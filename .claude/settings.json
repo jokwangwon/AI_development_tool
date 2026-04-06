@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "echo '[Harness Layer 1] PostToolUse: 코드 편집 감지 — lint 실행 예정'"
+      }
+    ],
+    "PreCommit": [
+      {
+        "command": "echo '[Harness Layer 2] PreCommit: 커밋 전 테스트 실행 예정'"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Agent"
+    ]
+  }
+}

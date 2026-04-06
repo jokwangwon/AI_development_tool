@@ -1,0 +1,20 @@
+#!/bin/bash
+# Harness Layer 3: git pre-commit hook
+# 커밋 전 자동 검증
+
+echo "[Harness Layer 3] pre-commit hook 실행 중..."
+
+# 1. 민감 정보 스캔 (API 키, 비밀번호 등)
+if git diff --cached --diff-filter=ACM | grep -iE '(api_key|secret|password|token)\s*=\s*["\x27][^"\x27]+["\x27]' > /dev/null 2>&1; then
+    echo "[ERROR] 민감 정보가 포함된 파일이 감지되었습니다!"
+    echo "  → .env 파일을 .gitignore에 추가하고, 환경 변수를 사용하세요."
+    exit 1
+fi
+
+# 2. 디버그 코드 체크
+if git diff --cached --diff-filter=ACM | grep -E '(console\.log|print\(|debugger|TODO:.*FIXME)' > /dev/null 2>&1; then
+    echo "[WARNING] 디버그 코드가 감지되었습니다. 확인 후 커밋하세요."
+fi
+
+echo "[Harness Layer 3] pre-commit 검증 통과"
+exit 0

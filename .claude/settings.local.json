@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(ls -lh /home/delangi/문서/project/category/portfolio-blog/docs/*/*.md)",
+      "WebFetch(domain:martinfowler.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:claudelab.net)",
+      "Bash(wc -l /home/delangi/문서/project/category/portfolio-blog/docs/**/*.md)",
+      "WebFetch(domain:agentfactory.panaversity.org)",
+      "Bash(chmod +x:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

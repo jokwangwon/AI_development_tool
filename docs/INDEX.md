@@ -57,7 +57,8 @@ docs/
 │   ├── generative-ai-extensibility-design.md    # 생성 AI 확장성
 │   ├── ai-backend-stack-convention.md           # AI 백엔드 스택 가이드라인
 │   ├── environment-and-docker-design.md         # 환경 변수 + Docker-First
-│   └── change-impact-analysis-design.md         # 변경 영향 분석
+│   ├── change-impact-analysis-design.md         # 변경 영향 분석
+│   └── miniature-god-hand-gdd.md                # 미니어처 갓 핸드 GDD (게임 설계)
 │
 ├── guides/                               # 개발 가이드
 │   ├── DEVELOPMENT_GUIDE.md              # 개발 프로세스, Git 규칙
@@ -129,6 +130,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-04-06 | AI 백엔드 스택 가이드라인 (3+1 합의 완료) | `ai-backend-stack-convention.md`, `ADR-005` |
 | 2026-04-06 | 환경 변수 중앙 관리 + Docker-First (3+1 합의 완료) | `environment-and-docker-design.md`, `ADR-006` |
 | 2026-04-06 | 변경 영향 분석 (3+1 합의 완료) | `change-impact-analysis-design.md`, `ADR-007` |
+| 2026-04-07 | 미니어처 갓 핸드 GDD 작성 (3+1 합의 기반) | `miniature-god-hand-gdd.md` |
+| 2026-04-07 | 엔진 선택 3+1 합의 → Unity 확정, C# 학습 완료 | `SESSION_2026-04-07.md` |
 
 ---
 

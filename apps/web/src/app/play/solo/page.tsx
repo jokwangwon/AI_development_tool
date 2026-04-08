@@ -11,7 +11,7 @@ import {
   type Round,
   type Topic,
 } from '@oracle-game/shared';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, type FinishSoloResponse } from '@/lib/api-client';
 
 type Phase = 'config' | 'playing' | 'finished';
 
@@ -25,6 +25,8 @@ export default function SoloPlayPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<EvaluationResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [finishResponse, setFinishResponse] = useState<FinishSoloResponse | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   // 데모 단계: 토큰은 임시 localStorage 기반
   const token = useMemo(
@@ -34,6 +36,7 @@ export default function SoloPlayPage() {
 
   const startGame = useCallback(async () => {
     setError(null);
+    setFinishResponse(null);
     try {
       const data = await apiClient.solo.start(token, {
         topic,
@@ -50,6 +53,42 @@ export default function SoloPlayPage() {
       setError(e instanceof Error ? e.message : 'Unknown error');
     }
   }, [token, topic, week, gameMode, difficulty]);
+
+  // 'finished' 진입 시 1회 server에 세션 결과 제출
+  // (StrictMode로 useEffect가 두 번 실행될 수 있으므로 ref로 1회 제한)
+  const finishedSubmittedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (phase !== 'finished') return;
+    if (results.length === 0) return;
+
+    // 동일 세션에 대해 중복 제출 방지
+    const sessionKey = rounds.map((r) => r.id).join(',');
+    if (finishedSubmittedRef.current === sessionKey) return;
+    finishedSubmittedRef.current = sessionKey;
+
+    const correctCount = results.filter((r) => r.isCorrect).length;
+    const totalScore = results.reduce((sum, r) => sum + r.score, 0);
+
+    setFinishing(true);
+    apiClient.solo
+      .finish(token, {
+        topic,
+        week,
+        gameMode,
+        totalRounds: results.length,
+        correctCount,
+        totalScore,
+      })
+      .then((res) => {
+        setFinishResponse(res);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : 'finish 실패');
+      })
+      .finally(() => {
+        setFinishing(false);
+      });
+  }, [phase, results, rounds, token, topic, week, gameMode]);
 
   if (phase === 'config') {
     return (
@@ -153,7 +192,35 @@ export default function SoloPlayPage() {
         정답률: {correctCount} / {results.length} (
         {Math.round((correctCount / Math.max(1, results.length)) * 100)}%)
       </p>
-      <p style={{ marginBottom: '1.5rem' }}>총 점수: {totalScore}</p>
+      <p style={{ marginBottom: '1.5rem' }}>이번 세션 점수: {totalScore}</p>
+
+      {finishing && (
+        <p style={{ color: 'var(--fg-muted)', marginBottom: '1rem' }}>
+          진도 반영 중...
+        </p>
+      )}
+
+      {finishResponse && (
+        <section
+          style={{
+            background: 'var(--bg-elevated)',
+            padding: '1.25rem',
+            borderRadius: 8,
+            marginBottom: '1.5rem',
+          }}
+        >
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>누적 진도</h2>
+          <p>총 점수: {finishResponse.progress.totalScore}</p>
+          <p>플레이 횟수: {finishResponse.progress.gamesPlayed}</p>
+          <p>
+            누적 정답률: {Math.round(finishResponse.progress.accuracy * 100)}%
+          </p>
+          <p>현재 연속 정답: {finishResponse.progress.streak}</p>
+        </section>
+      )}
+
+      {error && <p style={{ color: 'var(--error)', marginBottom: '1rem' }}>{error}</p>}
+
       <button
         type="button"
         onClick={() => setPhase('config')}

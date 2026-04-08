@@ -58,6 +58,33 @@ class SubmitAnswerDto {
   hintsUsed = 0;
 }
 
+class FinishSoloDto {
+  @IsString()
+  @IsEnum(CURRICULUM_TOPICS)
+  topic!: Topic;
+
+  @IsInt()
+  @Min(1)
+  week!: number;
+
+  @IsString()
+  @IsEnum(GAME_MODE_IDS)
+  gameMode!: GameModeId;
+
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  totalRounds!: number;
+
+  @IsInt()
+  @Min(0)
+  correctCount!: number;
+
+  @IsInt()
+  @Min(0)
+  totalScore!: number;
+}
+
 interface JwtUser {
   sub: string;
 }
@@ -81,6 +108,20 @@ export class GameController {
       answer: dto.answer,
       submittedAt: dto.submittedAt,
       hintsUsed: dto.hintsUsed,
+    });
+  }
+
+  @Post('finish')
+  async finish(@Body() dto: FinishSoloDto, @Req() req: Request) {
+    const user = req.user as JwtUser;
+    return this.sessionService.finishSolo({
+      userId: user.sub,
+      topic: dto.topic,
+      week: dto.week,
+      gameMode: dto.gameMode,
+      totalRounds: dto.totalRounds,
+      correctCount: dto.correctCount,
+      totalScore: dto.totalScore,
     });
   }
 }

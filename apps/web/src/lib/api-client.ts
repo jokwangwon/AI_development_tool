@@ -4,7 +4,21 @@ import type {
   GameModeId,
   Round,
   Topic,
+  UserProgress,
 } from '@oracle-game/shared';
+
+export interface FinishSoloResponse {
+  progress: UserProgress;
+  summary: {
+    topic: Topic;
+    week: number;
+    gameMode: GameModeId;
+    totalRounds: number;
+    correctCount: number;
+    accuracy: number;
+    sessionScore: number;
+  };
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -68,5 +82,17 @@ export const apiClient = {
         hintsUsed: number;
       },
     ) => request<EvaluationResult>('POST', '/games/solo/answer', { token, body: input }),
+
+    finish: (
+      token: string,
+      input: {
+        topic: Topic;
+        week: number;
+        gameMode: GameModeId;
+        totalRounds: number;
+        correctCount: number;
+        totalScore: number;
+      },
+    ) => request<FinishSoloResponse>('POST', '/games/solo/finish', { token, body: input }),
   },
 };

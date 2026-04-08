@@ -112,16 +112,18 @@ Phase 4: 통합 테스트 + 배포
 - ✅ 게임 모드 2/5 (BlankTyping, TermMatch) + Strategy Pattern
 - ✅ 솔로 게임 start/answer + 프론트 플레이 화면
 - ✅ 인증 (JWT + bcrypt), 학습 범위 검증 (계산적 키워드 매칭)
-- ✅ 테스트 40개 GREEN
+- ✅ 테스트 52개 GREEN
 - ✅ 1주차 sql-basics 시드 (빈칸 15 + 용어 15 + 화이트리스트, 멱등 부트 INSERT)
+- ✅ 솔로 게임 종료 흐름 (`/finish` + `user_progress` 가중평균 갱신 + `answer_history` 자동 INSERT)
+- 📌 ADR-009: AI 작업은 LangChain + Langfuse 강제 (다음 AI 워커 PR부터 적용)
 - 🔴 BullMQ 워커 + AI 문제 생성
 - 🔴 노션 import → 범위 추론
 
 ### 다음 우선순위
 
-1. 솔로 게임 종료 흐름 (`/finish` + `user_progress` 갱신 + `answer_history`)
-2. 로그인/회원가입 UI
-3. BullMQ 워커 + AI 문제 생성
+1. 로그인/회원가입 UI (현재 임시 localStorage 토큰 대체)
+2. BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009)
+3. 노션 import → 범위 추론 파이프라인
 4. 2주차 sql-functions 시드
 
 ---

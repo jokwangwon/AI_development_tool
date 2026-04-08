@@ -29,7 +29,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 | 단계 | 목표 | 진행률 |
 |------|------|--------|
-| **1단계** | 솔로 퀴즈 (빈칸타이핑 + 용어맞추기) + AI 문제 생성 | **약 60%** |
+| **1단계** | 솔로 퀴즈 (빈칸타이핑 + 용어맞추기) + AI 문제 생성 | **약 75%** |
 | 2단계 | 결과예측 + 카테고리분류 + 랭킹 | 0% (⚪) |
 | 3단계 | 시나리오 시뮬레이션 + 실시간 대전 | 0% (⚪) |
 
@@ -38,9 +38,10 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | 영역 | 상태 | 비고 |
 |------|------|------|
 | 인증 (JWT + bcrypt) | ✅ | refresh 토큰만 미구현 |
-| 사용자/진도 엔티티 | ✅ | 진도 갱신 로직은 미구현 |
+| 사용자/진도 엔티티 | ✅ | 진도 갱신 로직 포함 (`recordSessionProgress`) |
+| 답변 이력 (`answer_history`) | ✅ | submitAnswer 시 자동 INSERT |
 | 게임 모드 엔진 (Strategy Pattern) | ✅ | 모드 2개 |
-| 솔로 게임 세션 | 🟡 | 메모리 보관, 종료/요약/진도반영 미구현 |
+| 솔로 게임 세션 | ✅ | start → answer (history INSERT) → finish (progress 갱신) |
 | 문제 풀 조회 | ✅ | 누적 화이트리스트 적용 |
 | 학습 범위 검증 | ✅ | 계산적 키워드 매칭 |
 | 시드 데이터 (사전 생성 문제 풀) | 🟡 | 1주차 sql-basics 30문제 + scope 시드 작성 (다른 주차는 미작성) |
@@ -48,9 +49,9 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | 노션 import → 범위 추론 | 🔴 | 미시작 |
 | 프론트 솔로 화면 | 🟡 | 로그인 화면 없음, 임시 토큰 |
 | Docker Compose 환경 | ✅ | postgres/redis/api/web 정의 완료 |
-| 테스트 (Vitest) | ✅ | 5 파일 / 40 케이스 GREEN |
+| 테스트 (Vitest) | ✅ | 7 파일 / 52 케이스 GREEN |
 
-> **다음 세션 우선순위 제안**: 솔로 게임 종료 흐름(`/finish` + `user_progress` 갱신 + `answer_history`) → 로그인/회원가입 UI → BullMQ 워커 + AI 문제 생성.
+> **다음 세션 우선순위 제안**: 로그인/회원가입 UI → BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009).
 
 ---
 
@@ -171,12 +172,12 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | SDD 테이블 | 엔티티 클래스 | 상태 |
 |-----------|---------------|------|
 | `users` | `apps/api/src/modules/users/entities/user.entity.ts` | ✅ |
-| `user_progress` | `apps/api/src/modules/users/entities/user-progress.entity.ts` | ✅ |
+| `user_progress` | `apps/api/src/modules/users/entities/user-progress.entity.ts` | ✅ (총 라운드/정답 수 컬럼 추가, 가중 평균 정답률) |
 | `questions` | `apps/api/src/modules/content/entities/question.entity.ts` | ✅ |
 | `weekly_scope` | `apps/api/src/modules/content/entities/weekly-scope.entity.ts` | ✅ |
-| `game_sessions` | — | 🔴 (메모리 Map만) |
-| `session_players` | — | 🔴 |
-| `answer_history` | — | 🔴 (Spaced Repetition 도입 전제) |
+| `game_sessions` | — | 🔴 (솔로는 메모리 Map만, 멀티는 ⚪ MVP 3단계) |
+| `session_players` | — | 🔴 (⚪ MVP 3단계) |
+| `answer_history` | `apps/api/src/modules/users/entities/answer-history.entity.ts` | ✅ (Spaced Repetition 전제 데이터 축적 시작) |
 | `rankings` | — | 🔴 (⚪ MVP 2단계) |
 
 ### 5.2 Redis 데이터 구조
@@ -200,14 +201,14 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 | 단계 | SDD | 코드 위치 | 상태 |
 |------|-----|-----------|------|
-| 주차/모드/난이도 선택 UI | §6.1 | `apps/web/src/app/play/solo/page.tsx:54` (config phase) | ✅ |
-| 문제 풀 로드 | §6.1 | `game-session.service.ts:38` (`startSolo`) | ✅ |
-| 라운드 시작 + 타이머 | §6.1 | `solo/page.tsx:175` (`RoundPlayer`) — 클라 측 타이머만 | 🟡 (서버 검증 없음) |
-| 정답 → 점수 계산 (시간 보너스 + 연속) | §6.1 | `blank-typing.mode.ts:79`, `term-match.mode.ts:95` | 🟡 (연속 정답 보너스 미구현) |
-| 오답 → 정답 + 해설 표시 | §6.1 | — | 🔴 (정답 노출 없음) |
-| `answer_history` 기록 | §6.1 | — | 🔴 (테이블 자체 없음) |
-| 세트 완료 → 결과 요약 | §6.1 | `solo/page.tsx:148` (finished phase) | 🟡 (취약 분야 분석 없음) |
-| `user_progress` 업데이트 | §6.1 | — | 🔴 |
+| 주차/모드/난이도 선택 UI | §6.1 | `apps/web/src/app/play/solo/page.tsx` (config phase) | ✅ |
+| 문제 풀 로드 | §6.1 | `game-session.service.ts` (`startSolo`) | ✅ |
+| 라운드 시작 + 타이머 | §6.1 | `solo/page.tsx` (`RoundPlayer`) — 클라 측 타이머만 | 🟡 (서버 검증 없음) |
+| 정답 → 점수 계산 (시간 보너스 + 연속) | §6.1 | `blank-typing.mode.ts`, `term-match.mode.ts` | 🟡 (연속 정답 보너스는 finish 단위로만 반영) |
+| 오답 → 정답 + 해설 표시 | §6.1 | — | 🔴 (round result 응답에 정답/해설 추가 필요) |
+| `answer_history` 기록 | §6.1 | `game-session.service.ts` (`submitAnswer`) | ✅ |
+| 세트 완료 → 결과 요약 | §6.1 | `solo/page.tsx` (finished phase) + finish API | ✅ (취약 분야 분석은 미구현) |
+| `user_progress` 업데이트 | §6.1 | `users.service.ts` (`recordSessionProgress`) + `game-session.service.ts` (`finishSolo`) | ✅ |
 | 랭킹 반영 | §6.1 | — | 🔴 (⚪ MVP 2단계) |
 
 ### 6.2 실시간 대전 모드 (§6.2)
@@ -238,14 +239,14 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | PATCH | `/api/questions/:id/review` | §7.1 | — | 🔴 (관리자 승인) |
 | POST | `/api/games/solo/start` | §7.1 | `game.controller.ts:71` | ✅ |
 | POST | `/api/games/solo/answer` | §7.1 | `game.controller.ts:76` | ✅ |
-| POST | `/api/games/solo/finish` | §7.1 | — | 🔴 (진도 반영 트리거) |
+| POST | `/api/games/solo/finish` | §7.1 | `game.controller.ts` (`finish`) | ✅ |
 | GET | `/api/rankings` | §7.1 | — | 🔴 (⚪ MVP 2단계) |
 | GET | `/api/rankings/me` | §7.1 | — | 🔴 (⚪ MVP 2단계) |
 | GET | `/api/scope` | §7.1 | — | 🔴 |
 | POST | `/api/scope/import` | §7.1 | — | 🔴 (노션 import) |
 | PATCH | `/api/scope/:weekId` | §7.1 | — | 🔴 (관리자 편집) |
 
-**구현된 엔드포인트: 7 / 18 (39%)**
+**구현된 엔드포인트: 8 / 18 (44%)**
 
 ### 7.2 WebSocket Events (§7.2)
 
@@ -288,7 +289,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 이전 합의/SDD를 존중하면서 "1단계 MVP 동작"을 가장 빠르게 만들기 위한 순서:
 
 1. ~~**시드 데이터 작성**~~ ✅ 완료 (1주차 sql-basics 30문제 + scope, 11개 검증 테스트)
-2. **솔로 게임 종료 흐름** — `POST /games/solo/finish` + `user_progress` 갱신 + `answer_history` 엔티티 추가
+2. ~~**솔로 게임 종료 흐름**~~ ✅ 완료 (`/finish`, `user_progress` 갱신, `answer_history` INSERT, 12개 신규 테스트)
 3. **로그인 UI** — 현재 임시 localStorage 토큰을 로그인/회원가입 화면으로 대체
 4. **BullMQ 워커 + AI 문제 생성** — **LangChain Chat Model + Langfuse**(ADR-009)로 빈칸/용어 문제 생성, `StructuredOutputParser` + Zod 검증 → ScopeValidator → 풀 저장. 동시에 `@anthropic-ai/sdk` 제거.
 5. **노션 import → 범위 추론** — 노션 API 또는 마크다운 업로드 → 키워드 추출 → `weekly_scope` 저장

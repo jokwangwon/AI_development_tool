@@ -79,6 +79,7 @@ docs/
 │   ├── ADR-006-environment-and-docker.md         # 환경 변수 + Docker
 │   ├── ADR-007-change-impact-analysis.md         # 변경 영향 분석
 │   ├── ADR-008-oracle-dba-game-tech-stack.md    # Oracle DBA 게임 기술 스택
+│   ├── ADR-009-langchain-langfuse-stack.md      # LangChain + Langfuse 강제
 │   └── ...
 │
 ├── sessions/                             # 세션 로그
@@ -138,6 +139,7 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-04-06 | 변경 영향 분석 (3+1 합의 완료) | `change-impact-analysis-design.md`, `ADR-007` |
 | 2026-04-08 | Oracle DBA 학습 게임 SDD + 기술 스택 결정 (3+1 합의 완료) | `oracle-dba-learning-game-design.md`, `ADR-008`, `consensus-001` |
 | 2026-04-08 | MVP 1단계 스캐폴딩 + 구현 현황 매핑 문서 추가 | `IMPLEMENTATION_STATUS.md`, `SESSION_2026-04-08.md` |
+| 2026-04-08 | AI 작업 시 LangChain + Langfuse 강제 (사용자 직접 결정) | `ADR-009`, SDD §2.3/§4.3, `IMPLEMENTATION_STATUS.md` |
 
 ---
 

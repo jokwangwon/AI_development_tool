@@ -76,11 +76,13 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | BullMQ | `bullmq`, `@nestjs/bullmq` | ✅ | 🔴 import 0건 |
 | TypeORM + pg | `typeorm`, `pg` | ✅ | ✅ |
 | ioredis | `ioredis` | ✅ | 🔴 import 0건 |
-| Anthropic SDK | `@anthropic-ai/sdk` | ✅ | 🔴 import 0건 |
+| **LangChain JS** (ADR-009) | `langchain`, `@langchain/core`, `@langchain/anthropic` | 🔴 미설치 | — |
+| **Langfuse** (ADR-009) | `langfuse` | 🔴 미설치 | — |
+| ~~Anthropic SDK~~ | ~~`@anthropic-ai/sdk`~~ | ⚠ 설치되어 있으나 ADR-009로 **사용 금지**. 다음 AI 워커 PR에서 제거 예정 | 🔴 |
 | bcrypt + JWT | `bcrypt`, `@nestjs/jwt`, `passport-jwt` | ✅ | ✅ |
 | Zod | `zod` | ✅ | ✅ |
 
-> 의존성은 모두 깔려 있어, 워커/게이트웨이를 추가할 때 별도 설치가 필요 없다.
+> AI 워커를 추가할 때 LangChain + Langfuse를 함께 설치하고, 동시에 `@anthropic-ai/sdk`를 제거한다 (ADR-009 §강제 사항).
 
 ---
 
@@ -138,10 +140,10 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | 단계 | SDD | 코드 | 상태 |
 |------|-----|------|------|
 | 노션 자료 입력/import | §4.1 | — | 🔴 |
-| 범위 추론 (키워드 추출) | §4.2 | — | 🔴 |
+| 범위 추론 (키워드 추출) | §4.2 | — | 🔴 (LangChain 호출 — ADR-009) |
 | 주차/주제 매핑 | §4.2 Step 2 | — | 🔴 |
 | 범위 태깅 | §4.2 Step 3 | — | 🔴 (수동 INSERT만 가능) |
-| AI 문제 생성 (LLM 호출) | §4.3 | — | 🔴 (`@anthropic-ai/sdk` 미사용) |
+| AI 문제 생성 (LLM 호출) | §4.3 | — | 🔴 (LangChain + Langfuse — ADR-009) |
 | BullMQ 워커 격리 | §4.3 | — | 🔴 (`bullmq` 미사용) |
 | ① 스키마 검증 (Zod) | §4.4 ① | `packages/shared/src/schemas/question.schema.ts` | ✅ (스키마만, 호출처는 없음) |
 | ② 키워드 화이트리스트 매칭 | §4.4 ② | `apps/api/src/modules/content/services/scope-validator.service.ts` | ✅ |
@@ -276,6 +278,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | ADR-005 | 로컬 추론 시 Python 분리 | ✅ (현재는 LLM API 호출만 → TS 충분) |
 | ADR-006 | Docker-First | ✅ |
 | ADR-007 | 변경 영향 분석 | 🟡 (이 문서 자체가 그 일환) |
+| ADR-009 | LangChain + Langfuse 강제 | ⚪ AI 코드 0건 (다음 AI 워커 PR부터 적용) |
 | TEST_STRATEGY | 70% 커버리지 | ⚪ (커버리지 측정 미실행) |
 
 ---
@@ -287,7 +290,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 1. ~~**시드 데이터 작성**~~ ✅ 완료 (1주차 sql-basics 30문제 + scope, 11개 검증 테스트)
 2. **솔로 게임 종료 흐름** — `POST /games/solo/finish` + `user_progress` 갱신 + `answer_history` 엔티티 추가
 3. **로그인 UI** — 현재 임시 localStorage 토큰을 로그인/회원가입 화면으로 대체
-4. **BullMQ 워커 + AI 문제 생성** — Anthropic SDK로 빈칸/용어 문제 생성, Zod 검증 → ScopeValidator → 풀 저장
+4. **BullMQ 워커 + AI 문제 생성** — **LangChain Chat Model + Langfuse**(ADR-009)로 빈칸/용어 문제 생성, `StructuredOutputParser` + Zod 검증 → ScopeValidator → 풀 저장. 동시에 `@anthropic-ai/sdk` 제거.
 5. **노션 import → 범위 추론** — 노션 API 또는 마크다운 업로드 → 키워드 추출 → `weekly_scope` 저장
 6. **MVP 2단계 진입** — 결과예측/카테고리분류 모드 + 랭킹 (Redis Sorted Set)
 

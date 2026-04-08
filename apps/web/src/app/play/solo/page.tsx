@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CURRICULUM_TOPICS,
   GAME_MODE_LABELS,
@@ -12,10 +13,26 @@ import {
   type Topic,
 } from '@oracle-game/shared';
 import { apiClient, type FinishSoloResponse } from '@/lib/api-client';
+import { getToken } from '@/lib/auth-storage';
 
 type Phase = 'config' | 'playing' | 'finished';
 
 export default function SoloPlayPage() {
+  const router = useRouter();
+  const [token, setLocalToken] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // 마운트 시 토큰 확인 → 없으면 /login으로 즉시 리다이렉트
+  useEffect(() => {
+    const t = getToken();
+    if (!t) {
+      router.replace('/login');
+      return;
+    }
+    setLocalToken(t);
+    setAuthChecked(true);
+  }, [router]);
+
   const [phase, setPhase] = useState<Phase>('config');
   const [topic, setTopic] = useState<Topic>('sql-basics');
   const [week, setWeek] = useState(1);
@@ -28,13 +45,8 @@ export default function SoloPlayPage() {
   const [finishResponse, setFinishResponse] = useState<FinishSoloResponse | null>(null);
   const [finishing, setFinishing] = useState(false);
 
-  // 데모 단계: 토큰은 임시 localStorage 기반
-  const token = useMemo(
-    () => (typeof window !== 'undefined' ? localStorage.getItem('token') ?? '' : ''),
-    [],
-  );
-
   const startGame = useCallback(async () => {
+    if (!token) return;
     setError(null);
     setFinishResponse(null);
     try {
@@ -52,6 +64,7 @@ export default function SoloPlayPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error');
     }
+    // token, topic, week, gameMode, difficulty 변경 시 재생성
   }, [token, topic, week, gameMode, difficulty]);
 
   // 'finished' 진입 시 1회 server에 세션 결과 제출
@@ -60,6 +73,7 @@ export default function SoloPlayPage() {
   useEffect(() => {
     if (phase !== 'finished') return;
     if (results.length === 0) return;
+    if (!token) return;
 
     // 동일 세션에 대해 중복 제출 방지
     const sessionKey = rounds.map((r) => r.id).join(',');
@@ -89,6 +103,15 @@ export default function SoloPlayPage() {
         setFinishing(false);
       });
   }, [phase, results, rounds, token, topic, week, gameMode]);
+
+  // 인증 미확인 시 빈 컨테이너 (리다이렉트 진행 중)
+  if (!authChecked) {
+    return (
+      <Container>
+        <p style={{ color: 'var(--fg-muted)' }}>로그인 확인 중...</p>
+      </Container>
+    );
+  }
 
   if (phase === 'config') {
     return (
@@ -167,7 +190,7 @@ export default function SoloPlayPage() {
     return (
       <RoundPlayer
         round={current}
-        token={token}
+        token={token ?? ''}
         roundNumber={currentIndex + 1}
         totalRounds={rounds.length}
         onComplete={(result) => {

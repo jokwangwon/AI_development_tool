@@ -29,7 +29,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 | 단계 | 목표 | 진행률 |
 |------|------|--------|
-| **1단계** | 솔로 퀴즈 (빈칸타이핑 + 용어맞추기) + AI 문제 생성 | **약 75%** |
+| **1단계** | 솔로 퀴즈 (빈칸타이핑 + 용어맞추기) + AI 문제 생성 | **약 80%** |
 | 2단계 | 결과예측 + 카테고리분류 + 랭킹 | 0% (⚪) |
 | 3단계 | 시나리오 시뮬레이션 + 실시간 대전 | 0% (⚪) |
 
@@ -47,11 +47,11 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | 시드 데이터 (사전 생성 문제 풀) | 🟡 | 1주차 sql-basics 30문제 + scope 시드 작성 (다른 주차는 미작성) |
 | AI 문제 생성 워커 (BullMQ) | 🔴 | 패키지만 설치, 코드 없음 |
 | 노션 import → 범위 추론 | 🔴 | 미시작 |
-| 프론트 솔로 화면 | 🟡 | 로그인 화면 없음, 임시 토큰 |
+| 프론트 솔로 화면 | ✅ | 정식 로그인/회원가입 + 인증 가드 + 헤더 |
 | Docker Compose 환경 | ✅ | postgres/redis/api/web 정의 완료 |
 | 테스트 (Vitest) | ✅ | 7 파일 / 52 케이스 GREEN |
 
-> **다음 세션 우선순위 제안**: 로그인/회원가입 UI → BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009).
+> **다음 세션 우선순위 제안**: BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009) → 노션 import → 범위 추론.
 
 ---
 
@@ -290,7 +290,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 1. ~~**시드 데이터 작성**~~ ✅ 완료 (1주차 sql-basics 30문제 + scope, 11개 검증 테스트)
 2. ~~**솔로 게임 종료 흐름**~~ ✅ 완료 (`/finish`, `user_progress` 갱신, `answer_history` INSERT, 12개 신규 테스트)
-3. **로그인 UI** — 현재 임시 localStorage 토큰을 로그인/회원가입 화면으로 대체
+3. ~~**로그인 UI**~~ ✅ 완료 (`/login`, `/register`, 토큰 헬퍼, Header, solo 가드)
 4. **BullMQ 워커 + AI 문제 생성** — **LangChain Chat Model + Langfuse**(ADR-009)로 빈칸/용어 문제 생성, `StructuredOutputParser` + Zod 검증 → ScopeValidator → 풀 저장. 동시에 `@anthropic-ai/sdk` 제거.
 5. **노션 import → 범위 추론** — 노션 API 또는 마크다운 업로드 → 키워드 추출 → `weekly_scope` 저장
 6. **MVP 2단계 진입** — 결과예측/카테고리분류 모드 + 랭킹 (Redis Sorted Set)

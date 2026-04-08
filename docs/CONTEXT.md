@@ -115,16 +115,17 @@ Phase 4: 통합 테스트 + 배포
 - ✅ 테스트 52개 GREEN
 - ✅ 1주차 sql-basics 시드 (빈칸 15 + 용어 15 + 화이트리스트, 멱등 부트 INSERT)
 - ✅ 솔로 게임 종료 흐름 (`/finish` + `user_progress` 가중평균 갱신 + `answer_history` 자동 INSERT)
+- ✅ 로그인/회원가입 UI + 인증 가드 + 전역 헤더 (토큰 헬퍼)
 - 📌 ADR-009: AI 작업은 LangChain + Langfuse 강제 (다음 AI 워커 PR부터 적용)
 - 🔴 BullMQ 워커 + AI 문제 생성
 - 🔴 노션 import → 범위 추론
 
 ### 다음 우선순위
 
-1. 로그인/회원가입 UI (현재 임시 localStorage 토큰 대체)
-2. BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009)
-3. 노션 import → 범위 추론 파이프라인
-4. 2주차 sql-functions 시드
+1. BullMQ 워커 + AI 문제 생성 (LangChain + Langfuse, ADR-009)
+2. 노션 import → 범위 추론 파이프라인
+3. 2주차 sql-functions 시드
+4. 결과 페이지 취약 분야 분석 + 라운드 결과에 정답/해설 노출
 
 ---
 

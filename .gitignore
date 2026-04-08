@@ -46,3 +46,6 @@ htmlcov/
 # 로그
 *.log
 logs/
+
+# Claude Code 자동 생성 세션 데이터
+.claude/projects/

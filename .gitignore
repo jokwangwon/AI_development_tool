@@ -14,6 +14,17 @@ venv/
 dist/
 build/
 *.egg-info/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Docker 볼륨
+postgres-data/
+redis-data/
+
+# 환경 변수 예외 (예시 파일은 커밋)
+!.env.example
 
 # IDE
 .vscode/

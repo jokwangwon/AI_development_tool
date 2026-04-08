@@ -1,0 +1,16 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { QuestionEntity } from './entities/question.entity';
+import { WeeklyScopeEntity } from './entities/weekly-scope.entity';
+import { QuestionPoolService } from './services/question-pool.service';
+import { ScopeValidatorService } from './services/scope-validator.service';
+import { ContentController } from './content.controller';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([QuestionEntity, WeeklyScopeEntity])],
+  providers: [QuestionPoolService, ScopeValidatorService],
+  controllers: [ContentController],
+  exports: [QuestionPoolService, ScopeValidatorService],
+})
+export class ContentModule {}

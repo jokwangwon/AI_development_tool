@@ -43,14 +43,14 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 | 솔로 게임 세션 | 🟡 | 메모리 보관, 종료/요약/진도반영 미구현 |
 | 문제 풀 조회 | ✅ | 누적 화이트리스트 적용 |
 | 학습 범위 검증 | ✅ | 계산적 키워드 매칭 |
-| 시드 데이터 (사전 생성 문제 풀) | 🔴 | **현재 DB 빈 상태 → 게임 실행 불가** |
+| 시드 데이터 (사전 생성 문제 풀) | 🟡 | 1주차 sql-basics 30문제 + scope 시드 작성 (다른 주차는 미작성) |
 | AI 문제 생성 워커 (BullMQ) | 🔴 | 패키지만 설치, 코드 없음 |
 | 노션 import → 범위 추론 | 🔴 | 미시작 |
 | 프론트 솔로 화면 | 🟡 | 로그인 화면 없음, 임시 토큰 |
 | Docker Compose 환경 | ✅ | postgres/redis/api/web 정의 완료 |
-| 테스트 (Vitest) | ✅ | 4 파일 / 29 케이스 GREEN |
+| 테스트 (Vitest) | ✅ | 5 파일 / 40 케이스 GREEN |
 
-> **다음 세션 우선순위 제안**: 시드 데이터 작성 → 프론트에서 실제 게임이 돌아가는 것을 확인 → 그 다음 BullMQ 워커.
+> **다음 세션 우선순위 제안**: 솔로 게임 종료 흐름(`/finish` + `user_progress` 갱신 + `answer_history`) → 로그인/회원가입 UI → BullMQ 워커 + AI 문제 생성.
 
 ---
 
@@ -150,11 +150,15 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 ### 4.3 사전 생성 문제 풀 (Pre-generated Pool)
 
-- [ ] 1주차 SQL 기초 — 빈칸 15 + 용어 15 — 🔴
+- [x] 1주차 SQL 기초 — 빈칸 15 + 용어 15 — ✅
+  - `apps/api/src/modules/content/seed/data/week1-sql-basics.questions.ts`
+  - `apps/api/src/modules/content/seed/data/week1-sql-basics.scope.ts`
+  - `apps/api/src/modules/content/seed/seed.service.ts` (멱등 INSERT, OnApplicationBootstrap)
+  - `apps/api/src/modules/content/seed/seed.data.test.ts` (11 케이스)
 - [ ] 2주차 SQL 함수 — 빈칸 10 + 용어 15 — 🔴
-- [ ] 시드 데이터 스크립트 (`apps/api/src/seed/`) — 🔴
+- [ ] 3주차 이후 — 🔴
 
-> **이게 없으면 프론트에서 게임을 시작해도 "활성 문제 없음" 에러**가 난다 (`game-session.service.ts:54`).
+> 1주차는 `SEED_ON_BOOT=true`로 부트하면 자동 INSERT. 모든 시드는 ScopeValidator 화이트리스트를 통과하도록 설계되었고 단위 테스트로 검증된다.
 
 ---
 
@@ -280,9 +284,7 @@ SDD를 변경했다면 반드시 이 문서도 함께 갱신한다.
 
 이전 합의/SDD를 존중하면서 "1단계 MVP 동작"을 가장 빠르게 만들기 위한 순서:
 
-1. **시드 데이터 작성** — 1주차 sql-basics용 빈칸/용어 문제 30개를 SQL/JSON으로 작성하고 부트 시 INSERT
-   - 이게 있어야 프론트에서 실제로 게임이 돈다
-   - 헌법 §3 키워드 화이트리스트도 같이 시드
+1. ~~**시드 데이터 작성**~~ ✅ 완료 (1주차 sql-basics 30문제 + scope, 11개 검증 테스트)
 2. **솔로 게임 종료 흐름** — `POST /games/solo/finish` + `user_progress` 갱신 + `answer_history` 엔티티 추가
 3. **로그인 UI** — 현재 임시 localStorage 토큰을 로그인/회원가입 화면으로 대체
 4. **BullMQ 워커 + AI 문제 생성** — Anthropic SDK로 빈칸/용어 문제 생성, Zod 검증 → ScopeValidator → 풀 저장

@@ -25,7 +25,10 @@
       "Bash(npx tsc:*)",
       "Bash(ls -lt /home/delangi/.claude/projects/-home-delangi----project-category-bootcamp-game/*.jsonl)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(echo \"EXIT_SHARED=$?\")",
+      "Bash(echo \"EXIT_API=$?\")",
+      "Bash(echo \"EXIT_WEB=$?\")"
     ]
   }
 }

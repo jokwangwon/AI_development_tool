@@ -20,6 +20,10 @@ const envSchema = z.object({
   LLM_PROVIDER: z.enum(['anthropic', 'openai']).default('anthropic'),
   LLM_API_KEY: z.string().min(1),
   LLM_MODEL: z.string().default('claude-opus-4-6'),
+  SEED_ON_BOOT: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

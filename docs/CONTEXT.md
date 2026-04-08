@@ -112,17 +112,17 @@ Phase 4: 통합 테스트 + 배포
 - ✅ 게임 모드 2/5 (BlankTyping, TermMatch) + Strategy Pattern
 - ✅ 솔로 게임 start/answer + 프론트 플레이 화면
 - ✅ 인증 (JWT + bcrypt), 학습 범위 검증 (계산적 키워드 매칭)
-- ✅ 테스트 29개 GREEN
-- 🔴 사전 생성 문제 풀 시드 (없으면 게임 실행 불가)
+- ✅ 테스트 40개 GREEN
+- ✅ 1주차 sql-basics 시드 (빈칸 15 + 용어 15 + 화이트리스트, 멱등 부트 INSERT)
 - 🔴 BullMQ 워커 + AI 문제 생성
 - 🔴 노션 import → 범위 추론
 
 ### 다음 우선순위
 
-1. 시드 데이터 작성 (1주차 sql-basics 빈칸/용어 30문제)
-2. 솔로 게임 종료 흐름 (`/finish` + `user_progress` 갱신 + `answer_history`)
-3. 로그인/회원가입 UI
-4. BullMQ 워커 + AI 문제 생성
+1. 솔로 게임 종료 흐름 (`/finish` + `user_progress` 갱신 + `answer_history`)
+2. 로그인/회원가입 UI
+3. BullMQ 워커 + AI 문제 생성
+4. 2주차 sql-functions 시드
 
 ---
 

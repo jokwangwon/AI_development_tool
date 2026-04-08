@@ -37,7 +37,11 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.5",
     "zod": "^3.23.0",
-    "@anthropic-ai/sdk": "^0.27.0"
+    "langchain": "^0.3.5",
+    "@langchain/core": "^0.3.18",
+    "@langchain/anthropic": "^0.3.7",
+    "langfuse": "^3.27.0",
+    "langfuse-langchain": "^3.27.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",

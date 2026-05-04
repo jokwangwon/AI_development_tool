@@ -131,6 +131,7 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-04-06 | 변경 영향 분석 (3+1 합의 완료) | `change-impact-analysis-design.md`, `ADR-007` |
 | 2026-05-04 | Hermes Agent 도입 결정 — Option B 채택 (3+1 합의 완료) | `ADR-008-hermes-adoption-decision.md`, `review/3plus1-consensus-2026-05-04-hermes.md` |
 | 2026-05-04 | LLM Provider 추상화 설계 — Option β 채택 (LiteLLM facade 승격, 3+1 합의 완료, v2 보강 적용) | `llm-providers-design.md`, `ADR-009-self-adapter-v2-entry-conditions.md`, `review/3plus1-consensus-2026-05-04-p1-llm-providers.md` |
+| 2026-05-04 | Hermes Agent 도입 설계 (P2) — 6개 차단조건 충족 메커니즘 + Phase 1/2/3 + 롤백 + 검증 메트릭 (3+1 합의 대기) | `hermes-adoption-design.md` |
 
 ---
 

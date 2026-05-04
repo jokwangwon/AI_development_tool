@@ -129,6 +129,7 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-04-06 | AI 백엔드 스택 가이드라인 (3+1 합의 완료) | `ai-backend-stack-convention.md`, `ADR-005` |
 | 2026-04-06 | 환경 변수 중앙 관리 + Docker-First (3+1 합의 완료) | `environment-and-docker-design.md`, `ADR-006` |
 | 2026-04-06 | 변경 영향 분석 (3+1 합의 완료) | `change-impact-analysis-design.md`, `ADR-007` |
+| 2026-05-04 | Hermes Agent 도입 결정 — Option B 채택 (3+1 합의 완료) | `ADR-008-hermes-adoption-decision.md`, `review/3plus1-consensus-2026-05-04-hermes.md` |
 
 ---
 

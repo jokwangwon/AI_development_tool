@@ -84,3 +84,33 @@
 - `docs/architecture/llm-providers-design.md` (provider 추상화 — 작성 예정)
 - `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안)
 - `~/.claude/projects/-home-delangi----project-category-AI-development-tool/memory/feedback_provider_liquidity.md` (Provider Liquidity 영구 기억)
+
+---
+
+## 부록 A — 검증 결과 (2026-05-04)
+
+Phase 1 진입 전 사실 확인 작업 2건 완료. 결과 CRITICAL 위험 2건이 다운그레이드되었으나, 차단조건 6개는 그대로 유지(방어 자세).
+
+### A.1 ChatGPT Pro Codex CLI ToS 검증
+- **공식 지원**: Hermes는 OpenAI Codex `device code` OAuth flow를 정식 지원. credentials는 `~/.hermes/auth.json`에 저장, `~/.codex/auth.json`에서 import 가능
+- **개인 단일 사용자 시나리오**: ToS 위반 위험 **LOW** — Codex CLI 자체와 동등 사용
+- **금지 사례**: "Reselling access" 또는 "third-party services에 ChatGPT 전력 공급". 본 프로젝트는 개인 사용이므로 해당 없음
+- **정책 변동성**: OpenAI/Anthropic가 third-party 도구의 구독 집계를 최근 제한한 사례 존재 → API 키 경로 우선 정책은 그대로 유지
+- **A-meta 위험 등급**: CRITICAL → **MEDIUM** (정책 변동 모니터링 필요)
+
+### A.2 Hermes JSONL Export 검증
+- **공식 명령어**: `hermes sessions export backup.jsonl` 존재. 전체/플랫폼별/단일 세션 export 지원, full message history 포함
+- **데이터 저장소 정정**: ChromaDB는 사용하지 않음. **SQLite + FTS5 단일** — 암호화는 SQLCipher 단일 적용으로 충분 (차단조건 #1 단순화)
+- **마이그레이션 도구**: `hermes claw migrate` (OpenClaw → Hermes) 존재. 역방향 export는 sessions 단위로 가능
+- **스키마 버전 관리**: `schema_version` 테이블 존재
+- **R2 위험 등급**: CRITICAL → **HIGH** (skills/memory 범위는 P1 설계 단계에서 추가 검증)
+- **추가 검증 항목**: `hermes sessions export`가 sessions만 다루는지, agent-curated memory와 skills도 포함하는지 P1에서 확인 필요
+
+### A.3 차단조건 영향
+6개 차단조건은 **그대로 유지**. 검증 결과는 충족 가능성을 높였을 뿐 의무를 약화하지 않음.
+- #1 SQLCipher: 적용 대상이 SQLite 단일 → 구현 단순화
+- #2 JSONL export: 공식 명령어 활용. skills/memory 범위 보강 필요
+- #3 버전 핀: 그대로
+- #4 어댑터 추상화: 그대로 (P1 설계의 핵심)
+- #5 2 provider always-on: 그대로
+- #6 Docker 격리: 그대로

@@ -2,7 +2,36 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-04-06
+**최종 업데이트**: 2026-05-04 (Hermes 도입 설계 완성, Phase 0 진입 가능)
+
+---
+
+## 현재 활성 의사결정 (2026-05-04)
+
+**Hermes Agent 도입 진행 중** — 본 템플릿을 활용하여 Hermes 도입 의사결정을 SDD + 3+1 합의 프로토콜로 구조화.
+
+### 진입 준비 완료
+- ADR-008 (Hermes 도입 Option B), ADR-009 (자체 Adapter v2.0 진입조건), ADR-010 (Vault HSM 키관리)
+- P1 v2 (LLM Provider Facade — LiteLLM Option β), P2 v2 (Hermes 도입 — TIER 0~3 19개 보강 적용)
+- 4회 3+1 합의 모두 통과
+- **Phase 0 진입 가능 상태** (P2 v2 §3 — P2-N1·N2 + sqlite 호환성 검증 게이트, 3~5일)
+
+### 핵심 제약 (영구 기억)
+- **Provider Liquidity**: 모델/구독 교체가 코드 변경 없이 가능해야 함 (`feedback_provider_liquidity.md`)
+- 6개 차단조건 비협상 (P2 v2 §2)
+- API 키 경로 우선, OAuth 직결 금지
+
+### 다음 세션 대기 작업 (Task #16)
+1. P1 v2 minor revisions 6건 적용
+2. `.claude/settings.local.json` 처리 (gitignore 권장)
+3. 잘못된 origin/main 커밋 2개 정리
+
+### 다음 행동
+- Phase 0 시작 명령 또는 다음 세션 우선순위 결정
+
+상세: `docs/sessions/SESSION_2026-05-04.md`
+
+---
 
 ---
 

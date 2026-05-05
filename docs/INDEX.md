@@ -133,6 +133,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-04 | LLM Provider 추상화 설계 — Option β 채택 (LiteLLM facade 승격, 3+1 합의 완료, v2 보강 적용) | `llm-providers-design.md`, `ADR-009-self-adapter-v2-entry-conditions.md`, `review/3plus1-consensus-2026-05-04-p1-llm-providers.md` |
 | 2026-05-04 | Hermes Agent 도입 설계 (P2) — 6개 차단조건 충족 메커니즘 + Phase 1/2/3 + 롤백 + 검증 메트릭 (3+1 합의 완료) | `hermes-adoption-design.md`, `review/3plus1-consensus-2026-05-04-p2-hermes-adoption.md` |
 | 2026-05-04 | P2 v2 적용 (TIER 0+1+2+3 보강 19건) — Phase 0 신설, SQLCipher Vault HSM + Shamir, 격리 강화 6항목, 자동 롤백 11트리거, Phase 2 메트릭 분리 등 | `hermes-adoption-design.md` (v2), `ADR-010-sqlcipher-vault-key-management.md` |
+| 2026-05-05 | Phase 0 Day 1 사실 확인 + P2-N1 단축 합의 — Hermes v0.12.0 코드 grep 결과 `add_pre_record_hook` API 미존재 확정, Hermes 자체 redaction 발견. R-1~R-7 보강 (R-1 결과 조건부) | `phase0/day1-environment-and-fact-check.md`, `review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md` |
+| 2026-05-05 | 시스템 정체성 재정의 풀 3+1 합의 (GPT 외부 4번째 의견 포함) — "AI Development Company OS" 비전 채택, Hermes PMO 4 게이트 후 격상, P2 v3 R-7 후 신규 작성, MVP 부분 채택 (4 Agent + 2 Memory + Markdown/JSONL Evidence) | `architecture/system-identity-prequel.md`, `review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` |
 
 ---
 

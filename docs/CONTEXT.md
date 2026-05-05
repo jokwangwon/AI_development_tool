@@ -2,64 +2,94 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-05 (시스템 정체성 재정의 + Phase 0 Day 1~2 진행 중)
+**최종 업데이트**: 2026-05-05 (시스템 정체성 재정의 + R-1 FAIL + R-2 PASS, 다음 세션 R-3 진입 대기)
 
 ---
 
-## 현재 활성 의사결정 (2026-05-05)
+## 현재 활성 의사결정 (2026-05-05 세션 종료 시점)
 
-**시스템 정체성 재정의 합의 완료** — 풀 3+1 합의 + GPT 외부 4번째 의견 종합 결과 "AI Development Company OS" 방향성 채택, MVP 부분 채택, Hermes PMO 격상은 4 게이트 충족 후.
+**Phase 0 Day 1~3 완료, R-1 FAIL + R-2 PASS, G1a/G1b 분리 확정** — 다음 세션 R-3~R-7 진입 대기.
 
-### 합의 산출
+### 합의·검증 산출 (본 세션)
 - `docs/architecture/system-identity-prequel.md` (시스템 정체성 prequel — P2 v3 정식화 전 임시 선언)
-- `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (풀 3+1 합의 보고서)
+- `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (풀 3+1 합의)
+- `docs/review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md` (단축 합의)
+- `docs/external-review/2026-05-05-system-summary-for-gpt.md` (GPT 검토 의뢰 자료)
+- `docs/phase0/day1-environment-and-fact-check.md` (Hermes v0.12.0 사실 확인)
+- `docs/phase0/day2-r1-redaction-location-verification.md` (R-1 FAIL 확정)
+- `docs/phase0/day3-r2-sqlite-trigger-poc.md` (R-2 PASS 확정)
+- `docker/r2-poc/` (R-2 PoC Docker 격리 환경 + 6항목 자동 검증 스크립트)
+- `docs/sessions/SESSION_2026-05-05.md` (본 세션 로그)
 
-### 핵심 채택 사항
+### 핵심 채택 사항 (변경 없음)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
 - **권위 위계**: `Constitution > ADR > SDD > Harness Gates > Hermes > Worker Agents`
-- **Hermes ≠ root of trust** (운영적 강제 4가지)
+- **Hermes ≠ root of trust**
 - **자동 학습 ≠ 자동 정책 변경** (T1 자동 / T2 사용자 승인 / T3 절대 금지)
 - **Evidence 검증**: "Agent proposes / Hermes orchestrates / Tools verify / Evidence decides / Human overrides"
-- **메타포 강제 금지** 조항 (메타포 인플레이션 회피)
+- **메타포 강제 금지** 조항
 
-### MVP 범위 (Phase 1 시작 기준)
-- **Worker Agent 4**: PM/Orchestrator + Architect + Implementation + Reviewer (QA/Security/Doc은 hook/CI/secret scanner/체크리스트로 대체)
-- **Memory 2단계**: Global + Project (manual promotion만, Team/Session은 미래 ADR)
+### MVP 범위 (Phase 1 시작 기준, 변경 없음)
+- **Worker Agent 4**: PM/Orchestrator + Architect + Implementation + Reviewer
+- **Memory 2단계**: Global + Project (manual promotion만)
 - **Evidence**: Markdown + JSONL append-only (hash chain or git append commit으로 변조 방지)
 
-### Hermes PMO 격상 4 게이트 (G1~G4)
-- **G1**: Phase 0 R-1 (canary 검증) 완료 — Hermes 자체 redaction이 DB INSERT 경로 적용 확인
-- **G2**: 6 거버넌스 사전조건 충족 (8 위반 경로 P1~P8 강제 메커니즘 매핑)
-- **G3**: "Hermes ≠ root of trust" 운영적 구현 (read-only on Constitution/ADR/SDD, 합의 결과 git commit + UI 직접 전달)
-- **G4**: Provider-agnostic Memory/Skill 저장 형식 확정
+### G1a/G1b 분리 (CRITICAL — 다음 세션 핵심 컨텍스트)
 
-### Phase 0 진행 상태 (Day 1~2)
-- **Day 1 완료**: Hermes v0.12.0 사실 확인. P2 v2 §2.1.3 가정 코드 (`add_pre_record_hook`) 공식 API 미존재 확정. Hermes 자체 redaction 시스템 발견 (`security.redact_secrets`, v0.12.0 default OFF).
-- **단축 합의 완료**: APPROVE with revisions. R-1~R-7 보강 (R-1 결과 조건부).
-- **R-1 검증 재개**: Hermes 자체 redaction이 DB INSERT 경로에 실제 적용되는지 격리 환경 canary 검증.
-  - PASS → R-2~R-7 보강 후 P2 v3 작성
-  - FAIL → 합의 옵션 (2) C-③안 변형 자동 전환 (Hermes PMO 격상 6~12개월 완전 보류)
+```
+G1a: Hermes native redaction applies before DB INSERT
+   Result: FAIL (R-1 확정)
+   근거: agent/redact.py docstring "for logs and tool output", redact import 25개 모두 비-DB,
+         hermes_state.py redact import 0건
 
-### 작업 우선순위 (사용자 확정)
-1. ✅ 정체성 prequel 선언 작성 (현 단계 완료)
-2. ⏳ Phase 0 R-1 검증 재개
-3. ⏳ 6 거버넌스 사전조건 매트릭스 작성
-4. ⏳ Role Contract 25건 작성 (`docs/roles/AGENT_<NAME>.md` × 4)
-5. ⏳ Memory boundary 최소 메커니즘 작성
-6. ⏳ Evidence 최소 schema 작성
-7. ⏳ R-7 완료 후 P2 v3 신규 작성
-8. ⏳ ADR-008/009/010 갱신 PR 묶음
-9. ⏳ 4 게이트 충족 검증 후 Hermes PMO 격상 활성화 (예상 2~4주 후)
+G1b: DB-level fallback prevents plaintext secret persistence
+   Result: PASS by R-2 PoC
+   근거: SQLCipher BEFORE INSERT trigger + REGEXP UDF로 6항목 검증 PASS
+         (Docker 격리 환경, canary 5종 차단, DB 평문 부재, 에러 평문 미노출)
+```
+
+**G1b의 의미 (사용자 명시)**:
+> Hermes native redaction은 로그/LLM 송신 방어로만 취급, DB INSERT 경로는 SQLCipher BEFORE INSERT trigger로 별도 차단. **Hermes를 신뢰하는 구조가 아니라 DB 레벨에서 Hermes를 보완하는 구조.**
+
+### 4 게이트 진행 상태
+
+| 게이트 | 정의 | 현 상태 |
+|-------|------|--------|
+| ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) |
+| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ PoC PASS 실증, 정식 충족은 R-3~R-5 후 |
+| G2 | 6 거버넌스 사전조건 | ⏳ 미작성 |
+| G3 | "Hermes ≠ root of trust" 운영 구현 | ⏳ 미작성 |
+| G4 | Provider-agnostic Memory/Skill 형식 | ⏳ 미작성 |
+
+### Phase 0 진행 상태
+- ✅ Day 1 (사실 확인)
+- ✅ Day 2 (R-1 FAIL)
+- ✅ Day 3 (R-2 PASS, timebox 1~2일 내 조기 완료)
+- ⏳ Day 4~5: 계획 변경 — R-3~R-7로 흡수, 다음 세션 진입
+
+### 다음 세션 TODO (우선순위 순)
+
+1. **R-3** (CRITICAL): 수단/목적 분리 ADR 작성 — ADR-011 또는 ADR-008 Amendment
+2. **R-4**: Hermes redact pattern (`_PREFIX_PATTERNS` 35종) ↔ P1_REDACTOR 패턴 동등성 비교
+3. **R-5**: canary 재검증 트리거 설계 (T13 강화 — config 체크 + 주기적 inject)
+4. **R-6**: CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
+5. **R-7**: Phase 1 합격 SOP 작성
+6. **P2 v3 신규 작성** (R-7 완료 후) + ADR-008/009/010 갱신 PR 묶음
+7. **G2/G3/G4** 작성 (병행 가능)
+
+**권고 시작점**: 옵션 A — "R-3 진행해주세요" 명령으로 ADR-011 vs Amendment 형식 결정 후 본문 작성.
+
+### 잔여 (Task #16, 본 세션 미처리)
+- P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토
+- `.claude/settings.local.json` gitignore 처리
+- 잘못된 origin/main 커밋 2개 정리
 
 ### 영구 핵심 제약
-- **Provider Liquidity** (`feedback_provider_liquidity.md`): 모델/구독 교체가 코드 변경 없이 가능해야 함
-- **Hermes ≠ root of trust** (system-identity-prequel §3): 모든 PASS 결정의 최종 근거는 계산적 검증 + Evidence
-- **메타포 강제 금지** (system-identity-prequel §7): 메타포 정합성 위해 실 구조 늘리지 말 것
+- **Provider Liquidity** (헌법 5조 비협상, `feedback_provider_liquidity.md`)
+- **Hermes ≠ root of trust** (system-identity-prequel §3)
+- **메타포 강제 금지** (system-identity-prequel §7)
 
-### 현 잔여 작업 (Task #16, 보류 중)
-1. P1 v2 minor revisions 6건 적용 — P2 v3 작성과 병합 검토
-2. `.claude/settings.local.json` 처리 (gitignore 권장)
-3. 잘못된 origin/main 커밋 2개 정리
+상세: `docs/sessions/SESSION_2026-05-05.md`, `docs/architecture/system-identity-prequel.md`
 
 ---
 
@@ -112,4 +142,4 @@ Phase 4: 통합 테스트 + 배포
 ---
 
 **이 문서는 매 세션 시작 시 반드시 읽어야 합니다.**
-**상세**: `docs/architecture/system-identity-prequel.md`, `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md`
+**상세**: `docs/sessions/SESSION_2026-05-05.md`, `docs/architecture/system-identity-prequel.md`, `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md`

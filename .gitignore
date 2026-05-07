@@ -35,3 +35,6 @@ htmlcov/
 # 로그
 *.log
 logs/
+
+# Claude Code 로컬 사용자 설정 (개인 권한 승인 누적, 공유 미대상)
+.claude/settings.local.json

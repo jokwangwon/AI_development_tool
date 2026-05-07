@@ -1,0 +1,16 @@
+services:
+  r4-1-poc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: r4-1-poc:local
+    container_name: r4-1-poc
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "1000:1000"

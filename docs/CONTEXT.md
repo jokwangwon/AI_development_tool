@@ -2,13 +2,13 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-06 (R-3 + R-4 + R-4.1 완료 — ADR-011 발행 + Tier-1 42종 trigger UDF 확장 격리 PoC PASS, R-5 진입 대기)
+**최종 업데이트**: 2026-05-06 (R-3 + R-4 + R-4.1 + R-5 완료 — canary 재검증 트리거 설계 추가, R-6 진입 대기)
 
 ---
 
-## 현재 활성 의사결정 (2026-05-06 R-4.1 완료 시점)
+## 현재 활성 의사결정 (2026-05-06 R-5 완료 시점)
 
-**Phase 0 Day 1~3 + R-3 + R-4 + R-4.1 완료, ADR-011 §2.1 (a) + (b) 직접 충족 evidence 산출** — R-5~R-7 진입 대기.
+**Phase 0 Day 1~3 + R-3 + R-4 + R-4.1 + R-5 완료, ADR-011 §2.1 (a) + (b) + §2.4 운영 메커니즘 설계 산출** — R-6~R-7 진입 대기.
 
 ### 합의·검증 산출 (2026-05-05 ~ 2026-05-06 누적)
 - `docs/architecture/system-identity-prequel.md` (시스템 정체성 prequel — P2 v3 정식화 전 임시 선언)
@@ -26,6 +26,7 @@
 - **`docs/architecture/redaction-pattern-equivalence.md` (R-4 — 패턴 동등성 비교 + gap 식별 + 보충 권고, ADR-011 §2.1 (a) 충족)**
 - **`docs/phase0/r4-1-trigger-extension-evidence.md` (R-4.1 — Tier-1 42종 trigger UDF 확장 PoC PASS evidence, ADR-011 §2.1 (b) 충족)**
 - **`docker/r4-1-poc/` (R-4.1 격리 환경 코드 — Dockerfile + compose + r4_1_poc.py)**
+- **`docs/architecture/canary-recheck-design.md` (R-5 — canary 재검증 트리거 설계, ADR-011 §2.4 운영 메커니즘)**
 
 ### 핵심 채택 사항 (R-3에서 ADR 권위로 승격)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
@@ -75,18 +76,18 @@ G1b: DB-level fallback prevents plaintext secret persistence
 - ✅ **R-3 (2026-05-06): ADR-011 발행 + ADR-008 부록 B Amendment, 단축 합의 APPROVE**
 - ✅ **R-4 (2026-05-06): 패턴 동등성 비교 + gap 식별 + 보충 권고 (ADR-011 §2.1 (a) 충족)**
 - ✅ **R-4.1 (2026-05-06): Tier-1 42종 trigger UDF 확장 + 격리 환경 PoC PASS (ADR-011 §2.1 (b) 충족, 1차 PARTIAL → 2차 PASS 진화)**
-- ⏳ R-5~R-7: 다음 진입 대기
+- ✅ **R-5 (2026-05-06): canary 재검증 트리거 설계 (T13 강화 + 6 trigger 시점 + 4 verdict + 4 안전장치 + Markdown+JSONL evidence + T1/T2/T3 정책 매트릭스)**
+- ⏳ R-6~R-7: 다음 진입 대기
 
 ### 다음 세션 TODO (우선순위 순)
 
-1. ~~**R-3 / R-4 / R-4.1**~~ ✅ 완료 (2026-05-06)
-2. **R-5** (다음 진입점): canary 재검증 트리거 설계 (T13 강화 — config 체크 + 주기적 inject) — `docs/architecture/canary-recheck-design.md`. R-4.1 evidence §10.3 직접 입력 활용
-3. **R-6**: CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행) — `.github/workflows/r2-canary.yml`. R-4.1 evidence §10.1 docker 명령 + JSON 추출 직접 인용
-4. **R-7**: Phase 1 합격 SOP 작성 — `docs/phase0/redaction-verification-sop.md`. R-4.1 evidence §5/§6/§7/§11 catalog 직접 인용
-5. **P2 v3 신규 작성** (R-7 완료 후) + ADR-008/009/010/**011** 갱신 PR 묶음
-6. **G2/G3/G4** 작성 (병행 가능, G3는 ADR-011 §2.3 운영 구현)
+1. ~~**R-3 / R-4 / R-4.1 / R-5**~~ ✅ 완료 (2026-05-06)
+2. **R-6** (다음 진입점): CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행) — `.github/workflows/r2-canary.yml`. R-5 §4 trigger 매트릭스 + R-4.1 evidence §10.1 docker 명령 + JSON 추출 직접 인용
+3. **R-7**: Phase 1 합격 SOP 작성 — `docs/phase0/redaction-verification-sop.md`. R-5 §5 판정 + §6 안전장치 + §7 evidence + §8 정책 매트릭스 + R-4.1 evidence §5/§6/§7/§11 catalog 직접 인용
+4. **P2 v3 신규 작성** (R-7 완료 후) + ADR-008/009/010/**011** 갱신 PR 묶음
+5. **G2/G3/G4** 작성 (병행 가능, G3는 ADR-011 §2.3 운영 구현)
 
-**권고 시작점**: "R-5 진행해주세요" 명령으로 R-4.1 evidence §10.3 의 R-5 입력 (Tier-1 42 catalog + T13 inject 빈도 정책) 으로 canary 재검증 트리거 설계 시작.
+**권고 시작점**: "R-6 진행해주세요" 명령으로 R-5 §4 trigger 매트릭스 + R-4.1 evidence §10.1 의 GitHub Actions YAML 구현 설계 시작.
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

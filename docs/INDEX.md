@@ -153,6 +153,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-06 | Phase 0 R-4 — Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 비교 + gap 식별 + 보충 권고. ADR-011 §2.1 (a) 충족 의무의 직접 산출 | `architecture/redaction-pattern-equivalence.md` |
 | 2026-05-06 | Phase 0 R-4.1 — Tier-1 42종 trigger UDF 확장 + Docker 격리 환경 PoC PASS. ADR-011 §2.1 (b) 직접 충족 evidence 생성. 1차 PARTIAL → 2차 PASS 진화 (H-J/H-L 직접 등록 제외 + alternation 채택) | `phase0/r4-1-trigger-extension-evidence.md`, `docker/r4-1-poc/` |
 | 2026-05-06 | R-4 §7.2 산술 정정 (Prefix 30 → 31, Tier-1 41 → 42, frozenset → alternation) + ADR-008 부록 B.6 R-4 ✅ / R-4.1 ✅ 갱신 | `architecture/redaction-pattern-equivalence.md`, `decisions/ADR-008-hermes-adoption-decision.md` |
+| 2026-05-06 | `.claude/settings.local.json` untrack + `.gitignore` 갱신 — 로컬 사용자 설정 commit 분리, 권한 승인 누적 디스크 보존 | `.gitignore` |
+| 2026-05-06 | Phase 0 R-5 — canary 재검증 트리거 설계. T13 강화 / R-4.1 catalog 재사용 / 6 trigger 시점 / PASS-PARTIAL-FAIL-ROLLBACK 판정 / 4 안전장치 / Markdown+JSONL 이중 evidence / T1/T2/T3 정책 매트릭스. 실제 자동화 구현은 R-6 위임 | `architecture/canary-recheck-design.md` |
 
 ---
 

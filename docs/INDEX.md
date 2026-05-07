@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-05-07
+**최종 업데이트**: 2026-05-07 (Part 2 — P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2·G3 DRAFT 검토 APPROVE)
 
 ---
 
@@ -57,7 +57,16 @@ docs/
 │   ├── generative-ai-extensibility-design.md    # 생성 AI 확장성
 │   ├── ai-backend-stack-convention.md           # AI 백엔드 스택 가이드라인
 │   ├── environment-and-docker-design.md         # 환경 변수 + Docker-First
-│   └── change-impact-analysis-design.md         # 변경 영향 분석
+│   ├── change-impact-analysis-design.md         # 변경 영향 분석
+│   ├── llm-providers-design.md                  # P1 v2 LiteLLM facade
+│   ├── hermes-adoption-design.md                # P2 v2 (정식 채택 시 archived 예정)
+│   ├── hermes-adoption-design-v3.md             # P2 v3 DRAFT — Hermes PMO 구조 + G2/G3/G4 잔여 게이트
+│   ├── system-identity-prequel.md               # 시스템 정체성 prequel (P2 v3 정식 채택 시 archived 예정)
+│   ├── redaction-pattern-equivalence.md         # R-4 pattern equivalence
+│   ├── canary-recheck-design.md                 # R-5 canary 재검증 트리거 설계
+│   ├── governance-preconditions.md              # G2 DRAFT — 6 거버넌스 사전조건 (P1~P8 / GP-1~GP-6)
+│   ├── hermes-not-root-of-trust-runtime.md      # G3 DRAFT — Hermes ≠ root of trust 운영 구현
+│   └── provider-agnostic-memory-skill-design.md # G4 DRAFT — Memory scope + Skill schema + JSONL export
 │
 ├── guides/                               # 개발 가이드
 │   ├── DEVELOPMENT_GUIDE.md              # 개발 프로세스, Git 규칙
@@ -161,6 +170,14 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-07 | R-6 GitHub Actions actual run — 1차 FAIL (docker compose stdout prefix JSON parse infra bug, 보안/catalog/secret 위반 아님 사용자 분류) → fix `939125b` (`--no-log-prefix` flag 추가, workflow YAML 1 file 한정) → 2차 run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0, ROLLBACK 9 조건 0 발화) | `.github/workflows/r2-canary.yml` |
 | 2026-05-07 | R-7 SOP §7.3 Reviewer-only 단축 합의 APPROVE — Reviewer 13 항목 + 8 PASS 조건 + 5 메타 편향 통제 수단. **G1b CONDITIONALLY PASS → PASS 승격, Phase 1 acceptance PARTIAL → PASS 선언**. 자동 승격 아님 (사용자 명시 + ADR-011 §2.4 T2 절차 답습). Hermes PMO 격상은 4 게이트 통과 후 별도 결정 (본 합의 범위 외) | `review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`, `decisions/ADR-008-hermes-adoption-decision.md` (부록 B.6), `phase0/redaction-verification-sop.md` (§3.4 / §4.2 / §4.3 / §6.1 / §7.1.1 / §7.3 갱신) |
 | 2026-05-07 | 세션 로그 — push 진행 + 1차 FAIL infra fix + 2차 PASS + 단축 합의 APPROVE + G1b PASS 승격 + Phase 1 acceptance PASS 선언. 다음 진입점 P2 v3 또는 G2/G3/G4 병행 | `sessions/SESSION_2026-05-07.md` |
+| 2026-05-07 (Part 2) | P2 v3 신규 작성 (DRAFT) — P2 v2 §2.1.3 가정 폐기 + R-2~R-7 흡수 + Hermes PMO 구조 사전 정의 (격상 미선언) + G2/G3/G4 잔여 게이트 entry/exit | `architecture/hermes-adoption-design-v3.md` |
+| 2026-05-07 (Part 2) | P2 v3 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 7 기준 7/7 PASS + 8 금지 위반 0건 + 4 자기 발견 잠재 위험 (LOW) | `review/3plus1-consensus-2026-05-07-p2-v3-draft.md` |
+| 2026-05-07 (Part 2) | G2 거버넌스 사전조건 신규 작성 (DRAFT) — 헌법 8조·5조(Provider Liquidity) 위반 경로 P1~P8 정의 + 6 거버넌스 사전조건 GP-1~GP-6 매핑 + 강제 메커니즘 분류 (계산적 6/6, 추론적 보조 4/6, 자동 롤백 6/6) + §9 메타 안전장치 G3 인터페이스 | `architecture/governance-preconditions.md` |
+| 2026-05-07 (Part 2) | G2 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 10 기준 10/10 PASS + 10 금지 위반 0건 + 4 자기 발견 잠재 위험 (LOW) | `review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` |
+| 2026-05-07 (Part 2) | G3 Hermes ≠ root of trust runtime 신규 작성 (DRAFT) — 권위 위계 운영 구현 + Hermes 권한 22 항목 (T1 8 / T2 2 / T3 12) + 3 위험 5 측면 분해 + 합의 인프라 자기참조 차단 + Evidence 결정 5 운영 규칙 + G2/G4 인터페이스 | `architecture/hermes-not-root-of-trust-runtime.md` |
+| 2026-05-07 (Part 2) | G3 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 10 기준 10/10 PASS + 8 금지 위반 0건 + 4 자기 발견 잠재 위험 (LOW). G3 §4 자기참조 차단의 적용 대상으로 한계 명시 — G3 PASS 합의 시 외부 LLM 의견 권장 | `review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` |
+| 2026-05-07 (Part 2) | G4 Provider-agnostic Memory/Skill 신규 작성 (DRAFT, 옵션 B 통합 문서) — Memory scope 4단계 (MVP Global+Project + 후속 Session/Team-Agent) + Skill schema 17 필드 + JSONL export hash chain 변조 방지 + Memory/Skill boundary 4 금지 + G3·G2 GP-6 인터페이스 + 3-way (GP-6/G3/G4). 검토 다음 세션 진입점 | `architecture/provider-agnostic-memory-skill-design.md` |
+| 2026-05-07 (Part 2) | 세션 로그 Part 2 + CONTEXT/INDEX 갱신 — 4 게이트 진행 상태 표 갱신 (G1b PASS / G2·G3 DRAFT 검토 APPROVE / G4 DRAFT 검토 다음 세션) + 다음 세션 TODO 갱신 (G4 단축 검토 → 옵션 1/2/3 정식 채택 합의 / 옵션 3 외부 LLM 1+ 필수) | `sessions/SESSION_2026-05-07.md` (Part 2), `CONTEXT.md`, `INDEX.md` |
 
 ---
 

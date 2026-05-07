@@ -155,6 +155,7 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-06 | R-4 §7.2 산술 정정 (Prefix 30 → 31, Tier-1 41 → 42, frozenset → alternation) + ADR-008 부록 B.6 R-4 ✅ / R-4.1 ✅ 갱신 | `architecture/redaction-pattern-equivalence.md`, `decisions/ADR-008-hermes-adoption-decision.md` |
 | 2026-05-06 | `.claude/settings.local.json` untrack + `.gitignore` 갱신 — 로컬 사용자 설정 commit 분리, 권한 승인 누적 디스크 보존 | `.gitignore` |
 | 2026-05-06 | Phase 0 R-5 — canary 재검증 트리거 설계. T13 강화 / R-4.1 catalog 재사용 / 6 trigger 시점 / PASS-PARTIAL-FAIL-ROLLBACK 판정 / 4 안전장치 / Markdown+JSONL 이중 evidence / T1/T2/T3 정책 매트릭스. 실제 자동화 구현은 R-6 위임 | `architecture/canary-recheck-design.md` |
+| 2026-05-06 | Phase 0 R-6 — CI/nightly canary regression workflow 구현. workflow_dispatch + nightly cron + push/PR triggers (5 paths) + Docker R-4.1 PoC 실행 + JSON evidence 추출 + verdict PASS 검증 + artifact 업로드. permissions: contents: read (CI verifies, does not mutate). ADR-011 §2.1 (d) 자동 회귀 검증 경로 직접 충족 | `.github/workflows/r2-canary.yml` |
 
 ---
 

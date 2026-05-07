@@ -63,11 +63,15 @@ jobs:
         # `--exit-code-from r4-1-poc` 로 PoC service exit code 가
         # workflow step exit code 로 propagate. PASS=0, FAIL=1.
         # `set -o pipefail` 로 tee 통과 시에도 exit code 보존.
+        # `--no-log-prefix` 로 docker compose 의 service prefix
+        # ("r4-1-poc  | ...") 제거 — JSON_EVIDENCE_BEGIN/END 구간 추출
+        # 시 JSON 본문에 prefix 가 섞이지 않아 후속 step 의 json.load 가
+        # 정상 동작 (R-6 first run 인프라 fix, 사용자 단축 합의 2026-05-07).
         run: |
           set -o pipefail
           docker compose \
             -f docker/r4-1-poc/docker-compose.r4-1-poc.yml \
-            up --build --abort-on-container-exit --exit-code-from r4-1-poc \
+            up --build --abort-on-container-exit --no-log-prefix --exit-code-from r4-1-poc \
             | tee canary-output.log
 
       - name: Extract JSON evidence segment

@@ -2,15 +2,28 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-07 (R-6 actual run PASS + 단축 합의 APPROVE — G1b PASS 승격, Phase 1 acceptance PASS 선언, P2 v3 진입 대기)
+**최종 업데이트**: 2026-05-07 Part 2 (P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2/G3 DRAFT 검토 APPROVE — G4 검토 다음 세션 진입점)
 
 ---
 
-## 현재 활성 의사결정 (2026-05-07 G1b PASS 승격 시점)
+## 현재 활성 의사결정 (2026-05-07 Part 2 종료 시점)
 
-**Phase 0 완료 — R-3 ~ R-7 6단계 + R-6 GitHub Actions actual run PASS + Reviewer-only 단축 합의 APPROVE.** G1b status = **PASS** (CONDITIONALLY PASS → PASS 승격, 2026-05-07). Phase 1 acceptance = **PASS** (PARTIAL → PASS 선언, 2026-05-07). 다음: P2 v3 신규 작성 또는 G2/G3/G4 병행.
+**Phase 0 완료 (Part 1) + 4 게이트 DRAFT 진입 (Part 2)** — Part 1 (G1b PASS + Phase 1 acceptance PASS) 후 사용자 명시 결정으로 P2 v3 + G2 + G3 + G4 DRAFT 작성 진입. **G2/G3 DRAFT 검토 APPROVE AS DRAFT** (Reviewer-only). G4 DRAFT 검토는 다음 세션 진입점.
 
-### 합의·검증 산출 (2026-05-05 ~ 2026-05-06 누적)
+**4 게이트 합산** (2026-05-07 Part 2 종료 시점):
+```
+G1b = PASS                            ✅ 2026-05-07 Part 1 승격
+G2  = DRAFT 검토 APPROVE              ✅ 1b5bde3 / 957cddc
+G3  = DRAFT 검토 APPROVE              ✅ 9c488b1 / d42886b
+G4  = DRAFT 작성, 검토 다음 세션       ⏳ 079bc6c / 검토 대기
+─────────────────────────────────────
+4 게이트 PASS 합산 = 1/4
+4 게이트 DRAFT 작성 = 4/4
+4 게이트 DRAFT 검토 APPROVE = 3/4
+Hermes PMO 격상 선언 = 미선언 (4 게이트 통과 + 외부 LLM 1+ + 사용자 명시 결정 후 별도)
+```
+
+### 합의·검증 산출 (2026-05-05 ~ 2026-05-07 Part 2 누적)
 - `docs/architecture/system-identity-prequel.md` (시스템 정체성 prequel — P2 v3 정식화 전 임시 선언)
 - `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (풀 3+1 합의)
 - `docs/review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md` (단축 합의)
@@ -30,6 +43,16 @@
 - **`.github/workflows/r2-canary.yml` (R-6 — CI/nightly canary regression workflow, ADR-011 §2.1 (d) 자동 회귀 검증 경로)**
 - **`docs/phase0/redaction-verification-sop.md` (R-7 — Phase 1 acceptance SOP, ADR-008 부록 B.6 마지막 단계, 2026-05-07 갱신 G1b PASS)**
 - **`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md` (R-7 SOP §7.3 단축 합의 APPROVE — G1b PASS 승격 + Phase 1 acceptance PASS 선언 권위)**
+
+#### Part 2 (2026-05-07 후속 — P2 v3 + G2 + G3 + G4 DRAFT)
+- **`docs/architecture/hermes-adoption-design-v3.md` (P2 v3 DRAFT — 12 섹션, P2 v2 §2.1.3 가정 폐기 + R-2~R-7 흡수 + Hermes PMO 구조 사전 정의 + G2/G3/G4 entry/exit, commit `8f8e323`)**
+- **`docs/review/3plus1-consensus-2026-05-07-p2-v3-draft.md` (P2 v3 DRAFT 단축 검토 APPROVE AS DRAFT, 7 기준 7/7 PASS, commit `12d7609`)**
+- **`docs/architecture/governance-preconditions.md` (G2 DRAFT — 13 섹션, P1~P8 8 위반 경로 + GP-1~GP-6 6 사전조건 매핑 + 강제 메커니즘 분류 매트릭스 + §9 메타 안전장치 G3 인터페이스, commit `1b5bde3`)**
+- **`docs/review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` (G2 DRAFT 단축 검토 APPROVE AS DRAFT, 10 기준 10/10 PASS, commit `957cddc`)**
+- **`docs/architecture/hermes-not-root-of-trust-runtime.md` (G3 DRAFT — 11 섹션, 권위 위계 운영 + Hermes 권한 22 항목 (T1 8 / T2 2 / T3 12) + 3 위험 5 측면 + 합의 자기참조 차단 + Evidence 결정 5 운영 규칙 + G2·G4 인터페이스, commit `9c488b1`)**
+- **`docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 DRAFT 단축 검토 APPROVE AS DRAFT, 10 기준 10/10 PASS — G3 §4 자기참조 차단의 적용 대상으로 한계 명시, commit `d42886b`)**
+- **`docs/architecture/provider-agnostic-memory-skill-design.md` (G4 DRAFT — 11 섹션, 옵션 B 통합. Memory scope 4 단계 (MVP Global+Project) + Skill schema 17 필드 + JSONL export hash chain + Memory/Skill boundary 4 금지 + G3·G2 GP-6 인터페이스 + 3-way, commit `079bc6c`)**
+- **G4 DRAFT 단축 검토 — 다음 세션 진입점 (미수행)**
 
 ### 핵심 채택 사항 (R-3에서 ADR 권위로 승격)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
@@ -67,10 +90,10 @@ G1b: DB-level fallback prevents plaintext secret persistence
 | 게이트 | 정의 | 현 상태 |
 |-------|------|--------|
 | ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) — **ADR-011 §2.2 / ADR-008 부록 B 권위 명시** |
-| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ **PASS** (2026-05-07 단축 합의 승격) — R-3 ~ R-7 6단계 ✅ + R-4.1 격리 PoC PASS + R-6 GitHub Actions actual run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0) + Reviewer-only 단축 합의 APPROVE (`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`) |
-| G2 | 6 거버넌스 사전조건 | ⏳ 미작성 |
-| G3 | "Hermes ≠ root of trust" 운영 구현 | 🟡 ADR 권위 확정 (ADR-011 §2.3), 운영 구현 미작성 |
-| G4 | Provider-agnostic Memory/Skill 형식 | ⏳ 미작성 |
+| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ **PASS** (2026-05-07 Part 1 단축 합의 승격) — R-3 ~ R-7 6단계 ✅ + R-4.1 격리 PoC PASS + R-6 GitHub Actions actual run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0) + Reviewer-only 단축 합의 APPROVE (`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`) |
+| **G2** | **6 거버넌스 사전조건** | 🟡 **DRAFT 검토 APPROVE AS DRAFT** (2026-05-07 Part 2) — `governance-preconditions.md` (`1b5bde3`) + 검토 보고서 (`957cddc`). PASS 미선언 |
+| **G3** | **"Hermes ≠ root of trust" 운영 구현** | 🟡 **DRAFT 검토 APPROVE AS DRAFT** (2026-05-07 Part 2) — `hermes-not-root-of-trust-runtime.md` (`9c488b1`) + 검토 보고서 (`d42886b`). ADR-011 §2.3 권위 확정 + 본 G3 운영 구현 정의. PASS 미선언, **PASS 합의 시 외부 LLM 의견 권장** (G3 §4.4.2) |
+| **G4** | **Provider-agnostic Memory/Skill 형식** | 🟡 **DRAFT 작성** (2026-05-07 Part 2) — `provider-agnostic-memory-skill-design.md` (`079bc6c`, 옵션 B 통합 문서). DRAFT 검토 다음 세션 진입점. PASS 미선언 |
 
 ### Phase 0 진행 상태
 - ✅ Day 1 (사실 확인)
@@ -87,15 +110,19 @@ G1b: DB-level fallback prevents plaintext secret persistence
 
 ### 다음 세션 TODO (우선순위 순)
 
-1. ~~**R-3 / R-4 / R-4.1 / R-5 / R-6 / R-7 + G1b PASS 승격 + Phase 1 acceptance PASS 선언**~~ ✅ 완료 (2026-05-06 ~ 2026-05-07)
-2. **P2 v3 신규 작성** (다음 진입점): `docs/architecture/hermes-adoption-design-v3.md` — P2 v2 §2.1.3 가정 코드 미존재 사실 + R-2 ~ R-7 + R-6 actual run PASS evidence 흡수. 동시 갱신: ADR-008 / ADR-009 / ADR-010 / ADR-011
-3. **G2 / G3 / G4 병행 작성** (병행 가능):
-   - G2: 6 거버넌스 사전조건
-   - G3: "Hermes ≠ root of trust" 운영 구현 (ADR-011 §2.3 운영 함의 5항목)
-   - G4: Provider-agnostic Memory/Skill 형식 (ADR-009 / ADR-010 적용)
-4. **Hermes PMO 격상 후보** (4 게이트 G1b/G2/G3/G4 모두 통과 후 사용자 명시 결정)
+1. ~~**R-3 / R-4 / R-4.1 / R-5 / R-6 / R-7 + G1b PASS 승격 + Phase 1 acceptance PASS 선언**~~ ✅ 완료 (2026-05-06 ~ 2026-05-07 Part 1)
+2. ~~**P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2·G3 DRAFT 검토 APPROVE**~~ ✅ 완료 (2026-05-07 Part 2)
+3. **G4 Reviewer-only 단축 검토** (다음 진입점): `docs/review/3plus1-consensus-2026-05-XX-g4-provider-agnostic-memory-skill-draft.md` — G2/G3 검토 패턴 답습. APPROVE 시 G4 진입 적격 + 정식 채택 합의 준비.
+4. **G2 / G3 / G4 정식 채택 합의 준비** (G4 DRAFT 검토 APPROVE 후):
+   - 옵션 1: G4 단독 단축 합의 (Reviewer-only)
+   - 옵션 2: G4 + G2 GP-6 통합 합의
+   - **옵션 3 (권고 후보)**: G2 + G3 + G4 통합 풀 3+1 합의 + **외부 LLM 1+ 필수** (PR 묶음, 격상 통합 합의 답습)
+5. **정식 채택 후 ADR PR 묶음**: ADR-008 / ADR-009 / ADR-010 / ADR-011 cross-reference 갱신 + 신규 ADR-014 (Provider-agnostic Memory/Skill Format) 후보 검토
+6. **P2 v2 / system-identity-prequel.md archive 처리** (정식 채택 시점에)
+7. **INDEX / CONTEXT 갱신** (정식 채택 시점에 — 본 Part 2 종료 housekeeping 외 추가 갱신)
+8. **Hermes PMO 격상 후보** (4 게이트 모두 PASS + 외부 LLM 1+ 합의 + 사용자 명시 결정 후 별도)
 
-**권고 시작점**: "P2 v3 진행해주세요" 또는 "G2/G3/G4 병행 진행해주세요". 두 작업 모두 본 세션 G1b PASS 승격 후 진입 가능.
+**권고 시작점**: "G4 Reviewer-only 단축 검토를 진행해주세요"
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

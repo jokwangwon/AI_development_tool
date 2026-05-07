@@ -168,14 +168,15 @@ ADR-008 결정 본문 §6 차단조건 #1 (SQLCipher + redaction 필터) 의 충
 
 ### B.6 정식 충족 절차
 
-차단조건 #1 정식 exit 기준은 다음 5단계 완료를 요한다:
+차단조건 #1 정식 exit 기준은 다음 6단계 완료를 요한다 (R-4.1 은 R-4 추가 격리 PoC 분기로 ADR-011 §2.1 (b) 직접 충족 산출):
 
 ```
-R-3 ✅ 본 Amendment 발행 (2026-05-06)
-R-4 ⏳ Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 (gap 발견 시 trigger UDF 보충)
-R-5 ⏳ canary 재검증 트리거 (T13 강화 — config + 주기적 inject)
-R-6 ⏳ CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
-R-7 ⏳ Phase 1 합격 SOP (canary 패턴/주입/검증/PASS·FAIL 기준)
+R-3   ✅ 본 Amendment 발행 (2026-05-06)
+R-4   ✅ 패턴 동등성 비교 + gap 식별 + 보충 권고 — `docs/architecture/redaction-pattern-equivalence.md` (2026-05-06)
+R-4.1 ✅ Tier-1 42종 trigger UDF 확장 + 격리 환경 PoC PASS — `docs/phase0/r4-1-trigger-extension-evidence.md` (2026-05-06)
+R-5   ⏳ canary 재검증 트리거 (T13 강화 — config + 주기적 inject)
+R-6   ⏳ CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
+R-7   ⏳ Phase 1 합격 SOP (canary 패턴/주입/검증/PASS·FAIL 기준)
 ```
 
-R-4~R-7 진행 상태는 본 Amendment가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.
+R-4 / R-4.1 / R-5~R-7 진행 상태는 본 Amendment가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.

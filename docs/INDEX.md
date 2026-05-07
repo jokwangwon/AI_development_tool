@@ -78,6 +78,12 @@ docs/
 │   ├── ADR-011-means-vs-ends-redaction.md        # 수단/목적 분리 원칙 (R-4~R-7 모법)
 │   └── ...
 │
+├── phase0/                              # Phase 0 evidence (사실 확인 / R-1 / R-2 / R-4.1)
+│   ├── day1-environment-and-fact-check.md           # Day 1 사실 확인
+│   ├── day2-r1-redaction-location-verification.md   # R-1 FAIL evidence
+│   ├── day3-r2-sqlite-trigger-poc.md                # R-2 PASS evidence (baseline 5 patterns)
+│   └── r4-1-trigger-extension-evidence.md           # R-4.1 PASS evidence (Tier-1 42 + baseline 5)
+│
 ├── sessions/                             # 세션 로그
 │   └── ...
 │
@@ -144,6 +150,9 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-05 | 세션 로그 — 시스템 정체성 재정의 + R-1 FAIL + R-2 PASS + G1a/G1b 분리. 다음 세션 R-3~R-7 진입 대기 | `sessions/SESSION_2026-05-05.md` |
 | 2026-05-06 | Phase 0 R-3 — ADR-011 (수단/목적 분리 원칙) 신규 + ADR-008 부록 B Amendment 추가. 단축 합의(Reviewer-only) APPROVE. G1a/G1b 분리 / Hermes ≠ root of trust / 자동 학습 vs 자동 정책 변경 분리(T1/T2/T3) ADR 권위화. R-4~R-7 모법 역할 명시 | `decisions/ADR-011-means-vs-ends-redaction.md`, `decisions/ADR-008-hermes-adoption-decision.md` (부록 B), `review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` |
 | 2026-05-06 | 세션 로그 — R-3 ADR 형식화 + 세션 단절 후 복구 + INDEX/CLAUDE/CONTEXT 갱신. 다음 세션 R-4 진입 대기 | `sessions/SESSION_2026-05-06.md` |
+| 2026-05-06 | Phase 0 R-4 — Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 비교 + gap 식별 + 보충 권고. ADR-011 §2.1 (a) 충족 의무의 직접 산출 | `architecture/redaction-pattern-equivalence.md` |
+| 2026-05-06 | Phase 0 R-4.1 — Tier-1 42종 trigger UDF 확장 + Docker 격리 환경 PoC PASS. ADR-011 §2.1 (b) 직접 충족 evidence 생성. 1차 PARTIAL → 2차 PASS 진화 (H-J/H-L 직접 등록 제외 + alternation 채택) | `phase0/r4-1-trigger-extension-evidence.md`, `docker/r4-1-poc/` |
+| 2026-05-06 | R-4 §7.2 산술 정정 (Prefix 30 → 31, Tier-1 41 → 42, frozenset → alternation) + ADR-008 부록 B.6 R-4 ✅ / R-4.1 ✅ 갱신 | `architecture/redaction-pattern-equivalence.md`, `decisions/ADR-008-hermes-adoption-decision.md` |
 
 ---
 

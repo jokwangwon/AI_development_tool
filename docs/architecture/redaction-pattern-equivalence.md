@@ -241,7 +241,7 @@ R-2 PoC는 *원리 실증*을 목표로 한 PoC였고, 패턴 5종은 canary 5�
 | 34 | `mem0_` | ✅ | ❌ | ❌ | **Tier-1** |
 | 35 | `brv_` (ByteRover) | ✅ | ❌ | ❌ | **Tier-1** |
 
-**소계**: Hermes 35종 / P1_REDACTOR 1종 (sk- 계열만) / R-2 trigger 5종 → **trigger gap 30종 (Tier-1)**.
+**소계**: Hermes 35종 / P1_REDACTOR 1종 (sk- 계열만) / R-2 trigger 5종 → **trigger gap 31종 (Tier-1)**.
 
 ### 5.2 추가 regex 패턴 (12종)
 
@@ -291,7 +291,7 @@ R-2 PoC는 *원리 실증*을 목표로 한 PoC였고, 패턴 5종은 canary 5�
 
 ### 6.2 Tier-1 gap 카탈로그 (보충 필수)
 
-#### 6.2.1 Prefix patterns (30종)
+#### 6.2.1 Prefix patterns (31종)
 ```
 github_pat_, gho_, ghu_, ghs_, ghr_, AIza, pplx-, fal_, fc-, bb_live_,
 gAAAA, sk_live_, sk_test_, rk_live_, SG\., hf_, r8_, npm_, pypi-, dop_v1_,
@@ -334,9 +334,9 @@ URL userinfo (non-DB), Form body (14 키 frozenset)
 
 본 §7은 **카탈로그 권고만 제시**. 실제 SQL trigger / REGEXP UDF 코드 작성은 별도 작업으로 분리 — 보충 작업 자체도 ADR-011 §2.1 (a)~(d) 4조건 적용 대상이며, 본 권고를 입력으로 격리 환경 PoC (ADR-011 §2.1 (b)) 재실행 필요.
 
-### 7.2 Tier-1 보충 패턴 41종 (Prefix 30 + 추가 regex 9 + frozenset 2)
+### 7.2 Tier-1 보충 패턴 42종 (Prefix 31 + 추가 regex 9 + alternation 2)
 
-#### 7.2.1 Prefix patterns 30종 (Hermes #3~#7, #9~#14, #16~#35)
+#### 7.2.1 Prefix patterns 31종 (Hermes #3~#7, #9~#14, #16~#35)
 
 R-2 PoC trigger 구조 (`docs/phase0/day3-r2-sqlite-trigger-poc.md` line 110-122) 의 `OR NEW.content REGEXP '...'` 체인에 30 패턴 추가 권고. 정확한 정규식 문자열은 §2.1 표의 "Regex" 컬럼 그대로 사용.
 
@@ -387,8 +387,8 @@ Hermes 측 패턴은 upstream 변경으로 silent 깨짐 가능성 있음. 본 �
 
 | 조건 | 의무 | 본 R-4 충족 여부 | 잔여 작업 |
 |---|------|------|------|
-| **(a) 동등 이상의 보안 결과** | 명시적 비교표 (수단 A 보장 ↔ 수단 B 보장) | ✅ §5 3-way 매트릭스 / ❌ Hermes ⊋ R-2 trigger gap 41종 식별 — 동등 이상 미충족 | **§7 보충 권고 적용 → trigger UDF 확장 코드 작성 → 별도 작업** |
-| **(b) 격리 환경 PoC로 실증** | Docker isolation + 자동 검증 항목 | ⏳ 본 R-4는 코드 작성 미포함 — R-2 PoC 5종 patterns에 한정된 PASS evidence만 존재 | **§7 보충 후 R-2 PoC 재실행 (Tier-1 41종 전수 자동 검증)** |
+| **(a) 동등 이상의 보안 결과** | 명시적 비교표 (수단 A 보장 ↔ 수단 B 보장) | ✅ §5 3-way 매트릭스 / ❌ Hermes ⊋ R-2 trigger gap 42종 식별 — 동등 이상 미충족 | **§7 보충 권고 적용 → trigger UDF 확장 코드 작성 → 별도 작업** |
+| **(b) 격리 환경 PoC로 실증** | Docker isolation + 자동 검증 항목 | ⏳ 본 R-4는 코드 작성 미포함 — R-2 PoC 5종 patterns에 한정된 PASS evidence만 존재 | **§7 보충 후 R-2 PoC 재실행 (Tier-1 42종 전수 자동 검증)** |
 | **(c) ADR 권위로 명시** | 본 ADR 또는 후속 ADR | ✅ 본 문서가 ADR-011 §3 R-4 매핑 산출 — ADR-008 부록 B.6 R-4 ✅ 처리 가능 | — |
 | **(d) 자동 회귀 검증 경로 확보** | CI/nightly 재실행 (R-6) | ⏳ R-6 작성 대기 중 | **R-6 작업에 본 §7.4 메커니즘 직접 인용 필수** |
 
@@ -412,8 +412,8 @@ R-7 ⏳ Phase 1 합격 SOP
 | # | 항목 | 본 문서 § |
 |---|------|------|
 | 1 | **R-4는 코드 수정 없는 문서화 작업이다** — Hermes / P1_REDACTOR / R-2 trigger 패턴 비교, 동등성 gap 식별, 보충 권고 문서화 | §1.1 / §2~§4 / §5 / §6 / §7 |
-| 2 | **ADR-011 §2.1 (a) 현재 미충족 판단** — R-2 trigger baseline은 Hermes 대비 동등 이상 보장을 제공하지 못함 (Tier-1 gap 41종) | §5.3 / §8.1 |
-| 3 | **ADR-011 §2.1 (b) 격리 환경 PoC 재실증은 R-4.1에서 수행** — trigger UDF 코드 보충 / Tier-1 41종 반영 / R-2 PoC 재실행 / PASS evidence 재생성 | §9.1 |
+| 2 | **ADR-011 §2.1 (a) 현재 미충족 판단** — R-2 trigger baseline은 Hermes 대비 동등 이상 보장을 제공하지 못함 (Tier-1 gap 42종) | §5.3 / §8.1 |
+| 3 | **ADR-011 §2.1 (b) 격리 환경 PoC 재실증은 R-4.1에서 수행** — trigger UDF 코드 보충 / Tier-1 42종 반영 / R-2 PoC 재실행 / PASS evidence 재생성 | §9.1 |
 | 4 | **R-4.1 없이 P2 v3에서 기존 R-2 PASS evidence를 인용하면 ADR-011 §2.1 (a) 위반 위험** — P2 v3 작성 시점에 R-4.1 완료 확인 의무 | §10.3 |
 
 본 4항은 사용자 명시 R-4 범위 (2026-05-06) 의 직접 흡수이며, 본 문서는 항목별 § 매핑으로 R-4 본질 추적성을 보장한다.
@@ -426,7 +426,7 @@ R-7 ⏳ Phase 1 합격 SOP
 
 **산출 대상**:
 - `docker/r2-poc/r2_poc.py` 갱신 (REGEXP UDF + trigger SQL 확장)
-- `docker/r2-poc/canary_extended.py` 신규 (Tier-1 41종 canary 카탈로그)
+- `docker/r2-poc/canary_extended.py` 신규 (Tier-1 42종 canary 카탈로그)
 - R-2 재실행 보고서 갱신 (`docs/phase0/day3-r2-sqlite-trigger-poc.md` Amendment 또는 신규 보고서)
 
 **진입 조건**: 본 R-4 문서 사용자 검토 통과.
@@ -436,7 +436,7 @@ R-7 ⏳ Phase 1 합격 SOP
 
 **산출 대상**: `docs/architecture/canary-recheck-design.md`
 
-본 R-4 §7.4의 권고 1번을 R-5의 입력으로 사용. canary 패턴은 본 §6.2.1 Tier-1 30종 prefix + §6.2.2 9종 regex + §6.2.3 2종 frozenset 의 부분집합으로 구성 (전수 inject는 R-2 PoC 재실행 영역 — R-4.1).
+본 R-4 §7.4의 권고 1번을 R-5의 입력으로 사용. canary 패턴은 본 §6.2.1 Tier-1 31종 prefix + §6.2.2 9종 regex + §6.2.3 2종 frozenset 의 부분집합으로 구성 (전수 inject는 R-2 PoC 재실행 영역 — R-4.1).
 
 ### 9.3 R-6 (CI/nightly 회귀 — 본 §7.4 2번)
 
@@ -448,9 +448,9 @@ R-7 ⏳ Phase 1 합격 SOP
 
 **산출 대상**: `docs/phase0/redaction-verification-sop.md`
 
-본 R-4 §7.2 Tier-1 41종을 R-7 SOP의 PASS 기준 카탈로그로 직접 인용. SOP는 다음을 포함:
-- canary inject 패턴 카탈로그 = §7.2 Tier-1 41종
-- PASS 기준 = 41종 모두 trigger 차단 + DB 평문 부재 + 에러 평문 미노출 + ADR-011 §2.4 T3 위반 감지 0건
+본 R-4 §7.2 Tier-1 42종을 R-7 SOP의 PASS 기준 카탈로그로 직접 인용. SOP는 다음을 포함:
+- canary inject 패턴 카탈로그 = §7.2 Tier-1 42종
+- PASS 기준 = 42종 모두 trigger 차단 + DB 평문 부재 + 에러 평문 미노출 + ADR-011 §2.4 T3 위반 감지 0건
 - FAIL 처리 = ADR-011 §2.1 (b) 재실증 요구 + 단축 합의 트리거
 
 ### 9.5 Tier-2 / Tier-3 후속 의사결정
@@ -467,7 +467,7 @@ R-7 ⏳ Phase 1 합격 SOP
 ### 10.1 긍정적
 
 - ADR-011 §2.1 (a) 충족 의무가 본 R-4에서 명시적 카탈로그로 산출 — 미래 G1b 정식 충족 진입 조건이 *수치로 검증 가능*
-- gap 41종 (Tier-1) 이 R-4.1 / R-5 / R-6 / R-7 작업의 입력으로 그대로 인용 가능 — 작업 분기 시 의사결정 비용 0
+- gap 42종 (Tier-1) 이 R-4.1 / R-5 / R-6 / R-7 작업의 입력으로 그대로 인용 가능 — 작업 분기 시 의사결정 비용 0
 - Hermes upstream 변경 시 자동 회귀 검출 메커니즘(§7.4)이 ADR-011 §2.4 (자동 학습 vs 자동 정책 변경 분리) 와 정합
 
 ### 10.2 부정적
@@ -479,7 +479,7 @@ R-7 ⏳ Phase 1 합격 SOP
 ### 10.3 주의사항
 
 - 본 문서는 **trigger UDF 동등성을 선언하지 않는다** — 보충 권고 카탈로그이며, 실제 동등 이상 보장 검증은 R-4.1 PoC 재실행 후 ADR-011 §2.1 (b) 충족 시점에 확정
-- **R-4.1 없이 P2 v3에서 기존 R-2 PASS evidence를 인용하면 ADR-011 §2.1 (a) 위반 위험** — §7.2 Tier-1 41종 카탈로그를 미보충 상태의 R-2 PoC PASS evidence (현 baseline 5 patterns) 를 인용하는 행위가 해당. P2 v3 작성 시점에 R-4.1 완료 확인은 의무이며, 미완료 인용은 단축/풀 합의로만 예외 처리 가능. §8.3 4항 참조.
+- **R-4.1 없이 P2 v3에서 기존 R-2 PASS evidence를 인용하면 ADR-011 §2.1 (a) 위반 위험** — §7.2 Tier-1 42종 카탈로그를 미보충 상태의 R-2 PoC PASS evidence (현 baseline 5 patterns) 를 인용하는 행위가 해당. P2 v3 작성 시점에 R-4.1 완료 확인은 의무이며, 미완료 인용은 단축/풀 합의로만 예외 처리 가능. §8.3 4항 참조.
 - §7.3 차단 정책 (마스킹 미시도) 은 R-2 PoC 결정과 일관 — 변경 시 ADR-011 §2.4 T3 적용
 
 ---
@@ -510,4 +510,4 @@ R-7 ⏳ Phase 1 합격 SOP
 ---
 
 **본 문서 발행 시점**: 2026-05-06
-**다음 진입점**: **R-4.1** (사용자 결정, 2026-05-06) — Tier-1 41종 trigger UDF 확장 + R-2 PoC 격리 환경 재실행 + ADR-011 §2.1 (b) 직접 충족 evidence 생성. Tier-2 (Telegram bot) / Tier-3 (Discord, E.164) 는 R-4.1 범위 외 — 별도 합의 또는 R-7 SOP 작성 시 처리. R-5 (canary 재검증 트리거 설계) 는 R-4.1 완료 후 진행.
+**다음 진입점**: **R-4.1** (사용자 결정, 2026-05-06) — Tier-1 42종 trigger UDF 확장 + R-2 PoC 격리 환경 재실행 + ADR-011 §2.1 (b) 직접 충족 evidence 생성. Tier-2 (Telegram bot) / Tier-3 (Discord, E.164) 는 R-4.1 범위 외 — 별도 합의 또는 R-7 SOP 작성 시 처리. R-5 (canary 재검증 트리거 설계) 는 R-4.1 완료 후 진행.

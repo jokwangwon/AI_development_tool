@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-04-06
+**최종 업데이트**: 2026-05-06
 
 ---
 
@@ -72,6 +72,10 @@ docs/
 │   ├── ADR-005-ai-backend-stack-guideline.md     # AI 백엔드 스택
 │   ├── ADR-006-environment-and-docker.md         # 환경 변수 + Docker
 │   ├── ADR-007-change-impact-analysis.md         # 변경 영향 분석
+│   ├── ADR-008-hermes-adoption-decision.md       # Hermes 도입 (Option B) + 부록 B Amendment (R1 수단/목적 분리)
+│   ├── ADR-009-self-adapter-v2-entry-conditions.md  # 자체 Adapter v2.0 진입 조건
+│   ├── ADR-010-sqlcipher-vault-key-management.md    # SQLCipher Vault HSM 키 관리
+│   ├── ADR-011-means-vs-ends-redaction.md        # 수단/목적 분리 원칙 (R-4~R-7 모법)
 │   └── ...
 │
 ├── sessions/                             # 세션 로그
@@ -138,6 +142,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-05 | Phase 0 R-1 검증 결과 — FAIL 확정 (Hermes native redaction은 로그/도구 출력/통신 전용, DB INSERT 경로 미적용) | `phase0/day2-r1-redaction-location-verification.md` |
 | 2026-05-05 | Phase 0 R-2 SQLite trigger PoC — PASS (Docker 격리 환경에서 SQLCipher BEFORE INSERT trigger + REGEXP UDF로 canary 5종 차단, DB 평문 부재, 에러 평문 미노출). G1b 재판정 진입 조건 충족 | `phase0/day3-r2-sqlite-trigger-poc.md`, `docker/r2-poc/` |
 | 2026-05-05 | 세션 로그 — 시스템 정체성 재정의 + R-1 FAIL + R-2 PASS + G1a/G1b 분리. 다음 세션 R-3~R-7 진입 대기 | `sessions/SESSION_2026-05-05.md` |
+| 2026-05-06 | Phase 0 R-3 — ADR-011 (수단/목적 분리 원칙) 신규 + ADR-008 부록 B Amendment 추가. 단축 합의(Reviewer-only) APPROVE. G1a/G1b 분리 / Hermes ≠ root of trust / 자동 학습 vs 자동 정책 변경 분리(T1/T2/T3) ADR 권위화. R-4~R-7 모법 역할 명시 | `decisions/ADR-011-means-vs-ends-redaction.md`, `decisions/ADR-008-hermes-adoption-decision.md` (부록 B), `review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` |
+| 2026-05-06 | 세션 로그 — R-3 ADR 형식화 + 세션 단절 후 복구 + INDEX/CLAUDE/CONTEXT 갱신. 다음 세션 R-4 진입 대기 | `sessions/SESSION_2026-05-06.md` |
 
 ---
 

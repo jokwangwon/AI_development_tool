@@ -2,15 +2,15 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-05 (시스템 정체성 재정의 + R-1 FAIL + R-2 PASS, 다음 세션 R-3 진입 대기)
+**최종 업데이트**: 2026-05-06 (R-3 완료 — ADR-011 발행 + ADR-008 Amendment 추가, R-4 진입 대기)
 
 ---
 
-## 현재 활성 의사결정 (2026-05-05 세션 종료 시점)
+## 현재 활성 의사결정 (2026-05-06 R-3 완료 시점)
 
-**Phase 0 Day 1~3 완료, R-1 FAIL + R-2 PASS, G1a/G1b 분리 확정** — 다음 세션 R-3~R-7 진입 대기.
+**Phase 0 Day 1~3 + R-3 완료, ADR-011 발행 + ADR-008 부록 B Amendment 추가, 단축 합의 APPROVE** — R-4~R-7 진입 대기.
 
-### 합의·검증 산출 (본 세션)
+### 합의·검증 산출 (2026-05-05 ~ 2026-05-06 누적)
 - `docs/architecture/system-identity-prequel.md` (시스템 정체성 prequel — P2 v3 정식화 전 임시 선언)
 - `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (풀 3+1 합의)
 - `docs/review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md` (단축 합의)
@@ -19,13 +19,17 @@
 - `docs/phase0/day2-r1-redaction-location-verification.md` (R-1 FAIL 확정)
 - `docs/phase0/day3-r2-sqlite-trigger-poc.md` (R-2 PASS 확정)
 - `docker/r2-poc/` (R-2 PoC Docker 격리 환경 + 6항목 자동 검증 스크립트)
-- `docs/sessions/SESSION_2026-05-05.md` (본 세션 로그)
+- `docs/sessions/SESSION_2026-05-05.md` (2026-05-05 세션 로그)
+- **`docs/decisions/ADR-011-means-vs-ends-redaction.md` (R-3 신규 — 수단/목적 분리 원칙, R-4~R-7 모법)**
+- **`docs/decisions/ADR-008-hermes-adoption-decision.md` 부록 B Amendment (R-3 — R1 specific 갱신)**
+- **`docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (R-3 단축 합의 APPROVE)**
 
-### 핵심 채택 사항 (변경 없음)
+### 핵심 채택 사항 (R-3에서 ADR 권위로 승격)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
-- **권위 위계**: `Constitution > ADR > SDD > Harness Gates > Hermes > Worker Agents`
-- **Hermes ≠ root of trust**
-- **자동 학습 ≠ 자동 정책 변경** (T1 자동 / T2 사용자 승인 / T3 절대 금지)
+- **권위 위계**: `Constitution > ADR > SDD > Harness Gates > Hermes > Worker Agents` — **ADR-011 §2.3 영구 권위화**
+- **Hermes ≠ root of trust** — **ADR-011 §2.3 영구 권위화** (prequel §3 → ADR 승격, prequel 폐기 후에도 보존)
+- **자동 학습 ≠ 자동 정책 변경** (T1 자동 / T2 사용자 승인 / T3 절대 금지) — **ADR-011 §2.4 영구 권위화**
+- **수단/목적 분리 원칙** — **ADR-011 §2.1 신설** (헌법 8조 본질 = "DB 평문 저장 차단 결과", 수단 대체에 (a)~(d) 4조건 강제)
 - **Evidence 검증**: "Agent proposes / Hermes orchestrates / Tools verify / Evidence decides / Human overrides"
 - **메타포 강제 금지** 조항
 
@@ -55,29 +59,30 @@ G1b: DB-level fallback prevents plaintext secret persistence
 
 | 게이트 | 정의 | 현 상태 |
 |-------|------|--------|
-| ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) |
-| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ PoC PASS 실증, 정식 충족은 R-3~R-5 후 |
+| ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) — **ADR-011 §2.2 / ADR-008 부록 B 권위 명시** |
+| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ PoC PASS 실증 + **R-3 완료**, 정식 충족은 R-4~R-7 후 (ADR-011 §2.2 5단계) |
 | G2 | 6 거버넌스 사전조건 | ⏳ 미작성 |
-| G3 | "Hermes ≠ root of trust" 운영 구현 | ⏳ 미작성 |
+| G3 | "Hermes ≠ root of trust" 운영 구현 | 🟡 ADR 권위 확정 (ADR-011 §2.3), 운영 구현 미작성 |
 | G4 | Provider-agnostic Memory/Skill 형식 | ⏳ 미작성 |
 
 ### Phase 0 진행 상태
 - ✅ Day 1 (사실 확인)
 - ✅ Day 2 (R-1 FAIL)
 - ✅ Day 3 (R-2 PASS, timebox 1~2일 내 조기 완료)
-- ⏳ Day 4~5: 계획 변경 — R-3~R-7로 흡수, 다음 세션 진입
+- ✅ **R-3 (2026-05-06): ADR-011 발행 + ADR-008 부록 B Amendment 추가, 단축 합의 APPROVE**
+- ⏳ R-4~R-7: 다음 진입 대기
 
 ### 다음 세션 TODO (우선순위 순)
 
-1. **R-3** (CRITICAL): 수단/목적 분리 ADR 작성 — ADR-011 또는 ADR-008 Amendment
-2. **R-4**: Hermes redact pattern (`_PREFIX_PATTERNS` 35종) ↔ P1_REDACTOR 패턴 동등성 비교
-3. **R-5**: canary 재검증 트리거 설계 (T13 강화 — config 체크 + 주기적 inject)
-4. **R-6**: CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
-5. **R-7**: Phase 1 합격 SOP 작성
-6. **P2 v3 신규 작성** (R-7 완료 후) + ADR-008/009/010 갱신 PR 묶음
-7. **G2/G3/G4** 작성 (병행 가능)
+1. ~~**R-3**~~ ✅ 완료 (2026-05-06)
+2. **R-4** (다음 진입점): Hermes redact pattern (`_PREFIX_PATTERNS` 35종) ↔ P1_REDACTOR 패턴 동등성 비교 — `docs/architecture/redaction-pattern-equivalence.md`
+3. **R-5**: canary 재검증 트리거 설계 (T13 강화 — config 체크 + 주기적 inject) — `docs/architecture/canary-recheck-design.md`
+4. **R-6**: CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행) — `.github/workflows/r2-canary.yml`
+5. **R-7**: Phase 1 합격 SOP 작성 — `docs/phase0/redaction-verification-sop.md`
+6. **P2 v3 신규 작성** (R-7 완료 후) + ADR-008/009/010/**011** 갱신 PR 묶음
+7. **G2/G3/G4** 작성 (병행 가능, G3는 ADR-011 §2.3 운영 구현)
 
-**권고 시작점**: 옵션 A — "R-3 진행해주세요" 명령으로 ADR-011 vs Amendment 형식 결정 후 본문 작성.
+**권고 시작점**: "R-4 진행해주세요" 명령으로 Hermes `_PREFIX_PATTERNS` 추출 + P1_REDACTOR 비교 시작. ADR-011 §2.1 (a) 동등 이상 보장 검증 의무의 직접 충족 작업.
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

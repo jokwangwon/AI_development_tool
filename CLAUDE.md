@@ -218,6 +218,8 @@ docs/architecture/* 수정 시 → 관련 설계 문서 교차 확인
 docs/architecture/harness-engineering-design.md 수정 시 → CLAUDE.md Layer 테이블 확인
 docs/architecture/multi-agent-system-design.md 수정 시 → CLAUDE.md 섹션 3 확인
 docs/architecture/idea-driven-stack-decision-design.md 수정 시 → multi-agent-system-design.md, automated-review-questionnaire-design.md 교차 확인
+docs/decisions/ADR-011-means-vs-ends-redaction.md 수정 시 → ADR-008 부록 B Amendment, system-identity-prequel §3 (R-7 후 P2 v3 흡수 시) 교차 확인
+docs/decisions/ADR-008-hermes-adoption-decision.md 부록 B 수정 시 → ADR-011 §2.1~§2.3 교차 확인 (일반 원칙 본문은 ADR-011 우선)
 ```
 
 ---
@@ -237,6 +239,7 @@ docs/architecture/idea-driven-stack-decision-design.md 수정 시 → multi-agen
 | AI 백엔드 스택 | `docs/architecture/ai-backend-stack-convention.md` | Python 분리 기준 |
 | 환경+Docker | `docs/architecture/environment-and-docker-design.md` | 하드코딩 금지, Docker-First |
 | 변경 영향 분석 | `docs/architecture/change-impact-analysis-design.md` | 의존성/장애 사전 검증 |
+| **수단/목적 분리 원칙** | `docs/decisions/ADR-011-means-vs-ends-redaction.md` | **헌법 8조 본질 = 안전 결과. R-4~R-7 모법, Hermes ≠ root of trust, 자동 학습 vs 자동 정책 변경 분리(T1/T2/T3)** |
 | 멀티에이전트 설계 | `docs/architecture/multi-agent-system-design.md` | 3+1 에이전트 상세 |
 | 개발 가이드 | `docs/guides/DEVELOPMENT_GUIDE.md` | 개발 프로세스 |
 | 테스트 전략 | `docs/guides/TEST_STRATEGY.md` | 테스트 방법론 |

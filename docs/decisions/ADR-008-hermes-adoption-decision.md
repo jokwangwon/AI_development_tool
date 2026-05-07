@@ -114,3 +114,68 @@ Phase 1 진입 전 사실 확인 작업 2건 완료. 결과 CRITICAL 위험 2건
 - #4 어댑터 추상화: 그대로 (P1 설계의 핵심)
 - #5 2 provider always-on: 그대로
 - #6 Docker 격리: 그대로
+
+---
+
+## 부록 B — Amendment (2026-05-06): R1 해석 갱신 (수단/목적 분리)
+
+**상태**: 갱신 (단축 합의 — Reviewer-only)
+**날짜**: 2026-05-06
+**근거 ADR**: `docs/decisions/ADR-011-means-vs-ends-redaction.md`
+**근거 Phase 0 evidence**: R-1 FAIL (`docs/phase0/day2-r1-redaction-location-verification.md`), R-2 PASS (`docs/phase0/day3-r2-sqlite-trigger-poc.md`)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md`
+
+### B.1 R1 비협상 핵심 재정의
+
+R1의 비협상 핵심은 **특정 외부 hook 구현이 아니라, AI 학습 루프/메모리 DB에 비밀값이 평문으로 영구 저장되지 않도록 차단하는 결과**이다.
+
+본 Amendment 이전 부록 A R1 텍스트는 "외부 pre-record hook"을 수단으로 가정한 표현을 포함했다. 본 Amendment는 그 가정을 ADR-011 §2.1 수단/목적 분리 원칙에 따라 갱신한다.
+
+### B.2 G1a / G1b 분리 관리
+
+Hermes native redaction이 DB INSERT 경로에 적용된다는 기존 가정은 **R-1에서 FAIL로 판정**되었다.
+
+그러나 R-2 PoC에서 SQLCipher BEFORE INSERT trigger 기반 DB-level fallback이 plaintext secret persistence를 차단할 수 있음이 실증되었으므로, G1은 다음과 같이 분리 관리한다:
+
+- **G1a**: Hermes native redaction applies before DB INSERT — **FAIL** (폐기)
+- **G1b**: DB-level fallback prevents plaintext secret persistence — **PASS by R-2 PoC** (정식 충족은 R-3~R-7 후)
+
+정식 충족 조건은 ADR-011 §2.2 G1b 정식 충족 조건 표를 따른다.
+
+### B.3 권위화 출처
+
+이 해석은 **ADR-011 Means-vs-Ends Redaction Principle**에 의해 권위화된다. 본 Amendment는 ADR-011 §2.1~§2.3을 ADR-008 R1 specific 갱신으로 적용한 것이며, 일반 원칙 본문 해석은 ADR-011을 우선 참조한다.
+
+### B.4 본 Amendment의 의미 (오해 방지)
+
+본 Amendment는 "Hermes가 안전하다"는 선언이 **아니다**. 정확한 의미는 다음과 같다:
+
+1. Hermes native redaction은 DB INSERT 보호 수단으로 **신뢰하지 않는다**.
+2. DB INSERT 경로는 SQLCipher trigger 기반 fallback으로 **별도 보호한다**.
+3. **Hermes는 root of trust가 아니다** (ADR-011 §2.3 권위 위계 명문화).
+
+### B.5 6 차단조건 영향
+
+ADR-008 결정 본문 §6 차단조건 #1 (SQLCipher + redaction 필터) 의 충족 메커니즘은 다음으로 갱신된다:
+
+| 메커니즘 | 위치 | 신뢰도 |
+|---------|------|------|
+| SQLCipher 암호화 (디스크) | DB 파일 | 기존대로 |
+| Hermes native redaction | 로그 / LLM 송신 / 도구 출력 | 보조 (DB 차단 책임 없음) |
+| **SQLCipher BEFORE INSERT trigger + REGEXP UDF** | **DB INSERT 경로** | **Primary (G1b)** |
+
+차단조건 #2~#6은 변경 없음. 6 차단조건 자체의 비협상성은 유지된다 — 본 Amendment는 #1 충족 *수단*을 ADR-011 (a)~(d) 4조건 하에 재정의한 것이다.
+
+### B.6 정식 충족 절차
+
+차단조건 #1 정식 exit 기준은 다음 5단계 완료를 요한다:
+
+```
+R-3 ✅ 본 Amendment 발행 (2026-05-06)
+R-4 ⏳ Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 (gap 발견 시 trigger UDF 보충)
+R-5 ⏳ canary 재검증 트리거 (T13 강화 — config + 주기적 inject)
+R-6 ⏳ CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
+R-7 ⏳ Phase 1 합격 SOP (canary 패턴/주입/검증/PASS·FAIL 기준)
+```
+
+R-4~R-7 진행 상태는 본 Amendment가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.

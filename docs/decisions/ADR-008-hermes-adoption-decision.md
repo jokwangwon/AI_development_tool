@@ -174,9 +174,16 @@ ADR-008 결정 본문 §6 차단조건 #1 (SQLCipher + redaction 필터) 의 충
 R-3   ✅ 본 Amendment 발행 (2026-05-06)
 R-4   ✅ 패턴 동등성 비교 + gap 식별 + 보충 권고 — `docs/architecture/redaction-pattern-equivalence.md` (2026-05-06)
 R-4.1 ✅ Tier-1 42종 trigger UDF 확장 + 격리 환경 PoC PASS — `docs/phase0/r4-1-trigger-extension-evidence.md` (2026-05-06)
-R-5   ⏳ canary 재검증 트리거 (T13 강화 — config + 주기적 inject)
-R-6   ⏳ CI/nightly 회귀 검증 (Hermes 업그레이드 자동 R-2 재실행)
-R-7   ⏳ Phase 1 합격 SOP (canary 패턴/주입/검증/PASS·FAIL 기준)
+R-5   ✅ canary 재검증 트리거 설계 — `docs/architecture/canary-recheck-design.md` (2026-05-06)
+R-6   ✅ CI/nightly canary regression workflow 구현 — `.github/workflows/r2-canary.yml` (2026-05-06, commit `bbcc1af`; **GitHub Actions actual run 은 push 후 별도 검증 의무**)
+R-7   ✅ Phase 1 합격 SOP — `docs/phase0/redaction-verification-sop.md` (2026-05-06)
 ```
 
-R-4 / R-4.1 / R-5~R-7 진행 상태는 본 Amendment가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.
+**6단계 작성 완료. 단, G1b 정식 PASS 선언은 다음을 추가로 요구한다** (R-7 SOP § 0 핵심 선언):
+- R-6 GitHub Actions 실제 run PASS (verdict = "PASS", tier1_pass_rate = "42/42")
+- 본 R-6 actual run PASS 후 단축 합의 (Reviewer-only, ADR-011 §2.4 T2) 거쳐 G1b status CONDITIONALLY PASS → PASS 승격
+- 자동 승격 금지 (ADR-011 §2.4 T3 적용 영역)
+
+본 R-7 SOP 발행 시점 G1b status = **CONDITIONALLY PASS**. R-6 actual run 미확인 시 PARTIAL.
+
+R-4 / R-4.1 / R-5 / R-6 / R-7 진행 상태는 본 Amendment 가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.

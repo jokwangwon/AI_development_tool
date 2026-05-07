@@ -156,6 +156,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-06 | `.claude/settings.local.json` untrack + `.gitignore` 갱신 — 로컬 사용자 설정 commit 분리, 권한 승인 누적 디스크 보존 | `.gitignore` |
 | 2026-05-06 | Phase 0 R-5 — canary 재검증 트리거 설계. T13 강화 / R-4.1 catalog 재사용 / 6 trigger 시점 / PASS-PARTIAL-FAIL-ROLLBACK 판정 / 4 안전장치 / Markdown+JSONL 이중 evidence / T1/T2/T3 정책 매트릭스. 실제 자동화 구현은 R-6 위임 | `architecture/canary-recheck-design.md` |
 | 2026-05-06 | Phase 0 R-6 — CI/nightly canary regression workflow 구현. workflow_dispatch + nightly cron + push/PR triggers (5 paths) + Docker R-4.1 PoC 실행 + JSON evidence 추출 + verdict PASS 검증 + artifact 업로드. permissions: contents: read (CI verifies, does not mutate). ADR-011 §2.1 (d) 자동 회귀 검증 경로 직접 충족 | `.github/workflows/r2-canary.yml` |
+| 2026-05-06 | Phase 0 R-7 — Phase 1 acceptance SOP 작성. 13 항목 checklist + PASS/PARTIAL/FAIL/ROLLBACK 판정 + G1a FAIL/G1b CONDITIONALLY PASS 명시 + 9 ROLLBACK trigger + 7 Evidence 요구 + push 전/후 작업 분리. ADR-008 부록 B.6 6단계 모두 작성 ✅. **G1b PASS 선언은 R-6 GitHub Actions actual run PASS 후 단축 합의 거쳐 승격 (자동 승격 금지)** | `phase0/redaction-verification-sop.md` |
+| 2026-05-06 | ADR-008 부록 B.6 R-5/R-6/R-7 ✅ 갱신 + G1b CONDITIONALLY PASS 명시 (R-6 actual run 후 PASS 승격 절차 본문 추가) | `decisions/ADR-008-hermes-adoption-decision.md` |
 
 ---
 

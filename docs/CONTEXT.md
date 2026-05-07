@@ -2,13 +2,13 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-06 (R-3 + R-4 + R-4.1 + R-5 + R-6 + R-7 완료 — Phase 1 acceptance SOP 작성, G1b CONDITIONALLY PASS, push 후 actual run PASS 검증 대기)
+**최종 업데이트**: 2026-05-07 (R-6 actual run PASS + 단축 합의 APPROVE — G1b PASS 승격, Phase 1 acceptance PASS 선언, P2 v3 진입 대기)
 
 ---
 
-## 현재 활성 의사결정 (2026-05-06 R-7 완료 시점)
+## 현재 활성 의사결정 (2026-05-07 G1b PASS 승격 시점)
 
-**Phase 0 Day 1~3 + R-3 ~ R-7 모두 작성 완료. ADR-008 부록 B.6 6단계 ✅ 도달.** G1b status = **CONDITIONALLY PASS** (R-6 GitHub Actions actual run 미확인). R-6 push + actual run PASS 후 단축 합의 거쳐 G1b PASS 승격 → Phase 1 acceptance PASS → P2 v3 진입 가능.
+**Phase 0 완료 — R-3 ~ R-7 6단계 + R-6 GitHub Actions actual run PASS + Reviewer-only 단축 합의 APPROVE.** G1b status = **PASS** (CONDITIONALLY PASS → PASS 승격, 2026-05-07). Phase 1 acceptance = **PASS** (PARTIAL → PASS 선언, 2026-05-07). 다음: P2 v3 신규 작성 또는 G2/G3/G4 병행.
 
 ### 합의·검증 산출 (2026-05-05 ~ 2026-05-06 누적)
 - `docs/architecture/system-identity-prequel.md` (시스템 정체성 prequel — P2 v3 정식화 전 임시 선언)
@@ -28,7 +28,8 @@
 - **`docker/r4-1-poc/` (R-4.1 격리 환경 코드 — Dockerfile + compose + r4_1_poc.py)**
 - **`docs/architecture/canary-recheck-design.md` (R-5 — canary 재검증 트리거 설계, ADR-011 §2.4 운영 메커니즘)**
 - **`.github/workflows/r2-canary.yml` (R-6 — CI/nightly canary regression workflow, ADR-011 §2.1 (d) 자동 회귀 검증 경로)**
-- **`docs/phase0/redaction-verification-sop.md` (R-7 — Phase 1 acceptance SOP, ADR-008 부록 B.6 마지막 단계, G1b CONDITIONALLY PASS 명시)**
+- **`docs/phase0/redaction-verification-sop.md` (R-7 — Phase 1 acceptance SOP, ADR-008 부록 B.6 마지막 단계, 2026-05-07 갱신 G1b PASS)**
+- **`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md` (R-7 SOP §7.3 단축 합의 APPROVE — G1b PASS 승격 + Phase 1 acceptance PASS 선언 권위)**
 
 ### 핵심 채택 사항 (R-3에서 ADR 권위로 승격)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
@@ -66,7 +67,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 | 게이트 | 정의 | 현 상태 |
 |-------|------|--------|
 | ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) — **ADR-011 §2.2 / ADR-008 부록 B 권위 명시** |
-| **G1b** | **DB-level fallback (SQLCipher trigger)** | 🟡 **CONDITIONALLY PASS** — R-3 ~ R-7 모두 작성 완료 + R-4.1 격리 PoC PASS + R-6 로컬 17/17. **R-6 GitHub Actions actual run PASS 후** 단축 합의 거쳐 G1b PASS 승격 (R-7 SOP § 7.3 절차) |
+| **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ **PASS** (2026-05-07 단축 합의 승격) — R-3 ~ R-7 6단계 ✅ + R-4.1 격리 PoC PASS + R-6 GitHub Actions actual run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0) + Reviewer-only 단축 합의 APPROVE (`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`) |
 | G2 | 6 거버넌스 사전조건 | ⏳ 미작성 |
 | G3 | "Hermes ≠ root of trust" 운영 구현 | 🟡 ADR 권위 확정 (ADR-011 §2.3), 운영 구현 미작성 |
 | G4 | Provider-agnostic Memory/Skill 형식 | ⏳ 미작성 |
@@ -80,18 +81,21 @@ G1b: DB-level fallback prevents plaintext secret persistence
 - ✅ **R-4.1 (2026-05-06): Tier-1 42종 trigger UDF 확장 + 격리 환경 PoC PASS (ADR-011 §2.1 (b) 충족, 1차 PARTIAL → 2차 PASS 진화)**
 - ✅ **R-5 (2026-05-06): canary 재검증 트리거 설계 (T13 강화 + 6 trigger 시점 + 4 verdict + 4 안전장치 + Markdown+JSONL evidence + T1/T2/T3 정책 매트릭스)**
 - ✅ **R-6 (2026-05-06): CI/nightly canary regression workflow (workflow_dispatch + nightly cron + push/PR + R-4.1 PoC 실행 + JSON evidence 추출 + verdict PASS 검증 + artifact 업로드, permissions: contents: read)**
-- ✅ **R-7 (2026-05-06): Phase 1 acceptance SOP — 13 checklist + 4 verdict + 9 ROLLBACK + 7 Evidence + push 전/후 작업 분리 (G1b PASS 승격은 R-6 actual run PASS 후 단축 합의)**
-- ⏳ Phase 1 acceptance PASS: R-6 push + GitHub Actions actual run PASS 검증 대기
+- ✅ **R-7 (2026-05-06): Phase 1 acceptance SOP — 13 checklist + 4 verdict + 9 ROLLBACK + 7 Evidence + push 전/후 작업 분리**
+- ✅ **R-6 actual run (2026-05-07): 1차 FAIL infra bug → fix `939125b` → 2차 run `25482284523` PASS (24초)**
+- ✅ **R-7 SOP §7.3 단축 합의 (2026-05-07): Reviewer 13 항목 + 8 PASS 조건 + 5 메타 편향 통제 → APPROVE → G1b PASS 승격 + Phase 1 acceptance PASS 선언**
 
 ### 다음 세션 TODO (우선순위 순)
 
-1. ~~**R-3 / R-4 / R-4.1 / R-5 / R-6 / R-7**~~ ✅ 완료 (2026-05-06)
-2. **Push 결정** (다음 진입점): 사용자 명시 push 보류 해제 → `git push -u origin feature/hermes-phase0` (또는 PR) → GitHub Actions actual run trigger
-3. **R-6 actual run 결과 확인**: PASS → R-7 SOP § 7.3 절차 (단축 합의 + ADR-008 B.6 갱신 + G1b PASS 승격) → Phase 1 acceptance PASS 선언
-4. **P2 v3 신규 작성** (Phase 1 acceptance PASS 후) — `docs/architecture/hermes-adoption-design-v3.md` + ADR-008/009/010/**011** 갱신 PR 묶음
-5. **G2/G3/G4** 작성 (병행 가능, G3 는 ADR-011 §2.3 운영 구현)
+1. ~~**R-3 / R-4 / R-4.1 / R-5 / R-6 / R-7 + G1b PASS 승격 + Phase 1 acceptance PASS 선언**~~ ✅ 완료 (2026-05-06 ~ 2026-05-07)
+2. **P2 v3 신규 작성** (다음 진입점): `docs/architecture/hermes-adoption-design-v3.md` — P2 v2 §2.1.3 가정 코드 미존재 사실 + R-2 ~ R-7 + R-6 actual run PASS evidence 흡수. 동시 갱신: ADR-008 / ADR-009 / ADR-010 / ADR-011
+3. **G2 / G3 / G4 병행 작성** (병행 가능):
+   - G2: 6 거버넌스 사전조건
+   - G3: "Hermes ≠ root of trust" 운영 구현 (ADR-011 §2.3 운영 함의 5항목)
+   - G4: Provider-agnostic Memory/Skill 형식 (ADR-009 / ADR-010 적용)
+4. **Hermes PMO 격상 후보** (4 게이트 G1b/G2/G3/G4 모두 통과 후 사용자 명시 결정)
 
-**권고 시작점**: 사용자 push 결정 후 GitHub Actions actual run 확인 → R-7 SOP § 7.3 절차 답습. Push 보류 유지 시 추가 작업 없이 대기 또는 G2/G3/G4 병행 진행.
+**권고 시작점**: "P2 v3 진행해주세요" 또는 "G2/G3/G4 병행 진행해주세요". 두 작업 모두 본 세션 G1b PASS 승격 후 진입 가능.
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

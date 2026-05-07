@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-05-06
+**최종 업데이트**: 2026-05-07
 
 ---
 
@@ -158,6 +158,9 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-06 | Phase 0 R-6 — CI/nightly canary regression workflow 구현. workflow_dispatch + nightly cron + push/PR triggers (5 paths) + Docker R-4.1 PoC 실행 + JSON evidence 추출 + verdict PASS 검증 + artifact 업로드. permissions: contents: read (CI verifies, does not mutate). ADR-011 §2.1 (d) 자동 회귀 검증 경로 직접 충족 | `.github/workflows/r2-canary.yml` |
 | 2026-05-06 | Phase 0 R-7 — Phase 1 acceptance SOP 작성. 13 항목 checklist + PASS/PARTIAL/FAIL/ROLLBACK 판정 + G1a FAIL/G1b CONDITIONALLY PASS 명시 + 9 ROLLBACK trigger + 7 Evidence 요구 + push 전/후 작업 분리. ADR-008 부록 B.6 6단계 모두 작성 ✅. **G1b PASS 선언은 R-6 GitHub Actions actual run PASS 후 단축 합의 거쳐 승격 (자동 승격 금지)** | `phase0/redaction-verification-sop.md` |
 | 2026-05-06 | ADR-008 부록 B.6 R-5/R-6/R-7 ✅ 갱신 + G1b CONDITIONALLY PASS 명시 (R-6 actual run 후 PASS 승격 절차 본문 추가) | `decisions/ADR-008-hermes-adoption-decision.md` |
+| 2026-05-07 | R-6 GitHub Actions actual run — 1차 FAIL (docker compose stdout prefix JSON parse infra bug, 보안/catalog/secret 위반 아님 사용자 분류) → fix `939125b` (`--no-log-prefix` flag 추가, workflow YAML 1 file 한정) → 2차 run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0, ROLLBACK 9 조건 0 발화) | `.github/workflows/r2-canary.yml` |
+| 2026-05-07 | R-7 SOP §7.3 Reviewer-only 단축 합의 APPROVE — Reviewer 13 항목 + 8 PASS 조건 + 5 메타 편향 통제 수단. **G1b CONDITIONALLY PASS → PASS 승격, Phase 1 acceptance PARTIAL → PASS 선언**. 자동 승격 아님 (사용자 명시 + ADR-011 §2.4 T2 절차 답습). Hermes PMO 격상은 4 게이트 통과 후 별도 결정 (본 합의 범위 외) | `review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`, `decisions/ADR-008-hermes-adoption-decision.md` (부록 B.6), `phase0/redaction-verification-sop.md` (§3.4 / §4.2 / §4.3 / §6.1 / §7.1.1 / §7.3 갱신) |
+| 2026-05-07 | 세션 로그 — push 진행 + 1차 FAIL infra fix + 2차 PASS + 단축 합의 APPROVE + G1b PASS 승격 + Phase 1 acceptance PASS 선언. 다음 진입점 P2 v3 또는 G2/G3/G4 병행 | `sessions/SESSION_2026-05-07.md` |
 
 ---
 

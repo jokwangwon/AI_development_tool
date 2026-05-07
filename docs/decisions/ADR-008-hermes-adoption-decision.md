@@ -179,11 +179,17 @@ R-6   ✅ CI/nightly canary regression workflow 구현 — `.github/workflows/r2
 R-7   ✅ Phase 1 합격 SOP — `docs/phase0/redaction-verification-sop.md` (2026-05-06)
 ```
 
-**6단계 작성 완료. 단, G1b 정식 PASS 선언은 다음을 추가로 요구한다** (R-7 SOP § 0 핵심 선언):
-- R-6 GitHub Actions 실제 run PASS (verdict = "PASS", tier1_pass_rate = "42/42")
-- 본 R-6 actual run PASS 후 단축 합의 (Reviewer-only, ADR-011 §2.4 T2) 거쳐 G1b status CONDITIONALLY PASS → PASS 승격
-- 자동 승격 금지 (ADR-011 §2.4 T3 적용 영역)
+**6단계 작성 완료 + R-6 actual run PASS + 단축 합의 APPROVE → G1b 정식 PASS 도달** (2026-05-07):
 
-본 R-7 SOP 발행 시점 G1b status = **CONDITIONALLY PASS**. R-6 actual run 미확인 시 PARTIAL.
+- ✅ R-6 GitHub Actions 실제 run PASS — run ID `25482284523` (commit `939125b` 기준 24초 완료, 모든 step ✓)
+  - 1차 run (`25480443667`) FAIL 은 docker compose stdout prefix JSON parse infra bug — 보안 위반 / catalog drift / 실 secret 노출 / CI 자동 정책 변경 모두 *아님* (사용자 단축 합의 결정 답습). Fix `939125b` 는 workflow YAML 1 file 한정 (`r4_1_poc.py` / Tier-1 catalog / trigger UDF / redaction config 변경 0건)
+- ✅ Artifact `r2-r4-canary-evidence` 본문 검증 통과 — verdict = "PASS", tier1_pass_rate = "42/42", Tier-1 42/42 BLOCK, Safe 9/9 PASS, leak_observations = [], rollback_triggered = false
+- ✅ R-7 SOP §7.3 단축 합의 (Reviewer-only, ADR-011 §2.4 T2) APPROVE — `docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md` (13 Reviewer 항목 + 8 PASS 조건 + 5 통제 수단 명시)
+- ✅ G1b status: CONDITIONALLY PASS → **PASS** 승격
+- ✅ Phase 1 acceptance: PARTIAL → **PASS** 선언
+
+본 ADR-008 부록 B.6 갱신은 ADR-011 §2.4 T2 절차 (사용자 승인 + Reviewer-only 단축 합의) 답습. **자동 승격 아님**.
 
 R-4 / R-4.1 / R-5 / R-6 / R-7 진행 상태는 본 Amendment 가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.
+
+본 G1b PASS 는 *4 게이트 중 G1b 한정* — Hermes PMO 격상은 G2 / G3 / G4 추가 통과 후 별도 결정 (본 Amendment 범위 외).

@@ -2,8 +2,8 @@
 
 > **G1b 정식 충족 절차의 SOP 화. R-1 ~ R-6 산출을 운영자/리뷰어가 따라야 할 *체크리스트* + *판정 기준* + *증거 제출 양식* 으로 통합. R-6 GitHub Actions 실제 run 성공 후 G1b PASS 승격.**
 
-**상태**: 작성 완료 (R-7) — 본 R-7 발행 시점 = G1b **CONDITIONALLY PASS** (R-6 push 전, GitHub Actions 실제 run 미확인)
-**날짜**: 2026-05-06
+**상태**: 작성 완료 (R-7, 2026-05-06) + R-6 actual run PASS + 단축 합의 APPROVE → G1b **PASS** 승격 (2026-05-07)
+**날짜**: 2026-05-06 (R-7 SOP 작성) / 2026-05-07 (G1b PASS 승격 갱신)
 **상위 권위**: ADR-008 부록 B.6 6단계 마지막 + ADR-011 §3 R-7 매핑
 **입력 자료**: R-1 / R-2 / R-3 / R-4 / R-4.1 / R-5 / R-6 산출 전체
 
@@ -72,7 +72,7 @@ R-7   ✅ Phase 1 합격 SOP (본 문서, 2026-05-06)
 ### 2.4 R-6 검증 (로컬 + 실제 run)
 
 - [ ] **C9**: R-6 workflow 로컬 검증 완료 — `.github/workflows/r2-canary.yml` + 17/17 자동 검증 PASS (본 SOP § 6.2)
-- [ ] **C10**: R-6 GitHub Actions 실제 run 성공 ← **본 SOP 발행 시점 미충족 (push 전)**
+- [x] **C10**: R-6 GitHub Actions 실제 run 성공 — run ID `25482284523` (2026-05-07, 24초, 모든 step ✓ PASS, fix commit `939125b` 적용 후)
 
 ### 2.5 보안 원칙 검증
 
@@ -126,11 +126,16 @@ R-7   ✅ Phase 1 합격 SOP (본 문서, 2026-05-06)
 
 → **G1b PASS 절대 차단**. § 5 ROLLBACK 절차 + ADR-011 §2.4 T3 (단축/풀 합의 의무).
 
-### 3.4 본 R-7 발행 시점 판정
+### 3.4 판정 이력
 
-> **Current status before push: PARTIAL — waiting for GitHub Actions actual run after push.**
+| 시점 | 판정 | 사유 |
+|------|------|------|
+| 2026-05-06 (R-7 발행 직후, push 전) | **PARTIAL** | R-3 ~ R-7 6단계 작성 ✅, R-6 GitHub Actions actual run 미확인 |
+| 2026-05-07 (R-6 1차 run, fix 전) | **PARTIAL** (R6 ROLLBACK trigger 발화, infra bug) | docker compose stdout prefix JSON parse 실패 — 보안 위반 아님 |
+| 2026-05-07 (R-6 2차 run, fix `939125b` 후) | **PASS 후보** | run `25482284523` 모든 step ✓, artifact 검증 8/8 |
+| 2026-05-07 (단축 합의 APPROVE) | **PASS** | R-7 SOP §7.3 절차 답습, Reviewer 13 항목 + 5 통제 수단, `docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md` |
 
-(사용자 명시 답습. § 1.2 의 6단계 작성 ✅ 와 § 0 의 핵심 선언이 결합한 결과.)
+**현재 판정**: **PASS** — G1b PASS 승격 + Phase 1 acceptance PASS 선언 (2026-05-07).
 
 ---
 
@@ -146,33 +151,43 @@ Evidence: docs/phase0/day2-r1-redaction-location-verification.md
 권위: ADR-011 §2.2 + ADR-008 부록 B.2
 ```
 
-### 4.2 G1b — CONDITIONALLY PASS (본 R-7 발행 시점)
+### 4.2 G1b — PASS (2026-05-07 승격)
 
 ```
 G1b: DB-level fallback prevents plaintext secret persistence
-Result: CONDITIONALLY PASS
+Result: PASS
 
-Conditions for full PASS:
-  1. R-3 ~ R-7 모두 ✅ (ADR-008 부록 B.6 6단계 충족)
-     → 본 R-7 발행 시점 ✅ 충족
-  2. R-6 GitHub Actions actual run PASS
-     → ⏳ push 후 검증 대기
+승격 절차 완료 (2026-05-07):
+  1. R-3 ~ R-7 모두 ✅ (ADR-008 부록 B.6 6단계 충족) — 2026-05-06 도달
+  2. R-6 GitHub Actions actual run PASS — run ID `25482284523` (2026-05-07, 24초)
+     - 1차 run (`25480443667`) FAIL: docker compose stdout prefix infra bug (보안 위반 아님)
+     - Fix `939125b`: workflow YAML 1 file (`--no-log-prefix` flag) — 사용자 단축 합의 결정
+     - 2차 run PASS: 모든 step ✓, artifact 검증 8/8 (verdict PASS, 42/42, leak 0)
+  3. R-7 SOP §7.3 Reviewer-only 단축 합의 APPROVE
+     `docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`
+     (Reviewer 13 항목 PASS + 메타 편향 5 통제 수단)
 
-Status mapping:
-  - 본 R-7 발행 시점 (push 전): CONDITIONALLY PASS
-  - R-6 push + actual run PASS 후: PASS (단축 합의 후 본 SOP §7.3 절차)
-  - R-6 actual run FAIL 시: G1b 재판정 + § 5 ROLLBACK + 단축/풀 합의
+승격 사유 (자동 승격 아님 — Reviewer-only 단축 합의 거침):
+  - artifact `r2-r4-canary-evidence` 본문 검증 8/8 PASS
+  - ROLLBACK trigger 9 조건 (§ 5 R1~R9) 모두 미발화
+  - 단축 합의 13 Reviewer 확인 항목 모두 PASS
 
-권위: ADR-011 §2.2 + ADR-008 부록 B.6 + 본 SOP § 0 핵심 선언
+권위: ADR-011 §2.2 + ADR-008 부록 B.6 + 본 SOP § 0 핵심 선언 + 단축 합의 (2026-05-07)
 ```
 
-### 4.3 G1b 승격 절차
+### 4.3 G1b 승격 이력 (Historical)
 
-R-6 push → GitHub Actions run trigger → workflow 결과 확인 →
-- **PASS** → 본 SOP § 7.3 단축 합의 → G1b PASS 선언 + ADR-008 부록 B.6 갱신
-- **FAIL** → § 5 ROLLBACK trigger 매핑 → 단축/풀 합의 + ADR-011 §2.4 T3 절차
+| 시점 | G1b status | Trigger |
+|------|----------|--------|
+| 2026-05-04 ~ 2026-05-05 | (G1 단일 게이트, P2 v2) | 초기 P2 v2 |
+| 2026-05-05 (R-1 FAIL) | G1a FAIL / G1b 분리 도입 | R-1 evidence |
+| 2026-05-05 (R-2 PASS) | G1b PoC PASS (baseline 5 patterns) | R-2 evidence |
+| 2026-05-06 (R-3 발행) | G1a/G1b 분리 ADR 권위화 | ADR-011 §2.2 |
+| 2026-05-06 (R-4.1 PASS) | G1b 격리 PoC 확장 PASS (Tier-1 42) | R-4.1 evidence |
+| 2026-05-06 (R-7 발행) | **CONDITIONALLY PASS** | R-3 ~ R-7 6단계 ✅, R-6 actual run 대기 |
+| 2026-05-07 (단축 합의 APPROVE) | **PASS** | R-6 actual run PASS + 단축 합의 |
 
-승격 자체도 ADR-011 §2.4 T2 (사용자 승인 필요) 적용 — **자동 승격 금지**.
+승격 자체도 ADR-011 §2.4 T2 (사용자 승인 필요) 적용 — **자동 승격 금지** (2026-05-07 승격은 사용자 명시 + Reviewer-only 단축 합의 거침).
 
 ---
 
@@ -208,7 +223,7 @@ ROLLBACK 후에는 ADR-011 §2.4 T3 절차 (단축 또는 풀 합의) 거쳐 재
 | **E4** | R-5 canary recheck design | `docs/architecture/canary-recheck-design.md` | ✅ |
 | **E5** | R-6 workflow file | `.github/workflows/r2-canary.yml` | ✅ |
 | **E6** | R-6 local validation result | 본 SOP § 6.2 (commit `bbcc1af` 메시지 + 17/17 PASS) | ✅ |
-| **E7** | R-6 GitHub Actions artifact (`r2-r4-canary-evidence`) | GitHub Actions UI > workflow run > Artifacts | ⏳ push 후 |
+| **E7** | R-6 GitHub Actions artifact (`r2-r4-canary-evidence`) | GitHub Actions run [`25482284523`](https://github.com/jokwangwon/AI_development_tool/actions/runs/25482284523) > Artifacts (canary-output.log 43,551 bytes + canary-evidence.json 9,657 bytes, 30일 retention) | ✅ (2026-05-07) |
 
 ### 6.2 R-6 Local Validation Result (E6 본문 기록)
 
@@ -244,17 +259,28 @@ ROLLBACK 후에는 ADR-011 §2.4 T3 절차 (단축 또는 풀 합의) 거쳐 재
 
 ## 7. Push 전/후 작업 분리
 
-### 7.1 Push 전 (본 R-7 발행 시점, 2026-05-06)
+### 7.1 Push 전 (R-7 발행 시점, 2026-05-06)
 
 | 작업 | 상태 | Commit |
 |------|------|------|
 | R-3 ~ R-6 모든 commit 생성 | ✅ | `3e2be57`, `3b005f0`, `e1fb4be`, `62d2a95`, `5a6049d`, `bbcc1af` |
-| R-7 SOP 작성 (본 문서) | ✅ | (이번 commit) |
-| 로컬 working tree clean | ✅ | (이번 commit 전) |
+| R-7 SOP 작성 | ✅ | `6374b6b` |
+| 로컬 working tree clean | ✅ | (push 직전) |
 | `.claude/settings.local.json` untrack | ✅ | `c6fe1ab` |
 | R-6 로컬 검증 17/17 PASS | ✅ | 본 SOP § 6.2 |
 
-→ **현재 판정**: **PARTIAL** (G1b CONDITIONALLY PASS).
+→ **2026-05-06 시점 판정**: **PARTIAL** (G1b CONDITIONALLY PASS).
+
+### 7.1.1 Push 후 1차 run (2026-05-07, infra bug)
+
+| 작업 | 상태 | Detail |
+|------|------|------|
+| Push `feature/hermes-phase0` → origin | ✅ | `git push -u origin feature/hermes-phase0` |
+| 1차 run trigger | ✅ | run `25480443667` 자동 trigger (push event) |
+| 1차 run 결과 | ❌ | FAIL — docker compose stdout prefix JSON parse 실패 (infra bug) |
+| 사용자 분류 | ✅ | Infra-level bug (보안 위반 / catalog drift / 실 secret 노출 / CI 자동 정책 변경 모두 아님) |
+| Fix scope | ✅ | workflow YAML `--no-log-prefix` flag 1 file 한정 (`r4_1_poc.py` / catalog / UDF / config / ADR / SOP / P2 v3 변경 0건) |
+| Fix commit | ✅ | `939125b` `ci(redaction): disable compose log prefix for canary JSON parsing` |
 
 ### 7.2 Push 트리거 절차
 
@@ -269,16 +295,21 @@ ROLLBACK 후에는 ADR-011 §2.4 T3 절차 (단축 또는 풀 합의) 거쳐 재
    - **PASS** → § 7.3 진입
    - **FAIL** → § 5 ROLLBACK 절차
 
-### 7.3 Push 후 (R-6 actual run PASS 시)
+### 7.3 Push 후 (R-6 actual run PASS — 2026-05-07 완료)
 
-| 작업 | 책임 |
-|------|------|
-| R-6 GitHub Actions artifact 다운로드 + evidence 보존 (E7 충족) | 운영자 + 본 SOP § 6.3 |
-| 본 SOP § 4.2 G1b status 갱신 — CONDITIONALLY PASS → PASS | 단축 합의 (Reviewer-only, ADR-011 §2.4 T2) + 별도 docs commit |
-| ADR-008 부록 B.6 갱신 — 6단계 모두 ✅ + G1b PASS 도달 명시 | 동 단축 합의 |
-| Phase 1 Acceptance Checklist § 2 의 C10 ✅ 체크 | 운영자 |
-| Phase 1 acceptance PASS 선언 | 사용자 명시 결정 |
-| **P2 v3 신규 작성 진입** | Phase 1 acceptance PASS 후 별도 작업 |
+| 작업 | 책임 | 결과 |
+|------|------|------|
+| 2차 run trigger (fix `939125b` push 후) | 자동 (push event) | ✅ run `25482284523` |
+| 2차 run 결과 | GitHub Actions runner | ✅ PASS (24초, 모든 step ✓) |
+| R-6 GitHub Actions artifact 다운로드 + evidence 보존 (E7 충족) | 운영자 + 본 SOP § 6.3 | ✅ 로컬 보존 `/tmp/r6-artifact-pass/` + 30일 GitHub retention |
+| Artifact 본문 검증 (R-7 SOP §3.1 PASS 8/8 조건) | Python json.load + assertion | ✅ 8/8 PASS (verdict PASS, 42/42, leak 0, rollback 0) |
+| 본 SOP § 4.2 G1b status 갱신 — CONDITIONALLY PASS → PASS | 단축 합의 (Reviewer-only, ADR-011 §2.4 T2) + 별도 docs commit | ✅ 본 commit |
+| ADR-008 부록 B.6 갱신 — 6단계 모두 ✅ + G1b PASS 도달 명시 | 동 단축 합의 | ✅ 본 commit |
+| Phase 1 Acceptance Checklist § 2 의 C10 ✅ 체크 | 운영자 | ✅ 본 commit (§2.4 갱신) |
+| Phase 1 acceptance PASS 선언 | 사용자 명시 결정 | ✅ 본 단축 합의 결과 |
+| **P2 v3 신규 작성 진입** | Phase 1 acceptance PASS 후 별도 작업 | ⏳ 사용자 결정 대기 |
+
+**단축 합의 보고서**: `docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md` (Reviewer 13 항목 + 8 PASS 조건 + 5 메타 편향 통제 수단)
 
 ### 7.4 본 R-7 발행 시점 *금지* 사항 (사용자 명시 답습)
 
@@ -368,6 +399,7 @@ R-7 SOP 자체는 G2/G3/G4 미포함 (R-7 = G1b 정식 충족 SOP 한정).
 
 ---
 
-**본 SOP 발행 시점**: 2026-05-06
-**판정**: **PARTIAL** (G1b CONDITIONALLY PASS — push 전, R-6 actual run 미확인)
-**다음 진입점**: 사용자 결정으로 push 진행 → R-6 actual run 확인 → 본 SOP § 7.3 절차 → R-6 actual run PASS 시 G1b PASS 승격 단축 합의 → Phase 1 acceptance PASS 선언 시 P2 v3 진입.
+**본 SOP 발행 시점**: 2026-05-06 (R-7 작성)
+**G1b PASS 승격 시점**: 2026-05-07 (R-6 actual run PASS + 단축 합의 APPROVE)
+**판정**: **PASS** — G1b PASS, Phase 1 acceptance PASS (2026-05-07 단축 합의 답습)
+**다음 진입점**: P2 v3 신규 작성 — `docs/architecture/hermes-adoption-design-v3.md` (사용자 명시 결정 시 진입). G2 / G3 / G4 병행 가능 (Hermes PMO 격상은 4 게이트 모두 통과 후 별도 결정).

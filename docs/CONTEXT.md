@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 후속 2 (P1 분류 + PR 묶음 형태 결정 — **옵션 β 채택 (2-PR 묶음)** + PR-1 단축 합의 본문 흡수 6건 (C-D/E/F/I/K/L) — **다음 진입점: PR-2 풀 3+1 합의 (ADR-012 + G4 hash chain)**)
+**최종 업데이트**: 2026-05-09 후속 3 (**PR-2 풀 3+1 합의 + 외부 LLM 2건 APPROVE WITH CONDITIONS — Design/Governance Gate 권위 격상 적격** (5/5 입력 일치) + ADR-012 신규 발행 + G4 §4.2 schema 11 필드 + §4.4 hash chain 사양 + §4.6 round-trip 검증 절차 보강 — **다음 진입점: G2 §1.2 P10 정식 등록 단축 합의 → C-14 cross-vendor (GPT-5.x or Gemini) blind 의뢰 → P2 v3 정식 채택 풀 3+1 합의**)
 
 ---
 
@@ -54,6 +54,17 @@ Hermes PMO 격상 선언 = 미선언 (4 게이트 모두 Implementation/Runtime 
 
 #### 본 세션 (2026-05-09)
 - **`docs/review/3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` (G4 DRAFT 단축 검토 APPROVE AS DRAFT, 10 기준 10/10 PASS + 8 금지 0건 + 5 자기 발견 잠재 위험 LOW/VERY LOW (P-1 RFC 8785 JCS / P-2 schema 진화 / P-3 schema_version declaration / P-4 §6.4 명명 / P-5 `~/.claude/global` path) — G3 §4 자기참조 차단 적용 대상 한계 명시, commit `fd10b79`)**
+
+#### 본 세션 후속 3 (2026-05-09 후속 3 — PR-2 풀 3+1 + 외부 LLM 2건)
+- **`docs/decisions/ADR-012-evidence-ledger-protection.md` (ADR-012 신규 발행 — Evidence Ledger 보호 강화. 12 보호 원칙 + 4 매트릭스 + 5 추가 의무. 11 필드 + 17 enum 후보 + Layer 1~5 다층 강제 + RFC 8785 JCS Primary + jq fallback + Genesis hash MVP+0.2 전이 + prev_hash BLOCK + manual + chain_violation_detected + Full Rewrite 5 Layer + Round-trip Tier-based + 3 ledger entry 형식 + Migration BLOCK + manual + migration_failed + Hermes 변조 차단 매트릭스 4항목 + External LLM `agent="user"` 강제 + Schema 진화 정책 + Content-level 한계 + Timestamp monotonicity + 운영 부담 monitoring trigger + Provider Liquidity 4-way → 5-way Multi-layer Defense)**
+- **`docs/architecture/provider-agnostic-memory-skill-design.md` §4.2 / §4.4 / §4.6 보강 (ADR-012 동일 PR commit. schema 10 → 11 필드 + canonical RFC 8785 JCS + Genesis + prev_hash 검증 실패 + Full Rewrite + Tier-based round-trip + 3 ledger entry 형식 + Migration rollback. G4 §11.4 P-1/P-2/P-3 처리 완료)**
+- **`docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (PR-2 풀 3+1 + 외부 LLM 2건 합의 보고서. 5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate 권위 격상 적격. 16 + 4 차원 종합 판정 + 5/5 영구 핵심 제약 보호 HIGH + Gap-17 HIGH 흡수 + C-14 cross-vendor (P2 v3 진입 전) 의무 영구 답습)**
+- **`docs/review/agents-2026-05-09-pr2-evidence-ledger/agent-a-implementation.md` (Agent A 구현/운영, 481 줄, APPROVE WITH CONDITIONS 8 조건, R-6/R-7/R-11 HIGH binary)**
+- **`docs/review/agents-2026-05-09-pr2-evidence-ledger/agent-b-security.md` (Agent B 보안/거버넌스, 597 줄, APPROVE WITH CONDITIONS 4 + 14 NOTES, **Gap-17 HIGH** Hermes 변조 차단 매트릭스 4항목)**
+- **`docs/review/agents-2026-05-09-pr2-evidence-ledger/agent-c-alternatives.md` (Agent C 대안/단순화, 424 줄, APPROVE WITH CONDITIONS 4 핵심 + 6 보조)**
+- **`docs/external-review/2026-05-XX-pr2-evidence-ledger-request.md` (PR-2 외부 LLM 의뢰 자료, *내부 Agent A/B/C 분석 미포함* — 의도된 편향 통제 강화)**
+- **`docs/external-review/2026-05-09-pr2-evidence-ledger-response.md` (cross-vendor 외부 LLM 응답, APPROVE WITH CONDITIONS, 5 권고 + 16 차원, 11번째 = `event` + JCS primary + jq fallback)**
+- **`docs/external-review/2026-05-09-pr2-evidence-ledger-response-claude.md` (Claude 인접 컨텍스트 응답, APPROVE WITH CONDITIONS 17 조건 C-1~C-17, 다층 동시 의무 + C-14 cross-vendor P2 v3 진입 전 의무)**
 
 ### 핵심 채택 사항 (R-3에서 ADR 권위로 승격)
 - **정체성**: "AI Development Company OS" 메타포 (선언적, 즉시)
@@ -115,34 +126,31 @@ G1b: DB-level fallback prevents plaintext secret persistence
 2. ~~**P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2·G3 DRAFT 검토 APPROVE**~~ ✅ 완료 (2026-05-07 Part 2)
 3. ~~**G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT**~~ ✅ 완료 (2026-05-09, commit `fd10b79`)
 4. ~~**G2/G3/G4 정식 채택 합의 (옵션 3 — 통합 풀 3+1 + 외부 LLM 1+)**~~ ✅ 완료 (2026-05-09, 5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate PASS Bundled)
-5. ~~**G2/G3/G4 헤더 갱신 + CONTEXT/INDEX 갱신 (P0 조건 C-A + C-B 흡수)**~~ ✅ 완료 (2026-05-09 본 세션)
-6. **P1 조건 흡수 PR 묶음 결정** (다음 진입점, 사용자 명시 결정) — 합의 보고서 §11.2 답습:
-   - C-C: Evidence Ledger 보호 강화 (11 필드 + hash chain/signed commit) — 신규 ADR-012 후보
-   - C-D: Git/CI/external-review 파일 보호 명시 — G3 §2.2 보강
-   - C-E: 메타-순환 청산 (G3 §4 외부 LLM 권장/필수가 외부 LLM 없이 작성된 메타-순환 명시 기록) — Claude C-5
-   - C-F: SPOF accepted risk 명시 (G2 §9 + G3 §4 + G3 §5.5, 1인 동일 호스트 의도적 수용) — Claude C-6
-   - C-G: G4 hash chain 사양 보강 (canonical JSON / newline / encoding / field ordering / genesis / prev_hash 검증 실패 / full rewrite 방어 / round-trip lossy ledger) — GPT 조건 6
-   - C-H: provider_bindings lint 룰 강제 (`required`/`exclusive` schema 차단)
-   - C-I: P9~P12 deferred candidates 등록 (prompt injection / evidence forgery / supply-chain / memory poisoning)
-   - C-K: G4 §3.1 권장 → MVP 필수 vs 후속 분리 표기 + #15 권장→필수 격상 (Agent C 권고 답습)
-   - C-L: G2/G3/G4 후속 권고 5건 + 4건 (G4 P-1~P-5 / G3 4건 — 기존 잔여 항목)
-   - C-N: ADR-009 / P1 facade MVP 진입조건 명시 (Agent C + GPT 조건 5 + Claude C-9)
-7. **P2 v3 정식 채택 합의 형태 결정** (P0/P1 흡수 후 또는 병행, 사용자 명시 결정):
-   - 시나리오 X: P2 v3 단독 합의 (단축 또는 풀 3+1)
-   - 시나리오 Y: P2 v3 + 신규 ADR-012/013/014 후보 통합 합의 (PR 묶음)
-   - 두 시나리오 모두 **Cross-vendor 추가 외부 LLM (Gemini 등) 적용 시점 결정** (Claude C-3 권고 답습 — P2 v3 정식 채택 전 권장)
-8. **ADR PR 묶음 (P2 v3 정식 채택 후)**: ADR-008 / ADR-009 / ADR-010 / ADR-011 cross-reference 갱신 + 신규 ADR-012 (Evidence Ledger) / ADR-013 (Git·CI·external-review 보호) / ADR-014 (Provider-agnostic Memory/Skill Format) 후보 검토
-9. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
-10. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
+5. ~~**G2/G3/G4 헤더 갱신 + CONTEXT/INDEX 갱신 (P0 조건 C-A + C-B 흡수)**~~ ✅ 완료 (2026-05-09 후속)
+6. ~~**PR-1 본문 흡수 6건 (C-D/E/F/I/K/L) + 단축 합의 보고서 (Reviewer-only)**~~ ✅ 완료 (2026-05-09 후속 2)
+7. ~~**PR-2 풀 3+1 합의 (ADR-012 + G4 §4.4/§4.6 hash chain) + 외부 LLM 2건**~~ ✅ 완료 (2026-05-09 후속 3, 5/5 입력 APPROVE WITH CONDITIONS, ADR-012 발행 + G4 §4.2/§4.4/§4.6 보강)
+8. **G2 §1.2 P10 (Evidence Forgery) 정식 row 추가** (다음 진입점, 단축 합의 가능) — ADR-012 발행 시점 트리거 답습 + ADR-012 §1.3 cross-reference 의무. P10 정식 위반 경로 등록 = G2 §1.2 본문 변경 (T3 변경, 단축 합의 적격)
+9. **C-14 cross-vendor (GPT-5.x or Gemini) blind 의뢰 1+ 의무** (P2 v3 정식 채택 진입 *전*, 사용자 명시 결정 답습 — Claude C-3 + 외부 LLM 2 C-14)
+10. **C-N ADR-009 / P1 facade MVP 진입조건 명시** (별도 PR — 단축 또는 풀 3+1)
+11. **P2 v3 정식 채택 합의 형태 결정** (P0/P1/PR-2 흡수 후, 사용자 명시 결정):
+    - 시나리오 X: P2 v3 단독 합의 (단축 또는 풀 3+1)
+    - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
+    - C-14 cross-vendor 1+ 충족 후 진입
+12. **ADR PR 묶음 (P2 v3 정식 채택 후)**: ADR-008 / ADR-009 / ADR-010 / ADR-011 cross-reference 갱신 + 신규 ADR-013 (Git·CI·external-review 보호) / ADR-014 (Provider-agnostic Memory/Skill Format) 후보 검토
+13. **C-H provider_bindings lint 룰 강제 합의** (Implementation/Runtime PASS 영역, 별도 합의)
+14. **R-6 workflow ledger 검증 step 추가** (Implementation/Runtime PASS 영역, ADR-012 §10.2 답습)
+15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
+16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-09 후속 2 종료 후): "PR-2 풀 3+1 합의를 진행합니다 (ADR-012 신규 발행 + G4 hash chain 사양 보강)."
+**권고 시작점** (2026-05-09 후속 3 종료 후): "G2 §1.2 P10 정식 등록 단축 합의를 진행합니다 (ADR-012 발행 트리거 답습)." 또는 "C-14 cross-vendor (GPT-5.x or Gemini) blind 의뢰 자료를 작성합니다 (P2 v3 정식 채택 진입 전 의무)."
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)
 - **결정 2 (검토 형태)**: 본문 PR = 단축 합의 (Reviewer-only) / 신규 ADR PR = 풀 3+1 + 외부 LLM 1+
 - **결정 3 (외부 LLM 추가 시점)**: P1 흡수 후 + P2 v3 정식 채택 진입 *전* (Claude C-3 권고 답습)
-- **PR-1 흡수 완료**: C-D (G3 §2.2 #11) + C-E (G3 §4 메타-순환 부록) + C-F (G2 §9 + G3 §4·§5.5 SPOF) + C-I (G2 §1.2 P9~P12 부록) + C-K (G4 §3.1 + #15 격상) + C-L (G4 P-1~P-5 + G3 4건)
-- **별도 후속**: C-H (Implementation PASS 영역, 별도 합의) / C-N (ADR-009 갱신 별도 PR)
+- **PR-1 흡수 완료** (2026-05-09 후속 2): C-D (G3 §2.2 #11) + C-E (G3 §4 메타-순환 부록) + C-F (G2 §9 + G3 §4·§5.5 SPOF) + C-I (G2 §1.2 P9~P12 부록) + C-K (G4 §3.1 + #15 격상) + C-L (G4 P-1~P-5 + G3 4건)
+- **PR-2 흡수 완료** (2026-05-09 후속 3): C-C (ADR-012 신규 발행) + C-G (G4 §4.2 schema 11 필드 + §4.4 hash chain 사양 + §4.6 round-trip 검증 절차 보강). 5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate 권위 격상 적격
+- **별도 후속**: C-H (Implementation PASS 영역, 별도 합의) / C-N (ADR-009 갱신 별도 PR) / **G2 §1.2 P10 정식 등록 단축 합의** (ADR-012 발행 트리거, 다음 진입점) / **C-14 cross-vendor (GPT-5.x or Gemini) blind 의뢰 1+ 의무** (P2 v3 정식 채택 진입 *전*, 외부 LLM 2 C-14 + Claude C-3 답습)
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

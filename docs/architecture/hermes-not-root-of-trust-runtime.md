@@ -200,6 +200,39 @@ T3 (절대 금지)        : 12 건 (§2.2 #9~#14, #17~#22)
 
 **합산**: 계산적 22/22, 추론적 보조 6/22, 자동 롤백 14/22 (T1 #1~#7 외 전부).
 
+### 2.5 보호 대상 파일·디렉토리 enumeration (T3, C-D 흡수 — 2026-05-09 후속 2)
+
+> **본 §2.5 는 합의 보고서 §11.2 P1 조건 C-D 흡수** (출처: GPT 조건 4 + B Gap-3 + B Gap-6). §2.2 #9~#11 (정책 자동 변경 / ADR 자동 수정 / Constitution 우회) 의 *대상 파일·디렉토리 범위* 를 명시 enumeration 한다.
+
+다음은 Hermes / Worker Agent / Hermes-originated automation 이 **자동 변경 시도 시 자동 reject + audit log + 사용자 alert** (T3) 대상:
+
+| # | 보호 대상 | 분류 | 강제 메커니즘 | 권위 근거 |
+|---|---------|-----|----------|---------|
+| 1 | `.git/` (HEAD, config, hooks, packed-refs, refs/) | T3 | filesystem ACL: Hermes container `read_only` mount + `:ro` bind / `cap_drop=ALL` | system-identity-prequel §3.3 #1 + 본 §2.2 #20 |
+| 2 | `.github/workflows/*.yml` (GitHub Actions workflow) | T3 | git pre-commit hook on `.github/workflows/` + Hermes-originated commit auto-reject | 본 §2.2 #9 (정책 자동 변경) + R-6 actual run 권위 |
+| 3 | `.pre-commit-config.yaml` / `.husky/` / Layer 1~2 hook config | T3 | filesystem read-only on hook config + git pre-commit hook | 본 §2.2 #12 (Harness Gate 실패 무시) + 헌법 1~4조 |
+| 4 | `.github/CODEOWNERS` / branch protection 정의 | T3 | filesystem read-only + GitHub branch protection API audit | 본 §2.2 #20 (합의 결과 silent override) |
+| 5 | `docs/decisions/ADR-*.md` (ADR 본문 전체) | T3 | filesystem read-only + git pre-commit hook | 본 §2.2 #10 (ADR 자동 수정) + ADR-011 §2.3 |
+| 6 | `docs/architecture/governance-preconditions.md` / `hermes-not-root-of-trust-runtime.md` / `provider-agnostic-memory-skill-design.md` (G2/G3/G4 정의 문서) | T3 | filesystem read-only on Hermes container + 본 §4 자기참조 차단 | 본 §2.2 #13 (G2/G3/G4 PASS 자동 선언) + G2 §9.2 |
+| 7 | `docs/architecture/hermes-adoption-design-v3.md` (P2 v3) / SDD 명세 본문 | T3 | filesystem read-only + git pre-commit hook | 본 §2.2 #9 (정책 자동 변경) + 헌법 1조 (SDD) |
+| 8 | `docs/constitution/*.md` (헌법 본문) | T3 | filesystem read-only + git pre-commit hook | 본 §2.2 #11 (Constitution 우회) + 헌법 자체 |
+| 9 | `docs/external-review/*.md` (외부 LLM 의뢰·응답 자료) | T3 | filesystem append-only + Hermes-originated 변경 자동 reject + 본 §4 외부 LLM 자기참조 차단 | 본 §2.2 #20 (합의 결과 silent override) + 본 §4.4.2 |
+| 10 | `docs/review/3plus1-consensus-*.md` (합의 보고서) | T3 (작성 후 immutable) | git append-only (수정은 별도 commit + 사용자 명시) + Hermes-originated 수정 자동 reject | 본 §2.2 #20 + system-identity-prequel §3.3 #2 |
+| 11 | Evidence Ledger (`docs/phase0/*-evidence.md`, JSONL ledger 파일, R-6 artifact) | T3 (append-only) | hash chain 또는 git append commit + Hermes-originated 수정 자동 reject + signed commit (PR-2 ADR-012 후보) | system-identity-prequel §6.3 + 본 §5.2.4 |
+| 12 | `docs/phase0/redaction-verification-sop.md` / R-7 SOP | T3 | filesystem read-only + 본 §2.2 #19 (redaction 정책 완화) | R-7 SOP §3.4 |
+| 13 | `redaction-policy.yaml` / Tier-1 catalog / `skill-permissions.yaml` / `canary-catalog/` (정책성 파일) | T3 | filesystem read-only on Hermes container + R-5 canary recheck + 본 §3.1 (Learning silent drift) | ADR-011 §2.4 + 본 §2.2 #19, #21 |
+| 14 | `hermes-version.yaml` + dependency lock (`requirements.txt` / `pyproject.toml` / `poetry.lock`) | T2 (사용자 명시 PR merge) | R-6 workflow 의존성 변경 감지 + 사용자 명시 PR merge | ADR-008 차단조건 #3 + 본 §3.2 |
+| 15 | `.claude/settings.json` / `.claude/commands/` / `claude-code` 하네스 정의 | T3 | filesystem read-only on Hermes container + 사용자 명시 결정 강제 | system-identity-prequel §3.3 #1 |
+
+**enumeration 의 의미**:
+- 본 §2.5 는 §2.2 #9~#11 의 *대상 범위* 를 *명시* (silent expansion 차단)
+- 신규 보호 대상 추가 = T3 변경 절차 (풀 3+1 합의 + ADR Amendment + 사용자 명시 결정)
+- 본 enumeration 자체도 본 §2.5 의 보호 대상 (#6: G3 정의 문서)
+
+**G2 §9.2 와의 인터페이스**: G2 §9.2 #1 ("filesystem read-only on `docs/architecture/governance-preconditions.md`") 의 *대상 범위* 가 본 §2.5 #1~#15 로 확장. G2 §9.2 본문 *변경 없이* 본 §2.5 가 대상 enumeration 을 흡수.
+
+**Implementation 상태**: 본 §2.5 는 *enumeration 명시* 까지. 실 hook / filesystem ACL / pre-commit / CI step 구현은 **DESIGN PASS / IMPLEMENTATION PENDING** (별도 합의, Implementation/Runtime PASS 영역).
+
 ---
 
 ## 3. Silent Drift / Upstream Breakage / Skill Escalation 대응
@@ -428,6 +461,40 @@ Skill 이 정의된 권한 등급 (read / write / shell / network / DB 등) 을 
 - ❌ 외부 LLM 모든 합의 필수 (격상 통합 합의 + 정책 변경 시만 필수)
 - ❌ Hermes 합의 orchestration 자체 금지 (orchestration 은 §2.1 #4 허용 권한)
 
+### 4.7 본 §4 의 메타-순환 청산 (C-E 흡수 — 2026-05-09 후속 2)
+
+> **본 §4.7 은 합의 보고서 §11.2 P1 조건 C-E 흡수** (출처: Claude C-5). 본 §4 ("합의 인프라 순환 권위 해결") 의 *자기 적용 한계* 를 *메타-순환* 으로 명시 기록한다. **§4 자체가 §4 적용 대상이 될 때 어떤 한계가 발생하는지** 정직 노출.
+
+#### 4.7.1 메타-순환 사례
+
+본 G3 정의 문서 (현 본문) 가 *DRAFT 작성 + Reviewer-only 단축 검토 (2026-05-07) → 풀 3+1 정식 PASS 합의 (2026-05-09)* 절차로 정식 PASS 되었다. 이 절차에서 다음 *메타-순환* 이 발생:
+
+| # | 메타-순환 | 발생 시점 | 청산 방법 |
+|---|---------|--------|--------|
+| (a) | **§4.4.2 외부 LLM 권장/필수** 자체가 본 §4.4.2 가 *작성된* 시점에 외부 LLM 검증 없이 작성됨 (G2 / G3 / G4 DRAFT 모두 단일 사용자 + Claude 패밀리 컨텍스트) | 2026-05-07 ~ 2026-05-09 DRAFT 작성 단계 | 2026-05-09 정식 PASS 합의 시점에 GPT (cross-vendor) + Claude (인접 컨텍스트) **2건 수령 후** PASS 발생 — *사후 외부 LLM 충족* 으로 청산 |
+| (b) | **§4.3 매트릭스 "Hermes 관련 결정 = 풀 3+1 + 외부 LLM 권장"** 자체가 Hermes-orchestrated 합의 *없이* 결정됨 (Hermes PMO 미격상 시점) | 2026-05-07 §4 작성 시점 | 격상 *전* 합의는 Hermes-orchestrated 가 아니므로 §4.3 자기적용 대상 *아님* (사용자 + Claude 메인 컨텍스트 합의) — 본 §4.3 은 격상 *후* 적용 |
+| (c) | **§4.4.1 단축 합의 적격 조건** 자체가 §4.4.1 패턴으로 결정됨 — *circular* | 2026-05-07 §4 작성 시점 | 본 G3 정식 PASS 시점에 풀 3+1 + 외부 LLM 2건으로 *재검증* — §4.4.1 패턴 사용 적격성 사후 확인 |
+| (d) | **본 §4.7 자체** 가 본 G3 정의 문서 정식 PASS *후* 작성되며, 이는 G3 PASS 후 본문 변경에 해당 — `governance-preconditions.md` §10.2 G2 PASS 후 *변경 0건* 명시와의 정합성 점검 필요 | 2026-05-09 후속 2 | 본 §4.7 변경은 P1 조건 C-E (PASS 합의 §11.2) 흡수로 PASS 합의 권위 *내부* 변경 — 합의 보고서 권위 답습 (별도 §4 전체 재합의 *불필요*) |
+
+#### 4.7.2 메타-순환의 청산 원칙
+
+본 §4 자기 적용의 메타-순환은 다음 4 원칙으로 *허용·청산* 된다:
+
+1. **사후 외부 LLM 충족**: §4.4.2 적용 시점은 *DRAFT* 까지 면제, *정식 PASS* 시점에 외부 LLM 의무 강제 (본 §4 정식 PASS = 2026-05-09 GPT + Claude 2건 충족)
+2. **격상 전 면제**: §4.3 / §4.5 의 "Hermes 관련 결정" 은 *Hermes PMO 격상 후* 만 적용 (격상 전 합의는 사용자 + Claude 메인 컨텍스트로 충분)
+3. **합의 권위 내부 변경**: 합의 보고서가 *변경을 합의로 권위화* 한 경우 (현 §4.7 = C-E 흡수), 합의 보고서 권위 답습으로 별도 §4 전체 재합의 *불필요* — 단, 본 변경 자체가 다음 합의 (PR-2) 에서 점검 대상
+4. **자기 작성 한계 명시 의무**: 본 §4.7 처럼 *자기 적용 메타-순환* 은 명시 기록 — 묵시 통과 금지
+
+#### 4.7.3 본 §4.7 이 *하지 않는* 것
+
+- ❌ 본 §4 무력화 (메타-순환은 *청산* 이지 §4 폐기 아님)
+- ❌ 향후 모든 합의에서 외부 LLM 면제 (§4.4.2 본문은 그대로 유효)
+- ❌ Hermes 자기 격상 / 자기 PASS 의 정당화 (§4.3 매트릭스 그대로 유효)
+
+#### 4.7.4 본 §4.7 의 외부 LLM 검증 한계 (자기 명시)
+
+본 §4.7 자체는 **PR-1 단축 합의 (Reviewer-only)** 시점에 작성됨 — 외부 LLM 0건. 이는 *PR-1 본문 보강 = 단축 합의 적격* (사용자 결정 2: 본문 = 단축) 답습. 본 §4.7 의 외부 LLM 검증은 **PR-2 풀 3+1** 또는 **P2 v3 정식 채택 합의 (cross-vendor 추가)** 시점에 사후 충족 가능 (본 §4.7.2 원칙 #1 답습).
+
 ---
 
 ## 5. Evidence 결정 원칙 운영 규칙화
@@ -507,6 +574,61 @@ Human overrides.   (사람이 최종 방향을 선택한다)
 - Hermes 는 사용자 override 를 자동 reject 시도 금지 (§2.2 #22)
 - Hermes 는 사용자 override 본문을 *기록* 만 가능
 - Hermes 는 사용자 override 결과를 다음 작업에 *반영* (T1 자동 학습)
+
+### 5.5 SPOF Accepted Risk — 1인 동일 호스트 권한 모델 의도적 수용 (C-F 흡수 — 2026-05-09 후속 2)
+
+> **본 §5.5 는 합의 보고서 §11.2 P1 조건 C-F 흡수** (출처: Claude C-6). 본 §5 운영 규칙의 *전제 조건* 인 "사용자 = 단일 인격 + 단일 호스트" 의 SPOF (Single Point of Failure) 위험을 **의도적으로 수용** 하고, *multi-host / 다인 운영 전환 시 추가 layer 의무 발동 트리거* 를 명시 기록한다.
+
+#### 5.5.1 현 SPOF 의 형태
+
+본 G3 + G2 + G4 + Constitution + ADR 의 권위 위계 운영은 다음 단일 인격·단일 호스트 모델을 *전제* 한다:
+
+| 층 | 현 모델 | SPOF 위험 |
+|----|------|--------|
+| Constitution / ADR / SDD 변경 권한 | 단일 사용자 (`jokwangwon` git author) | 사용자 호스트 침해 시 모든 권위 위계 우회 가능 |
+| 합의 보고서 commit author | 동일 사용자 | Hermes-originated commit auto-reject (§2.2 #20) 의 *기준* 자체가 단일 author 비교 |
+| 사용자 명시 결정 (T2 / T3) | 단일 사용자 명시 | 사용자 호스트의 키체인 / SSH key / GPG key 침해 시 자동 승인 위장 가능 |
+| Evidence Ledger 보존 | 단일 git 저장소 + 단일 GitHub remote | 저장소 탈취 시 ledger 변조 가능 (hash chain 보강 후에도 origin replace 위험) |
+| 외부 LLM 의뢰·응답 회수 | 단일 사용자 → 외부 LLM 직접 의뢰 | 사용자 호스트 침해 시 외부 LLM 응답 위조 가능 |
+| Hermes container 호스트 | 단일 호스트 (현 시점) | 호스트 침해 시 filesystem read-only mount 우회 가능 |
+
+#### 5.5.2 의도적 수용 사유
+
+본 SPOF 는 **의도적으로 수용** 된다. 사유:
+
+1. **프로젝트 성격**: 본 프로젝트는 "AI Development Company OS 메타-템플릿" — 1인 개발자 / 소규모 팀 시작 전제 (CONTEXT.md 답습)
+2. **MVP 범위**: 4 Worker Agent + 2 Memory + 단일 호스트 가 MVP 범위 (system-identity-prequel §8 답습)
+3. **운영 단순성**: multi-host / 다인 권한 분리 = 운영 부담 增 (Hermes PMO 격상 합의의 R-8 위험과 동일 카테고리)
+4. **점진 전환**: SPOF → multi-layer 전환은 *Hermes PMO 격상 후* 별도 합의로 추진 (Implementation/Runtime PASS 영역)
+
+#### 5.5.3 Multi-host / 다인 전환 트리거 (의무 발동 조건)
+
+다음 *조건 중 하나* 충족 시 본 SPOF 모델은 *자동 무효화* 되고, 추가 layer 의무 발동:
+
+| # | 트리거 | 의무 발동 layer | 시점 |
+|---|------|----------|-----|
+| (1) | 두 번째 사용자 (다른 git author) 가 본 저장소에 commit 시도 | 사용자별 GPG signed commit 강제 + branch protection multi-author 룰 + ADR Amendment 절차 | 즉시 |
+| (2) | Hermes container 가 두 번째 호스트로 분산 | 분산 host 간 mutual TLS + 정책 파일 distributed read-only (예: signed manifest) + audit log 분산 sync | 분산 진입 시점 |
+| (3) | Production 환경 (단일 사용자 노트북 → 클라우드 / 공용 인프라) 전환 | secrets vault (Hashicorp / AWS Secrets Manager 등) + KMS-backed encryption + multi-stakeholder 승인 | 환경 전환 시점 |
+| (4) | 외부 LLM 의뢰·응답 자동화 (사용자 직접 회수 → API 자동) | API key 분리 보관 + 응답 signed manifest + 외부 LLM 응답 hash 검증 | 자동화 진입 시점 |
+| (5) | Hermes PMO 격상 (4 게이트 모두 Implementation/Runtime PASS) | 격상 합의 자체에 본 §5.5 multi-layer 전환 PASS 동시 충족 의무 (Claude C-3 + C-6 답습) | 격상 합의 시점 |
+
+**조건 미충족 시 (현 시점)**: 본 §5.5 의 5 트리거 *중 어느 것도 충족 안 됨* → 현 SPOF 모델 *유효*. 단, 본 §5.5 자체가 "의도적 수용" 의 *명시 기록* 으로 책무 분리 (Claude C-6 권고 답습).
+
+#### 5.5.4 본 §5.5 가 *하지 않는* 것
+
+- ❌ SPOF 정당화 (본 §5.5 는 *수용 + 트리거 명시* 까지, 정당화는 §5.5.2 사유 한정)
+- ❌ Multi-host 전환 의무 강제 (본 §5.5 는 *의무 발동 조건* 명시까지, 실 multi-layer 구현은 별도 합의)
+- ❌ 사용자 호스트 침해 자동 감지 (현 시점 hook 미구현)
+- ❌ Hermes PMO 격상 자동 활성화 (격상은 사용자 명시 + 별도 합의)
+
+#### 5.5.5 G2 §9.5 / 본 §4.7 와의 인터페이스
+
+- **G2 §9.5**: 본 SPOF 의 *6 GP 무결성 보호 측면* 인터페이스 (자기참조 차단의 제한 = 단일 사용자 의존)
+- **본 §4.7**: 본 SPOF 의 *합의 인프라 순환 권위 측면* (자기 작성 + 외부 LLM 사후 충족 모델은 단일 사용자 모델 전제)
+- **본 §5.5**: 본 SPOF 의 *Evidence + override + Tools verify 운영 측면* (현 §5.5)
+
+3 §은 동일 SPOF 의 *3 측면* — 어느 하나만 보강해도 SPOF 자체는 완전 해소되지 않음. 본 §5.5.3 트리거 5건 *전부* 또는 별도 합의로만 SPOF 해소.
 
 ---
 

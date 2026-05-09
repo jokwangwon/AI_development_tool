@@ -221,6 +221,7 @@ Constitution > ADR > SDD > Harness Gates > Hermes > Worker Agents
 
 ```yaml
 # skill.yaml — provider-neutral schema
+# 필수성 표기: 필수 / MVP-필수 (C-K 흡수, 2026-05-09 후속 2) / MVP-권장 / 후속
 id:                  # (1)  string, 필수, UUID v4 또는 slug
 name:                # (2)  string, 필수, human-readable
 version:             # (3)  string, 필수, semver
@@ -230,13 +231,13 @@ description:         # (6)  string, 필수, markdown
 inputs:              # (7)  JSON Schema, 필수
 outputs:             # (8)  JSON Schema, 필수
 allowed_actions:     # (9)  array<string>, 필수
-forbidden_actions:   # (10) array<string>, 권장
-required_evidence:   # (11) array<evidence_type>, 권장
-required_tests:      # (12) array<test_ref>, 권장
+forbidden_actions:   # (10) array<string>, MVP-권장
+required_evidence:   # (11) array<evidence_type>, MVP-필수 (Skill promotion T2 검증 의무)
+required_tests:      # (12) array<test_ref>, MVP-권장
 promotion_status:    # (13) enum, 필수
-rollback_triggers:   # (14) array<rollback_trigger>, 권장
-provider_bindings:   # (15) object, 권장 (provider-neutral 강제)
-created_from:        # (16) object, 권장
+rollback_triggers:   # (14) array<rollback_trigger>, MVP-권장
+provider_bindings:   # (15) object, **필수** (C-K 흡수 — Provider Liquidity lock-in 차단 핵심, 권장→필수 격상)
+created_from:        # (16) object, MVP-권장
 last_verified_at:    # (17) ISO 8601 timestamp, 필수
 ```
 
@@ -253,13 +254,13 @@ last_verified_at:    # (17) ISO 8601 timestamp, 필수
 | 7 | `inputs` | JSON Schema | ✅ | 입력 형식 — 타입 / 검증 / 필수 표시 | 0 (JSON Schema = 표준) |
 | 8 | `outputs` | JSON Schema | ✅ | 출력 형식 | 0 |
 | 9 | `allowed_actions` | array\<string\> | ✅ | 권한 등급 enum: `read` / `write` / `shell` / `network` / `db` / `git` / `docker` (확장 가능) | 0 (action 종류는 표준) |
-| 10 | `forbidden_actions` | array\<string\> | 권장 | `allowed_actions` 와 disjoint | 0 |
-| 11 | `required_evidence` | array\<evidence_type\> | 권장 | enum: `test_pass` / `lint` / `secret_scan` / `consensus` / `review` 등 | 0 |
-| 12 | `required_tests` | array\<test_ref\> | 권장 | 테스트 파일 경로 또는 ID | 0 |
+| 10 | `forbidden_actions` | array\<string\> | MVP-권장 | `allowed_actions` 와 disjoint | 0 |
+| 11 | `required_evidence` | array\<evidence_type\> | MVP-필수 (C-K) | enum: `test_pass` / `lint` / `secret_scan` / `consensus` / `review` 등. `promotion_status: promoted` 진입 시 ledger 검증 의무 (§3.4) | 0 |
+| 12 | `required_tests` | array\<test_ref\> | MVP-권장 | 테스트 파일 경로 또는 ID | 0 |
 | 13 | `promotion_status` | enum | ✅ | `proposed` / `approved` / `promoted` / `archived` / `revoked` (§3.3 답습) | 0 |
-| 14 | `rollback_triggers` | array\<rollback_trigger\> | 권장 | enum: `escalation_detected` / `evidence_missing` / `t3_violation` 등 | 0 |
-| 15 | `provider_bindings` | object | 권장 | `{ "<provider_name>": { ...optional bindings... } }` — **provider 이름이 있어도 provider 에 종속되지 않아야 함**. 최소 2 provider 로 재해석 가능 | ⚠️ 주의 (lock-in 핵심 영역) |
-| 16 | `created_from` | object | 권장 | `{ "task_id": "...", "commit_sha": "...", "agent": "..." }` — 출처 추적 | 0 |
+| 14 | `rollback_triggers` | array\<rollback_trigger\> | MVP-권장 | enum: `escalation_detected` / `evidence_missing` / `t3_violation` 등 | 0 |
+| 15 | `provider_bindings` | object | **✅ 필수 (C-K 격상)** | `{ "<provider_name>": { ...optional bindings... } }` — **provider 이름이 있어도 provider 에 종속되지 않아야 함**. 최소 2 provider 로 재해석 가능. `required: true` / `exclusive: true` 표시 *금지* (lint 룰 강제 = C-H 별도 합의 영역) | ⚠️ 주의 (lock-in 핵심 영역) |
+| 16 | `created_from` | object | MVP-권장 | `{ "task_id": "...", "commit_sha": "...", "agent": "..." }` — 출처 추적 | 0 |
 | 17 | `last_verified_at` | ISO 8601 | ✅ | 마지막 검증 시점 — `required_evidence` + `required_tests` 통과 시점 | 0 |
 
 ### 3.3 Promotion Status 상태 전이
@@ -328,6 +329,34 @@ provider_bindings:
 - 모든 binding 은 *optional optimization* 한정
 - 최소 2 provider 로 재해석 가능 (예: claude / openai / ollama 중 2+)
 - Provider 종속 endpoint / SDK / 모델명 분기는 Skill 본문에 작성 금지 (G2 GP-5 + G3 §6.4 답습)
+- **C-K 격상 (2026-05-09 후속 2)**: `provider_bindings` 자체가 *필수 필드* — 즉 모든 Skill 은 본 §3.5 검증 규칙 통과 의무 (이전: 권장 → 필수)
+- **C-H 별도 합의 영역**: lint 룰 (depcruise + schema lint) 강제 = 본 §3.5 검증 규칙의 *기계적 강제* — Implementation/Runtime PASS 영역, 별도 합의
+
+### 3.6 MVP 필수 / MVP 권장 / 후속 분리 (C-K 흡수 — 2026-05-09 후속 2)
+
+> **본 §3.6 은 합의 보고서 §11.2 P1 조건 C-K 흡수** (출처: Agent C 권고 + GPT 단순화 권고 + Claude §3.2 4/5 동의). §3.1 / §3.2 17 필드의 *필수성* 을 **MVP 진입 시점** 기준으로 분리 표기한다. *권장* 표기를 **MVP-필수 / MVP-권장 / 후속** 3 단계로 정련.
+
+#### 3.6.1 분류 매트릭스 (17 필드)
+
+| 분류 | 의미 | 필드 (총 17) | 검증 시점 |
+|------|------|----------|--------|
+| **필수** | Skill schema 통과 의무, 모든 단계에서 강제 | (1) id / (2) name / (3) version / (4) scope / (5) owner / (6) description / (7) inputs / (8) outputs / (9) allowed_actions / (13) promotion_status / **(15) provider_bindings (C-K 격상)** / (17) last_verified_at — **12 건** | Skill 등록 시점 (T2 사용자 명시 승인 §2.2 #16 답습) |
+| **MVP-필수** | MVP 범위 내 강제, 후속 *완화 불가* | (11) required_evidence (Skill `promotion_status: promoted` 진입 시 ledger entry 의무, §3.4 답습) — **1 건** | `promoted` 상태 전이 시점 (T2 + Evidence §5.3 답습) |
+| **MVP-권장** | MVP 권장, 격상 *후* 필수 격상 가능 | (10) forbidden_actions / (12) required_tests / (14) rollback_triggers / (16) created_from — **4 건** | Skill 운영 시점 (best-effort) |
+| **후속** | 본 G4 정식 채택 시점 *추가* 필드 후보 | (없음 — 17 필드 enumeration 자체 변경은 별도 합의) | (해당 없음) |
+
+#### 3.6.2 격상 이력 (C-K 흡수 결과)
+
+| 필드 | 이전 (DRAFT) | 이후 (C-K 격상 — 2026-05-09 후속 2) | 사유 |
+|------|---------|--------|----|
+| (15) `provider_bindings` | 권장 (Skill 작성 시 optional) | **필수** (모든 Skill 의무) | Provider Liquidity (헌법 5조 관용) lock-in 차단 *4-way 보호* (GP-5 + G3 §6.4 + G4 §3.5 + GP-6) 의 *진입점 핵심* — 권장 시 미작성 Skill 의 lock-in 위험 잔존 |
+| (11) `required_evidence` | 권장 | MVP-필수 (`promoted` 진입 시) | Evidence Ledger (system-identity-prequel §6.3) 권위 답습 — Skill `promotion_status: promoted` 는 §5.3 PASS 성립 요건 (i)~(iv) 충족 의무. evidence enumeration 의 *형식* 부재는 검증 불가 |
+
+#### 3.6.3 본 §3.6 의 권위 한계
+
+- 본 §3.6 은 *§3.1 schema 본문* 의 표기 정련 까지 — 17 필드 *추가/삭제/이름 변경 0건*
+- C-H (provider_bindings lint 룰 강제) 는 본 §3.6 *후속* 영역 — 본 §3.6 은 *schema 차원* 까지, lint 룰 강제 (depcruise + schema validation 자동 차단) 는 Implementation/Runtime PASS 별도 합의
+- 본 §3.6 변경 (격상/하향) 자체는 풀 3+1 합의 + ADR Amendment 절차 (T3 변경)
 
 ---
 
@@ -744,6 +773,66 @@ G3 §6.5 답습:
 5. G2 GP-6 답습 — 본 G4 §7 이 GP-6 의 *형식 제공* 측면 흡수
 
 본 5건 즉시 강제는 **본 G4 가 정식 채택되지 않더라도** 현 시점에서 유효 — *Hermes 가 4 게이트 통과 전 ADR-008 합의 자동화 + R-6 CI 회귀 검증* 책임 한정으로 작동하는 현 상태에 적용.
+
+### 11.4 G4 후속 권고 P-1 ~ P-5 흡수 진행 상태 (C-L 흡수 — 2026-05-09 후속 2)
+
+> **본 §11.4 는 합의 보고서 §11.2 P1 조건 C-L 흡수** (출처: `3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` §3.1 자기 발견 잠재 위험 5건). G4 DRAFT 검토 시점 (2026-05-09 첫 검토) 자기 발견 5 후속 권고 P-1 ~ P-5 의 *처리 시점·방법* 을 명시 기록.
+
+| # | 위험 (G4 검토 §3.1) | 처리 시점 | 처리 방법 |
+|---|------------|--------|--------|
+| **P-1** | §11.1 자기 명시 한계 — RFC 8785 JCS 미인용 (self-disclosed) | **PR-2 풀 3+1** (ADR-012 + G4 §4.4 hash chain 사양 보강 — C-G 흡수와 *동시*) | §4.4 본문에 RFC 8785 JCS 명시 인용 + canonical JSON 사양 보강 (별도 PR-2) |
+| **P-2** | §10 schema 진화 정책 — 필드 *제거* / *변경* 정책 미명시 | **PR-2 풀 3+1** (ADR-012 와 *동시*) 또는 **본 PR-1 §10 보강** | §10 변경 절차 표에 "필드 *추가* / *제거* / *이름 변경* / *타입 변경*" 4 행 추가 + schema_version 증가 정책 명시 (본 §11.4.1 권고) |
+| **P-3** | §4.5 외부 형식 import 시 schema_version declaration 절차 약함 | **PR-2 풀 3+1** (G4 §4.5 보강과 *동시*) 또는 별도 합의 | §4.5 import 시 schema_version 검증 + 호환성 매트릭스 명시 |
+| **P-4** | §6.4 "3-way 인터페이스" 명명 정확성 — 실제 G4 두 § (§3.5 + §4.3) + GP-5 + G3 §6.4 = 4-way | **PR-1 본문 보강** (현 §11.4.2 흡수) | §6.4 명명 "3-way" → "4-way" 정정 또는 *별 명명* (예: "Provider Liquidity Multi-layer Defense") — 본 §11.4.2 답습 |
+| **P-5** | §2.2.1 Global Memory `~/.claude/global/` Claude Code 표준 디렉토리 충돌 가능성 | **Implementation/Runtime PASS** 합의 (실 path 결정 시점) | 별도 합의 — Claude Code 표준 디렉토리 구조 점검 후 path 정정 또는 prefix 추가 |
+
+#### 11.4.1 P-2 schema 진화 정책 보강 (본 §10 흡수)
+
+§10 변경 절차 표에 다음 4 행 *추가* (본 §11.4.1 = §10 답습 답습):
+
+| 변경 유형 | 절차 |
+|---------|------|
+| §3.1 17 필드 schema *추가* | semver MINOR 증가 (예: 1.0.0 → 1.1.0) + 단축 합의 + import 시 backward compatibility 보장 |
+| §3.1 17 필드 schema *제거* | semver MAJOR 증가 (예: 1.0.0 → 2.0.0) + **풀 3+1 합의 + ADR Amendment 절차** + migration script 의무 (§4.5 답습) |
+| §3.1 17 필드 schema *이름 변경* | semver MAJOR 증가 + **풀 3+1 합의 + ADR Amendment 절차** + alias 호환성 1 release 유지 |
+| §3.1 17 필드 schema *타입 변경* | semver MAJOR 증가 + **풀 3+1 합의 + ADR Amendment 절차** + migration script 의무 |
+
+**schema_version 핀**: §4.2 JSONL `schema_version` 필드 (본 §4.2 답습) 가 변경 시점에 증가. import 시 `schema_version` 호환성 검증 의무 (§4.5 답습).
+
+#### 11.4.2 P-4 "3-way" 명명 정정 (본 §6.4 + §3.5 + §4.3 흡수)
+
+**이전 명명**: "3-way 인터페이스" (G2 GP-5 + G3 §6.4 + G4 §3.5 + §4.3 → 4 위치이지만 3 게이트로 카운트)
+
+**정정 명명**: **"Provider Liquidity 4-way Multi-layer Defense"**:
+- Layer 1: G2 GP-5 (depcruise 룰 + P1 facade 단일 진입점) — *모든 작성 주체* 의 코드 lock-in 차단
+- Layer 2: G3 §6.4 (Hermes-originated lock-in 변경 시도 차단) — *Hermes 작성 주체* 한정
+- Layer 3: G4 §3.5 (`provider_bindings` schema *required*/*exclusive* 금지) — *Skill 메타데이터* 차원
+- Layer 4: G4 §4.3 (JSONL Hermes 의존 0 + 최소 2 provider 재해석 가능) — *export format* 차원
+
+**4 layer 모두 충족** 시 Provider Liquidity 의 *완결성* 확보. 1 layer 만 깨져도 lock-in 위험 잔존 (예: schema OK + JSONL OK 이지만 P1 facade 우회 코드 작성 = lock-in 가능).
+
+본 §6.4 / §3.5 / §4.3 본문 자체는 *용어* 갱신 외 변경 0건 (본 §11.4.2 가 **명명 정정 명시 기록** 한정).
+
+#### 11.4.3 G3 4 후속 권고 잔여 (G3 검토 §3.1 P-1~P-4) 흡수 진행 상태
+
+> **본 §11.4.3 은 합의 보고서 §11.2 P1 조건 C-L 의 G3 4건 부분** (출처: `3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` §3.1 자기 발견 P-1~P-4). G3 DRAFT 검토 (2026-05-07) 시점 자기 발견 4건 처리 진행 상태.
+
+| # | G3 검토 §3.1 후속 권고 | 처리 시점 | 흡수 위치 |
+|---|--------------|--------|--------|
+| G3 P-1 | §1.2.4 추가 위반 경로 후보 명시 권고 | 본 PR-1 G3 §3 (이미 G3 §3.1~§3.3 으로 흡수 완료, 2026-05-07 단축 검토 §6.1 답습) | (이미 흡수) |
+| G3 P-2 | §6 GP-6 ↔ G3 ↔ G4 3-way 인터페이스 후속 갱신 | 본 PR-1 G3 §6.5 + G2 §10 (이미 §6.5 / §7.2 GP-6 cross-reference 명시 완료) | (이미 흡수) |
+| G3 P-3 | §4.4.2 외부 LLM 권장/필수 적용 시점 명확화 | 본 PR-1 G3 §4.7 (C-E 흡수와 *동시*) — 메타-순환 청산 §4.7.1 (a) | §4.7.1 (a) |
+| G3 P-4 | §5.2 #5 G2 §9 메타 안전장치 ↔ G3 §5.5 위임 명확화 | 본 PR-1 G3 §5.5 (C-F 흡수와 *동시*) — SPOF accepted risk 본문 G3 §5.5 + G2 §9.5 분리 | §5.5 + G2 §9.5 |
+
+G3 4건 후속 권고 모두 **본 PR-1 흡수 완료** (별도 후속 권고 잔여 0건).
+
+#### 11.4.4 본 §11.4 가 *하지 않는* 것
+
+- ❌ §4.4 RFC 8785 JCS 본문 인용 (PR-2 풀 3+1 영역 — C-G 흡수와 *동시*)
+- ❌ §10 본문 자동 갱신 (본 §11.4.1 은 *권고 사양* 명시까지, §10 본문 변경은 PR-2 또는 별도 합의)
+- ❌ §6.4 / §3.5 / §4.3 본문 *용어 자동 갱신* (본 §11.4.2 는 *명명 정정 명시 기록* 까지)
+- ❌ P-5 (`~/.claude/global/` path 정정) 자동 처리 (Implementation/Runtime PASS 영역, 별도 합의)
+- ❌ P-3 (§4.5 import schema_version 검증) 자동 구현 (PR-2 또는 별도 합의)
 
 ---
 

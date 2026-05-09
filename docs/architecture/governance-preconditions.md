@@ -120,6 +120,38 @@ Provider Liquidity 위반 경로 = 3건 (P6~P8)
 - 헌법 10조 (문서 일관성) 위반 — `docs/INDEX.md` + 의존 관계 매트릭스
 - ADR-011 §2.4 T3 (자동 정책 변경) 위반 자체 — **G3** ("Hermes ≠ root of trust" 운영 구현) 범위. 본 G2 §9 메타 안전장치에서 *interface*만 명시
 
+#### 1.2.5 P9 ~ P12 deferred candidates (C-I 흡수 — 2026-05-09 후속 2)
+
+> **본 §1.2.5 는 합의 보고서 §11.2 P1 조건 C-I 흡수** (출처: GPT 조건 7 + Claude C-4). 본 §1.2.1 ~ §1.2.3 의 *현재 enumeration P1~P8* 외에 **누락 위반 경로 후보 4 ~ 6 건** 을 *deferred candidates* 로 명시 등록한다. **deferred candidate = 향후 합의에서 P9~P12 정식 등록 가능, 본 G2 PASS 시점 정식 enumeration 외**.
+
+| 후보 ID | 위반 경로 (요약) | 핵심 위험 | 현 등록 상태 | 정식 등록 시점 |
+|--------|-------------|--------|----------|----------|
+| **P9 (후보)** | **Prompt Injection** — Hermes / Worker / LLM 출력 내 *지시 명령* 이 후속 LLM / Tool 에 의해 *명령* 으로 해석 (예: "ignore previous instructions ...") | 합의 결과 silent override / 자동 정책 변경 위장 / Skill escalation | deferred (GPT 조건 7) | 외부 입력 검증 GP-4 PoC 진입 시점에 P5 (외부 입력 검증) 와 *별 카테고리* 로 정식 등록 검토 |
+| **P10 (후보)** | **Evidence Forgery** — JSONL ledger / 합의 보고서 / GitHub Actions run artifact 위조 또는 변조 | PASS 위장 / Hermes-originated 변경 위장 / 합의 권위 침해 | deferred (GPT 조건 7 + Claude C-4) | PR-2 신규 ADR-012 (Evidence Ledger 보호 강화) 발행 시점에 정식 등록 — 이 합의가 P10 의 *enforcement layer* 자체 정의 |
+| **P11 (후보)** | **Supply-chain Compromise** — Hermes / pysqlcipher3 / litellm / Hermes-agent 의존성 또는 GitHub Actions runner / Docker base image 침해 | 자동 redaction 무력화 / SQLCipher trigger silent 깨짐 / canary catalog silent 변경 / R-6 actual run 위장 | deferred (GPT 조건 7) | 의존성 SBOM (Software Bill of Materials) + supply-chain 검증 PoC 합의 시점에 정식 등록 — Hermes PMO 격상 *전* 권장 (Claude C-3 + C-6 답습) |
+| **P12 (후보)** | **Memory Poisoning Side-channel** — Memory / Skill 의 *우회 경로* (CLAUDE.md prompt-level lock-in / 외부 import skill / Memory 자동 흡수) 를 통한 Memory 오염 + 후속 결정 silent 영향 | 자동 학습 → 자동 정책 변경 위장 (T1 → T3 우회) / Skill 권한 escalation 우회 / Provider lock-in 우회 | deferred (Claude C-4 + GPT 조건 7) | G4 (provider-agnostic-memory-skill-design.md) Implementation/Runtime PASS 합의 시점에 정식 등록 — Memory boundary hook + Skill wrapper 실 구현 후 |
+
+##### 1.2.5.1 추가 후보 (lower priority, 2 건)
+
+| 후보 ID | 위반 경로 (요약) | 처리 |
+|--------|-------------|----|
+| **P13 (후보)** | **Provider-specific URL Hardcoding** — `https://api.anthropic.com/...` / `https://api.openai.com/...` 등 provider 도메인 하드코딩 (P1 facade 우회) | GP-5 / G3 §6.4 / G4 §3.5 (provider_bindings) *동작 측면* 충분 — 별도 P 등록 *불필요* (Claude C-9 답습) |
+| **P14 (후보)** | **CLAUDE.md prompt-level Lock-in** — CLAUDE.md / system prompt 본문 내 특정 모델명 / vendor 분기 명시 | system-identity-prequel §7 ("메타포 강제 금지") 답습 + 헌법 5조 (Provider Liquidity) — 별도 P 등록 *불필요* (관용 권위로 흡수) |
+
+##### 1.2.5.2 본 §1.2.5 의 권위 한계
+
+- 본 §1.2.5 는 *deferred candidates* 만 등록 — **본 G2 PASS 시점 P1~P8 enumeration 변경 0건**
+- P9 ~ P12 정식 등록은 *각 후보의 정식 등록 시점* (위 표 4 행) 에 별도 합의 (단축 또는 풀 3+1)
+- 본 §1.2.5 변경 (P9~P12 정식 등록 / 추가 후보) 자체는 풀 3+1 합의 + ADR Amendment 절차 (T3 변경)
+- 본 §1.2.5 등록 후보가 *현 시점* enforcement 의무화 대상 *아님* — deferred candidates 는 *위험 식별 + 후속 합의 진입 trigger*
+
+##### 1.2.5.3 본 §1.2.5 가 *하지 않는* 것
+
+- ❌ P9 ~ P12 자동 정식 등록 (각 후보 별도 합의 시점)
+- ❌ 현 G2 PASS 무력화 (deferred 는 *후속* 영역)
+- ❌ Hermes PMO 격상 전 P9 ~ P12 enforcement 의무 (격상 합의 시점 또는 별도 합의)
+- ❌ P13 ~ P14 정식 등록 (관용 권위로 흡수, 별도 P 불필요)
+
 ---
 
 ## 2. 6 거버넌스 사전조건 (GP-1 ~ GP-6) 정의 + 매핑
@@ -505,6 +537,37 @@ Hermes 가 누적한 Memory / Skill 이 Hermes 의존 schema / binary protocol �
 2. Hermes 또는 Worker Agent 가 본 문서 본문 자동 변경 시도 시 *자동 reject* 권위 (현 시점 hook 미구현 — 사용자 검토에 의존)
 3. 본 §9 자체의 변경은 **풀 3+1 합의 + ADR Amendment 절차** (T3 변경)
 4. 본 §9 가 본 G2 PASS 의 *전제* — §9 미충족 시 G2 PASS 불가
+
+### 9.5 SPOF Accepted Risk — 본 §9 자기참조 차단의 *단일 사용자 의존성* (C-F 흡수 — 2026-05-09 후속 2)
+
+> **본 §9.5 는 합의 보고서 §11.2 P1 조건 C-F 흡수** (출처: Claude C-6). 본 §9 ("Hermes 자기참조 차단") 의 *기준 인격* 인 "사용자 명시 결정" 이 **단일 사용자 + 단일 호스트** 모델에 의존하는 SPOF 위험을 명시 기록한다. 운영 측면 본문은 G3 §5.5 위임.
+
+#### 9.5.1 본 §9 의 단일 사용자 의존성
+
+본 §9.2 #1 (filesystem read-only) / #2 (git commit Hermes-originated auto-reject) / #4 (T3 변경 감지 hook → 사용자 alert) 모두 *기준 인격* 으로 **단일 사용자** (`jokwangwon` git author) 를 전제. 이 전제가 침해 시 본 §9 무결성 보호 무력화 가능:
+
+- (i) 사용자 호스트 침해 시 → Hermes-originated 자동 reject 의 *기준* 자체 위변조 가능
+- (ii) 단일 GPG / SSH 키 탈취 시 → "사용자 명시 결정 commit author" 위장 가능
+- (iii) 단일 GitHub remote 탈취 시 → push 후 force-push 로 합의 보고서 변조 가능 (hash chain 보강 후에도 origin replace 위험)
+
+#### 9.5.2 의도적 수용 + Multi-host / 다인 전환 트리거
+
+본 SPOF 는 **의도적으로 수용** (1인 개발자 + 단일 호스트 MVP 범위 답습). 의무 발동 트리거는 **G3 §5.5.3** 답습 (5 조건). 본 G2 §9.5 는 *보호 대상 무결성 측면* 만 명시:
+
+| # | 트리거 (G3 §5.5.3 답습) | G2 §9 측면 의무 발동 |
+|---|---------|-----------|
+| (1) | 두 번째 사용자 (다른 git author) commit 시도 | GPG signed commit 강제 + branch protection multi-author 룰 + 본 6 GP 본문 변경의 multi-stakeholder 합의 강제 |
+| (2) | Hermes container 분산 (multi-host) | 정책 파일 distributed read-only (signed manifest) + 분산 audit log sync |
+| (3) | Production 환경 전환 | KMS-backed encryption + 6 GP 본문 secrets vault 백업 |
+| (4) | 외부 LLM 의뢰·응답 자동화 | 외부 LLM 응답 hash 검증 + signed manifest 의무 |
+| (5) | Hermes PMO 격상 합의 시점 | 본 §9.5 multi-layer 전환 PASS 동시 충족 의무 (Claude C-3 + C-6 답습) |
+
+#### 9.5.3 본 §9.5 가 *하지 않는* 것
+
+- ❌ SPOF 정당화 (본 §9.5 는 *수용 + 트리거 명시* 까지, 본 §9 무력화 사유 아님)
+- ❌ Multi-host 전환 의무 자동 강제 (본 §9.5 는 *조건* 명시까지, 실 구현 별도 합의)
+- ❌ G3 §5.5 본문 흡수 (운영 측면은 G3 §5.5 위임, 본 §9.5 는 *6 GP 무결성 측면* 만)
+- ❌ 본 G2 PASS 무력화 (본 §9.5 는 *명시 기록* 으로 책무 분리, G2 PASS 자체는 본 §9.5 충족 의존성 아님)
 
 ---
 

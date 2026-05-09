@@ -244,13 +244,16 @@ Agent C 의 §6.4 *최종 입장* 답습 — Reviewer 가 T-2 채택 시 *반드
 
 | 검증 항목 | 1차 AST scanner | 2차 T-2 (import-linter) | 3차 (별도 합의 — grep + egress) | 라운드트립 (P2-5) |
 |----------|---------------|----------------------|----------------------------|-----------------|
-| Direct import (5종) | ✅ | ✅ (중첩 강화) | — | — |
+| Direct import (`openai`/`anthropic`/`litellm`/`ollama`) | ✅ | ✅ (중첩 강화) | — | — |
+| Direct import (`google.generativeai`)[^1] | ✅ (단독 책무) | ❌ (도구 제약) | — | — |
 | From-import | ✅ | ✅ (중첩 강화) | — | — |
 | **Transitive (A→B→openai)** | ❌ | **✅ (2차 신규 가치)** | — | — |
 | 동적 import (`importlib`, `__import__`) | ✅ (1차 전담) | ❌ | — | — |
 | 모델명 분기 (문자열) | ✅ (1차 전담) | ❌ | — | — |
 | **URL/endpoint 하드코딩** | ❌ | ❌ | **✅ (3차 영역 — 별도 합의)** | — |
 | 의미적 lock-in (출력 포맷 가정) | ❌ | ❌ | ❌ | ✅ 라운드트립 |
+
+[^1]: **각주 1 (2026-05-10 후속, C-9 검증 발견)**: `google.generativeai` 는 import-linter 의 `forbidden_modules` contract 가 받지 못 함 — `Invalid forbidden module google.generativeai: subpackages of external packages are not valid` 에러 (import-linter 2.11 / grimp 3.14, 본 검증 환경). 따라서 본 모듈은 **1차 AST scanner 단독 책무** 로 명시 분리. 2차 import-linter `forbidden_modules` 는 4종 (`openai`, `anthropic`, `litellm`, `ollama`) 만 등재. TR-4 부분 발화로 판단되었으나 *책무 분담의 명시적 갱신* 으로 처리 (사용자 명시 답습 — 풀 3+1 재합의 미발화). 단 미래에 `google.generativeai` *최상위 패키지* 차단 룰이 도입되면 (예: top-level `google` 차단 시 `google.protobuf` 등 false positive 위험 발생) TR-4 풀 재합의 발화.
 
 **핵심**: 본 2차 PoC 채택 시 **URL 하드코딩 차단의 *부재* 가 *조용히 통과* (FN 잔존)** 을 *과대 해석* 하지 말 것 (C-8 답습).
 
@@ -366,3 +369,4 @@ C-1~C-10 모두 답습 의무. 특히:
 | 일자 | 변경 | 비고 |
 |------|------|------|
 | 2026-05-10 (Group A 2차) | 신규 작성 | 풀 3+1 합의 — T-2 (import-linter) APPROVE WITH CONDITIONS, C-1~C-10 + TR-1~TR-5 답습 |
+| 2026-05-10 (Group A 2차, 후속) | §5.5 책무 분담 매트릭스 각주 1 추가 | C-9 RA-9 사전 검증 PASS — `include_external_packages = True` 정상 동작 확인. 단 `google.generativeai` 가 import-linter forbidden contract 제약으로 받지 못 함 → 1차 AST scanner 단독 책무 명시 분리. 사용자 명시 답습 (풀 재합의 미발화, 책무 분담 명시 갱신만) |

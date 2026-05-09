@@ -103,13 +103,18 @@
 | **P7** | **모델명/Provider 분기 코드** | `if model == "claude-opus-4-7": ... elif model == "gpt-5.5": ...` 또는 provider 별 후처리 분기 / Skill 내 모델 가정 (ADR-008 §결과 §주의사항 6종) | Provider 교체 자유 (코드 변경 없이) | **차단조건 #4** (P1 v2 depcruise 룰) |
 | **P8** | **Memory / Skill Hermes 종속 형식** | Skill 정의 / Memory entry 가 Hermes 자체 schema (binary protocol / proprietary key) 사용으로 다른 오케스트레이터 import 불가 | Provider 교체 자유 (학습 자산 유지) | **차단조건 #2** (JSONL export) + **G4** (Provider-agnostic Memory/Skill 형식) |
 
-#### 1.2.3 P1~P8 합산
+#### 1.2.3 정식 위반 경로 합산 (P1~P8 + P10, 2026-05-09 후속 5 갱신)
 
 ```
 헌법 8조 (보안) 위반 경로 = 5건 (P1~P5)
 Provider Liquidity 위반 경로 = 3건 (P6~P8)
-합계 = 8건 (P1~P8)  ✅ 합의 §29~§30 일치
+Evidence Integrity 위반 경로 = 1건 (P10)            ← 2026-05-09 후속 5 정식 등록
+─────────────────────────────────────────────────
+정식 위반 경로 합계 = 9건 (P1~P8 + P10)            ← ✅ 합의 §29~§30 일치 + ADR-012 발행 시점 P10 흡수
+Deferred candidates = 3건 (P9 / P11 / P12, §1.2.5)
 ```
+
+P10 정식 등록 = ADR-012 (Evidence Ledger Protection) 발행 시점 (2026-05-09 후속 3 PR-2) 트리거 답습 — §1.2.5.2 명시 "P10 정식 등록 시점 = PR-2 신규 ADR-012 발행 시점" 답습. 본 §1.2.6 답습.
 
 #### 1.2.4 본 §1.2 가 *다루지 않는* 위반 경로
 
@@ -127,7 +132,7 @@ Provider Liquidity 위반 경로 = 3건 (P6~P8)
 | 후보 ID | 위반 경로 (요약) | 핵심 위험 | 현 등록 상태 | 정식 등록 시점 |
 |--------|-------------|--------|----------|----------|
 | **P9 (후보)** | **Prompt Injection** — Hermes / Worker / LLM 출력 내 *지시 명령* 이 후속 LLM / Tool 에 의해 *명령* 으로 해석 (예: "ignore previous instructions ...") | 합의 결과 silent override / 자동 정책 변경 위장 / Skill escalation | deferred (GPT 조건 7) | 외부 입력 검증 GP-4 PoC 진입 시점에 P5 (외부 입력 검증) 와 *별 카테고리* 로 정식 등록 검토 |
-| **P10 (후보)** | **Evidence Forgery** — JSONL ledger / 합의 보고서 / GitHub Actions run artifact 위조 또는 변조 | PASS 위장 / Hermes-originated 변경 위장 / 합의 권위 침해 | deferred (GPT 조건 7 + Claude C-4) | PR-2 신규 ADR-012 (Evidence Ledger 보호 강화) 발행 시점에 정식 등록 — 이 합의가 P10 의 *enforcement layer* 자체 정의 |
+| ~~**P10 (후보)**~~ → **P10 (정식 등록 완료, §1.2.6 답습, 2026-05-09 후속 5)** | **Evidence Forgery** — JSONL ledger / 합의 보고서 / GitHub Actions run artifact 위조 또는 변조 | PASS 위장 / Hermes-originated 변경 위장 / 합의 권위 침해 | ✅ **정식 등록 완료 (§1.2.6 답습)** | ✅ **2026-05-09 후속 5** — PR-2 ADR-012 발행 (2026-05-09 후속 3) 시점 트리거 답습 → 본 단축 합의 (Reviewer-only) 로 정식 등록 |
 | **P11 (후보)** | **Supply-chain Compromise** — Hermes / pysqlcipher3 / litellm / Hermes-agent 의존성 또는 GitHub Actions runner / Docker base image 침해 | 자동 redaction 무력화 / SQLCipher trigger silent 깨짐 / canary catalog silent 변경 / R-6 actual run 위장 | deferred (GPT 조건 7) | 의존성 SBOM (Software Bill of Materials) + supply-chain 검증 PoC 합의 시점에 정식 등록 — Hermes PMO 격상 *전* 권장 (Claude C-3 + C-6 답습) |
 | **P12 (후보)** | **Memory Poisoning Side-channel** — Memory / Skill 의 *우회 경로* (CLAUDE.md prompt-level lock-in / 외부 import skill / Memory 자동 흡수) 를 통한 Memory 오염 + 후속 결정 silent 영향 | 자동 학습 → 자동 정책 변경 위장 (T1 → T3 우회) / Skill 권한 escalation 우회 / Provider lock-in 우회 | deferred (Claude C-4 + GPT 조건 7) | G4 (provider-agnostic-memory-skill-design.md) Implementation/Runtime PASS 합의 시점에 정식 등록 — Memory boundary hook + Skill wrapper 실 구현 후 |
 
@@ -147,10 +152,76 @@ Provider Liquidity 위반 경로 = 3건 (P6~P8)
 
 ##### 1.2.5.3 본 §1.2.5 가 *하지 않는* 것
 
-- ❌ P9 ~ P12 자동 정식 등록 (각 후보 별도 합의 시점)
+- ❌ P9 / P11 / P12 자동 정식 등록 (각 후보 별도 합의 시점) — **P10 은 §1.2.6 답습 정식 등록 완료 (2026-05-09 후속 5)**
 - ❌ 현 G2 PASS 무력화 (deferred 는 *후속* 영역)
-- ❌ Hermes PMO 격상 전 P9 ~ P12 enforcement 의무 (격상 합의 시점 또는 별도 합의)
+- ❌ Hermes PMO 격상 전 P9 / P11 / P12 enforcement 의무 (격상 합의 시점 또는 별도 합의)
 - ❌ P13 ~ P14 정식 등록 (관용 권위로 흡수, 별도 P 불필요)
+
+#### 1.2.6 Evidence Integrity 위반 경로 1건 (P10) — 정식 등록 (2026-05-09 후속 5)
+
+> **본 §1.2.6 는 §1.2.5.2 명시 "P10 정식 등록 시점 = PR-2 신규 ADR-012 발행 시점" 답습 흡수.** ADR-012 (Evidence Ledger Protection, 2026-05-09 후속 3 PR-2 발행) 시점이 P10 정식 등록 *트리거*. 본 후속 5 단축 합의 (Reviewer-only) 로 정식 등록.
+
+##### 1.2.6.1 P10 정식 row
+
+| # | 경로 | 시나리오 | Evidence Integrity 측면 (5건) | 관련 ADR / 게이트 / 합의 |
+|---|------|---------|--------------------------|------------------|
+| **P10** | **Evidence Forgery** | Evidence Ledger entry / external-review 응답 / 합의 보고서 / hash chain / GitHub Actions run artifact / commit history 가 *위조* 또는 *변조* 되어 (a) 잘못된 PASS 판정 / (b) Hermes-originated 변경 silent 수용 / (c) 합의 권위 silent 침해 / (d) 자동 정책 변경 위장 / (e) 외부 LLM 응답 위조 발생 | (i) Ledger entry 형식적 무결성 (11 필드 schema, hash chain) / (ii) prev_hash 검증 실패 처리 / (iii) git history rewrite 차단 / (iv) Hermes-originated commit auto-reject (변조 차단 매트릭스 4항목) / (v) external LLM response `agent="user"` 강제 | **ADR-012 §2.1 ~ §2.12 + §3.1 ~ §3.5** (12 보호 원칙 + 4 매트릭스 + 5 추가 의무) + **G3 §5** (Evidence decision principle: PASS 성립 4 요건 — Tools 검증 + Evidence Ledger entry + 사용자 명시 승인 + 합의 보고서 commit) + **G4 §4.2 / §4.4 / §4.6** (11 필드 schema + Layer 1~5 다층 강제 + Tier-based round-trip) + 본 PR-2 합의 (`docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md`) |
+
+##### 1.2.6.2 P10 enforcement layer 매핑
+
+본 P10 enforcement 는 **ADR-012 직접 권위** + **G3 §5 + G4 §4** 답습. *별도 GP 신설 부재* (사용자 명시 답습 — 본 §1.2.6 = P10 row 추가 한정, GP 신설은 별도 합의 영역):
+
+| Enforcement Layer | 책임 영역 | 권위 |
+|----|--------|----|
+| **Layer 1** (Hash chain) | Middle entry tampering 차단 | ADR-012 §2.3 + G4 §4.4 (sha256 + canonical JSON) |
+| **Layer 2** (Git append-only) | History 재작성 차단 (denyNonFastForwards) | ADR-012 §2.3 (Layer 2 MANDATORY) |
+| **Layer 3** (Signed commit) | Host compromise 후 위조 차단 | ADR-012 §2.3 (Layer 3 RECOMMENDED MVP / MANDATORY multi-host) |
+| **Layer 4** (CI 회귀 검증) | canonical JSON 위반 / prev_hash mismatch / timestamp monotonicity 자동 검출 | ADR-012 §2.3 + R-6 workflow 답습 확장 (Implementation 영역) |
+| **Layer 5** (External anchor) | 1인 SPOF 완화 + 침해 후 발견 | ADR-012 §2.3 (Layer 5 RECOMMENDED MVP / MANDATORY P2 v3 정식 채택) |
+| **Hermes 변조 차단 매트릭스 4항목** | Hermes-originated entry / 파일 변조 / git commit / 외부 LLM 응답 위조 차단 | ADR-012 §2.12 (Gap-17 HIGH 흡수) + G3 §2.5 #11 / §4.5 / §2.2 #20 cross-reference |
+| **External LLM `agent="user"` 강제** | 사용자 직접 paste 시 Hermes 위조 차단 | ADR-012 §2.1 원칙 7 + §3.1 |
+
+##### 1.2.6.3 P10 처리 범위 (사용자 명시 답습)
+
+| 차원 | 본 §1.2.6 처리 |
+|----|----|
+| **상태** | Deferred Candidate (§1.2.5) → **Formal P-row (§1.2.6)** |
+| **처리 범위** | Design/Governance row 추가 한정 |
+| **Implementation status** | **Pending** — ADR-012 §10.2 답습 (실 runtime hook / migration script / CI step / pre-commit hook 미구현, 별도 Implementation/Runtime PASS 합의) |
+| **GP 매핑** | 별도 합의 영역 (본 §1.2.6 = P10 row 추가 한정, GP 신설 또는 기존 GP 매핑 갱신은 별도) |
+
+##### 1.2.6.4 P10 정식 등록의 합의 권위
+
+본 P10 정식 등록 = **단축 합의 (Reviewer-only) 적격** (사용자 명시 답습):
+- ADR-012 발행 (PR-2 풀 3+1 합의, 2026-05-09 후속 3) 권위 *내부* 작업
+- ADR-012 §11.2 + §1.3 cross-reference 의무 답습
+- 본 §1.2.6 = §1.2.5.2 deferred candidate 정식 등록 시점 명시 답습
+- 본 P10 정식 row 본문 = ADR-012 §2.1 ~ §2.12 + §3.1 ~ §3.5 답습 한정 (새 권위 결정 0건)
+
+**4 풀 3+1 승격 트리거 검증** (사용자 명시 답습):
+
+| 트리거 | 본 §1.2.6 |
+|----|----|
+| P10 이 기존 P1~P12 구조와 충돌 | ❌ — §1.2.5 deferred 에 이미 등록, 정식 row 승격은 §1.2.5.2 명시 트리거 답습 |
+| Evidence Forgery 가 ADR-012 범위를 넘어 새 정책 변경 요구 | ❌ — ADR-012 §2.1 ~ §3.5 답습 한정, 새 정책 0건 |
+| G2 / G3 / G4 Design PASS 상태를 흔드는 내용 | ❌ — §1.2 본문 추가, GP 매핑 변경 0건, 게이트 PASS 상태 영향 0 |
+| T3 자동 정책 변경 영역 발생 | ❌ — 정식 row 등록 자체는 T3 변경이지만 *ADR-012 발행 권위 내부* 작업, 사용자 명시 결정 답습 |
+
+→ **4/4 트리거 0건 발화** → **단축 합의 (Reviewer-only) 적격**.
+
+##### 1.2.6.5 본 §1.2.6 이 *하지 않는* 것
+
+- ❌ ADR-012 본문 재작성 (cross-reference 만 가능)
+- ❌ ADR-009 추가 갱신 (C-N 별도)
+- ❌ G3 / G4 본문 자동 갱신 (cross-reference 만)
+- ❌ 신규 GP 신설 (별도 합의 영역)
+- ❌ P9 / P11 / P12 자동 정식 등록 (각 후보 별도 합의 시점 답습)
+- ❌ P10 enforcement Implementation 자동 (Implementation/Runtime PASS 별도)
+- ❌ R-6 workflow ledger 검증 step 자동 추가 (Implementation 영역)
+- ❌ Hermes-originated commit auto-reject 자동 구현 (Implementation 영역)
+- ❌ Hermes PMO 격상 자동 선언
+- ❌ P2 v3 정식 채택 자동 선언 (다음 진입점 풀 3+1 합의)
+- ❌ P2 v2 / system-identity-prequel archive 자동 처리
 
 ---
 

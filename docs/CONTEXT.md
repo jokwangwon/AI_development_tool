@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 후속 12 (**ADR-013 / 014 후보 발행 결정 검토 단축 합의 APPROVE (Reviewer-only)** — 두 후보 *현 시점 발행 보류* 권고. 7 항목 분류 + 4+4 새 ADR 기준 평가 + 5 풀 3+1 승격 트리거 0건 발화. ADR-013 (Hermes PMO Activation / Human Review / Runtime Governance) = P2 v3 §2.6 + §11.1 + §2.6.1 + ADR-008/011/012 7 권위 layer 답습으로 충족 → ADR-008 본문 갱신 PR (부록 추가) 으로 대체 가능. ADR-014 (Memory/Skill Runtime Implementation / Migration / Round-trip) = G4 + ADR-012 §2.10 답습으로 충족 + Implementation/Runtime PASS PoC 완료 후 발행 검토. **본 검토 = 후보 결정만, 본문 작성 X**. **다음 진입점: Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS + 외부 LLM 2 + 인간 전문 리뷰 후 별도) 또는 ADR-008 본문 갱신 PR (Hermes PMO 격상 절차 추가) 또는 G2/G3/G4 Implementation 영역 진입**)
+**최종 업데이트**: 2026-05-09 후속 13 (**ADR-008 본문 갱신 PR — 부록 C 신설 (Hermes PMO Activation Cross-Reference) 단축 합의 APPROVE (Reviewer-only)** — 사용자 명시 7 항목 답습 + 6 풀 3+1 승격 트리거 0건 발화. **ADR-013 신규 발행 *대체* 권위 정착** (P2 v3 §2.6 + §11.1 + §2.6.1 + ADR-008 부록 B + ADR-011 + ADR-009 C-N + ADR-012 + 본 부록 C = **8 권위 layer 중첩 답습**). PMO 격상 12 조건 체크리스트 + 외부 LLM 2 + 인간 전문 리뷰 + 사용자 명시 결정 + 자동 격상 절대 금지 (5 layer 다중 차단) + Implementation/Runtime PASS ↔ Design/Governance PASS 분리 매트릭스. **ADR-008 §결정 본문 변경 0건**. **다음 진입점: G2 GP-2~GP-6 / G3 / G4 Implementation/Runtime PASS 작업 착수 또는 ADR-010 / 011 후속 보강 확인 또는 Hermes PMO 격상 적격성 검토 보류 (4 게이트 Implementation/Runtime PASS 후, 사용자 명시)**)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 
@@ -176,6 +176,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. ~~**ADR-008 / 010 / 011 본문 갱신 단일 PR 묶음 commit**~~ ✅ 완료 (2026-05-09 후속 10, 옵션 1 답습 — 25 cross-reference 갱신 항목 (A1~A25) 모두 반영. ADR-008 §관련 문서 9 항목 (P2 v2 Archived / P2 v3 Adopted / ADR-009 C-N / ADR-011 / ADR-012 / G2/G3/G4 / 차단조건 #2 #4 / 부록 B §B.6) + ADR-010 §맥락 + §관련 문서 4 항목 (P2 v2 Archived / P2 v3 Adopted / ADR-012 / Evidence Ledger DB secret 처리 주의 사항) + ADR-011 §8.1/§8.2/§8.5 12 항목 (prequel Archived / P2 v2 Archived / P2 v3 Adopted / R-4~R-7 ✅ 완료 / G1b PASS / G2/G3/G4 PASS / ADR-012 / ADR-009 C-N / G2 §1.2.6 P10 / P2 v3 / Archive / 본 후속 9 등록). 결정 내용 변경 0건 + 6 풀 3+1 승격 트리거 0건 발화 (재확인) + 6 금지 사항 위반 0건)
 16. ~~**G2 / G3 / G4 헤더 P2 v3 cross-reference 갱신 단축 PR**~~ ✅ 완료 (2026-05-09 후속 11, 3 게이트 헤더 영역 cross-reference 보강 — G2 = §1.2.6 P10 정식 등록 + P2 v3 §4 답습 권위 + 후속 권위 표기. G3 = Hermes 변조 차단 매트릭스 4항목 (ADR-012 §2.12 답습) + P2 v3 §5 답습 권위 + ADR-011 §2.3/§2.4 영구 권위 명시. G4 = ADR-012 Mandatory Reference + Provider Liquidity 5-way Layer 매트릭스 + ADR-009 C-N §5 모법 ADR + P2 v3 §6 답습. Design/Governance PASS ↔ Implementation Pending 분리 강화. 5 풀 3+1 승격 트리거 0건 발화 (Design vs Implementation 분리 / PMO 격상 오해 / P2 v3 의미 변경 / ADR 충돌 / 5 제약 약화). 헤더 본문 변경 0건 — cross-reference 갱신만)
 17. ~~**ADR-013 / 014 후보 발행 결정 검토**~~ ✅ 완료 (2026-05-09 후속 12, 단축 합의 APPROVE Reviewer-only — 두 후보 *현 시점 발행 보류* 권고. 7 항목 분류 + 4+4 새 ADR 기준 + 5 풀 3+1 승격 트리거 0건 발화. ADR-013 (Hermes PMO Activation / Human Review / Runtime Governance) = P2 v3 §2.6 + §11.1 + §2.6.1 + ADR-008/011/012 7 권위 layer 충족, **ADR-008 본문 갱신 PR (부록 추가) 으로 대체 가능**. ADR-014 (Memory/Skill Runtime / Migration / Round-trip) = G4 + ADR-012 답습 충족 + **Implementation/Runtime PASS PoC 완료 후 발행 검토**. **본 검토 = 후보 결정만, 본문 작성 X** (사용자 명시 답습). 발행 시점 후보 enumerate (ADR-013 a/b/c + ADR-014 a/b/c) + Implementation 작업 영역 8건 + 격상 후 다뤄도 되는 영역 6건 분류)
+18. ~~**ADR-008 본문 갱신 PR — 부록 C 신설 (Hermes PMO Activation Cross-Reference)**~~ ✅ 완료 (2026-05-09 후속 13, 단축 합의 APPROVE Reviewer-only — 사용자 명시 7 항목 답습 + 6 풀 3+1 승격 트리거 0건 발화. **ADR-013 신규 발행 *대체* 권위 정착**. 부록 C §C.1 의미 (오해 방지) + §C.2 12 조건 체크리스트 (P2 v3 §2.6.1 직접 답습) + §C.3 외부 LLM 2 + 인간 전문 리뷰 조건 + §C.4 자동 격상 절대 금지 (5 layer 다중 차단) + §C.5 Implementation/Runtime PASS ↔ Design/Governance PASS 분리 매트릭스 + §C.6 ADR-013 보류 사유 (8 권위 layer 답습) + §C.7 cross-reference 매트릭스 (12 권위) + §C.8 발생/미발생 enumerate. **ADR-008 §결정 본문 변경 0건**)
 11. **P2 v3 정식 채택 합의** (G2 §1.2 P10 정식 등록 후 진입) — **풀 3+1 합의** (C-14 응답 2건 모두 풀 3+1 권고 답습) + 본 CONTEXT C-14 체크리스트 11 조건 흡수 의무. **C-14 cross-vendor 1+ 충족 (2건) ✅** + **C-N ADR-009 갱신 ✅** 후 진입 적격
     - 시나리오 X: P2 v3 단독 합의 (풀 3+1, C-14 응답 evidence 포함)
     - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
@@ -185,7 +186,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-09 후속 12 ADR-013/014 후보 결정 후): "Hermes PMO 격상 적격성 검토 진행해주세요 (4 게이트 Implementation/Runtime PASS 필요 — 별도 합의 + 외부 LLM 2 + 인간 전문 리뷰)" 또는 "ADR-008 본문 갱신 PR (Hermes PMO 격상 절차 추가) 진행해주세요" 또는 "G2 GP-2~GP-6 / G3 / G4 Implementation/Runtime PASS 영역 진입해주세요".
+**권고 시작점** (2026-05-09 후속 13 ADR-008 부록 C 신설 후): "G2 GP-2~GP-6 / G3 / G4 Implementation/Runtime PASS 작업 착수해주세요" 또는 "ADR-010 / 011 후속 보강 필요 여부 확인해주세요" 또는 "Hermes PMO 격상 적격성 검토는 4 게이트 Implementation/Runtime PASS 이후로 보류" (사용자 명시 답습).
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)

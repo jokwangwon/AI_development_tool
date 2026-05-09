@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 후속 5 (**G2 §1.2 P10 (Evidence Forgery) 정식 row 등록 단축 합의 APPROVE (Reviewer-only)** — §1.2.3 합산 갱신 (8 → 9건, P1~P8 + P10) + §1.2.5 P10 deferred → 정식 등록 표기 + §1.2.6 신설 (Evidence Integrity 위반 경로 1건). 4 풀 3+1 승격 트리거 0건 발화. ADR-012 발행 권위 *내부* 작업. **다음 진입점: P2 v3 정식 채택 풀 3+1 합의 (C-14 11 조건 흡수 + ADR-012 + ADR-009 C-N + G2 P10 모두 반영, C-14 응답 evidence 포함)**)
+**최종 업데이트**: 2026-05-09 후속 6 (**P2 v3 (Hermes Adoption Design v3) 정식 채택 풀 3+1 + 외부 LLM 2건 (cross-vendor — Gemini 사고모델 + vendor 미명시) APPROVE WITH CONDITIONS — Design Adoption only 정식 채택 적격** (5/5 입력 일치). DRAFT → **Adopted (Design Adoption only)** + 8 본문 영역 갱신 (§0 헤더 + §2 Non-Activation Clause + §3 dual-structure + §6 G4 ADR-012 mandatory reference + §7 ADR 매트릭스 + §10 Normative Constraints + §10.2 Archive Migration Note + §11 + §2.6 인간 리뷰 의무화). **다음 진입점: P2 v2 / system-identity-prequel archive 결정 (사용자 명시) → ADR-008 / 010 / 011 본문 갱신 PR 묶음 → G2 / G3 / G4 헤더 cross-reference 갱신 → ADR-013 / 014 후보 발행 결정 → Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS + 인간 전문 리뷰 후 별도)**)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 
@@ -169,6 +169,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 8. ~~**C-14 cross-vendor blind 의뢰 1+ 의무**~~ ✅ 완료 (2026-05-09 후속 4, cross-vendor 응답 2건 APPROVE WITH CONDITIONS — Gemini 사고모델 + vendor 자기 명시 부재 1건. 11 핵심 조건 P2 v3 합의 전 체크리스트로 추적 — 본 §answer C-14 체크리스트)
 9. ~~**C-N ADR-009 / P1 facade MVP 진입조건 명시**~~ ✅ 완료 (2026-05-09 후속 4, ADR-009 갱신 단축 합의 APPROVE — Reviewer-only. 5 영역 흡수: P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference. 자체 Adapter v2.0 트리거 (T1~T4) 본문 변경 0건 + 핵심 결정 변경 0건)
 10. ~~**G2 §1.2 P10 (Evidence Forgery) 정식 row 추가**~~ ✅ 완료 (2026-05-09 후속 5, 단축 합의 APPROVE Reviewer-only — 3 영역 갱신 + 4 풀 3+1 승격 트리거 0건 발화 + ADR-012 발행 권위 내부 작업)
+11. ~~**P2 v3 정식 채택 풀 3+1 합의**~~ ✅ 완료 (2026-05-09 후속 6, 풀 3+1 + 외부 LLM 2건 (cross-vendor — Gemini 사고모델 + vendor 미명시) APPROVE WITH CONDITIONS — Design Adoption only 5/5 입력 일치. P2 v3 DRAFT → **Adopted** + 8 본문 영역 갱신 — §0 헤더 / §2 Non-Activation Clause / §3 dual-structure (DRAFT Snapshot + Adoption-time Status + Delta + Implementation Pending) / §6 ADR-012 Mandatory Reference / §7 ADR 매트릭스 (ADR-012 + ADR-009 C-N) / §10 Normative Constraints + §10.2 Archive Migration Note / §11 변경 절차 + §11.1 Hermes PMO 격상 전 인간 리뷰 의무화 / §2.6 격상 절차 단계 5.5 인간 전문 리뷰)
 11. **P2 v3 정식 채택 합의** (G2 §1.2 P10 정식 등록 후 진입) — **풀 3+1 합의** (C-14 응답 2건 모두 풀 3+1 권고 답습) + 본 CONTEXT C-14 체크리스트 11 조건 흡수 의무. **C-14 cross-vendor 1+ 충족 (2건) ✅** + **C-N ADR-009 갱신 ✅** 후 진입 적격
     - 시나리오 X: P2 v3 단독 합의 (풀 3+1, C-14 응답 evidence 포함)
     - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
@@ -178,7 +179,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-09 후속 5 종료 후): "P2 v3 정식 채택 풀 3+1 합의를 진행합니다 (C-14 11 조건 흡수 + ADR-012 + ADR-009 C-N + G2 P10 모두 반영, C-14 응답 evidence 포함, 풀 3+1 합의 형태)."
+**권고 시작점** (2026-05-09 후속 6 P2 v3 정식 채택 후): "P2 v2 / system-identity-prequel archive 결정 진행해주세요 (별도 archive commit, 사용자 명시 결정 영역)" 또는 "ADR-008 / 010 / 011 본문 갱신 PR 묶음 진행해주세요" — P2 v3 §9.2 답습.
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)

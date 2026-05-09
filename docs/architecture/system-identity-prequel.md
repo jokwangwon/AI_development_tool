@@ -1,11 +1,52 @@
-# 시스템 정체성 Prequel — AI Development Company OS
+# 시스템 정체성 Prequel — AI Development Company OS — **Archived (2026-05-09 후속 8)**
 
-> **본 문서는 풀 3+1 합의(2026-05-05) 결과로 채택된 시스템 정체성·권위 위계·MVP 방향성을 P2 v3 정식 작성 전까지 임시 선언하는 prequel입니다.**
+> **상태: Archived (2026-05-09 후속 8 — P2 v3 (Hermes Adoption Design v3) Design Adoption only 정식 채택 (2026-05-09 후속 6) + P2 v2 Archived 전환 (2026-05-09 후속 7) 후속, 단축 합의 APPROVE)**.
+>
+> 본 prequel **§1.2 운명 자체 명시** ("P2 v3 작성 완료 시 → 본 문서 §2~§9가 v3 §1~§4로 정식화, 본 문서는 archived 처리") 답습 — *예고된 정상 archive 절차* 정합.
+>
+> **본 prequel 본문 인용은 *역사적 사실 추적 + AI Dev Company OS 정체성 직접 권위 출처* 한정** — 새 작업은 P2 v3 본문 + ADR-011 / ADR-012 / ADR-009 C-N + G3 + G4 본문을 권위 우선 인용 의무.
+>
+> **prequel 핵심 권위 이관 매트릭스** (16 영역 = 12 완전 흡수 + 4 부분/분산 흡수):
+> - §3 권위 위계 (`Constitution > ADR > SDD > Harness > Hermes > Worker`) → **ADR-011 §2.3 영구 권위 승격** ("prequel 폐기 후에도 보존" 직접 명시) ✅
+> - §3.3 Hermes 가 *하지 않는* 것 → P2 v3 §2.1.2 (6항목) ✅
+> - §4 Hermes 역할 재정의 + 4 게이트 G1~G4 → P2 v3 §2 + §3 + §4 / §5 / §6 (G2 / G3 / G4 정식 산출) ✅
+> - §5 T1/T2/T3 분류 → **ADR-011 §2.4 영구 권위 승격** ("prequel §6의 3-tier 선언을 ADR 권위로 승격") ✅
+> - §6.1 5단계 명제 ("Agent proposes / Hermes orchestrates / Tools verify / Evidence decides / Human overrides") → G3 §5 + ADR-012 §1.2 직접 답습 ✅
+> - §6.3 Evidence Ledger MVP (10 필드 schema) → G4 §4.2 (10 필드) + ADR-012 §2.2 (11 필드, `event` 추가 — **흡수 + 강화**) ✅
+> - §6.4 Schema 고정 시점 ("Phase 1 종료 시 ADR-012 발행") → **ADR-012 (2026-05-09 후속 3 PR-2 신규 발행, 트리거 실현 완료)** ✅
+> - §7 메타포 강제 금지 → P2 v3 §10.1 #3 (Normative Constraints) + §10.2 Archive Migration Note + ADR-012 §1.5 + §9 + P2 v3 §2.5 ✅
+> - §8.1 Worker Agent 4 역할 (PM/Architect/Implementation/Reviewer) → multi-agent-system-design.md (정식 산출) + P2 v3 §2.1 cross-reference ✅
+> - §8.4 Memory 2단계 (Global / Project) → G4 §2.1 (Memory Scope 4 단계) + §2.2 (MVP scope Global + Project) ✅
+> - §8.5 Evidence Markdown + JSONL → G4 §4 + ADR-012 §2.2 (11 필드 schema) ✅
+> - §9 Phase 0 R-1 처리 → ADR-011 §1.1 (P2 v2 가정의 붕괴 명시) + §2.2 (G1a FAIL 확정) + P2 v3 §1.1 + §3.2 G1a (폐기) ✅
+> - **§2.1 정체성 선언** ("이 도구는 단일 AI 모델을 잘 쓰는 도구가 아니라...") / **§2.2 메타포 매핑** (회사 메타포 5 row) / **§2.3 핵심 명제** ("사원 AI는 자주 바뀔 수 있다") → 부분/분산 흡수 (P2 v3 §2.1 부분 + ADR-011 §2.3 + ADR-009 C-N §5 분산) — **옵션 A 채택으로 prequel §2 본문 보존, 직접 권위 출처 영구 보존** (AI Development Company OS 정체성 보존 강도 HIGH)
+>
+> **본 archive 가 *발생시키지 않는* 것** (P2 v3 §10.2 Archive Migration Note + ADR-012 §605 답습):
+> - ❌ Hermes PMO 격상 활성화
+> - ❌ Runtime Implementation PASS 선언
+> - ❌ G2 / G3 / G4 Implementation PASS 선언
+> - ❌ **P2 v3 정식 채택 재해석** (사용자 명시 금지)
+> - ❌ ADR-008 / 009 / 010 / 011 / 012 본문 자동 갱신 (cross-reference 만 — 본 archive commit *후* 별도 PR)
+> - ❌ 실 runtime code / migration script / hook 구현
+> - ❌ Tier-2 / Tier-3 catalog 자동 확장
+> - ❌ 5 영구 핵심 제약 약화 (§10.2 Archive Migration Note 답습)
+> - ❌ AI Dev Company OS 정체성 약화 (옵션 A 채택으로 §2 본문 영구 보존)
+>
+> **본 archive 후 5 영구 핵심 제약 보호 강도 = HIGH 5/5** (P2 v3 §10.1 + §10.2 + ADR-011 §2.3/§2.4 + ADR-012 §원칙 5/6/9 + ADR-009 §5 영구 권위 답습) — **메타포 강제 금지 (#3) 의 *모법* 인 prequel §7 본문 보존 (옵션 A) 으로 권위 출처 약화 0건**.
+>
+> **본 archive 합의 권위**: `docs/review/3plus1-consensus-2026-05-09-system-identity-prequel-archive-decision.md` (Reviewer-only 단축 합의 APPROVE — 8/8 검토 기준 PASS + 6/6 풀 3+1 승격 트리거 0건 발화 + 옵션 A 최소 침습 권고).
+>
+> **이전 상태 (2026-05-05 ~ 2026-05-09 후속 7)**: 임시 선언 (Pre-Declaration). P2 v3 정식 채택 (2026-05-09 후속 6) + P2 v2 Archived 전환 (2026-05-09 후속 7) 후 본 prequel → Archived 전환 (2026-05-09 후속 8).
 
-**상태**: 임시 선언 (Pre-Declaration), R-7 완료 후 P2 v3로 정식화 예정
+**상태**: **Archived** (P2 v3 정식 채택 + P2 v2 Archived 후속, 2026-05-09 후속 8 단축 합의 APPROVE Reviewer-only)
+**최종 수정**: 2026-05-05 (임시 선언) → **2026-05-09 후속 8 Archived**
 **근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md`
-**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-009, ADR-010 — P2 v3 작성 시 동시 갱신
-**관련 문서**: `docs/architecture/hermes-adoption-design.md` (P2 v2, 부분 무효 상태로 유지), `docs/phase0/day1-environment-and-fact-check.md`, `docs/review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md`
+**Archive 합의**: `docs/review/3plus1-consensus-2026-05-09-system-identity-prequel-archive-decision.md` (2026-05-09 후속 8 Reviewer-only 단축 합의)
+**후속 권위 (Active)**: `hermes-adoption-design-v3.md` (P2 v3, **Adopted — Design Adoption only**, 2026-05-09 후속 6) + `ADR-011-means-vs-ends-redaction.md` §2.3 + §2.4 (영구 권위 승격) + `ADR-012-evidence-ledger-protection.md` (Evidence Ledger Protection, 2026-05-09 후속 3 PR-2 신규 발행) + `ADR-009-self-adapter-v2-entry-conditions.md` C-N (2026-05-09 후속 4 갱신)
+**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-009 C-N, ADR-010, **ADR-011 (영구 권위 — prequel §3 / §5 승격)**, **ADR-012 (Evidence Ledger Protection — prequel §6.4 트리거 실현)**
+**관련 문서**: `docs/architecture/hermes-adoption-design-v3.md` (P2 v3, Adopted), `docs/architecture/hermes-adoption-design.md` (P2 v2, Archived 2026-05-09 후속 7), `docs/phase0/day1-environment-and-fact-check.md`, `docs/review/3plus1-consensus-2026-05-05-p2-n1-redaction-reinterpretation.md`
+
+> **이하 본문 (§1 ~ §10) = 2026-05-05 임시 선언 시점 사실 보존** (옵션 A — 최소 침습 채택, 본문 변경 0건). 본 §2 정체성 선언 / §3 권위 위계 / §6 Evidence 기반 검증 / §7 메타포 강제 금지 / §8 MVP 범위 / §9 R-1 처리 등 모든 본문은 *역사적 사실 + AI Dev Company OS 정체성 직접 권위 출처* 로 영구 보존. 새 작업은 P2 v3 + ADR-011 / ADR-012 / ADR-009 C-N + G3 + G4 본문을 권위 우선 인용 의무.
 
 ---
 

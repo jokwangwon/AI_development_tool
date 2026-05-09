@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 (G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 [GPT cross-vendor + Claude 인접 컨텍스트] APPROVE WITH CONDITIONS — **3 게이트 동시 Design/Governance Gate PASS 승격 + P2 v3 정식 채택 합의 단계 진입 적격**)
+**최종 업데이트**: 2026-05-09 후속 2 (P1 분류 + PR 묶음 형태 결정 — **옵션 β 채택 (2-PR 묶음)** + PR-1 단축 합의 본문 흡수 6건 (C-D/E/F/I/K/L) — **다음 진입점: PR-2 풀 3+1 합의 (ADR-012 + G4 hash chain)**)
 
 ---
 
@@ -135,7 +135,14 @@ G1b: DB-level fallback prevents plaintext secret persistence
 9. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 10. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점**: "P1 조건 흡수 PR 묶음 형태를 결정합니다 — C-C ~ C-N 중 어느 것 우선, 어느 것 별도 합의?" (사용자 명시 결정 대기)
+**권고 시작점** (2026-05-09 후속 2 종료 후): "PR-2 풀 3+1 합의를 진행합니다 (ADR-012 신규 발행 + G4 hash chain 사양 보강)."
+
+### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
+- **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)
+- **결정 2 (검토 형태)**: 본문 PR = 단축 합의 (Reviewer-only) / 신규 ADR PR = 풀 3+1 + 외부 LLM 1+
+- **결정 3 (외부 LLM 추가 시점)**: P1 흡수 후 + P2 v3 정식 채택 진입 *전* (Claude C-3 권고 답습)
+- **PR-1 흡수 완료**: C-D (G3 §2.2 #11) + C-E (G3 §4 메타-순환 부록) + C-F (G2 §9 + G3 §4·§5.5 SPOF) + C-I (G2 §1.2 P9~P12 부록) + C-K (G4 §3.1 + #15 격상) + C-L (G4 P-1~P-5 + G3 4건)
+- **별도 후속**: C-H (Implementation PASS 영역, 별도 합의) / C-N (ADR-009 갱신 별도 PR)
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

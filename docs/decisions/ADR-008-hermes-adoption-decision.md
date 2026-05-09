@@ -226,3 +226,178 @@ R-7   ✅ Phase 1 합격 SOP — `docs/phase0/redaction-verification-sop.md` (20
 R-4 / R-4.1 / R-5 / R-6 / R-7 진행 상태는 본 Amendment 가 아니라 ADR-011 §2.2 표 또는 `docs/CONTEXT.md` 의 4 게이트 진행 상태에서 추적한다.
 
 본 G1b PASS 는 *4 게이트 중 G1b 한정* — Hermes PMO 격상은 G2 / G3 / G4 추가 통과 후 별도 결정 (본 Amendment 범위 외).
+
+---
+
+## 부록 C — Hermes PMO Activation Cross-Reference (2026-05-09 후속 13 신설)
+
+**상태**: 신설 (단축 합의 — Reviewer-only)
+**날짜**: 2026-05-09 후속 13
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-09-adr-008-update-pmo-activation-cross-ref.md` (Reviewer-only 단축 합의 APPROVE — 7 항목 분류 + 6/6 풀 3+1 승격 트리거 0건 발화)
+**근거 권위**:
+- P2 v3 §2.6 (격상 절차 7 단계) + §2.6.1 (12 조건 PMO 격상 체크리스트) + §11.1 (Hermes PMO 격상 전 인간 전문 리뷰 의무화)
+- ADR-009 C-N §2.3 (Hermes PMO ↔ provider 분리 영구 권위, 2026-05-09 후속 4)
+- ADR-011 §2.3 (Hermes ≠ root of trust) + §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리)
+- ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목, 2026-05-09 후속 3 PR-2)
+- G2 §1.2.6 (P10 Evidence Forgery 정식 등록, 2026-05-09 후속 5)
+- G3 §1.3 + §5 (Evidence decision principle: PASS 성립 4 요건)
+- G4 §4 (Memory/Skill JSONL hash chain + Tier-based round-trip)
+- 본 ADR-008 §결정 단계 마이그레이션 + 부록 B Amendment
+
+**ADR-013 대체 권위**: 본 부록 C = ADR-013 (Hermes PMO Activation 영구 권위) 신규 발행 *대체* (`docs/review/3plus1-consensus-2026-05-09-adr-013-014-candidate-decision.md` §1.1.3 답습 — ADR-013 현 시점 발행 보류).
+
+### C.1 본 부록 C 의 의미 (오해 방지)
+
+> **본 부록 C 는 Hermes PMO 격상 *선언이 아니다*.**
+>
+> 본 부록 C 는 P2 v3 §2.6 + §11.1 + §2.6.1 + ADR-008 부록 B + ADR-011 §2.3/§2.4 + ADR-009 C-N §2.3 + ADR-012 §2.12 의 *Hermes PMO 격상 조건 cross-reference 강화* 한정. 8 권위 layer 중첩 답습으로 *영구 권위 정착 가능* 하나, *현 시점 격상 발생 0건*.
+
+본 부록 C 의 정확한 의미는 다음과 같다:
+
+1. P2 v3 정식 채택 (2026-05-09 후속 6) = **Design Adoption only** — Hermes PMO Activation 미발생 (P2 v3 §2 Non-Activation Clause 답습)
+2. 본 부록 C 는 *Hermes PMO 격상 조건* 명시 강화 + ADR-009 C-N + ADR-011 + ADR-012 + G2/G3/G4 + P2 v3 *cross-reference* 매트릭스 제공
+3. **Hermes PMO 격상 자체는 §C.6 절차 답습 후 *별도 결정* 영역**
+
+### C.2 Hermes PMO 격상 12 조건 체크리스트 (P2 v3 §2.6.1 직접 답습)
+
+본 §C.2 는 P2 v3 §2.6.1 PMO 격상 체크리스트 (12 조건) 의 *ADR 권위 정착 cross-reference*.
+
+| # | PMO 격상 조건 | 권위 출처 | 현 상태 (2026-05-09 후속 13) |
+|---|------|----|----|
+| 1 | G1b Implementation/Runtime PASS | 본 ADR-008 부록 B + R-7 SOP §7.3 | ✅ 2026-05-07 |
+| 2 | GP-1 (G1b 흡수) Implementation/Runtime PASS | G2 §3 + 본 ADR-008 차단조건 #1 | ✅ 2026-05-09 (G1b evidence 흡수) |
+| 3 | GP-2 ~ GP-6 Implementation/Runtime PASS | G2 §4 ~ §8 + Implementation 별도 합의 | ⏳ Pending (Design PASS 만) |
+| 4 | G3 runtime hooks/wrappers + Hermes 변조 차단 매트릭스 runtime | G3 §1 ~ §7 + ADR-012 §2.12 | ⏳ Pending (Design PASS 만) |
+| 5 | G4 migration round-trip PASS + JSONL writer + 11 필드 schema 활성 | G4 §4.5 + §4.6 + ADR-012 §2.10 | ⏳ Pending (Design PASS 만) |
+| 6 | ADR-012 evidence protection CI | ADR-012 §10.2 별도 PR (Implementation 영역) | ⏳ Pending |
+| 7 | ADR-009 T1~T4 trigger detection task | ADR-009 §3.1 ~ §3.4 분기별 별도 합의 | ⏳ Pending |
+| 8 | Provider Liquidity 5-way Layer 1~5 runtime 활성 (depcruise + AST 스캐너 + pre-commit hook + CI step) | C-H 별도 합의 + ADR-009 C-N §5 (Layer 1 모법) + ADR-012 §원칙 5/6 (Layer 5) + G3 §6.4 (Layer 2) + G4 §3.5/§4.3 (Layer 3/4) | ⏳ Pending |
+| 9 | 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 | 합의 시점 별도 (P2 v3 §11 변경 절차 답습) | ⏳ Pending (격상 시점) |
+| 10 | **인간 전문 리뷰 (Human-in-the-loop)** | P2 v3 §11.1 + §2.6 단계 5.5 + Gemini 사고모델 §7.10 #3 cross-vendor 답습 | ⏳ Pending (격상 시점) |
+| 11 | 사용자 명시 격상 결정 | 합의 시점 별도 (사용자 명시 결정 권위) | ⏳ Pending |
+| 12 | **ADR-008 본문 Hermes PMO 격상 절차 추가 PR** | **본 부록 C** ← 현 발행 (2026-05-09 후속 13) | ✅ **본 부록 C 발행으로 충족** |
+
+**합산** (2026-05-09 후속 13 시점): **2/12 충족** (조건 1 G1b PASS + 조건 12 본 부록 C). **10/12 미충족** (Implementation/Runtime PASS 영역 + 합의 시점 영역). Hermes PMO 격상 *현 시점 발생 0건*.
+
+### C.3 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 필요 조건
+
+> **Hermes PMO 격상은 다음 조건 모두 충족 시에만 발생**:
+>
+> - **외부 LLM 2개** (예: GPT-5.x + Gemini cross-vendor) **또는 외부 LLM 1개 + 인간 전문 리뷰** (P2 v3 §11 + Gemini 사고모델 §7.10 #3 답습)
+> - **인간 전문 리뷰 (Human-in-the-loop)** 의무 (P2 v3 §11.1 + §2.6 단계 5.5 직접 답습)
+> - **사용자 명시 격상 결정** (사용자 명시 결정 권위 — 자동 결정 절대 금지)
+
+본 §C.3 은 P2 v3 §11 변경 절차 + §2.6.1 PMO 격상 체크리스트 + Gemini 사고모델 cross-vendor 응답 §7.10 #3 *직접 인용* 답습.
+
+### C.4 사용자 명시 결정 없이는 PMO 격상 불가 (자동 격상 절대 금지)
+
+> **Hermes PMO 격상은 *자동 발생 절대 금지*** (ADR-011 §2.4 T3 위반).
+
+다음 모두 충족 시에만 발생:
+
+1. 사용자 명시 결정 (T2 사용자 승인)
+2. 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰
+3. 4 게이트 모두 Implementation/Runtime PASS evidence
+4. Adoption decision commit
+5. Evidence Ledger entry (`event: gate_pass` × 4 + `event: external_llm_received` × N + `event: human_review_completed`)
+
+**자동 격상 시도 차단 매커니즘** (다중 layer):
+
+| Layer | 차단 매커니즘 | 권위 |
+|------|----|----|
+| 1 | ADR-011 §2.4 T3 (Constitution / ADR / Harness Gates 정의 자체의 변경 = 자동 금지) | 영구 권위 |
+| 2 | ADR-012 §원칙 9 (prev_hash 검증 실패 = 즉시 BLOCK, 자동 복구 / 자동 revert 금지) | 영구 권위 |
+| 3 | ADR-009 C-N §2.3 (Hermes PMO ↔ provider 분리 — Hermes 가 자기 격상 시도 차단) | 영구 권위 |
+| 4 | ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목 — Hermes-originated commit auto-reject) | 영구 권위 |
+| 5 | G3 §2.5 #11 + §4.5 + §2.2 #20 (filesystem ACL on `governance-preconditions.md` / `hermes-not-root-of-trust-runtime.md` / `provider-agnostic-memory-skill-design.md` / `ADR-008-*.md` (본 ADR) / Evidence Ledger / 합의 보고서 등 + Hermes-originated commit auto-reject + audit log) | 영구 권위 |
+
+→ **5 layer 다중 차단** (자동 격상 시도 모든 경로 차단).
+
+### C.5 Implementation/Runtime PASS 와 Design/Governance PASS 분리
+
+본 §C.5 는 P2 v3 §3.1.4 Implementation Pending 표 직접 답습 + Hermes PMO Activation 영역 추가:
+
+| 영역 | Design/Governance PASS | Implementation/Runtime PASS |
+|------|----|----|
+| G1b DB-level fallback | (해당 없음) | ✅ 2026-05-07 (R-7 SOP §7.3 단축 합의) |
+| G2 GP-1 (G1b 흡수) | ✅ Bundled 2026-05-09 | ✅ 2026-05-09 (G1b evidence 흡수, Tier-1 한정) |
+| **G2 GP-2 ~ GP-6** | ✅ Bundled 2026-05-09 | ⏳ **Pending** |
+| **G3 운영 구현** | ✅ Bundled 2026-05-09 | ⏳ **Pending** |
+| **G4 migration / round-trip** | ✅ Bundled 2026-05-09 | ⏳ **Pending** |
+| ADR-012 CI enforcement | (해당 없음) | ⏳ **Pending** |
+| ADR-009 T1~T4 trigger detection | (해당 없음) | ⏳ **Pending** |
+| Provider Liquidity 5-way Layer 1~5 runtime | (해당 없음) | ⏳ **Pending** |
+| Hermes 변조 차단 매트릭스 4항목 runtime | (해당 없음) | ⏳ **Pending** |
+| **Hermes PMO Activation** | ❌ **Not authorized** | ❌ **Not authorized — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM + 인간 전문 리뷰 + 사용자 명시 결정 후** |
+
+**합산** (2026-05-09 후속 13 시점):
+- Design/Governance PASS = **4/4** (G1b PASS + G2 + G3 + G4 Bundled)
+- Implementation/Runtime PASS = **2/4** (G1b + GP-1 만 — G1b evidence 흡수)
+- **Hermes PMO Activation = 0** (Not authorized)
+
+P2 v3 정식 채택 = *Design Adoption only* (Implementation PASS 미발생). 본 부록 C 발행 = ADR 권위 정착 한정 (격상 발생 0건).
+
+### C.6 ADR-013 현 시점 발행 보류 사유
+
+> **ADR-013 (Hermes PMO Activation 영구 권위) 신규 발행은 *현 시점 보류***.
+
+**근거**: `docs/review/3plus1-consensus-2026-05-09-adr-013-014-candidate-decision.md` §1.1.3 답습 — 8 권위 layer 중첩 답습 충족:
+
+1. P2 v3 §2.6 (격상 절차 7 단계)
+2. P2 v3 §11.1 (인간 전문 리뷰 의무화)
+3. P2 v3 §2.6.1 (12 조건 PMO 격상 체크리스트)
+4. **본 부록 C** (현 발행 — ADR-013 대체 권위)
+5. ADR-008 부록 B Amendment (R-3 시점 + R1 specific 갱신)
+6. ADR-011 §2.3 (Hermes ≠ root of trust 영구 권위)
+7. ADR-009 C-N §2.3 (Hermes PMO ↔ provider 분리 영구 권위)
+8. ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목)
+
+**ADR-013 신규 발행 시점 후보** (조건부 — 별도 합의 + 풀 3+1 + 외부 LLM 1+ 의무):
+
+- (a) **Hermes PMO 격상 적격성 검토 시점** (4 게이트 모두 Implementation/Runtime PASS 후) — 본 부록 C 답습으로 ADR-008 본문 갱신 *충분* 시 ADR-013 *불필요* 가능
+- (b) **영구 ADR 권위 정착 사용자 결정 시점** — 사용자가 ADR-008 부록 vs ADR-013 신규 분리 결정
+- (c) **외부 LLM 권고 발생 시** (cross-vendor 의견 추가에서 ADR-013 권위 정착 권고)
+
+### C.7 cross-reference 매트릭스 (사용자 명시 항목 7 답습)
+
+| 권위 | cross-reference 영역 |
+|----|----|
+| **ADR-009 C-N §2.3** (Hermes PMO ↔ provider 분리 영구 권위) | 본 §C.4 #3 + §C.5 |
+| **ADR-009 C-N §5** (Provider Liquidity 5-way Layer 1 모법 ADR) | 본 §C.5 (Provider Liquidity 5-way Layer 1) |
+| **ADR-011 §2.3** (Hermes ≠ root of trust 영구 권위) | 본 §C.4 권위 위계 + §C.6 ADR-013 보류 사유 #6 |
+| **ADR-011 §2.4** (T1/T2/T3 자동 학습 vs 정책 변경 분리) | 본 §C.4 #1 (T3 자동 금지) |
+| **ADR-012 §2.12** (Hermes 변조 차단 매트릭스 4항목) | 본 §C.4 #4 + §C.5 (Hermes 변조 차단 매트릭스 runtime) |
+| **ADR-012 §원칙 5 / §원칙 6** (Provider Liquidity 5-way Layer 5 — Evidence 형식 차원) | 본 §C.5 (Provider Liquidity 5-way Layer 5) |
+| **ADR-012 §원칙 9** (자동 정책 변경 금지) | 본 §C.4 #2 |
+| **G2 §1.2.6 P10** (Evidence Forgery 정식 등록) | 본 §C.5 (P10 Evidence Forgery 정식 등록 — Evidence Integrity) |
+| **G3 §1.3 + §5** (Evidence decision principle: PASS 성립 4 요건) | 본 §C.4 (Adoption decision commit + Evidence Ledger entry) |
+| **G3 §2.5 #11 + §4.5 + §2.2 #20** (Hermes-originated commit auto-reject + filesystem ACL + audit log) | 본 §C.4 #5 (5 layer 다중 차단 Layer 5) |
+| **G4 §4.2 (11 필드) + §4.4 (Layer 1~5 hash chain) + §4.6 (Tier-based round-trip)** | 본 §C.5 (G4 migration / round-trip — ADR-012 §2.1~§3.5 답습) |
+| **P2 v3 §2** (Hermes PMO 구조) + §2.6 (격상 절차 7 단계) + §2.6.1 (12 조건 체크리스트) + §11.1 (인간 전문 리뷰 의무화) + §10.1 (Normative Constraints) + §10.2 (Archive Migration Note) | 본 부록 C 전체 (직접 답습) |
+
+### C.8 본 부록 C 가 *발생시키는* 것 / *발생시키지 않는* 것
+
+#### C.8.1 *발생시키는* 것 (cross-reference 강화 한정)
+
+- ✅ ADR-008 부록 C 신설 (Hermes PMO Activation Cross-Reference)
+- ✅ P2 v3 §2.6.1 12 조건 체크리스트의 ADR 권위 정착
+- ✅ ADR-009 C-N + ADR-011 + ADR-012 + G2/G3/G4 + P2 v3 cross-reference 보강
+- ✅ ADR-013 신규 발행 *대체* 권위 정착 (사용자 명시 답습)
+- ✅ Hermes PMO 격상 *조건* 명시 강화 (격상 *발생* 0건)
+- ✅ 5 layer 다중 차단 매트릭스 명시 (자동 격상 시도 차단)
+- ✅ Implementation/Runtime PASS ↔ Design/Governance PASS 분리 매트릭스 명시
+
+#### C.8.2 *발생시키지 않는* 것 (사용자 명시 답습)
+
+- ❌ Hermes PMO 격상 자동 선언
+- ❌ Implementation/Runtime PASS 자동 선언
+- ❌ G2 / G3 / G4 Implementation PASS 자동 선언
+- ❌ ADR-013 신규 발행 (사용자 명시 금지 — 본 부록 C 대체)
+- ❌ ADR-014 신규 발행
+- ❌ ADR-008 §결정 본문 변경 (Option B / 6 차단조건 / 단계 마이그레이션 모두 변경 0건)
+- ❌ 부록 B Amendment 본문 변경
+- ❌ P2 v3 §2.6.1 12 조건 완화 또는 강화 (변경 0건 — 직접 답습)
+- ❌ 실 runtime code / migration script / hook 구현
+- ❌ Tier-2 / Tier-3 catalog 자동 확장
+
+본 부록 C 발행은 ADR-011 §2.4 T2 절차 (사용자 승인 + Reviewer-only 단축 합의) 답습 — *자동 격상 아님*. 본 부록 C 자체가 *Hermes PMO 격상 조건* 명시 강화 한정.

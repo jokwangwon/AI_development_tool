@@ -6,15 +6,21 @@
 >
 > **G3 운영 구현 상태 (P0 조건 C-B, 5/5 입력 일치)**: **DESIGN PASS / IMPLEMENTATION PENDING** (§1 ~ §7 모든 § 의 (a)~(e) 5조건 중 (b) 격리 환경 PoC + (d) 자동 회귀 검증 경로 미충족, 합의 보고서 §6 갱신 권고 흡수 시점에 별도 합의).
 >
-> **Hermes PMO 격상 / G3 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
+> **Hermes 변조 차단 매트릭스 4항목** (Hermes-originated ledger entry / 파일 변조 / git commit / 외부 LLM 응답 위조 — ADR-012 §2.12 답습): G3 §2.5 #11 (filesystem ACL on Evidence Ledger / ADR / G2-G3-G4 정의 / external-review 등 15건) + §4.5 (audit log + 컨테이너 정지) + §2.2 #20 (Hermes-originated commit auto-reject) + 본 G3 §1.3 PASS 성립 4 요건 (Tools 검증 + Evidence Ledger entry + 사용자 명시 승인 + 합의 보고서 commit) — 모두 본 G3 의 정식 권위.
+>
+> **P2 v3 (`hermes-adoption-design-v3.md`) = Adopted (Design Adoption only, 2026-05-09 후속 6)** 후속 권위. 본 G3 = P2 v3 §5 (G3 정의) + §2.1.2 Hermes 가 *하지 않는* 것 6항목 + §2.2 권위 위계 + §10.1 Normative Constraints #2 (Hermes ≠ root of trust 5 layer 보호) + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화 답습.
+>
+> **P2 v2 (`hermes-adoption-design.md`) = Archived (옵션 A 최소 침습, 2026-05-09 후속 7)** + **`system-identity-prequel.md` = Archived (옵션 A, 2026-05-09 후속 8 — 본 G3 §1 권위 위계 운영 매트릭스의 권위 출처 prequel §3 → ADR-011 §2.3 영구 권위 승격 답습으로 archive 후에도 권위 보존)** — 본 G3 cross-reference 영향 0건 (path 변경 0건).
+>
+> **Hermes PMO 격상은 본 PASS 에 포함되지 않는다** (사용자 명시 답습) — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 후 별도 (P2 v3 §2.6.1 12 조건 PMO 격상 체크리스트 답습). G3 운영 구현 PASS / ADR 본문 자동 갱신 / archive 자동 처리도 본 PASS 미포함.
 
 **작성일**: 2026-05-07
 **정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G4)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
-**상위 권위**: 헌법 제8조 (보안), 헌법 제5조 관용 (Provider Liquidity), ADR-011 §2.3 (권위 위계 + 운영 함의 5항목, 영구 권위), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리)
-**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 (수단/목적 분리)
-**관련 설계**: `hermes-adoption-design-v3.md` §5 (G3 정의), `governance-preconditions.md` (G2 — GP-2~GP-6 인터페이스 의존), `system-identity-prequel.md` §3 (권위 위계 prequel — ADR-011 §2.3로 승격), `canary-recheck-design.md` (R-5), `redaction-pattern-equivalence.md` (R-4)
-**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 단독 발견 "합의 인프라 순환 권위 역설" + GPT 핵심 원칙 "Agent proposes / Tools verify / Evidence decides / Human overrides"), `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (ADR-011 §2.3 권위 승격), `docs/review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` (G2 §9 메타 안전장치 G3 위임), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G3 정식 PASS 합의)
+**상위 권위**: 헌법 제8조 (보안), 헌법 제5조 관용 (Provider Liquidity), **ADR-011 §2.3 (권위 위계 + 운영 함의 5항목, 영구 권위 — `system-identity-prequel.md` §3 → 본 ADR-011 §2.3 영구 승격, "prequel 폐기 후에도 보존" 직접 명시)**, **ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리, 영구 권위 — prequel §6 3-tier 선언 → ADR-011 §2.4 영구 승격)**, **ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목, 2026-05-09 후속 3 PR-2 신규 발행)**
+**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 (수단/목적 분리), **ADR-009 C-N §2.3 (Hermes PMO ↔ provider 분리 영구 권위, 2026-05-09 후속 4 갱신)**, **ADR-012 (Evidence Ledger Protection — 본 G3 §1.3 + §5 PASS 성립 4 요건 (ii) Evidence Ledger entry 의 *형식적 무결성* 권위 출처)**
+**관련 설계**: **`hermes-adoption-design-v3.md` §5 (G3 정의 — P2 v3 Adopted Design Adoption only, 2026-05-09 후속 6)**, `governance-preconditions.md` (G2 — GP-2~GP-6 인터페이스 의존 + §1.2.6 P10 Evidence Forgery 정식 등록), `provider-agnostic-memory-skill-design.md` (G4 — G3 §6.5 / §7 인터페이스 + §4 hash chain 사양), `hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7**), `system-identity-prequel.md` §3 (권위 위계 prequel — ADR-011 §2.3로 영구 승격, **Archived 2026-05-09 후속 8**), `canary-recheck-design.md` (R-5), `redaction-pattern-equivalence.md` (R-4)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 단독 발견 "합의 인프라 순환 권위 역설" + GPT 핵심 원칙 "Agent proposes / Tools verify / Evidence decides / Human overrides"), `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (ADR-011 §2.3 권위 승격), `docs/review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` (G2 §9 메타 안전장치 G3 위임), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G3 정식 PASS 합의), **`docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (ADR-012 발행 — 본 G3 §1.3 / §5 답습 권위)**, **`docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (P2 v3 정식 채택 — 본 G3 = P2 v3 §5 답습 권위)**
 **관련 evidence**: G1b PASS (R-7 SOP §7.3 단축 합의, 2026-05-07), G2 DRAFT 단축 검토 APPROVE (`957cddc`)
 
 ---

@@ -8,16 +8,23 @@
 >
 > **PR-2 보강 흡수 (2026-05-09 풀 3+1 합의 + 외부 LLM 2건)**: **§4.2 schema 11 필드 (10 → 10 + `event` 신규) + §4.4 hash chain 사양 보강 (Layer 1~5 다층 강제 + RFC 8785 JCS Primary + fallback + Genesis Hash + prev_hash 검증 실패 BLOCK + manual + Full Rewrite 5 Layer 방어) + §4.6 round-trip 검증 절차 보강 (Tier-based + 3 ledger entry 형식 + Migration 검증 실패 rollback 조건) — `docs/decisions/ADR-012-evidence-ledger-protection.md` 와 동일 PR commit. 합의 권위: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (5/5 입력 APPROVE WITH CONDITIONS). G4 §11.4 P-1 (RFC 8785 JCS) + P-2 (schema 진화 정책) + P-3 (import schema_version) 처리 완료** — P-4 / P-5 는 PR-1 또는 후속 합의 영역 (PR-1 §11.4 답습).
 >
-> **Hermes PMO 격상 / G4 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 (신규 ADR-014 후보 검토 포함) / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
+> **ADR-012 (Evidence Ledger Protection) Mandatory Reference (2026-05-09 후속 3 PR-2 신규 발행)**: 본 G4 §4.2 11 필드 schema (`event` 신규) + §4.4 hash chain 사양 (Layer 1~5 + RFC 8785 JCS Primary + Genesis Hash + prev_hash 검증 실패 BLOCK + Full Rewrite 5 Layer) + §4.6 round-trip 검증 절차 (Tier-based + 3 ledger entry 형식 + Migration rollback) 의 *권위 출처*. **G4 §4 = ADR-012 §2.1 ~ §3.5 답습 권위**.
+>
+> **P2 v3 (`hermes-adoption-design-v3.md`) = Adopted (Design Adoption only, 2026-05-09 후속 6)** 후속 권위. 본 G4 = P2 v3 §6 (G4 정의 + ADR-012 Mandatory Reference cross-reference) + §10.1 #1 (Provider Liquidity 5-way Multi-layer Defense 5 Layer — 본 G4 §3.5 + §4.3 Layer 3/4 + ADR-012 §원칙 6 Layer 5) + §10.2 Archive Migration Note + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화 답습.
+>
+> **P2 v2 (`hermes-adoption-design.md`) = Archived (옵션 A 최소 침습, 2026-05-09 후속 7)** + **`system-identity-prequel.md` = Archived (옵션 A, 2026-05-09 후속 8 — 본 G4 §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary) 의 *원본 권위 출처* prequel §6.3 + §8.4 → 본 G4 + ADR-012 §1.4 답습 권위 발행으로 archive 후에도 권위 보존)** — 본 G4 cross-reference 영향 0건 (path 변경 0건).
+>
+> **Hermes PMO 격상은 본 PASS 에 포함되지 않는다** (사용자 명시 답습) — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 후 별도 (P2 v3 §2.6.1 12 조건 PMO 격상 체크리스트 답습). G4 운영 구현 PASS / ADR 본문 자동 갱신 (신규 ADR-014 후보 검토 포함) / archive 자동 처리도 본 PASS 미포함.
 
 **작성일**: 2026-05-07
 **정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G3)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
+**§4 hash chain 보강 합의**: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (PR-2 풀 3+1 + 외부 LLM 2건 — ADR-012 발행 + G4 §4.2/§4.4/§4.6 보강, 2026-05-09 후속 3 PR-2)
 **산출 방식**: 옵션 B (Memory + Skill 통합 단일 문서) — 사용자 명시 결정 답습. 사유: G4 핵심은 *Memory/Skill 공통 형식 — provider-agnostic schema*. 분리 작성 시 lock-in 방지 *공통 보장*이 약화될 위험.
-**상위 권위**: 헌법 제5조 관용 (Provider Liquidity), 헌법 제8조 (보안), ADR-008 차단조건 #2 (JSONL export 표준)
-**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리)
-**관련 설계**: `hermes-adoption-design-v3.md` §6 (G4 정의), `governance-preconditions.md` §8 (GP-6 Memory/Skill Migration), `hermes-not-root-of-trust-runtime.md` §6.5 / §7 (GP-6 ↔ G3 ↔ G4 3-way 인터페이스), `system-identity-prequel.md` §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary)
-**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Memory 2단계 채택 + Skill 자동 추출 T1 한정 + GPT 4단계 미채택 사유), `docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 §7 G4 경계 인용), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G4 정식 PASS 합의)
+**상위 권위**: 헌법 제5조 관용 (Provider Liquidity), 헌법 제8조 (보안), ADR-008 차단조건 #2 (JSONL export 표준), **ADR-009 C-N §5 (Provider Liquidity 5-way Multi-layer Defense 모법 ADR Layer 1, 2026-05-09 후속 4 갱신)**, **ADR-012 §원칙 5 + §원칙 6 (Provider Liquidity 5-way Layer 5 — Evidence 형식 차원 provider-neutral 강제)**
+**상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리), **ADR-012 (Evidence Ledger Protection — 본 G4 §4 권위 출처)**
+**관련 설계**: **`hermes-adoption-design-v3.md` §6 (G4 정의 — P2 v3 Adopted Design Adoption only, 2026-05-09 후속 6)**, `governance-preconditions.md` §8 (GP-6 Memory/Skill Migration) + §1.2.6 P10 Evidence Forgery 정식 등록, `hermes-not-root-of-trust-runtime.md` §6.5 / §7 (GP-6 ↔ G3 ↔ G4 3-way 인터페이스), `hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7**), `system-identity-prequel.md` §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary) (**Archived 2026-05-09 후속 8** — 본 G4 답습 권위 발행으로 권위 보존), `llm-providers-design.md` (P1 v2 — Option β LiteLLM facade)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Memory 2단계 채택 + Skill 자동 추출 T1 한정 + GPT 4단계 미채택 사유), `docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 §7 G4 경계 인용), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G4 정식 PASS 합의), **`docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (G4 §4 hash chain 보강 — ADR-012 동일 PR commit)**, **`docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (P2 v3 정식 채택 — 본 G4 = P2 v3 §6 답습 권위)**
 **관련 evidence**: G1b PASS (R-7 SOP §7.3 단축 합의, 2026-05-07), G2 DRAFT 적격 검토 APPROVE (`957cddc`), G3 DRAFT 적격 검토 APPROVE (`d42886b`)
 
 ---

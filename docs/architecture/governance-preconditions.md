@@ -1,13 +1,22 @@
-# 6 Governance Preconditions (G2) — DRAFT
+# 6 Governance Preconditions (G2) — Design/Governance Gate PASS (Bundled, 2026-05-09)
 
-> **상태: DRAFT (초안)**. Hermes PMO 격상 4 게이트 중 G2 — "헌법 8조·5조(Provider Liquidity) 위반 경로 P1~P8 강제 메커니즘 매핑 + 6 거버넌스 사전조건 GP-1~GP-6 정의 + 각 사전조건의 entry/exit 기준"까지 작성. **G2 PASS 선언은 본 초안 범위 외** — 후속 PoC + 합의 통과 후 별도.
+> **상태: Design/Governance Gate PASS (Bundled, 2026-05-09)**. Hermes PMO 격상 4 게이트 중 G2 — "헌법 8조·5조(Provider Liquidity) 위반 경로 P1~P8 강제 메커니즘 매핑 + 6 거버넌스 사전조건 GP-1~GP-6 정의 + 각 사전조건의 entry/exit 기준" 정의. **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접 컨텍스트) APPROVE WITH CONDITIONS** (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`).
+>
+> **PASS 범위 한정 (P0 조건 C-A, 5/5 입력 일치)**: 본 PASS 는 *Design/Governance Gate PASS* 한정 — 문서 구조 / 권위 위계 / 6 GP 정의 / 강제 메커니즘 분류 매트릭스 / Entry·Exit 기준 정의의 *설계 승인* 에 한정한다. **Implementation/Runtime PASS 는 본 PASS 에 포함되지 않는다** — GP-2~GP-6 의 PoC 실증 / CI 강제 / runtime hook 구현 / Evidence Ledger 검증은 *별도 합의* 로만 발생.
+>
+> **GP 별 상태 (P0 조건 C-B, 5/5 입력 일치)**:
+> - **GP-1**: PASS (G1b PASS evidence 흡수, 단 Tier-1 한정 — Tier-2/Tier-3 catalog 확장은 후속, Claude C-7)
+> - **GP-2 ~ GP-6**: **DESIGN PASS / IMPLEMENTATION PENDING** (각 GP 의 PoC 실증 + (a)~(e) 5조건 충족 검증은 별도 합의)
+>
+> **Hermes PMO 격상 / G2 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
 
 **작성일**: 2026-05-07
-**상태**: DRAFT (초안). 후속 합의 + PoC + entry/exit 검증 통과 후 G2 PASS 합의 가동 가능.
+**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G3 + G4)
+**합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **상위 권위**: 헌법 제8조 (보안), 프로젝트 내 관용 "헌법 제5조 (Provider Liquidity)" — 본 §1.1 명명 정정 참조
 **상위 결정**: ADR-008 (Hermes 도입 Option B) 6 차단조건, ADR-011 (수단/목적 분리, §2.3 권위 위계, §2.4 T1/T2/T3)
 **관련 설계**: `hermes-adoption-design-v3.md` §4 (G2 정의), `system-identity-prequel.md` §3.3 / §4.2, `redaction-pattern-equivalence.md` (R-4), `canary-recheck-design.md` (R-5), `llm-providers-design.md` (P1 v2)
-**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 6 거버넌스 사전조건 + 8 위반 경로 P1~P8 식별)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 6 거버넌스 사전조건 + 8 위반 경로 P1~P8 식별), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G2 정식 PASS 합의)
 **관련 evidence**: R-2 ~ R-7 + R-6 actual run `25482284523` (G1b PASS)
 
 ---

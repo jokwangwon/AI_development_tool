@@ -2,25 +2,24 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 (G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 4 DRAFT 검토 모두 APPROVE / G2·G3·G4 정식 채택 합의 형태 결정 다음 세션 진입점)
+**최종 업데이트**: 2026-05-09 (G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 [GPT cross-vendor + Claude 인접 컨텍스트] APPROVE WITH CONDITIONS — **3 게이트 동시 Design/Governance Gate PASS 승격 + P2 v3 정식 채택 합의 단계 진입 적격**)
 
 ---
 
 ## 현재 활성 의사결정 (2026-05-09 종료 시점)
 
-**Phase 0 완료 (Part 1) + 4 게이트 DRAFT 검토 모두 APPROVE (Part 2 + 본 세션)** — Part 1 (G1b PASS + Phase 1 acceptance PASS) 후 사용자 명시 결정으로 P2 v3 + G2 + G3 + G4 DRAFT 작성 진입. **G2/G3/G4 DRAFT 검토 APPROVE AS DRAFT** (Reviewer-only). 다음 세션 진입점은 G2/G3/G4 정식 채택 합의 형태 결정 (옵션 1/2/3).
+**Phase 0 완료 (Part 1) + 4 게이트 DRAFT 검토 모두 APPROVE (Part 2 + 본 세션) + G2/G3/G4 통합 정식 PASS (옵션 3, 본 세션 후속)** — Part 1 (G1b PASS + Phase 1 acceptance PASS) 후 사용자 명시 결정으로 P2 v3 + G2 + G3 + G4 DRAFT 작성 진입. G2/G3/G4 DRAFT 검토 APPROVE AS DRAFT (Reviewer-only). **2026-05-09 후속**: 옵션 3 (G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 1+) 채택 → Agent A/B/C (Opus 독립) + GPT (cross-vendor) + Claude (인접 컨텍스트) **5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate PASS (Bundled)** 합의 보고서 발행 + 3 게이트 헤더 갱신. 다음 진입점은 P0 (3건) + P1 (10건) 조건 흡수 PR 묶음 결정 + P2 v3 정식 채택 합의 형태 결정 (Gemini 등 추가 cross-vendor 적용 시점 포함).
 
-**4 게이트 합산** (2026-05-09 종료 시점):
+**4 게이트 합산** (2026-05-09 후속 시점):
 ```
-G1b = PASS                            ✅ 2026-05-07 Part 1 승격
-G2  = DRAFT 검토 APPROVE              ✅ 1b5bde3 / 957cddc
-G3  = DRAFT 검토 APPROVE              ✅ 9c488b1 / d42886b
-G4  = DRAFT 검토 APPROVE              ✅ 079bc6c / fd10b79
-─────────────────────────────────────
-4 게이트 PASS 합산 = 1/4 (G1b)
-4 게이트 DRAFT 작성 = 4/4
-4 게이트 DRAFT 검토 APPROVE = 4/4
-Hermes PMO 격상 선언 = 미선언 (4 게이트 모두 PASS + 외부 LLM 1+ + 사용자 명시 결정 후 별도)
+G1b = PASS                                                    ✅ 2026-05-07 Part 1 승격
+G2  = Design/Governance Gate PASS (Bundled, 2026-05-09)       ✅ 본 세션 정식 승격 (GP-1 PASS + GP-2~GP-6 DESIGN PASS / IMPLEMENTATION PENDING)
+G3  = Design/Governance Gate PASS (Bundled, 2026-05-09)       ✅ 본 세션 정식 승격 (운영 구현 = DESIGN PASS / IMPLEMENTATION PENDING)
+G4  = Design/Governance Gate PASS (Bundled, 2026-05-09)       ✅ 본 세션 정식 승격 (라운드트립 + migration script = DESIGN PASS / IMPLEMENTATION PENDING)
+─────────────────────────────────────────────────────────────
+4 게이트 Design/Governance Gate PASS 합산 = 4/4 (G1b PASS + G2/G3/G4 Design/Governance Gate PASS)
+4 게이트 Implementation/Runtime PASS 합산 = 1/4 (G1b 만 — GP-2~GP-6 / G3 운영 / G4 라운드트립 모두 IMPLEMENTATION PENDING)
+Hermes PMO 격상 선언 = 미선언 (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 권고 답습)
 ```
 
 ### 합의·검증 산출 (2026-05-05 ~ 2026-05-09 누적)
@@ -93,9 +92,9 @@ G1b: DB-level fallback prevents plaintext secret persistence
 |-------|------|--------|
 | ~~G1a~~ | Hermes native redaction → DB | ❌ FAIL 확정 (폐기) — **ADR-011 §2.2 / ADR-008 부록 B 권위 명시** |
 | **G1b** | **DB-level fallback (SQLCipher trigger)** | ✅ **PASS** (2026-05-07 Part 1 단축 합의 승격) — R-3 ~ R-7 6단계 ✅ + R-4.1 격리 PoC PASS + R-6 GitHub Actions actual run `25482284523` PASS (24초, verdict PASS, 42/42, leak 0) + Reviewer-only 단축 합의 APPROVE (`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`) |
-| **G2** | **6 거버넌스 사전조건** | 🟡 **DRAFT 검토 APPROVE AS DRAFT** (2026-05-07 Part 2) — `governance-preconditions.md` (`1b5bde3`) + 검토 보고서 (`957cddc`). PASS 미선언 |
-| **G3** | **"Hermes ≠ root of trust" 운영 구현** | 🟡 **DRAFT 검토 APPROVE AS DRAFT** (2026-05-07 Part 2) — `hermes-not-root-of-trust-runtime.md` (`9c488b1`) + 검토 보고서 (`d42886b`). ADR-011 §2.3 권위 확정 + 본 G3 운영 구현 정의. PASS 미선언, **PASS 합의 시 외부 LLM 의견 권장** (G3 §4.4.2) |
-| **G4** | **Provider-agnostic Memory/Skill 형식** | 🟡 **DRAFT 검토 APPROVE AS DRAFT** (2026-05-09) — `provider-agnostic-memory-skill-design.md` (`079bc6c`, 옵션 B 통합 문서) + 검토 보고서 (`fd10b79`). PASS 미선언, **PASS 합의 시 외부 LLM 의견 권장** (G3 §4.4.2 답습) |
+| **G2** | **6 거버넌스 사전조건** | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — `governance-preconditions.md` 헤더 갱신 + 합의 보고서 (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`, 5/5 입력 APPROVE WITH CONDITIONS). **GP-1 = PASS, GP-2~GP-6 = DESIGN PASS / IMPLEMENTATION PENDING**. Implementation/Runtime PASS 미충족 |
+| **G3** | **"Hermes ≠ root of trust" 운영 구현** | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — `hermes-not-root-of-trust-runtime.md` 헤더 갱신 + 합의 보고서. ADR-011 §2.3 권위 확정 + G3 §1~§7 설계 승인. **운영 구현 = DESIGN PASS / IMPLEMENTATION PENDING**. 외부 LLM 1+ 충족 (GPT cross-vendor + Claude 인접 컨텍스트) |
+| **G4** | **Provider-agnostic Memory/Skill 형식** | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — `provider-agnostic-memory-skill-design.md` (옵션 B 통합 문서) 헤더 갱신 + 합의 보고서. **라운드트립 + migration script = DESIGN PASS / IMPLEMENTATION PENDING**. hash chain 사양 보강 + provider_bindings lint 룰 강제는 별도 합의 |
 
 ### Phase 0 진행 상태
 - ✅ Day 1 (사실 확인)
@@ -115,19 +114,28 @@ G1b: DB-level fallback prevents plaintext secret persistence
 1. ~~**R-3 / R-4 / R-4.1 / R-5 / R-6 / R-7 + G1b PASS 승격 + Phase 1 acceptance PASS 선언**~~ ✅ 완료 (2026-05-06 ~ 2026-05-07 Part 1)
 2. ~~**P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2·G3 DRAFT 검토 APPROVE**~~ ✅ 완료 (2026-05-07 Part 2)
 3. ~~**G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT**~~ ✅ 완료 (2026-05-09, commit `fd10b79`)
-4. **G2/G3/G4 정식 채택 합의 형태 결정** (다음 진입점, 사용자 명시 결정):
-   - 옵션 1: G4 단독 단축 합의 (Reviewer-only) — 새 권위 결정 0건이지만 외부 LLM 의견 권장
-   - 옵션 2: G4 + G2 GP-6 통합 합의 (단축 또는 풀 3+1) — GP-6 §8.5 (e) + G3 §6.5 / §7.3 답습
-   - **옵션 3 (권고 후보)**: G2 + G3 + G4 통합 풀 3+1 합의 + **외부 LLM 1+ 필수** (PR 묶음, 격상 통합 합의 답습) — P2 v3 §9.2 / G2 §10.2 / G3 §8.2 / G4 §8.3 옵션 3 패턴
-5. **(옵션 3 채택 시) 외부 검토 의뢰 자료 준비** (`docs/external-review/` 패턴 답습) → 외부 LLM 1+ 의견 → 풀 3+1 통합 합의
-6. **정식 채택 후 ADR PR 묶음**: ADR-008 / ADR-009 / ADR-010 / ADR-011 cross-reference 갱신 + 신규 ADR-014 (Provider-agnostic Memory/Skill Format) 후보 검토
-7. **G4 검토 후속 권고 5건 흡수** (정식 채택 또는 G4 PASS 합의 시점): P-1 RFC 8785 JCS 인용 / P-2 schema 진화 정책 / P-3 schema_version declaration 절차 / P-4 §6.4 명명 cross-reference / P-5 implementation 시 `CLAUDE_GLOBAL_MEMORY_PATH` (선택)
-8. **G3 검토 후속 권고 4건 흡수** (정식 채택 시점): §2.4 자동 롤백 합산 산술 정정 (14/22 → 15/22) / G2 §8.5 G3 §6.5 cross-reference / §4.4.2 외부 LLM 형식 매트릭스 / §11.1 메타 한계 추가 4건
-9. **P2 v2 / system-identity-prequel.md archive 처리** (정식 채택 시점에)
-10. **INDEX / CONTEXT 갱신** (정식 채택 시점에 — 본 세션 종료 housekeeping 외 추가 갱신)
-11. **Hermes PMO 격상 후보** (4 게이트 모두 PASS + 외부 LLM 1+ 합의 + 사용자 명시 결정 후 별도)
+4. ~~**G2/G3/G4 정식 채택 합의 (옵션 3 — 통합 풀 3+1 + 외부 LLM 1+)**~~ ✅ 완료 (2026-05-09, 5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate PASS Bundled)
+5. ~~**G2/G3/G4 헤더 갱신 + CONTEXT/INDEX 갱신 (P0 조건 C-A + C-B 흡수)**~~ ✅ 완료 (2026-05-09 본 세션)
+6. **P1 조건 흡수 PR 묶음 결정** (다음 진입점, 사용자 명시 결정) — 합의 보고서 §11.2 답습:
+   - C-C: Evidence Ledger 보호 강화 (11 필드 + hash chain/signed commit) — 신규 ADR-012 후보
+   - C-D: Git/CI/external-review 파일 보호 명시 — G3 §2.2 보강
+   - C-E: 메타-순환 청산 (G3 §4 외부 LLM 권장/필수가 외부 LLM 없이 작성된 메타-순환 명시 기록) — Claude C-5
+   - C-F: SPOF accepted risk 명시 (G2 §9 + G3 §4 + G3 §5.5, 1인 동일 호스트 의도적 수용) — Claude C-6
+   - C-G: G4 hash chain 사양 보강 (canonical JSON / newline / encoding / field ordering / genesis / prev_hash 검증 실패 / full rewrite 방어 / round-trip lossy ledger) — GPT 조건 6
+   - C-H: provider_bindings lint 룰 강제 (`required`/`exclusive` schema 차단)
+   - C-I: P9~P12 deferred candidates 등록 (prompt injection / evidence forgery / supply-chain / memory poisoning)
+   - C-K: G4 §3.1 권장 → MVP 필수 vs 후속 분리 표기 + #15 권장→필수 격상 (Agent C 권고 답습)
+   - C-L: G2/G3/G4 후속 권고 5건 + 4건 (G4 P-1~P-5 / G3 4건 — 기존 잔여 항목)
+   - C-N: ADR-009 / P1 facade MVP 진입조건 명시 (Agent C + GPT 조건 5 + Claude C-9)
+7. **P2 v3 정식 채택 합의 형태 결정** (P0/P1 흡수 후 또는 병행, 사용자 명시 결정):
+   - 시나리오 X: P2 v3 단독 합의 (단축 또는 풀 3+1)
+   - 시나리오 Y: P2 v3 + 신규 ADR-012/013/014 후보 통합 합의 (PR 묶음)
+   - 두 시나리오 모두 **Cross-vendor 추가 외부 LLM (Gemini 등) 적용 시점 결정** (Claude C-3 권고 답습 — P2 v3 정식 채택 전 권장)
+8. **ADR PR 묶음 (P2 v3 정식 채택 후)**: ADR-008 / ADR-009 / ADR-010 / ADR-011 cross-reference 갱신 + 신규 ADR-012 (Evidence Ledger) / ADR-013 (Git·CI·external-review 보호) / ADR-014 (Provider-agnostic Memory/Skill Format) 후보 검토
+9. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
+10. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점**: "G2/G3/G4 정식 채택 합의 형태를 결정합니다 — 옵션 1/2/3 중 어느 것?" (사용자 명시 결정 대기)
+**권고 시작점**: "P1 조건 흡수 PR 묶음 형태를 결정합니다 — C-C ~ C-N 중 어느 것 우선, 어느 것 별도 합의?" (사용자 명시 결정 대기)
 
 ### 잔여 (Task #16, 본 세션 미처리)
 - P1 v2 minor revisions 6건 — P2 v3 작성과 병합 검토

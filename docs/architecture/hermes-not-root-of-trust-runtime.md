@@ -1,13 +1,20 @@
-# Hermes ≠ Root of Trust Runtime (G3) — DRAFT
+# Hermes ≠ Root of Trust Runtime (G3) — Design/Governance Gate PASS (Bundled, 2026-05-09)
 
-> **상태: DRAFT (초안)**. Hermes PMO 격상 4 게이트 중 G3 — "Hermes ≠ root of trust" 원칙(ADR-011 §2.3 영구 권위)을 *운영 가능한 메커니즘*으로 구현하기 위한 설계 문서. **G3 PASS 선언 / G2·G4 PASS / Hermes PMO 격상 / P2 v3 정식 채택 / ADR 본문 갱신 / archive 처리 / 실 런타임 코드 구현 모두 본 초안 범위 외**.
+> **상태: Design/Governance Gate PASS (Bundled, 2026-05-09)**. Hermes PMO 격상 4 게이트 중 G3 — "Hermes ≠ root of trust" 원칙 (ADR-011 §2.3 영구 권위) 의 *운영 가능 메커니즘 설계 문서*. **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접 컨텍스트) APPROVE WITH CONDITIONS** (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`).
+>
+> **PASS 범위 한정 (P0 조건 C-A, 5/5 입력 일치)**: 본 PASS 는 *Design/Governance Gate PASS* 한정 — 권위 위계 운영 / 22 권한 분류 (T1 8 / T2 2 / T3 12) / 3 위험 5 측면 / 합의 인프라 자기참조 차단 / Evidence 결정 5 운영 규칙 / G2·G4 인터페이스의 *설계 승인* 에 한정한다. **Implementation/Runtime PASS 는 본 PASS 에 포함되지 않는다** — 실 hook / wrapper / sidecar / CI step / depcruise 룰 코드 구현 + Evidence Ledger enforcement + .git/ + .github/workflows/ + pre-commit + CI config + external-review 보호 강제는 *별도 합의* 로만 발생.
+>
+> **G3 운영 구현 상태 (P0 조건 C-B, 5/5 입력 일치)**: **DESIGN PASS / IMPLEMENTATION PENDING** (§1 ~ §7 모든 § 의 (a)~(e) 5조건 중 (b) 격리 환경 PoC + (d) 자동 회귀 검증 경로 미충족, 합의 보고서 §6 갱신 권고 흡수 시점에 별도 합의).
+>
+> **Hermes PMO 격상 / G3 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
 
 **작성일**: 2026-05-07
-**상태**: DRAFT (초안). 후속 합의 + (각 §의 PoC) + Exit 기준 충족 검증 통과 후 G3 PASS 합의 가동 가능.
+**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G4)
+**합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **상위 권위**: 헌법 제8조 (보안), 헌법 제5조 관용 (Provider Liquidity), ADR-011 §2.3 (권위 위계 + 운영 함의 5항목, 영구 권위), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리)
 **상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 (수단/목적 분리)
 **관련 설계**: `hermes-adoption-design-v3.md` §5 (G3 정의), `governance-preconditions.md` (G2 — GP-2~GP-6 인터페이스 의존), `system-identity-prequel.md` §3 (권위 위계 prequel — ADR-011 §2.3로 승격), `canary-recheck-design.md` (R-5), `redaction-pattern-equivalence.md` (R-4)
-**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 단독 발견 "합의 인프라 순환 권위 역설" + GPT 핵심 원칙 "Agent proposes / Tools verify / Evidence decides / Human overrides"), `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (ADR-011 §2.3 권위 승격), `docs/review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` (G2 §9 메타 안전장치 G3 위임)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 단독 발견 "합의 인프라 순환 권위 역설" + GPT 핵심 원칙 "Agent proposes / Tools verify / Evidence decides / Human overrides"), `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (ADR-011 §2.3 권위 승격), `docs/review/3plus1-consensus-2026-05-07-g2-governance-preconditions-draft.md` (G2 §9 메타 안전장치 G3 위임), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G3 정식 PASS 합의)
 **관련 evidence**: G1b PASS (R-7 SOP §7.3 단축 합의, 2026-05-07), G2 DRAFT 단축 검토 APPROVE (`957cddc`)
 
 ---

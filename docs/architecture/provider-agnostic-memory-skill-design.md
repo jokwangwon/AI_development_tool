@@ -1,14 +1,21 @@
-# Provider-agnostic Memory / Skill Design (G4) — DRAFT
+# Provider-agnostic Memory / Skill Design (G4) — Design/Governance Gate PASS (Bundled, 2026-05-09)
 
-> **상태: DRAFT (초안)**. Hermes PMO 격상 4 게이트 중 **G4** — Memory 와 Skill 이 특정 provider / 특정 DB / 특정 내부 포맷에 lock-in 되지 않도록 *공통 schema + 운영 규칙 + JSONL export/import 형식* 을 정의하는 통합 설계 문서. **G4 PASS 선언 / G2·G3 PASS / Hermes PMO 격상 / P2 v3 정식 채택 / ADR 본문 갱신 / archive 처리 / 실 runtime 코드 / 실 migration script 모두 본 초안 범위 외**.
+> **상태: Design/Governance Gate PASS (Bundled, 2026-05-09)**. Hermes PMO 격상 4 게이트 중 **G4** — Memory 와 Skill 이 특정 provider / 특정 DB / 특정 내부 포맷에 lock-in 되지 않도록 *공통 schema + 운영 규칙 + JSONL export/import 형식* 을 정의하는 통합 설계 문서. **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접 컨텍스트) APPROVE WITH CONDITIONS** (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`).
+>
+> **PASS 범위 한정 (P0 조건 C-A, 5/5 입력 일치)**: 본 PASS 는 *Design/Governance Gate PASS* 한정 — Memory scope 4 단계 (MVP Global+Project) / Skill schema 17 필드 / JSONL export hash chain 변조 방지 / Memory/Skill boundary 4 금지 / G3 인터페이스 5 항목 / G2 GP-6 인터페이스의 *설계 승인* 에 한정한다. **Implementation/Runtime PASS 는 본 PASS 에 포함되지 않는다** — 실 migration script (`hermes_to_claude.py` / `hermes_to_openai.py` 등) 구현 + 라운드트립 PoC 실증 + hash chain canonical JSON 사양 보강 (canonical / newline / encoding / field ordering / genesis / prev_hash 검증 실패 처리 / full rewrite 방어 / round-trip lossy ledger) + provider_bindings lint 룰 강제는 *별도 합의* 로만 발생.
+>
+> **G4 라운드트립 / migration script 상태 (P0 조건 C-B, 5/5 입력 일치)**: **DESIGN PASS / IMPLEMENTATION PENDING** (§4 변환 스크립트 사양까지만, 실 PoC 미실증 — 합의 보고서 §6 갱신 권고 흡수 시점에 별도 합의).
+>
+> **Hermes PMO 격상 / G4 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 (신규 ADR-014 후보 검토 포함) / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
 
 **작성일**: 2026-05-07
-**상태**: DRAFT (초안). 후속 합의 + (각 §의 PoC) + Exit 기준 충족 검증 통과 후 G4 PASS 합의 가동 가능.
+**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G3)
+**합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **산출 방식**: 옵션 B (Memory + Skill 통합 단일 문서) — 사용자 명시 결정 답습. 사유: G4 핵심은 *Memory/Skill 공통 형식 — provider-agnostic schema*. 분리 작성 시 lock-in 방지 *공통 보장*이 약화될 위험.
 **상위 권위**: 헌법 제5조 관용 (Provider Liquidity), 헌법 제8조 (보안), ADR-008 차단조건 #2 (JSONL export 표준)
 **상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리)
 **관련 설계**: `hermes-adoption-design-v3.md` §6 (G4 정의), `governance-preconditions.md` §8 (GP-6 Memory/Skill Migration), `hermes-not-root-of-trust-runtime.md` §6.5 / §7 (GP-6 ↔ G3 ↔ G4 3-way 인터페이스), `system-identity-prequel.md` §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary)
-**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Memory 2단계 채택 + Skill 자동 추출 T1 한정 + GPT 4단계 미채택 사유), `docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 §7 G4 경계 인용)
+**근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Memory 2단계 채택 + Skill 자동 추출 T1 한정 + GPT 4단계 미채택 사유), `docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 §7 G4 경계 인용), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G4 정식 PASS 합의)
 **관련 evidence**: G1b PASS (R-7 SOP §7.3 단축 합의, 2026-05-07), G2 DRAFT 적격 검토 APPROVE (`957cddc`), G3 DRAFT 적격 검토 APPROVE (`d42886b`)
 
 ---

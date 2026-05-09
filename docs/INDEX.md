@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-05-09 (G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — G2/G3/G4 정식 채택 합의 진입 적격)
+**최종 업데이트**: 2026-05-09 (G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 [GPT cross-vendor + Claude 인접 컨텍스트] APPROVE WITH CONDITIONS — **3 게이트 동시 Design/Governance Gate PASS 승격** + P2 v3 정식 채택 합의 단계 진입 적격)
 
 ---
 
@@ -64,9 +64,9 @@ docs/
 │   ├── system-identity-prequel.md               # 시스템 정체성 prequel (P2 v3 정식 채택 시 archived 예정)
 │   ├── redaction-pattern-equivalence.md         # R-4 pattern equivalence
 │   ├── canary-recheck-design.md                 # R-5 canary 재검증 트리거 설계
-│   ├── governance-preconditions.md              # G2 DRAFT — 6 거버넌스 사전조건 (P1~P8 / GP-1~GP-6)
-│   ├── hermes-not-root-of-trust-runtime.md      # G3 DRAFT — Hermes ≠ root of trust 운영 구현
-│   └── provider-agnostic-memory-skill-design.md # G4 DRAFT — Memory scope + Skill schema + JSONL export
+│   ├── governance-preconditions.md              # G2 Design/Governance Gate PASS (Bundled, 2026-05-09) — 6 거버넌스 사전조건 (P1~P8 / GP-1~GP-6, GP-1 PASS / GP-2~6 IMPLEMENTATION PENDING)
+│   ├── hermes-not-root-of-trust-runtime.md      # G3 Design/Governance Gate PASS (Bundled, 2026-05-09) — Hermes ≠ root of trust 운영 구현 (운영 구현 IMPLEMENTATION PENDING)
+│   └── provider-agnostic-memory-skill-design.md # G4 Design/Governance Gate PASS (Bundled, 2026-05-09) — Memory scope + Skill schema + JSONL export (라운드트립/migration script IMPLEMENTATION PENDING)
 │
 ├── guides/                               # 개발 가이드
 │   ├── DEVELOPMENT_GUIDE.md              # 개발 프로세스, Git 규칙
@@ -179,6 +179,8 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-07 (Part 2) | G4 Provider-agnostic Memory/Skill 신규 작성 (DRAFT, 옵션 B 통합 문서) — Memory scope 4단계 (MVP Global+Project + 후속 Session/Team-Agent) + Skill schema 17 필드 + JSONL export hash chain 변조 방지 + Memory/Skill boundary 4 금지 + G3·G2 GP-6 인터페이스 + 3-way (GP-6/G3/G4). 검토 다음 세션 진입점 | `architecture/provider-agnostic-memory-skill-design.md` |
 | 2026-05-07 (Part 2) | 세션 로그 Part 2 + CONTEXT/INDEX 갱신 — 4 게이트 진행 상태 표 갱신 (G1b PASS / G2·G3 DRAFT 검토 APPROVE / G4 DRAFT 검토 다음 세션) + 다음 세션 TODO 갱신 (G4 단축 검토 → 옵션 1/2/3 정식 채택 합의 / 옵션 3 외부 LLM 1+ 필수) | `sessions/SESSION_2026-05-07.md` (Part 2), `CONTEXT.md`, `INDEX.md` |
 | 2026-05-09 | G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 10 기준 10/10 PASS + 8 금지 위반 0건 + 5 자기 발견 잠재 위험 (LOW/VERY LOW: P-1 RFC 8785 JCS / P-2 schema 진화 / P-3 schema_version declaration / P-4 §6.4 명명 / P-5 `~/.claude/global` path). G3 §4 자기참조 차단의 적용 대상으로 한계 명시 — G4 PASS 합의 시 외부 LLM 의견 권장. G2/G3/G4 정식 채택 합의 진입 적격 | `review/3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` |
+| 2026-05-09 (후속) | **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (옵션 3)** — 외부 LLM 검토 의뢰 자료 작성 + Agent A (구현/운영, Opus) + Agent B (보안/거버넌스, Opus) + Agent C (대안/단순화, Opus) 3 내부 독립 분석 + GPT (cross-vendor) + Claude (인접 컨텍스트, 메타 면책 명시) 외부 LLM 2건 + Reviewer 종합 합의. **5/5 입력 APPROVE WITH CONDITIONS — Design/Governance Gate PASS (Bundled)**. P0 3건 (PASS 범위 한정 / GP-2~GP-6 IMPLEMENTATION PENDING / 외부 LLM 1+ 충족) + P1 10건 + P2 일부. Implementation/Runtime PASS / Hermes PMO 격상 / P2 v3 정식 채택 / ADR 자동 갱신 모두 본 합의 범위 외 (사용자 명시 답습) | `external-review/2026-05-09-g2g3g4-promotion-request.md`, `external-review/2026-05-09-g2g3g4-promotion-response.md` (GPT), `external-review/2026-05-09-g2g3g4-promotion-response-claude.md` (Claude), `review/agents-2026-05-09-g2g3g4/agent-a-implementation.md`, `agent-b-security.md`, `agent-c-alternatives.md`, `review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` |
+| 2026-05-09 (후속) | **G2/G3/G4 정식 PASS 헤더 갱신 + CONTEXT/INDEX 갱신 (P0 조건 C-A + C-B 흡수)** — 3 게이트 헤더 DRAFT → "Design/Governance Gate PASS (Bundled, 2026-05-09)" + Implementation/Runtime PASS 미포함 명시 + GP-2~GP-6 / G3 운영 / G4 라운드트립 = "DESIGN PASS / IMPLEMENTATION PENDING" 표기. CONTEXT.md 4 게이트 표 갱신 + 다음 세션 TODO 갱신 (P1 흡수 PR 묶음 결정 → P2 v3 정식 채택 합의 형태 결정) | `architecture/governance-preconditions.md`, `architecture/hermes-not-root-of-trust-runtime.md`, `architecture/provider-agnostic-memory-skill-design.md`, `CONTEXT.md`, `INDEX.md` |
 
 ---
 

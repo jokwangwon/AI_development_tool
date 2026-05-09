@@ -1,9 +1,14 @@
-# Hermes Agent 도입 설계 v3 (Hermes Adoption Design v3) — DRAFT
+# Hermes Agent 도입 설계 v3 (Hermes Adoption Design v3) — **Adopted (Design Adoption only)**
 
-> **상태: DRAFT (초안)**. P2 v2 §2.1.3 가정 붕괴 사실 + R-2 ~ R-7 evidence + R-6 GitHub Actions actual run PASS + G1b PASS 승격(2026-05-07) 권위를 흡수하고, Hermes PMO 구조와 G2/G3/G4 잔여 게이트의 entry/exit 기준을 명세하는 초안. **Hermes PMO 격상 선언은 본 초안 범위 외** — 4 게이트 모두 통과 + 사용자 명시 결정 후 별도 발행.
+> **상태: Adopted — Design Adoption only (2026-05-09 후속 6 풀 3+1 + 외부 LLM 2건 합의 APPROVE WITH CONDITIONS)**. P2 v2 §2.1.3 가정 붕괴 사실 + R-2 ~ R-7 evidence + R-6 GitHub Actions actual run PASS + G1b PASS 승격(2026-05-07) + G2/G3/G4 Design/Governance Gate PASS (Bundled, 2026-05-09) + ADR-012 (Evidence Ledger Protection) 발행 + ADR-009 C-N 갱신 + G2 §1.2.6 P10 정식 등록 권위를 흡수하고, Hermes PMO 구조와 G2/G3/G4 게이트의 entry/exit 기준을 명세한 정식 채택 문서.
+>
+> **본 정식 채택 = "Design Adoption only" 의미 제한** (5/5 합의 입력 일치 — 사용자 명시 답습): P2 v3 formal adoption is a *design-document adoption* only. **It is NOT Hermes PMO activation, runtime adoption, or Implementation PASS.** Hermes PMO 격상 / Runtime Implementation PASS / G2/G3/G4 Implementation PASS 모두 *별도 합의 + 4 게이트 Implementation/Runtime PASS + 외부 LLM 2 또는 외부 LLM 1 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정* 후 발생.
+>
+> **본 정식 채택 합의 권위**: `docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C + cross-vendor 외부 LLM 2건 (Gemini 사고모델 + vendor 미명시 1건))
 
-**상태**: DRAFT (초안, 2026-05-07 작성). 단축 합의 통과 후 v2 대체.
-**작성일**: 2026-05-07
+**상태**: **Adopted — Design Adoption only** (2026-05-09 후속 6 풀 3+1 합의 APPROVE WITH CONDITIONS).
+**작성일**: 2026-05-07 (DRAFT) → **2026-05-09 (정식 채택, 후속 6)**
+**정식 채택 일자**: 2026-05-09 후속 6
 **상위 결정**: ADR-008 (Option B), ADR-011 (수단/목적 분리 — R-3 모법)
 **상위 권위**: 헌법 제5조 (Provider Liquidity), 헌법 제8조 (보안), `docs/architecture/system-identity-prequel.md` (R-7 후 본 v3로 흡수, archived 예정)
 **관련 ADR**: ADR-009 (자체 Adapter v2.0 진입조건), ADR-010 (SQLCipher Vault HSM 키 관리), ADR-011 (수단/목적 분리)
@@ -37,18 +42,21 @@
 7. ❌ Tier-2 / Tier-3 catalog 확장 (별도 합의)
 8. ❌ Phase 진입 결정 (본 초안은 설계 문서이며, Phase 진입은 별도 합의)
 
-### 0.3 본 초안의 정식화 절차 (예정)
+### 0.3 본 문서의 정식화 절차 (Adopted, 2026-05-09 후속 6 시점 갱신)
 
-| # | 단계 | 산출 | 시점 |
-|---|------|------|------|
-| 1 | 본 초안 작성 (현 단계) | 본 문서 (DRAFT) | 2026-05-07 |
-| 2 | 사용자 검토 + 수정 | 본 문서 갱신 | 사용자 명시 결정 후 |
-| 3 | 합의 가동 (단축 또는 풀) | `docs/review/3plus1-consensus-YYYY-MM-DD-p2-v3.md` | 사용자 명시 결정 후 |
-| 4 | v3 정식 채택 + v2 archived + prequel archived | 본 헤더 "DRAFT" 제거 + v2 헤더 갱신 + prequel 헤더 갱신 | 합의 APPROVE 후 |
-| 5 | ADR 동시 갱신 PR 묶음 | ADR-008/009/010/011 갱신 (cross-reference 추가) | 단계 4와 동일 PR 또는 후속 PR |
-| 6 | INDEX / CONTEXT 갱신 | `docs/INDEX.md`, `docs/CONTEXT.md` | 단계 4와 동일 |
+| # | 단계 | 산출 | 시점 | 상태 |
+|---|------|------|------|----|
+| 1 | DRAFT 작성 | 본 문서 (DRAFT) | 2026-05-07 | ✅ 완료 |
+| 2 | 사용자 검토 + C-14 cross-vendor blind 의뢰 | 의뢰 자료 + 응답 2건 | 2026-05-09 후속 4 | ✅ 완료 |
+| 3 | 풀 3+1 합의 가동 + Reviewer 종합 | `docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (5/5 APPROVE WITH CONDITIONS) | 2026-05-09 후속 6 | ✅ 완료 |
+| **4** | **v3 정식 채택 (Design Adoption only) — 본 문서 헤더 "DRAFT" → "Adopted" + 8 본문 영역 갱신** | 본 문서 (Adopted) + 합의 보고서 + Agent A/B/C + 외부 LLM 응답 2건 | **2026-05-09 후속 6** | ✅ **본 commit** |
+| 5 | P2 v2 / system-identity-prequel archive 결정 | 별도 archive commit | 본 합의 *후* 별도 PR (사용자 명시 결정) | ⏳ |
+| 6 | ADR-008 / 010 / 011 본문 갱신 PR 묶음 (cross-reference 추가) | 별도 PR | 본 합의 *후* 별도 PR | ⏳ |
+| 7 | G2 / G3 / G4 헤더 P2 v3 정식 채택 cross-reference 갱신 | 별도 PR (단축) | 본 합의 *후* | ⏳ |
+| 8 | ADR-013 / 014 후보 발행 결정 | 별도 합의 (Hermes PMO 격상 *전*) | ⏳ |
+| 9 | Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS + 외부 LLM 2 + 인간 전문 리뷰 + 사용자 명시 후) | 별도 합의 + ADR-008 본문 갱신 | ⏳ Implementation/Runtime PASS 후 |
 
-본 초안 자체는 단계 1까지만 처리. 단계 2~6은 본 초안 범위 외.
+**단계 4까지 본 commit 에서 완료**. 단계 5~9는 본 정식 채택 *후* 별도 PR (사용자 명시 결정 영역).
 
 ---
 
@@ -127,7 +135,11 @@ G1b: DB-level fallback prevents plaintext secret persistence
 
 ## 2. Hermes PMO 구조 (활성화 후보 대상의 사전 정의)
 
-> **본 §2는 Hermes PMO *격상 선언이 아니다*.** 본 §2는 4 게이트(G1b/G2/G3/G4) 모두 통과 후 사용자 명시 결정으로 활성화될 수 있는 PMO의 *구조 사전 정의*이다. 현 시점 상태는 §3.6 (현 활성화 상태)을 따른다.
+> **본 §2 의 정식 채택은 Hermes 에 추가 권한을 부여하지 않는다 (Non-Activation Clause, 2026-05-09 후속 6 정식 채택 합의 §3.2 + §5.2 A4 답습).**
+>
+> 본 §2 는 *Hermes PMO 활성화 선언이 아니라*, 향후 활성화 검토 시 사용할 *구조 사양* 이다. 본 §2 의 정식 채택은 Hermes 에 추가 runtime 권한을 부여하지 않는다. **Hermes PMO 격상은 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 후 별도 발행 — 그 전까지 금지** (C-14 cross-vendor blind 응답 1 §7.10 조건 3 + Gemini 사고모델 §7.10 #3 직접 답습).
+>
+> 현 시점 상태는 §3 (4 게이트 진행 상태) 답습. **Hermes PMO 격상 (활성화) 시점 = §2.6 7 단계 격상 절차 + §2.6.1 격상 체크리스트 + §11 변경 절차 답습**.
 
 ### 2.1 Hermes 역할 정의 (system-identity-prequel §4 흡수)
 
@@ -201,19 +213,41 @@ Constitution
 
 §2.1.1 10항목 + §2.3 5 운영 함의 + §3.4 G3 5 운영 메커니즘 모두 활성. **단, 활성화는 본 v3 범위 외이며, 4 게이트 통과 후 별도 합의로 결정**.
 
-### 2.6 격상 절차 (별도 합의)
+### 2.6 격상 절차 (별도 합의, 2026-05-09 후속 6 정식 채택 시점 갱신)
 
-| 단계 | 조건 | 산출 |
-|------|------|------|
-| 1 | G1b PASS | ✅ 2026-05-07 (R-7 SOP §7.3 단축 합의) |
-| 2 | G2 PASS | ⏳ §4 entry/exit 기준 충족 후 |
-| 3 | G3 PASS | ⏳ §5 entry/exit 기준 충족 후 |
-| 4 | G4 PASS | ⏳ §6 entry/exit 기준 충족 후 |
-| 5 | 4 게이트 통합 검증 합의 (풀 3+1) | 별도 합의 보고서 |
-| 6 | 사용자 명시 격상 결정 | 명시 명령 |
-| 7 | 격상 활성화 commit + ADR-008 본문 추가 갱신 | 별도 PR |
+| 단계 | 조건 | 산출 | 현 상태 (2026-05-09 후속 6) |
+|------|------|------|----|
+| 1 | **G1b Implementation/Runtime PASS** | R-7 SOP §7.3 단축 합의 | ✅ 2026-05-07 |
+| 2 | **G2 Implementation/Runtime PASS** (GP-2~GP-6 PoC + CI step + 자동 롤백 활성) | 별도 합의 보고서 + R-2~R-7 패턴 답습 | ⏳ Implementation Pending (Design/Governance Gate PASS = 2026-05-09) |
+| 3 | **G3 Implementation/Runtime PASS** (22 권한 hook + Hermes-originated commit auto-reject + Hermes 변조 차단 매트릭스 4항목 runtime + Evidence Ledger entry 강제) | 별도 합의 보고서 + runtime PoC | ⏳ Implementation Pending (Design/Governance Gate PASS = 2026-05-09) |
+| 4 | **G4 Implementation/Runtime PASS** (migration script + round-trip PoC + ADR-012 CI enforcement + JSONL writer + 11 필드 schema 활성) | 별도 합의 보고서 + R2-5 답습 PoC | ⏳ Implementation Pending (Design/Governance Gate PASS = 2026-05-09) |
+| 5 | **4 게이트 통합 검증 합의 (풀 3+1 + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 리뷰)** | 별도 합의 보고서 | ⏳ |
+| **5.5** | **인간 전문 리뷰 (Human-in-the-loop) — 거버넌스 최종 확인 의무** (§11.1 답습 — 2026-05-09 후속 6 정식 채택 합의 + Gemini §7.10 #3 직접 인용) | 인간 리뷰 산출 + Evidence Ledger entry `event: human_review_completed` | ⏳ **신설 단계 (2026-05-09 후속 6)** |
+| 6 | 사용자 명시 격상 결정 | 명시 명령 | ⏳ |
+| 7 | 격상 활성화 commit + ADR-008 본문 추가 갱신 + Adoption decision commit + Evidence Ledger entry (`event: gate_pass` × 4 + `event: external_llm_received` × N + `event: human_review_completed`) | 별도 PR | ⏳ |
 
-본 v3는 **단계 1~4의 정의까지만 다룬다**. 단계 5~7은 본 v3 범위 외.
+본 v3 정식 채택 (Design Adoption only) 은 **단계 1~4 의 정의 + Design/Governance Gate PASS 까지만** 흡수. 단계 5~7 + 단계 5.5 (인간 리뷰) 는 본 v3 정식 채택 *후* 별도 합의 (Hermes PMO 격상 시점).
+
+#### 2.6.1 PMO 격상 체크리스트 (2026-05-09 후속 6 신설)
+
+본 §2.6.1 은 Hermes PMO 격상 *전* 충족 의무 체크리스트. **모든 항목 충족 *전* 격상 절대 금지**:
+
+| PMO 격상 조건 | 현 상태 (2026-05-09 후속 6) |
+|------|----|
+| G1b Implementation/Runtime PASS | ✅ 완료 |
+| GP-1 (G1b 흡수) Implementation/Runtime PASS | ✅ 완료 |
+| GP-2 ~ GP-6 Implementation/Runtime PASS | ⏳ 미완료 |
+| G3 runtime hooks/wrappers + Hermes 변조 차단 매트릭스 runtime | ⏳ 미완료 |
+| G4 migration round-trip PASS + JSONL writer + 11 필드 schema 활성 | ⏳ 미완료 |
+| ADR-012 evidence protection CI (R-6 workflow ledger 검증 step + canonical JSON 검증 + prev_hash 검증 + timestamp monotonicity) | ⏳ 미완료 |
+| ADR-009 T1~T4 trigger detection task 활성 (분기별 측정) | ⏳ 미완료 |
+| Provider Liquidity 5-way Multi-layer Defense (Layer 1~5 runtime 활성 — depcruise + AST 스캐너 + pre-commit hook + CI step) | ⏳ 미완료 |
+| 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 | ⏳ 별도 |
+| **인간 전문 리뷰 (Human-in-the-loop) — §2.6 단계 5.5 답습** | ⏳ 별도 |
+| 사용자 명시 격상 결정 | ⏳ 별도 |
+| ADR-008 본문 Hermes PMO 격상 절차 추가 PR | ⏳ 별도 |
+
+본 §2.6.1 는 system-identity-prequel §6.4 답습 + 외부 LLM 1 §7.10 조건 3 + Gemini 사고모델 §7.10 #3 직접 인용 답습.
 
 ---
 
@@ -221,13 +255,55 @@ Constitution
 
 ### 3.1 4 게이트 개요
 
-| 게이트 | 정의 | 현 상태 (2026-05-07) | 본 v3 상세 |
+> **DRAFT vs Adoption-time dual-structure** (5/5 합의 입력 일치 — 2026-05-09 후속 6 정식 채택 합의 §5.2 A1 답습): 본 §3 은 *DRAFT 시점 사실 보존* + *Adoption-time Status (현 시점)* + *Delta* + *Implementation Pending 표* 4 영역으로 구성. DRAFT 시점 상태는 §3.1.1, Adoption-time Status 는 §3.1.2, Delta 는 §3.1.3, Implementation Pending 표는 §3.1.4 답습.
+
+#### 3.1.1 DRAFT Snapshot (2026-05-07 작성 시점, 사실 보존)
+
+| 게이트 | 정의 | DRAFT 시점 (2026-05-07) | 본 v3 상세 |
 |-------|------|--------------------|----------|
 | **G1a** | Hermes native redaction → DB | ❌ **FAIL 확정 (폐기)** | §3.2 |
 | **G1b** | DB-level fallback (SQLCipher trigger) | ✅ **PASS** (2026-05-07 승격) | §3.3 |
 | **G2** | 6 거버넌스 사전조건 | ⏳ **미작성** | §4 |
 | **G3** | "Hermes ≠ root of trust" 운영 구현 | 🟡 **ADR-011 §2.3 권위 확정 / 운영 구현 미작성** | §5 |
 | **G4** | Provider-agnostic Memory/Skill 형식 | ⏳ **미작성** | §6 |
+
+#### 3.1.2 Adoption-time Status (2026-05-09 후속 6 정식 채택 시점, 현 시점)
+
+| 게이트 | 정의 | Adoption-time Status (2026-05-09 후속 6) | 정식 산출 |
+|-------|------|--------------------|----------|
+| **G1a** | Hermes native redaction → DB | ❌ **FAIL 확정 (영구 폐기)** | ADR-011 §2.2 권위 |
+| **G1b** | DB-level fallback (SQLCipher trigger + Tier-1 42 catalog) | ✅ **PASS — Implementation/Runtime PASS** (2026-05-07 승격, R-2~R-7 + R-6 actual run `25482284523`) | `docs/phase0/redaction-verification-sop.md` + 합의 보고서 |
+| **G2** | 6 거버넌스 사전조건 (P1~P8 + **P10 정식 등록 (Evidence Integrity)**) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — GP-1 Implementation/Runtime PASS (G1b evidence 흡수) / **GP-2 ~ GP-6 = Design PASS / Implementation Pending** + **§1.2.6 P10 정식 등록 완료 (2026-05-09 후속 5)** | `docs/architecture/governance-preconditions.md` (정식 산출) + `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` |
+| **G3** | "Hermes ≠ root of trust" 운영 구현 (22 권한 + 자기참조 차단 + Evidence decision principle 5 운영 규칙 + Hermes 변조 차단 매트릭스 4항목) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — **운영 구현 = Design PASS / Implementation Pending** | `docs/architecture/hermes-not-root-of-trust-runtime.md` (정식 산출) |
+| **G4** | Provider-agnostic Memory/Skill 형식 (Memory scope 4 + Skill schema 17 + JSONL 11 필드 + hash chain Layer 1~5 + Tier-based round-trip) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** + **§4.2 11 필드 schema 갱신 + §4.4 hash chain 사양 보강 + §4.6 round-trip 검증 절차 보강 (2026-05-09 후속 3 PR-2)** — **라운드트립 + migration script = Design PASS / Implementation Pending** | `docs/architecture/provider-agnostic-memory-skill-design.md` (정식 산출) |
+
+#### 3.1.3 Delta (DRAFT 시점 → Adoption-time, 2026-05-09 후속 6 정식 채택 시점)
+
+DRAFT 작성 (2026-05-07) 이후 본 정식 채택 (2026-05-09 후속 6) 시점까지의 *권위 변경 evidence*:
+
+| Delta # | 권위 변경 | commit / 합의 권위 | 시점 |
+|---|---|---|---|
+| Δ-1 | G2/G3/G4 Design/Governance Gate PASS (Bundled) — 옵션 3 통합 풀 3+1 + 외부 LLM 2건 | `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` | 2026-05-09 후속 1 |
+| Δ-2 | PR-1 본문 흡수 6건 (C-D / C-E / C-F / C-I / C-K / C-L) | `docs/review/3plus1-consensus-2026-05-09-p1-doc-absorption.md` (단축 합의 Reviewer-only) | 2026-05-09 후속 2 |
+| Δ-3 | PR-2 풀 3+1 + 외부 LLM 2건 — **ADR-012 (Evidence Ledger Protection) 신규 발행 + G4 §4.2/§4.4/§4.6 hash chain 보강** | `docs/decisions/ADR-012-evidence-ledger-protection.md` + `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` | 2026-05-09 후속 3 |
+| Δ-4 | C-14 cross-vendor blind 의뢰 + 응답 2건 (cross-vendor 미명시 + Gemini 사고모델) — APPROVE WITH CONDITIONS | `docs/external-review/2026-05-09-c14-cross-vendor-p2v3-pre-adoption-{request,response,response-gemini}.md` | 2026-05-09 후속 4 |
+| Δ-5 | **C-N ADR-009 갱신** — P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference | `docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md` + `docs/review/3plus1-consensus-2026-05-09-c-n-adr-009-update.md` | 2026-05-09 후속 4 |
+| Δ-6 | **G2 §1.2.6 P10 (Evidence Forgery) 정식 row 등록** | `docs/architecture/governance-preconditions.md` (§1.2.6) + `docs/review/3plus1-consensus-2026-05-09-g2-p10-evidence-forgery.md` | 2026-05-09 후속 5 |
+| Δ-7 | **본 P2 v3 정식 채택 (Design Adoption only)** — DRAFT → Adopted, 8 본문 영역 갱신 | `docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (5/5 입력 APPROVE WITH CONDITIONS) + 본 commit | **2026-05-09 후속 6** |
+
+#### 3.1.4 Implementation Pending 표 (2026-05-09 후속 6 정식 채택 시점)
+
+| 영역 | 상태 | 처리 시점 |
+|----|----|----|
+| G1b DB-level fallback | ✅ Implementation/Runtime PASS (2026-05-07) | 완료 |
+| G2 GP-1 (DB-level Secret Persistence 차단) | ✅ Implementation/Runtime PASS (G1b evidence 흡수) | 완료 |
+| **G2 GP-2 ~ GP-6** (Egress Redaction / Credential Hygiene / 외부 입력 검증 / Provider Adapter / Memory-Skill Migration) | ⏳ **Design PASS / Implementation Pending** | 별도 합의 + PoC |
+| **G3 runtime enforcement** (22 권한 / hook / wrapper / CI step / Hermes 변조 차단 매트릭스 4항목) | ⏳ **Design PASS / Implementation Pending** | 별도 합의 + PoC |
+| **G4 migration script + round-trip PoC** (`scripts/hermes-migration/*.py`) | ⏳ **Design PASS / Implementation Pending** | 별도 합의 + PoC (R2-5 답습) |
+| **ADR-012 CI enforcement** (R-6 workflow ledger 검증 step + canonical JSON 검증 + prev_hash 검증 + timestamp monotonicity) | ⏳ **Design PASS / Implementation Pending** | 별도 PR (Implementation 영역) |
+| **ADR-009 T1~T4 trigger detection task** (분기별 측정) | ⏳ **Design PASS / Implementation Pending** | 별도 합의 (분기별) |
+| **Provider Liquidity Layer 1 ~ Layer 5** (depcruise + AST 스캐너 + pre-commit hook + CI step) | ⏳ **Design PASS / Implementation Pending** | C-H 별도 합의 |
+| **Hermes PMO Activation** | ❌ **Not authorized** | 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2 또는 외부 LLM 1 + 인간 전문 리뷰 + 사용자 명시 결정 후 별도 |
 
 ### 3.2 G1a (폐기)
 
@@ -268,18 +344,21 @@ Constitution
 
 §4 (G2 — 6 거버넌스 사전조건), §5 (G3 — Hermes ≠ root of trust 운영 구현), §6 (G4 — Provider-agnostic Memory/Skill 형식) 참조.
 
-### 3.5 4 게이트 합산 진행 상태 (2026-05-07 시점)
+### 3.5 4 게이트 합산 진행 상태 (2026-05-09 후속 6 정식 채택 시점)
 
 ```
-G1a = FAIL (폐기)                  ✅ 영구 결정
-G1b = PASS                         ✅ 2026-05-07 승격
-G2  = 미작성                       ⏳ §4
-G3  = ADR 권위 확정 / 운영 구현 미작성  🟡 §5
-G4  = 미작성                       ⏳ §6
-───────────────────────────────────
-4 게이트 PASS 합산 = 1/4
-Hermes PMO 격상 선언 = 미선언 (본 v3 범위 외)
+G1a = FAIL (영구 폐기)                                       ✅ ADR-011 §2.2 권위
+G1b = PASS — Implementation/Runtime PASS                     ✅ 2026-05-07 승격 (R-2~R-7 + R-6 actual run)
+G2  = Design/Governance Gate PASS (Bundled, 2026-05-09)      ✅ + §1.2.6 P10 정식 등록 — GP-1 Implementation/Runtime PASS / GP-2~GP-6 Design PASS / Implementation Pending
+G3  = Design/Governance Gate PASS (Bundled, 2026-05-09)      ✅ — 운영 구현 = Design PASS / Implementation Pending
+G4  = Design/Governance Gate PASS (Bundled, 2026-05-09)      ✅ + §4.2/§4.4/§4.6 보강 (PR-2 후속 3) — 라운드트립 + migration script = Design PASS / Implementation Pending
+───────────────────────────────────────────────────────────
+4 게이트 Design/Governance Gate PASS 합산 = 4/4 (G1b PASS + G2/G3/G4 Design/Governance PASS Bundled)
+4 게이트 Implementation/Runtime PASS 합산 = 1/4 (G1b 만)
+Hermes PMO 격상 선언 = 미선언 (본 v3 정식 채택 = Design Adoption only — §2 Non-Activation Clause 답습)
 ```
+
+**참고 (DRAFT 시점, 2026-05-07)**: 4 게이트 PASS 합산 = 1/4 (G1b 만). 본 §3.5 갱신은 §3.1.3 Δ-1 ~ Δ-7 답습.
 
 ### 3.6 현 활성화 상태 (Hermes 책임 한정)
 
@@ -508,28 +587,33 @@ Hermes PMO 격상 선언 = 미선언 (본 v3 범위 외)
 - `scripts/hermes-migration/hermes_to_gpt.py` (sample 변환)
 - 합의 보고서
 
-### 6.7 의존 ADR / 갱신 후보
+### 6.7 의존 ADR / 갱신 후보 (2026-05-09 후속 6 정식 채택 시점 갱신)
 
-- ADR-008 차단조건 #2: Memory/Skill 형식 cross-reference 추가
-- ADR-009 (자체 Adapter v2.0 진입조건): G4 충족과 자체 Adapter 진입의 관계 갱신
-- 신규 ADR 후보: ADR-014 (Provider-agnostic Memory/Skill Format) — 합의 시점 결정
+- **ADR-008 차단조건 #2**: Memory/Skill 형식 cross-reference 추가 (별도 PR)
+- **ADR-009 C-N 갱신 (2026-05-09 후속 4)**: P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR (Layer 1) + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference (§9.4) — **본 v3 §1.6 / §2.3 / §6 / §10 cross-reference**
+- **ADR-012 (2026-05-09 후속 3 신규 발행) — Mandatory Reference**: Evidence Ledger Protection — 12 보호 원칙 + 4 매트릭스 + 5 추가 의무. **본 §6 G4 의 hash chain (Layer 1~5) + canonical JSON (RFC 8785 JCS Primary + jq fallback) + Genesis hash + prev_hash 검증 실패 (BLOCK + manual + chain_violation_detected) + Full Rewrite 5 Layer 방어 + Round-trip Tier-based + 3 ledger entry 형식 + Migration rollback + Hermes 변조 차단 매트릭스 4항목 + External LLM `agent="user"` 강제 + Provider Liquidity 5-way Multi-layer Defense 의 *권위 출처*. 본 §6 = ADR-012 §2.1~§3.5 답습**
+- **G4 §4.2 11 필드 schema (`event` 신규) + §4.4 hash chain 사양 + §4.6 round-trip 검증 절차 (2026-05-09 후속 3 PR-2 보강)**: 본 §6 의 *형식적 무결성* 규약. ADR-012 §2.2 직접 답습
+- **G2 §1.2.6 P10 Evidence Forgery 정식 등록 (2026-05-09 후속 5)**: 본 §6 G4 ↔ G2 §1.2.6 P10 = ADR-012 발행 *enforcement layer* (Layer 1~5 매트릭스 + Hermes 변조 차단 4항목 + External LLM `agent="user"` 강제)
+- 신규 ADR 후보: ADR-014 (Provider-agnostic Memory/Skill Format) — 별도 합의 시점 결정 (Hermes PMO 격상 *전*)
 
 ---
 
-## 7. 동시 갱신 ADR 매트릭스
+## 7. 동시 갱신 ADR 매트릭스 (2026-05-09 후속 6 정식 채택 시점 갱신)
 
-> **본 §7은 ADR 본문 자동 갱신을 트리거하지 않는다.** 본 §7은 v3 정식 채택 시점에 동시 갱신될 ADR 후보 항목 목록이다. 갱신은 별도 PR 묶음.
+> **본 §7은 ADR 본문 자동 갱신을 트리거하지 않는다** (사용자 명시 답습). 본 §7은 v3 정식 채택 시점에 동시 갱신될 ADR 후보 항목 목록이다. **갱신은 본 v3 정식 채택 *후* 별도 PR 묶음** (Agent C C-8 + 외부 LLM 1 §7.4 + Gemini 답습).
 
-| ADR | 갱신 항목 | 본 v3 인용 |
-|-----|---------|---------|
-| **ADR-008** | 본문 §6 차단조건 #1 충족 메커니즘 → 본 v3 §1.3 cross-reference 추가. 부록 B 그대로 유지. | §1.3 |
-| **ADR-008** | 본문 §단계 마이그레이션 → 본 v3 §3.6 (현 활성화 상태) cross-reference 추가 | §2.4, §3.6 |
-| **ADR-009** | 자체 Adapter v2.0 진입조건 → G4 PASS 후 재평가 cross-reference 추가 | §6.7 |
-| **ADR-010** | SQLCipher Vault HSM 키 관리 → G1b PASS evidence cross-reference 추가 | §3.3 |
-| **ADR-011** | §2.2 G1b 정식 충족 조건 표 → R-7 SOP §4.2 PASS 갱신 결과 cross-reference 추가 | §3.3 |
-| **ADR-011** | §8.5 후속 작업 → G2 / G3 / G4 산출 등록 (작성 시) | §4.4, §5.6, §6.6 |
+| ADR | 갱신 항목 | 본 v3 인용 | 처리 시점 |
+|-----|---------|---------|----|
+| **ADR-008** | 본문 §6 차단조건 #1 충족 메커니즘 → 본 v3 §1.3 cross-reference 추가. 부록 B 그대로 유지. | §1.3 | 본 v3 정식 채택 *후* 별도 PR |
+| **ADR-008** | 본문 §단계 마이그레이션 → 본 v3 §3.6 (현 활성화 상태) cross-reference 추가 | §2.4, §3.6 | 별도 PR |
+| **ADR-008** | Hermes PMO 격상 절차 추가 (4 게이트 Implementation/Runtime PASS + 외부 LLM 2 + 인간 전문 리뷰 + 사용자 명시 결정) | §2.6 | 별도 PR |
+| **ADR-009 (C-N 갱신, 2026-05-09 후속 4)** ✅ 완료 | P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference | §1.6 / §2.3 / §6 / §10 | ✅ 2026-05-09 후속 4 (별도 처리 완료) |
+| **ADR-010** | SQLCipher Vault HSM 키 관리 → G1b PASS evidence + Evidence Ledger DB secret 처리 cross-reference 추가 (ADR-012 §원칙 5) | §3.3 + ADR-012 §1.4 | 별도 PR |
+| **ADR-011** | §2.2 G1b 정식 충족 조건 표 → R-7 SOP §4.2 PASS 갱신 결과 cross-reference 추가 | §3.3 | 별도 PR |
+| **ADR-011** | §8.5 후속 작업 → G2 / G3 / G4 산출 등록 + ADR-012 + ADR-009 C-N + G2 §1.2.6 P10 cross-reference | §4.4, §5.6, §6.6 + §3.1.3 Δ-1~Δ-7 | 별도 PR |
+| **ADR-012 (2026-05-09 후속 3 PR-2 신규 발행)** ✅ 완료 — **G4 hash chain Mandatory Reference** | Evidence Ledger Protection — 12 보호 원칙 + 4 매트릭스 + 5 추가 의무 (Layer 1~5 + RFC 8785 JCS Primary + Genesis Hash + prev_hash BLOCK + Full Rewrite 5 Layer + Round-trip Tier-based + Hermes 변조 차단 매트릭스 4항목 + External LLM `agent="user"` 강제) | **§6 (G4) Mandatory Reference 답습 (§6.7) + §10 영구 핵심 제약 + §1.6 (P1 과의 관계, Provider Liquidity 5-way Layer 5)** | ✅ 2026-05-09 후속 3 PR-2 (별도 발행 완료) |
 
-**갱신 절차**: 본 v3 정식 채택 합의 → ADR PR 묶음 1건 → INDEX/CONTEXT 갱신.
+**갱신 절차** (2026-05-09 후속 6 갱신): 본 v3 정식 채택 commit → **본 합의 *후* ADR PR 묶음** (사용자 결정 시점, ADR-008 / 010 / 011 단축 합의 또는 풀 3+1) → INDEX/CONTEXT 일괄 갱신 별도 PR. ADR-009 C-N 갱신 (2026-05-09 후속 4) + ADR-012 신규 발행 (2026-05-09 후속 3 PR-2) 은 *이미 완료*.
 
 ---
 
@@ -567,63 +651,109 @@ Hermes PMO 격상 선언 = 미선언 (본 v3 범위 외)
 
 ---
 
-## 9. 본 초안 범위 외 + 다음 단계
+## 9. 본 정식 채택 범위 외 + 다음 단계 (2026-05-09 후속 6 갱신)
 
-### 9.1 본 초안이 트리거하지 *않는* 것
+### 9.1 본 정식 채택이 트리거하지 *않는* 것
 
-- ❌ Hermes PMO 격상 활성화 commit
-- ❌ G2 / G3 / G4 작업 자동 시작 (사용자 명시 결정 필요)
-- ❌ ADR-008 / ADR-009 / ADR-010 / ADR-011 본문 자동 갱신 (별도 PR)
-- ❌ `system-identity-prequel.md` 자동 archived 처리 (v3 정식 채택 시점에)
-- ❌ P2 v2 (`hermes-adoption-design.md`) 자동 archived 처리 (v3 정식 채택 시점에)
-- ❌ INDEX / CONTEXT 자동 갱신 (v3 정식 채택 시점에)
-- ❌ Phase 1 / Phase 2 / Phase 3 진입 결정
+- ❌ Hermes PMO 격상 활성화 commit (별도 합의 + 4 게이트 Implementation/Runtime PASS + 외부 LLM 2 또는 외부 LLM 1 + 인간 전문 리뷰 + 사용자 명시 결정 후 — §11 + §2.6.1 답습)
+- ❌ Runtime Implementation PASS 선언 (G1b 만 1/4)
+- ❌ G2 / G3 / G4 Implementation PASS 선언 (Design/Governance Gate PASS = 2026-05-09 후속 1)
+- ❌ ADR-008 / ADR-010 / ADR-011 본문 자동 갱신 (cross-reference 만 가능, 본문 변경 = 본 v3 정식 채택 *후* 별도 PR — §7 답습)
+- ❌ `system-identity-prequel.md` 자동 archived 처리 (본 v3 정식 채택 *후* 별도 archive commit, 사용자 명시 결정)
+- ❌ P2 v2 (`hermes-adoption-design.md`) 자동 archived 처리 (본 v3 정식 채택 *후* 별도 archive commit, 사용자 명시 결정)
+- ❌ INDEX / CONTEXT 일괄 갱신 (본 commit 시점 *해당 변경 영역만*, 일괄 갱신은 별도 PR)
+- ❌ Phase 1 / Phase 2 / Phase 3 진입 결정 (별도 합의)
+- ❌ ADR-013 / 014 후보 자동 발행 (별도 합의 — Hermes PMO 격상 *전*)
+- ❌ Tier-2 / Tier-3 catalog 자동 확장 (별도 합의)
+- ❌ 실 runtime code / migration script / hook 구현 (Implementation/Runtime PASS 별도 합의)
 
-### 9.2 다음 단계 진입 옵션
+### 9.2 본 정식 채택 *후* 별도 PR 우선순위 (2026-05-09 후속 6 갱신)
 
-| 옵션 | 다음 단계 | 합의 형태 | 비고 |
-|-----|---------|---------|-----|
-| **A** | 본 초안 단축 합의 → v3 정식 채택 → ADR PR 묶음 → INDEX/CONTEXT 갱신 | 단축 합의 (Reviewer-only) | 본 초안 자체에 새 설계 안건 없음 (R-3 ~ R-7 + G1b PASS 권위 흡수 + G2/G3/G4 정의) — 단축 합의 적격 |
-| **B** | G2 / G3 / G4 병행 작성 시작 → 작성 완료 후 v3 정식 채택과 함께 묶음 | 풀 3+1 (G2/G3/G4 통합 검증) | v3 정식 채택을 G2/G3/G4 작성 완료까지 보류 |
-| **C** | 본 초안 보류 + 추가 evidence 대기 | 합의 미가동 | Phase 1 운영 evidence 누적 후 검토 |
+| # | 작업 | 합의 형태 | 비고 |
+|----|----|----|----|
+| 1 | **P2 v2 (`hermes-adoption-design.md`) archive 결정** | 별도 archive commit | 사용자 명시 결정 영역 (D-2 답습) |
+| 2 | **system-identity-prequel.md archive 결정** | 별도 archive commit | 사용자 명시 결정 영역 + §10.2 Archive Migration Note 검증 의무 |
+| 3 | ADR-008 본문 갱신 (cross-reference + Hermes PMO 격상 절차 추가) | 별도 PR (단축 또는 풀 3+1) | §7 답습 |
+| 4 | ADR-010 본문 갱신 | 별도 PR (단축) | §7 답습 |
+| 5 | ADR-011 본문 갱신 (§8.5 후속 작업 answer) | 별도 PR (단축) | §7 답습 |
+| 6 | G2 / G3 / G4 헤더 P2 v3 정식 채택 cross-reference 갱신 | 별도 PR (단축) | §7 답습 |
+| 7 | ADR-013 / 014 후보 발행 결정 | 별도 합의 (Hermes PMO 격상 *전*) | 사용자 명시 결정 |
+| 8 | Hermes PMO 격상 적격성 검토 (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2 또는 외부 LLM 1 + 인간 전문 리뷰 + 사용자 명시 결정 후) | 별도 합의 + ADR-008 본문 갱신 | §2.6 + §2.6.1 + §11 답습 |
 
-**권고 옵션** (사용자 결정 후보, 본 초안은 *권고 단정 금지*): 옵션 A. 사유: G1b PASS evidence는 이미 권위 확정 (R-7 SOP §7.3 단축 합의), 본 v3는 그 결과를 P2 본문으로 흡수하는 작업. 새 설계 안건 없음. 단, 옵션 B / C 도 사용자 결정 시 정당.
+### 9.3 본 정식 채택 후 다음 세션 진입점 후보
 
-### 9.3 다음 세션 진입점 후보
-
-- "P2 v3 단축 합의 진행해주세요" → 옵션 A
-- "G2 작업 시작해주세요" → 옵션 B 분기
-- "G3 작업 시작해주세요" → 옵션 B 분기
-- "G4 작업 시작해주세요" → 옵션 B 분기
-- "P2 v3 초안 검토 보류" → 옵션 C
+- "P2 v2 / system-identity-prequel archive 결정 진행해주세요" → §9.2 #1 + #2
+- "ADR-008 / 010 / 011 본문 갱신 PR 묶음 진행해주세요" → §9.2 #3 ~ #5
+- "G2 / G3 / G4 헤더 cross-reference 갱신 진행해주세요" → §9.2 #6
+- "ADR-013 (Git·CI·external-review 보호) 발행 진행해주세요" → §9.2 #7
+- "ADR-014 (Provider-agnostic Memory/Skill Format) 발행 진행해주세요" → §9.2 #7
+- "Hermes PMO 격상 적격성 검토 진행해주세요" → §9.2 #8 (4 게이트 Implementation/Runtime PASS 후)
+- "G2 GP-2 ~ GP-6 Implementation 합의 진행해주세요" → §2.6.1 답습
 
 ---
 
-## 10. 영구 핵심 제약 (변동 없음)
+## 10. Normative Constraints — 영구 핵심 제약 (5건, 변동 없음, 2026-05-09 후속 6 정식 채택 시점 격상)
+
+> **Normative Constraints 격상 (2026-05-09 후속 6 정식 채택 합의 §3.3 + §5.2 A5 답습)**: 본 §10 은 단순 *영구 핵심 제약 표* 가 아니라 **Normative Constraints — 본 v3 정식 채택 후에도 약화 / 폐기 / 우회 불가능한 5 영구 제약** 의 *권위 명시 격상*. 본 §10 은 archive 후에도 권위 보존.
+
+### 10.1 5 Normative Constraints 표
 
 본 v3 작성 + 정식 채택 + Hermes PMO 격상(미래) 전 과정에서 다음은 **무조건 영구 유지**:
 
-| 제약 | 권위 근거 |
-|------|---------|
-| **Provider Liquidity** | 헌법 제5조 (비협상), `feedback_provider_liquidity.md` |
-| **Hermes ≠ root of trust** | ADR-011 §2.3 (영구 권위), system-identity-prequel §3 → ADR 승격 |
-| **메타포 강제 금지** | system-identity-prequel §7 (본 v3 §2.5로 흡수 — 격상 후도 메타포 정합성 위해 구조 늘림 금지) |
-| **자동 정책 변경 금지 (T3)** | ADR-011 §2.4 |
-| **수단/목적 분리 원칙** | ADR-011 §2.1 (a)~(d) 4조건, 본 v3 §3.3 / §4.3 / §5.4 / §6.4 의 exit 기준 패턴) |
+| # | 제약 | 권위 근거 | Multi-layer 보호 (5/5) |
+|---|------|---------|------|
+| 1 | **Provider Liquidity** | 헌법 제5조 관용 (비협상), `feedback_provider_liquidity.md`, ADR-008 차단조건 #2, **ADR-009 §5 (5-way Multi-layer Defense Layer 1 모법 ADR, 2026-05-09 후속 4 C-N)**, **ADR-012 §원칙 5 / 6 (Layer 5 — Evidence 형식 차원, 2026-05-09 후속 3 PR-2)** | Layer 1 (코드 lock-in 차단, ADR-009 §2.2) + Layer 2 (Hermes-originated lock-in 차단, G3 §6.4 + ADR-009 §2.3) + Layer 3 (Skill 메타데이터, G4 §3.5) + Layer 4 (Export format, G4 §4.3) + Layer 5 (Evidence 형식, ADR-012 §원칙 6 + G4 §4.2) |
+| 2 | **Hermes ≠ root of trust** | ADR-011 §2.3 (영구 권위), system-identity-prequel §3 → ADR 승격, **ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목, 2026-05-09 후속 3 PR-2)**, **ADR-009 §2.3 (Hermes PMO ↔ provider 분리, 2026-05-09 후속 4 C-N)**, G3 §1.3 + §5 (Evidence decision principle), G3 §2.5 #11 / §4.5 / §2.2 #20 (Hermes-originated commit auto-reject) | 5 layer (ADR-011 권위 + ADR-012 변조 매트릭스 + ADR-009 PMO-provider 분리 + G3 evidence + G3 hook) |
+| 3 | **메타포 강제 금지** | system-identity-prequel §7 (본 v3 §2.5로 흡수 — 격상 후도 메타포 정합성 위해 구조 늘림 금지), ADR-012 §1.5 (메타포 회피 — *형식적 무결성* 까지, *진리 보장* 아님) | system-identity-prequel §7 + 본 §10.2 archive 약화 방지 + ADR-012 §1.5 |
+| 4 | **자동 정책 변경 금지 (T3)** | ADR-011 §2.4 (T1/T2/T3 분류), 본 v3 §0.2 #6 + §11 변경 절차, **ADR-012 §원칙 9 (prev_hash 검증 실패 = 즉시 BLOCK, 자동 복구 / 자동 revert 금지)**, ADR-009 §2.3 (Hermes provider 소유 = T3 영역) | T1 (자동 학습 OK) / T2 (사용자 승인 필수) / T3 (자동 변경 절대 금지) 3 tier |
+| 5 | **수단/목적 분리 원칙** | ADR-011 §2.1 (a)~(d) 4조건 + 합의 APPROVE (e), **ADR-012 §4 (a)~(e) 5조건 답습**, 본 v3 §3.3 / §4.3 / §5.4 / §6.4 의 exit 기준 패턴 | (a) 동등 이상 + (b) 격리 PoC + (c) ADR 권위 + (d) 자동 회귀 + (e) 합의 APPROVE — 5 조건 모두 본 v3 4 게이트 Exit 기준 답습 |
+
+### 10.2 Archive Migration Note (2026-05-09 후속 6 정식 채택 합의 §5.2 A5 + 외부 LLM 1 §7.7 + Gemini §7.10 #4 답습)
+
+> **Archive Migration Note (영문 + 한국어 권위 보존)**:
+>
+> Archiving P2 v2 (`hermes-adoption-design.md`) or `system-identity-prequel.md` does not weaken, supersede, or delete the five permanent constraints listed in §10.1. If any archived document contains stronger wording, the stronger constraint remains preserved through ADR-011, ADR-012, ADR-009 (C-N), and this section §10.1.
+>
+> P2 v2 또는 system-identity-prequel.md 의 archive 처리는 §10.1 의 5 영구 핵심 제약을 *약화 / 폐기 / 우회* 시키지 않는다. archive 대상 문서에 더 강한 문구가 있다면, 더 강한 제약은 ADR-011 / ADR-012 / ADR-009 (C-N) / 본 §10.1 을 통해 영구 보존된다. **5 영구 핵심 제약 보호 = HIGH 5/5 (조건부 — 본 §10.1 + §10.2 흡수 후)**.
+
+본 §10.2 는 archive 후에도 영구 권위 — system-identity-prequel §3 / §6 / §7 의 본 v3 흡수 정합성 검증 의무 (별도 archive commit 시점).
 
 ---
 
-## 11. 본 초안의 변경 절차
+## 11. 본 문서의 변경 절차 (2026-05-09 후속 6 정식 채택 시점 갱신)
 
-본 v3는 DRAFT 상태에서 다음 절차를 따른다:
+본 v3 정식 채택 (2026-05-09 후속 6) *후* 변경은 다음 절차를 따른다:
 
 | 변경 유형 | 절차 |
 |---------|------|
 | 단순 오타 / 문구 정리 | 사용자 단독 결정 가능 |
-| §1 ~ §3 (Delta + 4 게이트 정의) 본문 갱신 | 사용자 명시 결정 |
-| §4 / §5 / §6 (G2 / G3 / G4 정의) 본문 갱신 | 단축 합의 (Reviewer-only) |
-| **DRAFT 상태 해제 → 정식 채택** | **단축 합의 또는 풀 3+1 합의 APPROVE** (옵션 A 또는 B) |
-| §10 영구 핵심 제약 변경 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 매우 신중) |
+| §1 ~ §3 (Delta + 4 게이트 진행 상태표) 본문 갱신 | 단축 합의 (Reviewer-only) — Δ 추가 또는 Adoption-time Status 갱신 한정 |
+| §4 / §5 / §6 (G2 / G3 / G4 정의) cross-reference 갱신 | 단축 합의 (Reviewer-only) — 정식 산출 본문 변경 시 동시 cross-reference 갱신 |
+| §7 ADR 매트릭스 갱신 (신규 ADR 추가 / cross-reference 추가) | 단축 합의 (Reviewer-only) — 별도 ADR PR 발행 시점 cross-reference 추가 |
+| **§2 Hermes PMO 구조 갱신** (활성화 후 책임 / 금지 사항 / 격상 절차) | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — Hermes 권한 영역) |
+| §10 Normative Constraints 변경 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 매우 신중, archive Migration Note 보존 의무) |
+| §11 본 절차 변경 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 자기참조 절차) |
+| **Hermes PMO 활성화 (격상)** | **풀 3+1 합의 + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 + ADR-008 본문 갱신 + 4 게이트 모두 Implementation/Runtime PASS 충족 evidence + Adoption decision commit + Evidence Ledger entry (`event: gate_pass` × 4 + `event: external_llm_received` × N + `event: human_review_completed`)** — **전까지 절대 금지** (C-14 cross-vendor 응답 1 §7.10 조건 3 + Gemini 사고모델 §7.10 #3 직접 답습) |
+
+### 11.1 Hermes PMO 격상 전 인간 전문 리뷰 (Human-in-the-loop) 의무 명문화
+
+> **본 §11.1 = 2026-05-09 후속 6 정식 채택 합의 §5.2 A6 + Gemini 사고모델 §7.10 #3 직접 인용 답습**.
+
+**Hermes PMO 실제 활성화 전, 최소 1회 이상의 전문적인 인간 리뷰 (Human-in-the-loop) 를 통한 거버넌스 최종 확인** 의무. 본 인간 리뷰는 다음 조건 충족 시점에 활성:
+
+1. 4 게이트 모두 Implementation/Runtime PASS evidence 완료
+2. 외부 LLM 2개 또는 외부 LLM 1개 + 인간 리뷰 합의
+3. 사용자 명시 격상 결정
+
+**인간 전문 리뷰의 책임 영역**:
+- 본 v3 §10 Normative Constraints 5 영구 제약 보존성 최종 검증
+- §2 Hermes PMO 구조의 *권한 남용 위험* 평가
+- 4 게이트 Implementation/Runtime PASS evidence 의 *완결성* 평가
+- ADR-012 §2.12 Hermes 변조 차단 매트릭스 4항목의 *runtime 활성* 검증
+- Provider Liquidity 5-way Multi-layer Defense (Layer 1~5) 의 *runtime 활성* 검증
+- system-identity-prequel + P2 v2 archive 후 §10 Archive Migration Note (§10.2) 의 *권위 보존성* 검증
+
+**인간 전문 리뷰 결과 = Adoption decision commit 의 *evidence 의무*** (Evidence Ledger entry `event: human_review_completed` 의무).
 
 ---
 
@@ -641,12 +771,16 @@ Hermes PMO 격상 선언 = 미선언 (본 v3 범위 외)
 
 ---
 
-**작성일**: 2026-05-07
-**상태**: DRAFT (초안)
-**다음 진입점**: 사용자 결정 — 옵션 A (단축 합의 → 정식 채택) / 옵션 B (G2 / G3 / G4 병행) / 옵션 C (보류)
+**작성일**: 2026-05-07 (DRAFT) → **2026-05-09 후속 6 (정식 채택, Design Adoption only)**
+**상태**: **Adopted — Design Adoption only** (2026-05-09 후속 6 풀 3+1 + 외부 LLM 2건 합의 APPROVE WITH CONDITIONS)
+**합의 권위**: `docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (5/5 입력 — Agent A/B/C + cross-vendor 외부 LLM 2건 (Gemini 사고모델 + vendor 미명시))
+**다음 진입점** (2026-05-09 후속 6 정식 채택 후): §9.2 별도 PR 우선순위 답습 — P2 v2 / system-identity-prequel archive 결정 → ADR-008 / 010 / 011 본문 갱신 → G2 / G3 / G4 헤더 cross-reference 갱신 → ADR-013 / 014 후보 발행 결정 → Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS 후 별도 합의 + 인간 전문 리뷰)
 **금지 (사용자 명시 답습, 변동 없음)**:
-- ❌ Hermes PMO 격상 선언 자동
-- ❌ P2 v3 본문 자동 갱신 (단순 오타 외)
-- ❌ G2 / G3 / G4 자동 통과 선언
+- ❌ Hermes PMO 격상 선언 자동 (§2 Non-Activation Clause + §11 + §2.6.1 답습)
+- ❌ Runtime Implementation PASS 선언
+- ❌ G2 / G3 / G4 Implementation PASS 선언
+- ❌ ADR-008 / 010 / 011 본문 자동 갱신 (cross-reference 만 가능, 본문 변경 별도 PR)
+- ❌ P2 v2 / system-identity-prequel archive 자동 (별도 archive commit, 사용자 명시 결정)
 - ❌ 추가 정책 변경 자동 (ADR-011 §2.4 T3)
 - ❌ Tier-2 / Tier-3 catalog 확장 자동 (별도 합의)
+- ❌ 실 runtime code / migration script / hook 구현 (Implementation/Runtime PASS 별도)

@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 후속 14 (**ADR-010 / ADR-011 후속 보강 필요 여부 검토 단축 합의 APPROVE (Reviewer-only)** — **분기 A 채택: 추가 보강 *불필요***. ADR-010 5/5 항목 충족 + ADR-011 5/5 항목 충족 + 6/6 풀 3+1 승격 트리거 0건 발화. ADR-010 = 후속 10 A13 (Evidence Ledger DB Secret 처리 주의 사항) 포함 + 책임 경계 명확 (디스크 암호화 + 키 관리) + 충돌 0건. ADR-011 = 수단/목적 분리 원칙 + 권위 위계 archive 후 영구 보존 + T1/T2/T3 충돌 0건 + Hermes PMO 격상 절차 ADR-008 부록 C 연결 + 자동 정책 변경 금지 5 layer 다중 차단 강제. **본 검토 = 보강 필요 여부 검토만, 본문 수정 X**. **Implementation/Runtime PASS 작업 진입 적격**. **다음 진입점: G2 GP-2~GP-6 / G3 / G4 Implementation/Runtime PASS 작업 착수 (분기 A 답습)**)
+**최종 업데이트**: 2026-05-09 후속 15 (**Implementation/Runtime PASS Roadmap 단축 합의 APPROVE (Reviewer-only)** — `docs/architecture/implementation-runtime-roadmap.md` (DRAFT) 권위 권고 발행. 17 항목 분해 (G2 GP-2~GP-6 5 + G3 5 영역 + G4 7 영역) + 9 그룹 (A~I) 동시 진행 가능 분류 + 사용자 명시 8 우선순위 모두 유지 + Claude 재평가 3 항목 추가 (Order 9~11). ADR-011 §2.1 (a)~(e) 5조건 답습 매트릭스 + Rollback Trigger 9 항목 + Evidence Required 5 형식. **5/5 풀 3+1 승격 트리거 0건 발화** (PMO 격상 조건 변경 / Design PASS 의미 변경 / Implementation PASS 기준 완화 / 5 영구 제약 약화 / ADR-011 §2.1 충돌). 그룹 A~G = 단축 합의 + PoC evidence / 그룹 H (ADR-014 발행) + 그룹 I (G3 22 권한 분해) = 풀 3+1 + 외부 LLM 1+ 의무. **본 roadmap = 권고 한정, 우선순위 자동 *고정* 0건**. **다음 진입점: 그룹 A (G2 GP-5 Provider Adapter Enforcement) 첫 PoC 착수 (단축 합의 + PoC evidence)**)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 
@@ -178,6 +178,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 17. ~~**ADR-013 / 014 후보 발행 결정 검토**~~ ✅ 완료 (2026-05-09 후속 12, 단축 합의 APPROVE Reviewer-only — 두 후보 *현 시점 발행 보류* 권고. 7 항목 분류 + 4+4 새 ADR 기준 + 5 풀 3+1 승격 트리거 0건 발화. ADR-013 (Hermes PMO Activation / Human Review / Runtime Governance) = P2 v3 §2.6 + §11.1 + §2.6.1 + ADR-008/011/012 7 권위 layer 충족, **ADR-008 본문 갱신 PR (부록 추가) 으로 대체 가능**. ADR-014 (Memory/Skill Runtime / Migration / Round-trip) = G4 + ADR-012 답습 충족 + **Implementation/Runtime PASS PoC 완료 후 발행 검토**. **본 검토 = 후보 결정만, 본문 작성 X** (사용자 명시 답습). 발행 시점 후보 enumerate (ADR-013 a/b/c + ADR-014 a/b/c) + Implementation 작업 영역 8건 + 격상 후 다뤄도 되는 영역 6건 분류)
 18. ~~**ADR-008 본문 갱신 PR — 부록 C 신설 (Hermes PMO Activation Cross-Reference)**~~ ✅ 완료 (2026-05-09 후속 13, 단축 합의 APPROVE Reviewer-only — 사용자 명시 7 항목 답습 + 6 풀 3+1 승격 트리거 0건 발화. **ADR-013 신규 발행 *대체* 권위 정착**. 부록 C §C.1 의미 (오해 방지) + §C.2 12 조건 체크리스트 (P2 v3 §2.6.1 직접 답습) + §C.3 외부 LLM 2 + 인간 전문 리뷰 조건 + §C.4 자동 격상 절대 금지 (5 layer 다중 차단) + §C.5 Implementation/Runtime PASS ↔ Design/Governance PASS 분리 매트릭스 + §C.6 ADR-013 보류 사유 (8 권위 layer 답습) + §C.7 cross-reference 매트릭스 (12 권위) + §C.8 발생/미발생 enumerate. **ADR-008 §결정 본문 변경 0건**)
 19. ~~**ADR-010 / ADR-011 후속 보강 필요 여부 확인**~~ ✅ 완료 (2026-05-09 후속 14, 단축 합의 APPROVE Reviewer-only — **분기 A 채택: 추가 보강 *불필요***. ADR-010 5/5 항목 충족 (Evidence Ledger DB 보호 범위 / secret 처리 / key rotation·backup·export 충돌 0건 / 책임 경계 매트릭스 명확 / Implementation PASS 오해 0건) + ADR-011 5/5 항목 충족 (수단/목적 분리 최신 / 권위 위계 archive 후 명확 / T1/T2/T3 충돌 0건 / Hermes PMO 격상 절차 연결 / 자동 정책 변경 금지 5 layer 다중 차단 강제) + 6/6 풀 3+1 승격 트리거 0건 발화. **본 검토 = 보강 필요 여부 검토만, 본문 수정 X**. **Implementation/Runtime PASS 작업 진입 적격**)
+20. ~~**Implementation/Runtime PASS Roadmap 작성**~~ ✅ 완료 (2026-05-09 후속 15, 단축 합의 APPROVE Reviewer-only — `implementation-runtime-roadmap.md` DRAFT 권위 권고 발행. 17 항목 분해 (G2 5 + G3 5 + G4 7) + 9 그룹 동시 진행 분류 + 사용자 명시 8 우선순위 유지 + Claude 추가 3 항목 (Order 9~11). ADR-011 §2.1 (a)~(e) 5조건 답습 + Rollback Trigger 9 + Evidence 5 형식. 5/5 풀 3+1 승격 트리거 0건 발화. 그룹 A~G = 단축 합의 / 그룹 H (ADR-014 발행) + I (G3 22 권한 분해) = 풀 3+1 + 외부 LLM 1+ 의무. **roadmap 우선순위 자동 *고정* 0건**)
 11. **P2 v3 정식 채택 합의** (G2 §1.2 P10 정식 등록 후 진입) — **풀 3+1 합의** (C-14 응답 2건 모두 풀 3+1 권고 답습) + 본 CONTEXT C-14 체크리스트 11 조건 흡수 의무. **C-14 cross-vendor 1+ 충족 (2건) ✅** + **C-N ADR-009 갱신 ✅** 후 진입 적격
     - 시나리오 X: P2 v3 단독 합의 (풀 3+1, C-14 응답 evidence 포함)
     - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
@@ -187,7 +188,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-09 후속 14 ADR-010/011 후속 보강 검토 후): "G2 GP-2~GP-6 / G3 / G4 Implementation/Runtime PASS 작업 착수해주세요 (분기 A 답습 — 추가 보강 불필요 확정, ADR-011 §2.1 (a)~(e) 5조건 + R-2/R-4.1 PoC 패턴 답습)" — Implementation/Runtime PASS 작업 진입 영역.
+**권고 시작점** (2026-05-09 후속 15 roadmap 작성 후): "G2 GP-5 Provider Adapter Enforcement 첫 PoC 착수해주세요 (그룹 A — depcruise rule + AST scanner + pre-commit hook + CI step + Docker 격리 PoC, 단축 합의 + PoC evidence)" — Implementation/Runtime PASS 첫 영역 진입.
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)

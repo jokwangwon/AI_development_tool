@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-05-07 (Part 2 — P2 v3 + G2 + G3 + G4 DRAFT 작성 + G2·G3 DRAFT 검토 APPROVE)
+**최종 업데이트**: 2026-05-09 (G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — G2/G3/G4 정식 채택 합의 진입 적격)
 
 ---
 
@@ -178,6 +178,7 @@ CLAUDE.md (에이전트 지시사항)
 | 2026-05-07 (Part 2) | G3 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 10 기준 10/10 PASS + 8 금지 위반 0건 + 4 자기 발견 잠재 위험 (LOW). G3 §4 자기참조 차단의 적용 대상으로 한계 명시 — G3 PASS 합의 시 외부 LLM 의견 권장 | `review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` |
 | 2026-05-07 (Part 2) | G4 Provider-agnostic Memory/Skill 신규 작성 (DRAFT, 옵션 B 통합 문서) — Memory scope 4단계 (MVP Global+Project + 후속 Session/Team-Agent) + Skill schema 17 필드 + JSONL export hash chain 변조 방지 + Memory/Skill boundary 4 금지 + G3·G2 GP-6 인터페이스 + 3-way (GP-6/G3/G4). 검토 다음 세션 진입점 | `architecture/provider-agnostic-memory-skill-design.md` |
 | 2026-05-07 (Part 2) | 세션 로그 Part 2 + CONTEXT/INDEX 갱신 — 4 게이트 진행 상태 표 갱신 (G1b PASS / G2·G3 DRAFT 검토 APPROVE / G4 DRAFT 검토 다음 세션) + 다음 세션 TODO 갱신 (G4 단축 검토 → 옵션 1/2/3 정식 채택 합의 / 옵션 3 외부 LLM 1+ 필수) | `sessions/SESSION_2026-05-07.md` (Part 2), `CONTEXT.md`, `INDEX.md` |
+| 2026-05-09 | G4 DRAFT Reviewer-only 단축 검토 APPROVE AS DRAFT — 10 기준 10/10 PASS + 8 금지 위반 0건 + 5 자기 발견 잠재 위험 (LOW/VERY LOW: P-1 RFC 8785 JCS / P-2 schema 진화 / P-3 schema_version declaration / P-4 §6.4 명명 / P-5 `~/.claude/global` path). G3 §4 자기참조 차단의 적용 대상으로 한계 명시 — G4 PASS 합의 시 외부 LLM 의견 권장. G2/G3/G4 정식 채택 합의 진입 적격 | `review/3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` |
 
 ---
 

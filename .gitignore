@@ -45,3 +45,6 @@ src/__*_probe__.py
 # import-linter 검증용 임시 venv (C-9 답습)
 .venv-c9*/
 .venv-poc*/
+
+# Group C RA-9 사전 검증 venv + sanity script (Q1 합의 진입 *전* 격리 환경)
+.poc-prep/

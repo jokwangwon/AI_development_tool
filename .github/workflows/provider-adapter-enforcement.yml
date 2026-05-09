@@ -103,19 +103,21 @@ jobs:
           fi
           echo "2차 PASS verified — Contracts kept (rc=0)"
 
-      - name: 2차 FAIL probe — expect broken (exit 1)
+      - name: 2차 FAIL probe insert — transitive violator
         run: |
-          # 임시 probe — src/ 안에 transitive violator 삽입 → lint-imports 실행 → 제거
+          # 임시 probe — src/ 안에 transitive violator 삽입
           # 책무 분담 §5.5 답습 — transitive (A→B→openai) 차단 효과 검증
           cat > src/__transitive_probe__.py <<'EOF'
           # 의도적 위반 — import-linter 가 src.__transitive_probe__ -> openai 보고해야 함
           import openai  # noqa
           EOF
+
+      - name: 2차 FAIL probe — expect broken (exit 1)
+        run: |
           set +e
           PYTHONPATH=. lint-imports > linter_output.txt 2>&1
           rc=$?
           set -e
-          rm -f src/__transitive_probe__.py
           cat linter_output.txt
           if [ "$rc" -ne 1 ]; then
             echo "::error::2차 FAIL probe did not return exit 1 (rc=$rc) — Layer 1 (T-2) disabled?"
@@ -126,6 +128,13 @@ jobs:
             exit 1
           fi
           echo "2차 FAIL probe verified — transitive violation detected (rc=1)"
+
+      # G-1 답습 (Group A 보완) — probe cleanup 보장 (CI 중간 실패 시도 정리)
+      - name: 2차 FAIL probe cleanup
+        if: always()
+        run: |
+          rm -f src/__transitive_probe__.py
+          echo "Probe cleanup: $(ls src/__transitive_probe__.py 2>/dev/null && echo "STILL EXISTS — 우발적 commit 차단 by .gitignore" || echo "removed")"
 
       - name: Evidence summary
         if: always()

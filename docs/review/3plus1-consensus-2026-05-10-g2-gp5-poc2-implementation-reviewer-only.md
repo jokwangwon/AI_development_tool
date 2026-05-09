@@ -136,13 +136,13 @@ CI workflow 의 Evidence summary step 에 답습:
 
 ## 3. 누락/이견/추가 권장 사항
 
-### 3.1 누락 (Gap)
+### 3.1 누락 (Gap) — *처리 상태*
 
-| # | 항목 | 영향 | 권장 처리 |
+| # | 항목 | 영향 | 처리 상태 |
 |---|------|------|---------|
-| G-1 | `src/__transitive_probe__.py` 가 CI 실패 시 *cleanup 보장* — 현재 `rm -f` 로 처리 단, CI step 중간 실패 시 잔존 위험 | 中 | `if: always()` cleanup step 추가 (2차 후속) |
-| G-2 | `.gitignore` 갱신 — `src/__transitive_probe__.py` 우발적 commit 차단 | 低 | 2차 후속 |
-| G-3 | C-9 검증 환경 (venv `/tmp/c9-ra9-verify/`) cleanup | 低 | 본 PoC commit 후 정리 |
+| G-1 | `src/__transitive_probe__.py` 가 CI 실패 시 *cleanup 보장* | 中 | ✅ **처리 완료 (2026-05-10 후속, Group A 보완)** — CI workflow FAIL probe step 3 분리 (insert / verify / cleanup `if: always()`) |
+| G-2 | `.gitignore` 갱신 — `src/__transitive_probe__.py` 우발적 commit 차단 | 低 | ✅ **처리 완료 (2026-05-10 후속, Group A 보완)** — `.gitignore` 4 패턴 추가 (`src/__transitive_probe__.py`, `src/__*_probe__.py`, `.venv-c9*/`, `.venv-poc*/`). `git check-ignore` 검증 4/4 매치 |
+| G-3 | C-9 검증 환경 (venv `/tmp/c9-ra9-verify/`) cleanup | 低 | ✅ **처리 완료 (2026-05-10)** — `rm -rf /tmp/c9-ra9-verify` 답습 |
 
 ### 3.2 이견 (Divergence)
 
@@ -220,3 +220,4 @@ CI workflow 의 Evidence summary step 에 답습:
 | 일자 | 변경 | 비고 |
 |------|------|------|
 | 2026-05-10 (Group A 2차 후속) | 신규 작성 | G2 GP-5 2차 PoC 구현 Reviewer-only 단축 합의 — APPROVE WITH CONDITIONS |
+| 2026-05-10 (Group A 보완) | §3.1 G-1/G-2/G-3 처리 완료 갱신 | CI probe cleanup `if: always()` 분리 + `.gitignore` 4 패턴 추가 + C-9 venv 정리. escalation triggers 0/5 발화 → 단축 합의 본 보고서 처리 (별도 합의 미발화) |

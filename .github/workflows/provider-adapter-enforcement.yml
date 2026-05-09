@@ -1,0 +1,80 @@
+# Provider Adapter Enforcement — G2 GP-5 Layer 1 (Entry) PoC
+#
+# 답습 출처:
+#   - docs/phase0/g2-gp5-provider-adapter-enforcement-poc.md (1차 PoC 사양)
+#   - docs/architecture/llm-providers-design.md §9.1 / §9.4
+#   - docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md §5
+#
+# 본 workflow 는 양방향 검증:
+#   1. PASS fixture → scanner exit 0 기대
+#   2. FAIL fixture → scanner exit 1 기대 (역전 검증)
+#
+# 양쪽 중 하나라도 기대값과 다르면 fail-closed (Layer 1 무력화 감지).
+name: Provider Adapter Enforcement
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/provider_import_scanner.py"
+      - "tests/fixtures/provider_adapter_enforcement/**"
+      - ".github/workflows/provider-adapter-enforcement.yml"
+      # PoC 1차 — runtime src/ 코드 0줄. real source tree 가 추가되면 본 paths 도 확장
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: PASS fixture — expect no violations (exit 0)
+        run: |
+          set +e
+          python tools/provider_import_scanner.py tests/fixtures/provider_adapter_enforcement/pass/
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::PASS fixture reported violations (rc=$rc) — Layer 1 false positive"
+            exit 1
+          fi
+          echo "PASS fixture verified — no violations (rc=0)"
+
+      - name: FAIL fixture — expect violations (exit 1)
+        run: |
+          set +e
+          python tools/provider_import_scanner.py tests/fixtures/provider_adapter_enforcement/fail/ > scanner_output.txt
+          rc=$?
+          set -e
+          cat scanner_output.txt
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::FAIL fixture did not return exit 1 (rc=$rc) — Layer 1 disabled?"
+            exit 1
+          fi
+          violation_count=$(wc -l < scanner_output.txt)
+          if [ "$violation_count" -lt 5 ]; then
+            echo "::error::Expected >=5 violations, got $violation_count — pattern coverage regression"
+            exit 1
+          fi
+          echo "FAIL fixture verified — $violation_count violations reported (rc=1)"
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          echo "## Provider Adapter Enforcement — Evidence" >> $GITHUB_STEP_SUMMARY
+          echo "- commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ref: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY

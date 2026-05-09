@@ -239,14 +239,16 @@ R-1 FAIL과 R-2 PASS는 Phase 0 evidence 보고서에 기록되어 있으나, �
 
 ---
 
-## 8. 관련 문서
+## 8. 관련 문서 (2026-05-09 후속 9 cross-reference 갱신, 결정 내용 변경 0건 — 단축 합의 APPROVE Reviewer-only)
 
 ### 8.1 상위 권위
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 (Provider Liquidity)
-- `docs/architecture/system-identity-prequel.md` §3 (권위 위계 prequel — 본 ADR §2.3으로 승격)
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 관용 (Provider Liquidity, 비협상)
+- `docs/architecture/system-identity-prequel.md` §3 (권위 위계 prequel — 본 ADR §2.3으로 영구 권위 승격, prequel §6의 3-tier 선언 → 본 ADR §2.4 영구 권위 승격) — **Archived 2026-05-09 후속 8**, 본 ADR §2.3 / §2.4 영구 권위 승격 직접 명시 답습으로 archive 후에도 권위 보존. archive 합의: `docs/review/3plus1-consensus-2026-05-09-system-identity-prequel-archive-decision.md`
 
-### 8.2 갱신 대상
-- `docs/decisions/ADR-008-hermes-adoption-decision.md` 부록 B Amendment (동시 발행)
+### 8.2 갱신 대상 / 후속 권위
+- `docs/decisions/ADR-008-hermes-adoption-decision.md` 부록 B Amendment (R-3 동시 발행, 2026-05-06)
+- `docs/architecture/hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7** — 옵션 A 최소 침습)
+- **`docs/architecture/hermes-adoption-design-v3.md`** (P2 v3, **Adopted — Design Adoption only, 2026-05-09 후속 6, 후속 권위**) — 본 ADR §2.1 (수단/목적 분리) / §2.2 (G1a/G1b 분리) / §2.3 (Hermes ≠ root of trust) / §2.4 (T1/T2/T3) 모두 답습 권위 발행. P2 v3 §10.1 Normative Constraints + §10.2 Archive Migration Note + §3 dual-structure + §6 G4 + §7 ADR 매트릭스 + §11 변경 절차 + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화
 
 ### 8.3 Phase 0 evidence
 - `docs/phase0/day1-environment-and-fact-check.md` (Hermes v0.12.0 사실 확인)
@@ -259,8 +261,30 @@ R-1 FAIL과 R-2 PASS는 Phase 0 evidence 보고서에 기록되어 있으나, �
 - `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (풀 합의 권위 위계)
 - `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md` (본 ADR 단축 합의)
 
-### 8.5 후속 작업 (R-4 ~ R-7)
-- R-4: `docs/architecture/redaction-pattern-equivalence.md` (작성 예정)
-- R-5: `docs/architecture/canary-recheck-design.md` (작성 예정)
-- R-6: `.github/workflows/r2-canary.yml` (작성 예정)
-- R-7: `docs/phase0/redaction-verification-sop.md` (작성 예정)
+### 8.5 후속 작업 (R-4 ~ R-7 + 4 게이트 PASS + ADR 발행 + Archive 후속)
+
+#### 8.5.1 R-4 ~ R-7 (모법 역할 — §3 답습)
+
+- R-4: ✅ **완료** — `docs/architecture/redaction-pattern-equivalence.md` (Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 비교 + gap 식별 + 보충 권고, ADR-011 §2.1 (a) 충족, 2026-05-06)
+- R-4.1: ✅ **완료** — `docs/phase0/r4-1-trigger-extension-evidence.md` + `docker/r4-1-poc/` (Tier-1 42종 trigger UDF 확장 + Docker 격리 환경 PoC PASS, ADR-011 §2.1 (b) 충족, 2026-05-06)
+- R-5: ✅ **완료** — `docs/architecture/canary-recheck-design.md` (canary 재검증 트리거 설계, T13 강화 + R-4.1 catalog 재사용 + 6 trigger 시점 + 4 verdict + 4 안전장치 + Markdown+JSONL evidence + T1/T2/T3 정책 매트릭스, 2026-05-06)
+- R-6: ✅ **완료** — `.github/workflows/r2-canary.yml` (CI/nightly canary regression workflow, ADR-011 §2.1 (d) 자동 회귀 검증 경로, 2026-05-06) + R-6 GitHub Actions actual run `25482284523` PASS (24초, verdict=PASS, 42/42 BLOCK, leak 0, 2026-05-07)
+- R-7: ✅ **완료** — `docs/phase0/redaction-verification-sop.md` (Phase 1 acceptance SOP, 13 항목 checklist + 4 verdict + 9 ROLLBACK + 7 Evidence + push 전/후 작업 분리, 2026-05-06) + R-7 SOP §7.3 단축 합의 APPROVE Reviewer-only (`docs/review/3plus1-consensus-2026-05-07-g1b-phase1-acceptance.md`, 2026-05-07) → **G1b CONDITIONALLY PASS → PASS 승격 + Phase 1 acceptance PARTIAL → PASS 선언**
+
+#### 8.5.2 G1b PASS 이후 후속 작업 (2026-05-09 후속 1 ~ 후속 8 누적)
+
+- ✅ **G2 / G3 / G4 정식 산출 + Design/Governance Gate PASS (Bundled, 2026-05-09 후속 1)** — 옵션 3 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접) APPROVE WITH CONDITIONS:
+  - G2: `docs/architecture/governance-preconditions.md` (6 GP, P1~P8 + §1.2.6 P10) — GP-1 = G1b PASS evidence 흡수 (Implementation/Runtime PASS), GP-2~GP-6 = Design PASS / Implementation Pending
+  - G3: `docs/architecture/hermes-not-root-of-trust-runtime.md` (Hermes 권한 22 항목, T1 8 / T2 2 / T3 12, Hermes 변조 차단 매트릭스 4항목) — 운영 구현 = Design PASS / Implementation Pending
+  - G4: `docs/architecture/provider-agnostic-memory-skill-design.md` (Memory scope 4 + Skill schema 17 + JSONL 11 필드 + hash chain Layer 1~5 + Tier-based round-trip) — 라운드트립 + migration script = Design PASS / Implementation Pending
+- ✅ **PR-1 본문 흡수 6건 (2026-05-09 후속 2)** — C-D / C-E / C-F / C-I / C-K / C-L 단축 합의 APPROVE Reviewer-only
+- ✅ **PR-2 (ADR-012 + G4 §4 보강) 풀 3+1 + 외부 LLM 2건 APPROVE WITH CONDITIONS (2026-05-09 후속 3)** — `docs/decisions/ADR-012-evidence-ledger-protection.md` (Evidence Ledger Protection 신규 발행 — 12 보호 원칙 + 4 매트릭스 + 5 추가 의무 + 본 ADR §2.1 (a)~(d) + (e) 5조건 패턴 답습 + §2.3 Hermes ≠ root of trust 답습 (ADR-012 §2.12 변조 차단 매트릭스 4항목) + §2.4 T3 답습 (ADR-012 §원칙 9))
+- ✅ **C-14 cross-vendor blind 의뢰 1+ 의무 충족 (2026-05-09 후속 4)** — cross-vendor 응답 2건 (vendor 미명시 + Gemini 사고모델) APPROVE WITH CONDITIONS
+- ✅ **C-N ADR-009 갱신 단축 합의 APPROVE (2026-05-09 후속 4)** — `docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md` (P1 facade MVP 진입조건 + **Hermes PMO ↔ provider 분리 영구 권위 (§2.3)** + **Provider Liquidity 5-way Multi-layer Defense 모법 ADR Layer 1 (§5)** + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference)
+- ✅ **G2 §1.2.6 P10 Evidence Forgery 정식 등록 단축 합의 APPROVE (2026-05-09 후속 5)** — Evidence Forgery 정식 위반 경로 등록 + ADR-012 §1.4 cross-reference + Hermes 변조 차단 매트릭스 4항목 + Layer 1~5 enforcement
+- ✅ **P2 v3 정식 채택 풀 3+1 + 외부 LLM 2건 (cross-vendor — Gemini + vendor 미명시) APPROVE WITH CONDITIONS — Design Adoption only (2026-05-09 후속 6)** — DRAFT → Adopted, 8 본문 영역 갱신 (§0/§2/§3/§6/§7/§9/§10/§11). 본 ADR §2.1 / §2.2 / §2.3 / §2.4 모두 P2 v3 §10.1 Normative Constraints 답습 권위 발행
+- ✅ **P2 v2 Archive 적격성 검토 + Archive 전환 단축 합의 APPROVE (2026-05-09 후속 7)** — 옵션 A 최소 침습. 본 ADR §1.1 (P2 v2 §2.1.3 가정 붕괴) cross-reference 영구 보존
+- ✅ **system-identity-prequel.md Archive 적격성 검토 + Archive 전환 단축 합의 APPROVE (2026-05-09 후속 8)** — 옵션 A 최소 침습. 본 ADR §2.3 / §2.4 영구 권위 승격 직접 명시 답습 + AI Dev Company OS 정체성 직접 권위 출처 영구 보존
+- ✅ **본 ADR-008 / 010 / 011 갱신 PR 묶음 *범위 결정* 단축 합의 APPROVE (2026-05-09 후속 9)** — 6 항목 분류 + 6/6 풀 3+1 승격 트리거 0건 발화 + 옵션 1 (3 ADR 단일 PR 묶음) 권고 + 25 cross-reference 갱신 항목 (A1~A25)
+
+본 §8.5 의 모든 후속 작업은 본 ADR §2.1 (a)~(d) + 합의 APPROVE (e) 5조건 패턴 답습 (G2/G3/G4 정식 PASS + ADR-012 발행 + ADR-009 C-N + G2 §1.2.6 P10 + P2 v3 정식 채택 + Archive 모두) — 본 ADR 의 모법 역할 영구 보존.

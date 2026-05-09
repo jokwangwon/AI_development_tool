@@ -78,12 +78,45 @@
 
 ---
 
-**관련 문서**:
+**관련 문서** (2026-05-09 후속 9 cross-reference 갱신, 결정 내용 변경 0건 — 단축 합의 APPROVE Reviewer-only):
+
+### 합의 보고서 / 헌법
+
 - `docs/review/3plus1-consensus-2026-05-04-hermes.md` (3+1 합의 보고서 전문)
-- `docs/architecture/hermes-adoption-design.md` (도입 설계 — 작성 예정)
-- `docs/architecture/llm-providers-design.md` (provider 추상화 — 작성 예정)
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안)
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 관용 (Provider Liquidity, 비협상)
 - `~/.claude/projects/-home-delangi----project-category-AI-development-tool/memory/feedback_provider_liquidity.md` (Provider Liquidity 영구 기억)
+
+### Hermes 도입 설계 (P2)
+
+- `docs/architecture/hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7** — 옵션 A 최소 침습 — 헤더 갱신 + 본문 보존, path 변경 0건. archive 합의: `docs/review/3plus1-consensus-2026-05-09-p2-v2-archive-decision.md`)
+- **`docs/architecture/hermes-adoption-design-v3.md`** (P2 v3, **Adopted — Design Adoption only, 2026-05-09 후속 6, 후속 권위**) — P2 v2 §2.1.3 가정 (외부 pre-record hook) 폐기 + R-2~R-7 evidence 흡수 + G1b PASS 권위 + Hermes PMO 구조 사전 정의 (활성화 *아님*) + G2/G3/G4 entry/exit. **본 ADR-008 의 Option B 단계 마이그레이션은 P2 v3 §2.6 + §11.1 + §2.6.1 12 조건 PMO 격상 체크리스트로 운영 절차화** (인간 전문 리뷰 의무 명문화, P2 v3 §2.6 단계 5.5)
+- `docs/architecture/system-identity-prequel.md` (**Archived 2026-05-09 후속 8** — AI Dev Company OS 정체성 직접 권위 출처 영구 보존. archive 합의: `docs/review/3plus1-consensus-2026-05-09-system-identity-prequel-archive-decision.md`)
+
+### Provider 추상화 / Adapter (차단조건 #4)
+
+- `docs/architecture/llm-providers-design.md` (P1 v2, LiteLLM facade — Option β 채택)
+- **`docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md`** (C-N 갱신 2026-05-09 후속 4 — P1 facade MVP 진입조건 명시 + **Hermes PMO ↔ provider 분리 영구 권위 (§2.3)** + **Provider Liquidity 5-way Multi-layer Defense 모법 ADR Layer 1 (§5)** + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference). 본 ADR-008 차단조건 #4 (provider 어댑터 추상화) 의 *Hermes PMO ↔ provider 분리* 권위 출처
+
+### 차단조건 #1 충족 (수단/목적 분리)
+
+- **`docs/decisions/ADR-011-means-vs-ends-redaction.md`** (수단/목적 분리 원칙 — 본 ADR-008 부록 B Amendment R1 specific 갱신의 권위 근거. §2.1 (a)~(d) 4조건 + §2.2 G1a/G1b 분리 + §2.3 Hermes ≠ root of trust 영구 권위 + §2.4 T1/T2/T3 영구 권위)
+- `docs/decisions/ADR-010-sqlcipher-vault-key-management.md` (SQLCipher Vault HSM 키 관리 — 차단조건 #1 키 관리 측면)
+
+### Evidence 무결성 (2026-05-09 후속 3 PR-2 신규 발행)
+
+- **`docs/decisions/ADR-012-evidence-ledger-protection.md`** (Evidence Ledger Protection — 본 ADR-008 차단조건 #2 (JSONL export 표준) 의 *Evidence Ledger 무결성* 강화 권위. 12 보호 원칙 + Layer 1~5 다층 강제 + RFC 8785 JCS + Hermes 변조 차단 매트릭스 4항목 + Provider Liquidity 5-way Layer 5)
+- 신규 위반 경로 P10 (Evidence Forgery) 정식 등록 (G2 §1.2.6, 2026-05-09 후속 5)
+
+### 4 게이트 정식 산출 (2026-05-09 Design/Governance Gate PASS Bundled)
+
+- `docs/architecture/governance-preconditions.md` (G2, **Design/Governance Gate PASS Bundled, 2026-05-09**) — 6 거버넌스 사전조건 GP-1~GP-6 + §1.2.6 P10 Evidence Forgery 정식 등록. **GP-1 = G1b PASS evidence 흡수 (Implementation/Runtime PASS), GP-2~GP-6 = Design PASS / Implementation Pending**
+- `docs/architecture/hermes-not-root-of-trust-runtime.md` (G3, **Design/Governance Gate PASS Bundled**) — 권위 위계 운영 + Hermes 권한 22 항목 (T1 8 / T2 2 / T3 12) + Hermes 변조 차단 매트릭스 4항목. **운영 구현 = Design PASS / Implementation Pending**
+- `docs/architecture/provider-agnostic-memory-skill-design.md` (G4, **Design/Governance Gate PASS Bundled** + §4.2 11 필드 schema + §4.4 hash chain 사양 + §4.6 round-trip 검증 절차 보강 PR-2). **라운드트립 + migration script = Design PASS / Implementation Pending**
+- `docs/phase0/redaction-verification-sop.md` (R-7 SOP — G1b PASS 정식 충족 절차)
+
+### 부록 B §B.6 정식 충족 절차 cross-reference (G1b PASS + G2 GP-1 흡수)
+
+- 부록 B §B.6 R-3 ~ R-7 6단계 ✅ 완료 (2026-05-06 ~ 2026-05-07 Part 1) + R-6 GitHub Actions actual run `25482284523` PASS (24초, 42/42, leak 0) + R-7 SOP §7.3 단축 합의 APPROVE Reviewer-only (2026-05-07) → G1b CONDITIONALLY PASS → **PASS** 승격 + Phase 1 acceptance PARTIAL → **PASS** 선언. **G2 GP-1 = G1b PASS evidence 흡수** (Tier-1 한정, 2026-05-09 G2 정식 PASS 시점)
 
 ---
 

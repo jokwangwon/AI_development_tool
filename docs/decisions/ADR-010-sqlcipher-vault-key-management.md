@@ -8,7 +8,7 @@
 
 ## 맥락 (Context)
 
-P2 (`hermes-adoption-design.md` v2)의 차단조건 #1 SQLCipher 암호화에서 키 관리 방식 결정 필요.
+P2 (`hermes-adoption-design.md` v2, **Archived 2026-05-09 후속 7** — 후속 권위 = `hermes-adoption-design-v3.md` (P2 v3, **Adopted — Design Adoption only, 2026-05-09 후속 6**)) 의 차단조건 #1 SQLCipher 암호화에서 키 관리 방식 결정 필요.
 
 P2 3+1 합의에서 Agent B가 단독 발견한 **CRITICAL 위험 B-N2**: "SQLCipher 키 유출 시 redaction된 모든 과거 데이터 노출". 1일 데이터 손실 수용은 **키 자체 분실** 시나리오만 고려하며, **키 유출** 시나리오는 미커버.
 
@@ -162,8 +162,36 @@ P2 합의 D-4 결정 사항. 별도 ADR 작성 의무는 Reviewer 권고.
 
 ---
 
-**관련 문서**:
-- `docs/architecture/hermes-adoption-design.md` (P2 v2 §2.1.2 본 ADR 위임)
-- `docs/decisions/ADR-008-hermes-adoption-decision.md` (차단조건 #1 상위)
+**관련 문서** (2026-05-09 후속 9 cross-reference 갱신, 결정 내용 변경 0건 — 단축 합의 APPROVE Reviewer-only):
+
+### Hermes 도입 설계 (P2)
+
+- `docs/architecture/hermes-adoption-design.md` (P2 v2 §2.1.2 본 ADR 위임 — **Archived 2026-05-09 후속 7**)
+- **`docs/architecture/hermes-adoption-design-v3.md`** (P2 v3, **Adopted — Design Adoption only, 2026-05-09 후속 6, 후속 권위**) — §2 Hermes PMO 구조 사전 정의 + §10.1 Normative Constraints + §10.2 Archive Migration Note 답습. P2 v2 §2.1.2 본 ADR 위임의 후속 권위 본문
+
+### 상위 ADR
+
+- `docs/decisions/ADR-008-hermes-adoption-decision.md` (차단조건 #1 상위 — Hermes 도입 결정 Option B)
+- **`docs/decisions/ADR-011-means-vs-ends-redaction.md`** (수단/목적 분리 원칙 — 본 ADR-010 Vault HSM 키 관리는 ADR-011 §2.1 (a)~(d) 4조건 패턴 답습 가능 영역. 본 ADR-008 부록 B Amendment 답습)
+- **`docs/decisions/ADR-012-evidence-ledger-protection.md`** (Evidence Ledger Protection — Evidence Ledger DB 가 redacted secret evidence 포함 가능 시 본 ADR-010 의 SQLCipher Vault 보호 범위 확장 의무. ADR-012 §원칙 5 (Provider Liquidity 5-way Layer 5 — Evidence 형식 차원) + §1.4 cross-reference 답습 — Evidence Ledger entry 가 *형식적 무결성* (hash chain / canonical / append-only / signed) 까지 보호하나, *secret 평문 포함* 시 본 ADR-010 GP-1 SQLCipher trigger 보호 범위에 ledger DB 명시 포함 의무 — 외부 LLM 2 C-1 답습)
+
+### 합의 / 헌법
+
 - `docs/review/3plus1-consensus-2026-05-04-p2-hermes-adoption.md` (B-N2 발견 출처)
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 관용 (Provider Liquidity)
+
+### 4 게이트 정식 산출 (2026-05-09 Design/Governance Gate PASS Bundled)
+
+- `docs/architecture/governance-preconditions.md` (G2 — GP-1 = G1b PASS evidence 흡수, 본 ADR-010 SQLCipher Vault 키 관리는 GP-1 의 키 관리 측면)
+- `docs/architecture/provider-agnostic-memory-skill-design.md` (G4 — §4.2 11 필드 schema + §4.4 hash chain 사양 + §4.6 round-trip 검증 절차) — Evidence Ledger DB 형식 정합
+
+### Evidence Ledger DB Secret 처리 주의 사항 (ADR-012 §1.4 + 외부 LLM 2 C-1 답습)
+
+본 ADR-010 의 SQLCipher Vault 보호 범위는 다음을 *명시 포함* 의무:
+
+- Hermes SQLite (FTS5 학습루프 DB)
+- Memory DB (Global / Project — G4 §2 답습)
+- Skill DB (G4 §3 답습)
+- **Evidence Ledger DB (`docs/evidence/ledger.jsonl` 또는 후속 SQLite migration 시점 — ADR-012 §원칙 5 답습)**: Evidence Ledger entry 가 redacted secret evidence (예: secret_scan event 의 redacted secret pattern) 포함 가능 시 본 ADR-010 GP-1 보호 범위에 명시 포함 의무. *Evidence Ledger entry 자체* 가 secret 평문 INSERT 경로 (P1 변종) 가능성 차단 — ADR-012 §1.4 cross-reference + 외부 LLM 2 C-1 권고 답습 (G2 GP-1 SQLCipher trigger 보호 범위 ledger DB 명시 포함)
+
+본 cross-reference 추가는 *결정 내용 변경 0건* — Vault HSM + Shamir SSS 3-of-3 + 90일 회전 + dual-key + PGP 백업 + sample restore 분기 1회 모두 변경 없음. **본 ADR-010 의 보호 *대상 범위* 가 P2 v3 §3.1.2 + ADR-012 §1.4 cross-reference 로 명시 확대된 것 한정** (cross-reference 갱신).

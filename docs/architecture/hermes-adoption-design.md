@@ -1,12 +1,37 @@
-# Hermes Agent 도입 설계 v2 (Hermes Adoption Design v2)
+# Hermes Agent 도입 설계 v2 (Hermes Adoption Design v2) — **Archived (2026-05-09 후속 7)**
 
-> **Option B 단계 도입 + 6개 차단조건 + Phase 0/1/2/3 + 롤백 + 검증. 3+1 합의 TIER 0~3 보강 적용 (v2)**
+> **상태: Archived (2026-05-09 후속 7 — P2 v3 (Hermes Adoption Design v3) Design Adoption only 정식 채택 후속, 단축 합의 APPROVE)**.
+>
+> P2 v3 (`hermes-adoption-design-v3.md`) 가 본 v2 의 *정식 후속 권위* 이며, 본 v2 본문은 *git history 추적용 + 역사적 사실 보존* 으로 유지됨 (옵션 A — 최소 침습 채택).
+>
+> **본 v2 본문 인용은 *역사적 사실 추적* 한정** — 새 작업은 P2 v3 본문을 권위 우선 인용 의무 (P2 v3 §8 carry-over 매트릭스 답습). P2 v2 carry-over 23 영역 = 22 carry-over (변경 없음 — 본 v2 §1.4 ~ §9 본문 그대로 유지) + 1 갱신 (§2.1.3 Pre-Record Redaction Hook 가정 = ADR-011 §2.2 + P2 v3 §1.1 + §3.2 G1a FAIL 권위로 *영구 폐기* — 본 §2.1.3 본문은 *역사적 가정* 으로 보존, 새 작업 *인용 금지*).
+>
+> **본 archive 가 *발생시키지 않는* 것** (P2 v3 §10.2 Archive Migration Note + ADR-012 §605 답습):
+> - ❌ Hermes PMO 격상 활성화
+> - ❌ Runtime Implementation PASS 선언
+> - ❌ G2 / G3 / G4 Implementation PASS 선언
+> - ❌ ADR-008 / 009 / 010 / 011 / 012 본문 자동 갱신 (cross-reference 만 — 본 archive commit *후* 별도 PR)
+> - ❌ system-identity-prequel.md 자동 archive (별도 작업 분리)
+> - ❌ 실 runtime code / migration script / hook 구현
+> - ❌ Tier-2 / Tier-3 catalog 자동 확장
+> - ❌ 5 영구 핵심 제약 (Provider Liquidity / Hermes ≠ root of trust / 메타포 강제 금지 / T3 / 수단/목적 분리) 약화
+>
+> **본 archive 후 5 영구 핵심 제약 보호 강도 = HIGH 5/5** (P2 v3 §10.1 + §10.2 Archive Migration Note 직접 답습) — 5 제약 보호의 모든 권위 출처는 본 v2 *외부* (ADR-011 / ADR-012 / ADR-009 C-N / 헌법 / G2 / G3 / G4 / system-identity-prequel + P2 v3 §10.1) 에 영구 보존.
+>
+> **본 archive 합의 권위**: `docs/review/3plus1-consensus-2026-05-09-p2-v2-archive-decision.md` (Reviewer-only 단축 합의 APPROVE — 7/7 검토 기준 PASS + 5/5 풀 3+1 승격 트리거 0건 발화 + 옵션 A 최소 침습 권고).
+>
+> **이전 상태 (2026-05-04 ~ 2026-05-09 후속 6)**: 확정 (3+1 합의 통과 v2). P2 v3 정식 채택 (2026-05-09 후속 6) 후 본 v2 → Archived 전환 (2026-05-09 후속 7).
 
-**최종 수정**: 2026-05-04 (3+1 합의 통과, TIER 0+1+2+3 적용)
-**상태**: 확정 (3+1 합의 완료 — `review/3plus1-consensus-2026-05-04-p2-hermes-adoption.md`)
+**최종 수정**: 2026-05-04 (3+1 합의 통과, TIER 0+1+2+3 적용) → **2026-05-09 후속 7 Archived**
+**상태**: **Archived** (P2 v3 정식 채택 후속, 2026-05-09 후속 7 — 단축 합의 APPROVE Reviewer-only)
+**원 합의 (v2 확정)**: `review/3plus1-consensus-2026-05-04-p2-hermes-adoption.md` (2026-05-04)
+**Archive 합의 (Archived 전환)**: `review/3plus1-consensus-2026-05-09-p2-v2-archive-decision.md` (2026-05-09 후속 7 Reviewer-only 단축 합의)
+**후속 권위 (Active)**: `hermes-adoption-design-v3.md` (P2 v3, **Adopted — Design Adoption only**, 2026-05-09 후속 6)
 **상위 결정**: `ADR-008-hermes-adoption-decision.md` (Option B 채택)
-**관련 ADR**: ADR-009 (자체 Adapter v2.0 진입조건), **ADR-010 (SQLCipher Vault HSM 키 관리)**
+**관련 ADR**: ADR-009 C-N (자체 Adapter v2.0 진입조건 + P1 facade MVP + Hermes PMO ↔ provider 분리, 2026-05-09 후속 4 갱신), **ADR-010 (SQLCipher Vault HSM 키 관리)**, **ADR-011 (수단/목적 분리 원칙 — 본 v2 §2.1.3 Pre-Record Redaction Hook 가정 영구 폐기 권위)**, **ADR-012 (Evidence Ledger Protection, 2026-05-09 후속 3 PR-2 발행)**
 **관련 설계**: `llm-providers-design.md` (P1 v2 — LiteLLM facade), `multi-agent-system-design.md`, `harness-engineering-design.md`, `environment-and-docker-design.md`
+
+> **이하 본문 (§1 ~ §10) = 2026-05-04 v2 확정 시점 사실 보존** (본 archive 처리는 *옵션 A 최소 침습* — 본문 변경 0건). 본 §2.1.3 Pre-Record Redaction Hook 가정은 *역사적 가정* 으로 보존되며, 새 작업의 권위 인용 *금지* (ADR-011 §2.2 + P2 v3 §3.2 G1a FAIL 답습).
 
 ---
 

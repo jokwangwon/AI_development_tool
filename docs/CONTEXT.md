@@ -2,19 +2,18 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-10 (**Group A 단단 종료 — G2 GP-5 1차+2차+보완 PoC 모두 APPROVE WITH CONDITIONS**). 본 세션 누적 9 commits (`35cbf4b → f8018af`):
+**최종 업데이트**: 2026-05-10 (**Group B 통합 PoC 종료 — G3 Hermes-originated marker + Evidence 없는 PASS 차단 Reviewer-only 단축 합의 APPROVE WITH CONDITIONS**). 본 세션 누적 12 commits (`35cbf4b → df4de14`):
 
-- **1차 PoC** (Layer 1 형식 차단): `tools/provider_import_scanner.py` (AST 5종 패턴) + 1차 fixture (PASS×1+FAIL×5) + CI workflow + Reviewer-only 단축 합의 APPROVE
-- **2차 PoC** (Layer 1 정적 그래프 강화): 풀 3+1 합의 (Agent A/B/C 1206줄 독립 + Reviewer 380줄, T-2 import-linter 채택, C-1~C-10 + TR-1~TR-5 등록) → C-9 RA-9 사전 검증 PASS (`include_external_packages = True` 정상 동작) → `.importlinter` + `requirements-dev.txt` (TR-2 답습) + `src/` placeholder (TR-1 미발화) + `transitive_import.py` fixture + CI 양방향 step 추가 + Reviewer-only 단축 합의 APPROVE WITH CONDITIONS
-- **보완**: G-1 (CI probe cleanup `if: always()`) + G-2 (`.gitignore` 4 패턴 추가, `git check-ignore` 4/4 매치) + G-3 (C-9 venv 정리)
+- **Group A 1차 PoC** (Layer 1 형식 차단): `tools/provider_import_scanner.py` (AST 5종 패턴) + 1차 fixture (PASS×1+FAIL×5) + CI workflow + Reviewer-only 단축 합의 APPROVE
+- **Group A 2차 PoC** (Layer 1 정적 그래프 강화): 풀 3+1 합의 (T-2 import-linter 채택, C-1~C-10 + TR-1~TR-5) → C-9 RA-9 사전 검증 PASS → `.importlinter` + `requirements-dev.txt` + `src/` placeholder + `transitive_import.py` fixture + CI 양방향 step + Reviewer-only 단축 합의 APPROVE WITH CONDITIONS
+- **Group A 보완**: G-1 (CI probe cleanup `if: always()`) + G-2 (`.gitignore` 4 패턴 추가) + G-3 (C-9 venv 정리)
+- **Group B 통합 PoC** (G3 — commits `ecf9da3` + `4872a11` + `df4de14`, GitHub Actions actual run `25605665191` PASS 8초 conclusion=success): `tools/evidence_pass_gate.py` (3 검사 — Hermes marker × governance 공동 / PASS × evidence / Implementation PASS scope 분리) + fixture (PASS × 2 + FAIL × 4, 3 패턴 cover) + CI workflow (PASS rc=0 / FAIL rc=1 ≥4 + 3 패턴 cover step + Evidence summary) + 사양 + Reviewer-only 단축 합의. 양방향 검증 5/5 PASS (로컬 + actual run, FP 0 / FN 0). ADR-011 §2.1 (a)~(e) 5/5 + 사용자 명시 8 PASS / 6 BLOCK / 7 금지 0/7 위반 + escalation TR-B-1~TR-B-4 0/4 발화
 
-**핵심 발견**: `google.generativeai` 가 import-linter `forbidden_modules` contract 가 받지 못 함 → 1차 AST scanner 단독 책무 분리 (합의 §5.5 매트릭스 각주 1, 사용자 답습 — 풀 재합의 미발화). **양방향 검증 5/5 PASS** (1차 PASS rc=0 / 1차 FAIL rc=1 5건 / 1차 src 회귀 rc=0 / 2차 PASS rc=0 1 kept / 2차 FAIL probe rc=1 transitive 정확 검출).
+**Implementation/Runtime PASS 자동 선언 미발생** + **Hermes PMO 격상 0건** + **G2 GP-5 6 금지목록 0/6 위반** + **G3 7 금지목록 0/7 위반** + **신규 정책 발명 0건** + **ADR 본문 변경 0건**. 본 세션 = G2 GP-5 *부분 충족 시제* + G3 *부분 충족 시제* 한정 (G2/G3 전체 PASS 권한 없음 — 사용자 명시 답습). 자세한 세션 로그는 `docs/sessions/SESSION_2026-05-10.md`.
 
-**Implementation/Runtime PASS 자동 선언 미발생** + **Hermes PMO 격상 0건** + **6 금지목록 0/6 위반** + **신규 정책 발명 0건**. 본 세션 = G2 GP-5 *부분 충족 시제* 한정 (G2 전체 PASS 권한 없음 — 사용자 명시 답습). 자세한 세션 로그는 `docs/sessions/SESSION_2026-05-10.md`.
+**다음 진입점**: Group C (G4 JSONL hash chain + RFC 8785 JCS + round-trip PoC) — JCS 라이브러리 선정 / test corpus / PoC 범위 결정 *먼저* 진행 (사용자 명시 답습). 또는 Group A 3차 (URL/endpoint grep PoC, C-8) / Group D (G2 GP-3 + GP-2). 사용자 명시 결정.
 
-**다음 진입점**: Group A 3차 (URL/endpoint grep PoC, C-8 답습) 또는 Group B/C/D 병렬 진입 (roadmap Order 2~). 사용자 명시 결정.
-
-**이전 업데이트**: 2026-05-09 후속 15 (Implementation/Runtime PASS Roadmap 단축 합의 APPROVE — `implementation-runtime-roadmap.md` DRAFT 권위 권고 발행, 17 항목 + 9 그룹 분류, ADR-011 §2.1 (a)~(e) 답습)
+**이전 업데이트**: 2026-05-10 (Group A 단단 종료 — G2 GP-5 1차+2차+보완 PoC 모두 APPROVE WITH CONDITIONS)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 
@@ -195,6 +194,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 22. ~~**Group A 2차 PoC — depcruise rule (T-2 import-linter) 풀 3+1 합의**~~ ✅ 완료 (2026-05-10, commits `a6e82f1` + `b683e15` + `cfa0db0`. **풀 3+1 합의** — 7항목 + 4 옵션 (T-1~T-4) 분석. Agent A/B/C 독립 분석 1206줄 + Reviewer 380줄. **T-2 (import-linter) 채택** — RA-1 CRITICAL (T-1 dependency-cruiser Python 미지원 동작 불가) + RA-9 CRITICAL (grimp 외부 모듈 install 사전 검증 의무). C-1~C-10 추가 조건 + TR-1~TR-5 재합의 trigger 등록. Agent C 권고 안 #1 (보류) → 3 반박 명시 답습. APPROVE WITH CONDITIONS)
 23. ~~**Group A 2차 PoC 구현**~~ ✅ 완료 (2026-05-10, commits `d7c4b05` + `4a18bcc` + `9764fd8`. **C-9 RA-9 사전 검증 PASS** — `import-linter 2.11 + grimp 3.14` 환경에서 `include_external_packages = True` 정상 동작. **핵심 발견**: `google.generativeai` 가 import-linter forbidden contract 제약 → 1차 AST scanner 단독 책무 분리 (각주 1 등재). 산출물 6건 — `.importlinter` config + `requirements-dev.txt` (TR-2 답습) + `src/` placeholder (TR-1 미발화) + `transitive_import.py` fixture + CI 갱신 + 본 PoC 사양. **양방향 검증 5/5 PASS**. Reviewer-only 단축 합의 APPROVE WITH CONDITIONS)
 24. ~~**Group A 보완 — G-1/G-2/G-3 처리**~~ ✅ 완료 (2026-05-10, commit `f8018af`. CI probe cleanup `if: always()` step 분리 + `.gitignore` 4 패턴 추가 (`git check-ignore` 4/4 매치) + C-9 venv 정리. 변경 영향 0건 (도구/룰/fixture 변경 0). 보조 작업 — 별도 합의 미발화)
+25. ~~**Group B 통합 PoC — G3 Hermes-originated marker + Evidence 없는 PASS 차단**~~ ✅ 완료 (2026-05-10, commits `ecf9da3` + `4872a11` + `df4de14`. GitHub Actions actual run `25605665191` PASS 8초 conclusion=success. `tools/evidence_pass_gate.py` 3 검사 (Hermes marker × governance 공동 / PASS × evidence / Implementation PASS scope 분리) + fixture (PASS × 2 + FAIL × 4, 3 패턴 cover) + CI workflow (PASS rc=0 / FAIL rc=1 ≥4 + 3 패턴 cover step + Evidence summary 6 항목) + 사양 + Reviewer-only 단축 합의 APPROVE WITH CONDITIONS. 양방향 검증 5/5 PASS (로컬 + actual run, FP 0 / FN 0). ADR-011 §2.1 (a)~(e) 5/5 + 사용자 명시 8 PASS / 6 BLOCK / 7 금지 0/7 위반 + TR-B-1~TR-B-4 0/4 발화 + Group A 답습 충실 + 알려진 한계 4건 명시. 본 PoC = G3 *부분 충족 시제* 한정 (G3 전체 PASS 권한 0건))
 11. **P2 v3 정식 채택 합의** (G2 §1.2 P10 정식 등록 후 진입) — **풀 3+1 합의** (C-14 응답 2건 모두 풀 3+1 권고 답습) + 본 CONTEXT C-14 체크리스트 11 조건 흡수 의무. **C-14 cross-vendor 1+ 충족 (2건) ✅** + **C-N ADR-009 갱신 ✅** 후 진입 적격
     - 시나리오 X: P2 v3 단독 합의 (풀 3+1, C-14 응답 evidence 포함)
     - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
@@ -204,7 +204,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-10 Group A 종료 후): 다음 중 사용자 명시 결정 — (a) "Group A 3차 — URL/endpoint grep PoC 진입 (C-8 답습, 풀 3+1)" / (b) "Group B/C/D 병렬 진입 (roadmap Order 2~)" / (c) "Group H — ADR-014 발행 (풀 3+1 + 외부 LLM 1+)" / (d) "Group I — G3 22 권한 분해 합의 (풀 3+1)".
+**권고 시작점** (2026-05-10 Group B 종료 후): 다음 중 사용자 명시 결정 — (a) **"Group C 우선 검토 — G4 JSONL hash chain + RFC 8785 JCS + round-trip PoC"** (사용자 명시 권고, 단 JCS 라이브러리 선정 / test corpus / PoC 범위 결정 *먼저* 진행 — 바로 구현 금지) / (b) "Group A 3차 — URL/endpoint grep PoC 진입 (C-8 답습)" / (c) "Group D — G2 GP-3 Credential/Secret Hygiene + GP-2 Egress Redaction" / (d) "Group H — ADR-014 발행 (풀 3+1 + 외부 LLM 1+)" / (e) "Group I — G3 22 권한 분해 합의 (풀 3+1)".
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)

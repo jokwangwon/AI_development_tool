@@ -6,6 +6,8 @@
 >
 > **G4 라운드트립 / migration script 상태 (P0 조건 C-B, 5/5 입력 일치)**: **DESIGN PASS / IMPLEMENTATION PENDING** (§4 변환 스크립트 사양까지만, 실 PoC 미실증 — 합의 보고서 §6 갱신 권고 흡수 시점에 별도 합의).
 >
+> **PR-2 보강 흡수 (2026-05-09 풀 3+1 합의 + 외부 LLM 2건)**: **§4.2 schema 11 필드 (10 → 10 + `event` 신규) + §4.4 hash chain 사양 보강 (Layer 1~5 다층 강제 + RFC 8785 JCS Primary + fallback + Genesis Hash + prev_hash 검증 실패 BLOCK + manual + Full Rewrite 5 Layer 방어) + §4.6 round-trip 검증 절차 보강 (Tier-based + 3 ledger entry 형식 + Migration 검증 실패 rollback 조건) — `docs/decisions/ADR-012-evidence-ledger-protection.md` 와 동일 PR commit. 합의 권위: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (5/5 입력 APPROVE WITH CONDITIONS). G4 §11.4 P-1 (RFC 8785 JCS) + P-2 (schema 진화 정책) + P-3 (import schema_version) 처리 완료** — P-4 / P-5 는 PR-1 또는 후속 합의 영역 (PR-1 §11.4 답습).
+>
 > **Hermes PMO 격상 / G4 운영 구현 PASS / P2 v3 정식 채택 / ADR 본문 자동 갱신 (신규 ADR-014 후보 검토 포함) / archive 자동 처리는 본 PASS 에 포함되지 않는다** (사용자 명시 답습).
 
 **작성일**: 2026-05-07
@@ -367,26 +369,32 @@ provider_bindings:
 본 §4 는 Memory + Skill 양쪽에 적용되는 *공통* JSONL export/import 형식.
 
 ```jsonl
-{"type":"memory","scope":"global","id":"<uuid>","schema_version":"0.1","ts":"2026-05-07T10:00:00Z","agent":"user","content":{...},"evidence_refs":["docs/evidence/<task-id>.md"],"prev_hash":"<sha256>","hash":"<sha256>"}
+{"type":"memory","scope":"global","id":"<uuid>","schema_version":"0.1","ts":"2026-05-07T10:00:00Z","agent":"user","event":"memory_write","content":{...},"evidence_refs":["docs/evidence/<task-id>.md"],"prev_hash":"<sha256>","hash":"<sha256>"}
 {"type":"memory","scope":"project","id":"<uuid>",...}
-{"type":"skill","scope":"project","id":"<uuid>","schema_version":"0.1","ts":"2026-05-07T10:00:00Z","agent":"user","content":{<skill.yaml as JSON>},"evidence_refs":[...],"prev_hash":"<sha256>","hash":"<sha256>"}
+{"type":"skill","scope":"project","id":"<uuid>","schema_version":"0.1","ts":"2026-05-07T10:00:00Z","agent":"user","event":"skill_promoted","content":{<skill.yaml as JSON>},"evidence_refs":[...],"prev_hash":"<sha256>","hash":"<sha256>"}
+{"type":"meta","scope":"project","id":"<uuid>","schema_version":"0.1","ts":"2026-05-09T11:00:00Z","agent":"user","event":"external_llm_received","content":{"source_vendor":"gpt-5.x","verdict":"APPROVE_WITH_CONDITIONS"},"evidence_refs":["docs/external-review/<file>.md"],"prev_hash":"<sha256>","hash":"<sha256>"}
 ...
 ```
 
-### 4.2 Schema (1 줄 = 1 entry)
+### 4.2 Schema (1 줄 = 1 entry, **11 필드 — ADR-012 §2.2 갱신**)
+
+> **ADR-012 §2.2 갱신 (2026-05-09 PR-2 풀 3+1 합의)**: schema 10 필드 → **11 필드** (`event` 신규 추가). 본 §4.2 = ADR-012 §2.2 답습.
 
 | 필드 | 타입 | 필수 | 검증 규칙 |
 |------|-----|----|--------|
-| `type` | enum | ✅ | `memory` / `skill` |
+| `type` | enum | ✅ | `memory` / `skill` / **`meta`** (ADR-012 §2.2 — round-trip / migration / forgery / external_llm 영역) |
 | `scope` | enum | ✅ | `global` / `project` / `session` / `team` |
 | `id` | string | ✅ | UUID v4 또는 slug |
-| `schema_version` | string | ✅ | semver (본 G4 schema 의 버전 — 현 `0.1` MVP) |
-| `ts` | ISO 8601 | ✅ | entry 생성 timestamp |
-| `agent` | string | ✅ | provider-neutral identifier (`user` / `<worker_name>` / `hermes` 등) |
-| `content` | object | ✅ | (Memory) 자유 schema, (Skill) §3.1 17 필드 schema 그대로 |
+| `schema_version` | string | ✅ | semver (본 G4 schema 의 버전 — 현 `0.1` MVP, ADR-012 §3.2 진화 정책 답습) |
+| `ts` | ISO 8601 | ✅ | entry 생성 timestamp + **monotonicity 의무** (본 entry `ts` ≥ `prev_hash` entry `ts`, ADR-012 §3.4) |
+| `agent` | string | ✅ | provider-neutral identifier (`user` / `<worker_name>` / `hermes` 등). **External LLM response 적재 시 `agent="user"` 강제** (ADR-012 §2.1 원칙 7 + §2.12 #4) |
+| **`event`** | **enum** | **✅ (ADR-012 §2.2 — 신규 11번째 필드)** | **17 enum 후보 (MVP 12 의무 + 5 후속 확장)** — `memory_write` / `skill_proposed` / `skill_approved` / `skill_promoted` / `skill_revoked` / `gate_pass` / `gate_fail` / `external_llm_received` / `evidence_forgery_detected` / `roundtrip_pass` / `roundtrip_lossy` / `roundtrip_fail` / `migration_failed` / `chain_violation_detected` / `hash_chain_broken` / `policy_change_attempted` / `canonical_json_fallback`. 자세한 분류 + T1/T2/T3 매핑 = ADR-012 §2.2 답습 |
+| `content` | object | ✅ | (Memory) 자유 schema, (Skill) §3.1 17 필드 schema 그대로, (Meta) event-specific schema (ADR-012 §3.1 + §2.9 + §2.10 답습) |
 | `evidence_refs` | array\<string\> | 권장 | Markdown evidence 파일 경로 |
-| `prev_hash` | string (sha256) | ✅ | 직전 entry 의 `hash` (chain 형성) — 첫 entry 는 `genesis_hash` |
-| `hash` | string (sha256) | ✅ | 본 entry 의 canonical JSON sha256 (변조 방지) |
+| `prev_hash` | string (sha256) | ✅ | 직전 entry 의 `hash` (chain 형성) — 첫 entry 는 `genesis_hash` (§4.4) |
+| `hash` | string (sha256) | ✅ | 본 entry 의 canonical JSON sha256 (변조 방지) — sha256 hardcode (schema_version 0.1), `hash_algo` 필드 후속 격상 영역 (ADR-012 §3.2) |
+
+**합산 = 11 필드** (ADR-012 §2.2 답습). **모든 필드 provider-neutral 강제** (ADR-012 §2.1 원칙 6).
 
 ### 4.3 Hermes 의존 0 보장
 
@@ -399,20 +407,117 @@ provider_bindings:
 | schema_version 호환성 | 본 `0.1` 이외 버전은 명시 declaration 후만 import 가능 | §4.5 답습 |
 | 외부 오케스트레이터 import 가능 | claude / openai / gemini / local LLM 등 최소 2+ 로 재해석 가능 | §3.5 + GP-6 답습 |
 
-### 4.4 Hash Chain 변조 방지
+### 4.4 Hash Chain 변조 방지 (**ADR-012 §2.3 + §2.5 + §2.6 + §2.7 + §2.8 답습 — 2026-05-09 PR-2 풀 3+1 합의 보강**)
 
-**원칙** (system-identity-prequel §6.3 답습):
-- JSONL append-only — entry 수정 / 삭제 금지
-- hash chain — `prev_hash` + `hash` 로 변조 검출
-- 또는 git append commit 으로 변조 방지 (둘 중 하나 의무)
+> **ADR-012 §2.3~§2.8 갱신**: 본 §4.4 = ADR-012 §2.3 (Append-only + Hash Chain 다층 강제) + §2.5 (RFC 8785 JCS) + §2.6 (Genesis Hash) + §2.7 (prev_hash 검증 실패 처리) + §2.8 (Full Rewrite 방어) 답습. 이전 (보강 전) "둘 중 하나 의무" 약 사양 → 다층 강제 사양 + canonical JSON 표준 인용 + 실패 처리 + full rewrite 방어 명시.
 
-**Canonical JSON 정의** (hash 계산 일관성):
-- key 정렬: lexicographic
-- whitespace 제거 (separator `","` / `":"` 한정)
-- numeric 정규화: integer 는 정수 형식 / float 는 IEEE 754
-- string escape: 표준 RFC 8259
+#### 4.4.1 다층 강제 (Layer 1 ~ Layer 5)
 
-**Genesis hash**: `sha256("genesis:<scope>:<schema_version>")` — 첫 entry 의 `prev_hash`
+**Layer 1 — Hash Chain (MANDATORY 모든 환경)**:
+- `prev_hash` = 직전 entry 의 `hash` (chain 형성)
+- `hash` = 본 entry 의 canonical JSON sha256
+- 첫 entry 의 `prev_hash` = `genesis_hash` (§4.4.3)
+- SHA-256 hardcode (schema_version 0.1) — `hash_algo` 필드 후속 격상 영역 (ADR-012 §3.2 답습)
+- JSONL append-only — entry 수정 / 삭제 / 재작성 금지 (T3 영역, ADR-011 §2.4)
+
+**Layer 2 — Git Append-only Branch (MANDATORY)**:
+- `git config receive.denyNonFastForwards true` (force-push 차단)
+- branch protection rule
+- pre-commit hook: `git rebase` / `git filter-branch` / `git reset --hard` 감지 시 reject (T3 자동 *방어* 권한, T3 자동 *변경* 금지의 비대칭 활용 — ADR-012 §2.8 답습)
+- CI 회귀 검증: base branch 대비 JSONL line deletion / rewrite 감지
+
+**Layer 3 — Signed Commit (RECOMMENDED MVP, MANDATORY multi-host)**:
+- GPG / SSH key signed commit
+- 1인 동일 호스트 = SHOULD (G3 §5.5 SPOF 면책)
+- Multi-host 전환 / 외부 공유 / 팀 사용 / Hermes PMO 격상 시점 = MUST 승격 (G3 §5.5.3 트리거 답습)
+
+**Layer 4 — CI 회귀 검증 (MANDATORY)**:
+- Layer 1 (hash chain) + Layer 2 (history) 자동 회귀 검증
+- canonical JSON 위반 검출
+- timestamp monotonicity 검증 (ADR-012 §3.4)
+- R-6 workflow (`.github/workflows/r2-canary.yml`) 답습 확장 (별도 PR — Implementation 영역)
+
+**Layer 5 — External Anchor (RECOMMENDED MVP, MANDATORY P2 v3 정식 채택 시점)**:
+- 월 1회 external snapshot (별도 외부 git remote / cloud storage push)
+- GitHub Actions run ID + signed tag (ADR-012 §2.8 답습)
+- 1인 SPOF 완화 + 침해 후 발견 가능
+
+**사용자 명시 옵션 답습 (D-1, ADR-012 §2.4)**: "signed commit OR git append commit (둘 중 하나) 의무" — 사용자 결정 영역. 5/5 입력 권고는 *다층 동시 의무* (Layer 1 + 2 MANDATORY, Layer 3 RECOMMENDED). **본 §4.4 = Layer 1 + Layer 2 MANDATORY 답습** (D-1A / D-1B / D-1C 모두 호환).
+
+#### 4.4.2 Canonical JSON — RFC 8785 JCS Primary + Fallback
+
+**Primary**: **RFC 8785 JCS** (https://www.rfc-editor.org/rfc/rfc8785) — *informational track*, IETF 권위.
+
+**Fallback**: `jq -S -c` (lex sort + compact + UTF-8 + RFC 8259 escape) 또는 자체 구현 동등성 의무 + test corpus 검증 (ADR-012 §2.5 답습).
+
+**구현 라이브러리 후보**:
+- Python: `pyjcs` / `rfc8785` / 또는 stdlib `json.dumps(sort_keys=True, separators=(",",":"))` 동등 보장
+- Node: `canonicalize` npm
+- Go: `cyberphone/json-canonicalization` / `gowebpki/jcs`
+
+**Test corpus 의무**:
+- `tests/canonical/` 디렉토리에 RFC 8785 reference 출력 ≥ 20개 포함
+- CI 회귀 검증: 입력 → 자체 canonical → JCS reference output 비교
+- 불일치 시 BLOCK
+
+**Fallback 사용 시**:
+- `event: canonical_json_fallback` ledger entry 작성 의무 (§4.2 + ADR-012 §2.5 답습)
+- Reviewer 알림 + 사용자 review 권장
+
+**참고 (이전 정의 — 보강 전)**: lex sort + RFC 8259 escape + IEEE 754 numeric — 본 정의는 fallback 동등 보장의 *최소 기준*. 본 §4.4.2 갱신으로 RFC 8785 JCS 우선 채택.
+
+#### 4.4.3 Genesis Hash
+
+**MVP (schema_version 0.1) — 현 정의 유지** (ADR-012 §2.6):
+
+```
+genesis_hash = sha256("genesis:<scope>:<schema_version>")
+```
+
+**0.2 진입 또는 multi-chain 도입 시 (ADR-012 §2.6 + 외부 LLM 2 C-7 답습)**:
+
+```python
+genesis_hash = sha256("genesis:" + canonical_json({
+  "scope": <scope>,
+  "schema_version": <version>,
+  "created_at": <ISO 8601>,
+  "agent": "user"
+}))
+```
+
+**전이 절차**: 0.1 chain 의 첫 entry 는 MVP 정의로 유지. 0.2 진입 시 새 chain (별도 `chain_id` 또는 `schema_version`) 생성, 기존 0.1 chain 은 read-only (ADR-012 §3.2 답습).
+
+#### 4.4.4 prev_hash 검증 실패 처리 (BLOCK + Manual Review)
+
+**처리 절차** (ADR-012 §2.7 답습):
+
+1. **즉시 BLOCK** — import / export / migration 중단
+2. **기존 원본 JSONL 보존** — 자동 revert 금지 (T3 위반 위험 — ADR-011 §2.4)
+3. **새 violation entry append** — `event: chain_violation_detected` ledger entry 작성:
+   ```jsonl
+   {"type":"meta","scope":"<scope>","event":"chain_violation_detected","content":{"violation_type":"prev_hash_mismatch|hash_recalculation|history_rewrite","detected_at":"<ts>","affected_entry":"<id>","prev_hash_expected":"<sha256>","prev_hash_actual":"<sha256>"},...}
+   ```
+4. **사용자 명시 review 의무** — 자동 PASS 금지
+5. **자동 revert 금지** (T3 위반)
+6. **Dual write 금지** (silent failure 위험)
+
+**검출 layer**:
+- Layer 1: pre-commit hook (입력 entry 의 `prev_hash` 검증)
+- Layer 2: pre-push hook (chain 전체 재검증)
+- Layer 3: CI nightly 회귀 검증 (R-6 답습 확장)
+- Layer 4: import script (`scripts/hermes-migration/import.py` — 향후 Implementation 시점)
+
+#### 4.4.5 Full Rewrite 방어 (5 Layer)
+
+**Layer 1**: Hash chain (middle entry tampering 차단)
+**Layer 2**: Git append-only branch + denyNonFastForwards (history 재작성 차단)
+**Layer 3**: pre-commit hook — `git rebase` / `git filter-branch` / `git reset --hard` 감지 시 reject
+**Layer 4**: CI 회귀 검증 — base branch 대비 JSONL line deletion / rewrite 감지
+**Layer 5 (RECOMMENDED MVP, MANDATORY multi-host)**: External anchor — GitHub Actions run ID + signed tag 또는 월 1회 external snapshot
+
+**1인 동일 호스트 SPOF 한계 명시** (ADR-012 §2.8 + 외부 LLM 1 권고 5):
+
+> 동일 호스트 전체 침해 상황은 본 ADR-012 의 완전 방어 범위 밖이다. 본 ADR / 본 §4.4 는 Hermes container compromise, middle-entry tampering, accidental rewrite, migration 손실, evidence forgery 시도에 대한 탐지와 차단을 목표로 한다.
 
 ### 4.5 Migration Script 사양 (구현은 본 초안 외)
 
@@ -435,27 +540,89 @@ provider_bindings:
 - schema_version 명시
 - `--dry-run` flag 지원 (검증 only)
 
-### 4.6 라운드트립 검증 절차
+### 4.6 라운드트립 검증 절차 (**ADR-012 §2.9 + §2.10 답습 — 2026-05-09 PR-2 풀 3+1 합의 보강**)
+
+> **ADR-012 §2.9~§2.10 갱신**: 본 §4.6 = ADR-012 §2.9 (Round-trip Lossy 검출 — Tier-based) + §2.10 (JSONL Export/Import 무결성) 답습. 이전 (보강 전) "hash 일치 OR 의미 보존" 단순 OR 약 사양 → tier-based + 3 ledger entry 형식 + migration 검증 실패 시 rollback 조건 명시.
+
+#### 4.6.1 라운드트립 검증 흐름
 
 ```
 [원본 Hermes JSONL]
        │
-       │ ① hermes_to_claude.py 변환
+       │ ① hermes_to_<provider>.py 변환
        ↓
-[Claude 형식]
+[<provider> 형식]
        │
-       │ ② Claude → 다시 본 G4 JSONL 형식으로 변환
+       │ ② <provider> → 다시 본 G4 JSONL 형식으로 변환
        ↓
 [재변환 JSONL]
        │
-       │ ③ canonical JSON sha256 비교
+       │ ③ canonical JSON sha256 비교 (RFC 8785 JCS — §4.4.2 답습)
        ↓
-[원본 hash 일치 검증]   ← Provider-agnostic 보장
+[검증 — Tier-based]   ← Provider-agnostic 보장
 ```
 
-**검증 PASS 조건**:
-- hash 일치 (정확 round-trip) **또는** 의미 보존 검증 (사용자 명시 review — 손실 허용 영역 명시)
-- 손실 발생 시 손실 영역 ledger entry (`event: roundtrip_lossy`)
+#### 4.6.2 검증 PASS 조건 (Tier-based — ADR-012 §2.9 답습)
+
+| Tier | 정체성 | PASS 조건 |
+|-----|------|------|
+| **Genesis (신규 chain)** | 첫 entry 작성 | (round-trip 무관) |
+| **T2 (Skill / Memory promoted, 로컬)** | 로컬 promotion 절차 | **hash 일치 STRICT** — 손실 0건. 위반 시 BLOCK + `event: roundtrip_fail` |
+| **T3 (Cross-vendor migration)** | 외부 형식 변환 + 재import | 의미 보존 허용 — (i) 손실 영역 자동 enumeration / (ii) `event: roundtrip_lossy` 의무 / (iii) 사용자 명시 review + ADR-011 §2.4 사용자 승인 / (iv) **정책 / 권한 / 증거 손실 BLOCK** |
+
+#### 4.6.3 Ledger Entry 3 형식 (ADR-012 §2.9 답습)
+
+```jsonl
+{"type":"meta","scope":"<scope>","event":"roundtrip_pass","content":{"source_chain":"<id>","target_provider":"openai","hash_match":true},...}
+{"type":"meta","scope":"<scope>","event":"roundtrip_lossy","content":{"source_chain":"<id>","target_provider":"openai","lost_fields":["evidence_refs.confidence_score"],"semantic_diff":"<user-review-summary>"},...}
+{"type":"meta","scope":"<scope>","event":"roundtrip_fail","content":{"source_chain":"<id>","target_provider":"openai","failure_reason":"chain_violation_detected|policy_loss|permission_loss|evidence_loss"},...}
+```
+
+#### 4.6.4 자동화 vs 사용자 Review 분리 (ADR-012 §2.9 답습)
+
+- `lost_fields` enumeration = **자동** (canonical JSON diff)
+- `semantic_diff` 판단 = **사용자 명시 review** (ADR-011 §2.4 T2/T3 사용자 승인)
+- **의미 보존 review 자동화 절대 금지** (Agent A R-4 답습)
+
+#### 4.6.5 JSONL Export / Import 무결성 (ADR-012 §2.10 답습)
+
+**Export** (Hermes 의존 0 — ADR-008 차단조건 #2 답습):
+- `scripts/hermes-migration/` 변환 스크립트 = `import hermes_agent` 0건 (depcruise 검증, G2 GP-5 답습)
+- 표준 도구 (`jq` + `sha256sum`) 만으로 검증 가능
+- 외부 오케스트레이터 (claude / openai / gemini / local) 최소 2+ 재해석 가능
+
+**Import 의무 검증**:
+1. `schema_version` 필드 존재 확인 (없으면 BLOCK — ADR-012 §2.10)
+2. 호환성 매트릭스 조회 — 현 MVP 0.1 only, 외부 형식 매핑은 별도 (Implementation 영역)
+3. 미일치 시 BLOCK + 사용자 명시 manual approval 요구
+4. Hash chain 검증 (§4.4.4 답습)
+
+#### 4.6.6 Migration 검증 실패 시 Rollback 조건 (ADR-012 §2.10 답습)
+
+**처리 절차**:
+
+1. **BLOCK**
+2. **원본 보존** — 자동 revert 금지 (T3 위반 위험 — ADR-011 §2.4)
+3. **새 `event: migration_failed` entry append**:
+   ```jsonl
+   {"type":"meta","scope":"<scope>","event":"migration_failed","content":{"source_provider":"hermes","target_provider":"openai","failure_step":"export|conversion|import|reverify","error_summary":"..."},...}
+   ```
+4. **사용자 명시 manual review 의무**
+5. **자동 revert 금지** (T3 위반)
+6. **Dual write 금지** (silent failure 위험 — schema_version drift)
+
+**4 후보 처리 비교** (ADR-012 §2.10 + 합의 §4.3 답습):
+
+| 후보 | 평가 | 채택 |
+|----|----|----|
+| (a) BLOCK + manual review | 안전, 운영 부담 ↑ | ✅ 채택 |
+| (b) 자동 revert | T3 위반 위험 (ADR-011 §2.4) | ❌ 비채택 |
+| (c) 원본 보존 + 새 violation entry | (a) 와 결합 — 본 §4.6.6 답습 | ✅ (a) 와 결합 채택 |
+| (d) Dual write | silent failure 위험 + schema_version drift | ❌ 비채택 |
+
+#### 4.6.7 본 §4.6 의 권한 한계
+
+본 §4.6 = Round-trip 검증 *절차 사양* 까지. 실 migration script 구현 (`scripts/hermes-migration/*.py`) + R-6 workflow ledger 검증 step 추가 = **Implementation/Runtime PASS 영역** (별도 합의, 본 §4.6 범위 외 — ADR-012 §10.2 답습).
 
 ---
 

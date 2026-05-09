@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-09 후속 7 (**P2 v2 (`hermes-adoption-design.md`) Archive 적격성 검토 단축 합의 APPROVE (Reviewer-only)** — 7/7 검토 기준 PASS + 5/5 풀 3+1 승격 트리거 0건 발화 + **옵션 A (최소 침습 — 헤더 갱신 + 본문 보존, path 변경 0건) 채택**. P2 v2 → **Archived** 전환 완료. **다음 진입점: system-identity-prequel.md archive 결정 (별도 작업) → ADR-008 / 010 / 011 본문 갱신 PR 묶음 → G2 / G3 / G4 헤더 cross-reference 갱신 → ADR-013 / 014 후보 발행 결정 → Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS + 인간 전문 리뷰 후 별도)**)
+**최종 업데이트**: 2026-05-09 후속 8 (**system-identity-prequel.md Archive 적격성 검토 단축 합의 APPROVE (Reviewer-only)** — 8/8 검토 기준 PASS + 6/6 풀 3+1 승격 트리거 0건 발화 + **옵션 A (최소 침습 — 헤더 갱신 + 본문 보존, path 변경 0건) 채택**. system-identity-prequel.md → **Archived** 전환 완료. AI Dev Company OS 정체성 보존 HIGH (옵션 A — §2 본문 영구 보존). prequel §1.2 자체 archive 예고 정합. **다음 진입점: ADR-008 / 010 / 011 본문 갱신 PR 묶음 → G2 / G3 / G4 헤더 cross-reference 갱신 → ADR-013 / 014 후보 발행 결정 → Hermes PMO 격상 적격성 검토 (4 게이트 Implementation/Runtime PASS + 인간 전문 리뷰 후 별도)**)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 
@@ -170,7 +170,8 @@ G1b: DB-level fallback prevents plaintext secret persistence
 9. ~~**C-N ADR-009 / P1 facade MVP 진입조건 명시**~~ ✅ 완료 (2026-05-09 후속 4, ADR-009 갱신 단축 합의 APPROVE — Reviewer-only. 5 영역 흡수: P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR + v2.0 트리거 vs MVP 조건 분리 + P2 v3 cross-reference. 자체 Adapter v2.0 트리거 (T1~T4) 본문 변경 0건 + 핵심 결정 변경 0건)
 10. ~~**G2 §1.2 P10 (Evidence Forgery) 정식 row 추가**~~ ✅ 완료 (2026-05-09 후속 5, 단축 합의 APPROVE Reviewer-only — 3 영역 갱신 + 4 풀 3+1 승격 트리거 0건 발화 + ADR-012 발행 권위 내부 작업)
 11. ~~**P2 v3 정식 채택 풀 3+1 합의**~~ ✅ 완료 (2026-05-09 후속 6, 풀 3+1 + 외부 LLM 2건 (cross-vendor — Gemini 사고모델 + vendor 미명시) APPROVE WITH CONDITIONS — Design Adoption only 5/5 입력 일치. P2 v3 DRAFT → **Adopted** + 8 본문 영역 갱신 — §0 헤더 / §2 Non-Activation Clause / §3 dual-structure (DRAFT Snapshot + Adoption-time Status + Delta + Implementation Pending) / §6 ADR-012 Mandatory Reference / §7 ADR 매트릭스 (ADR-012 + ADR-009 C-N) / §10 Normative Constraints + §10.2 Archive Migration Note / §11 변경 절차 + §11.1 Hermes PMO 격상 전 인간 리뷰 의무화 / §2.6 격상 절차 단계 5.5 인간 전문 리뷰)
-12. ~~**P2 v2 Archive 적격성 검토 + Archive 전환**~~ ✅ 완료 (2026-05-09 후속 7, 단축 합의 APPROVE Reviewer-only — 7/7 검토 기준 PASS + 5/5 풀 3+1 승격 트리거 0건 발화 + 옵션 A (최소 침습 — 헤더 갱신 + 본문 보존, path 변경 0건) 채택. P2 v2 (`hermes-adoption-design.md`) 헤더 = Archived. ADR cross-reference 깨짐 0건 + 5 영구 핵심 제약 보호 강도 HIGH 5/5 유지. system-identity-prequel.md archive 는 다음 별도 작업 분리)
+12. ~~**P2 v2 Archive 적격성 검토 + Archive 전환**~~ ✅ 완료 (2026-05-09 후속 7, 단축 합의 APPROVE Reviewer-only — 7/7 검토 기준 PASS + 5/5 풀 3+1 승격 트리거 0건 발화 + 옵션 A (최소 침습 — 헤더 갱신 + 본문 보존, path 변경 0건) 채택. P2 v2 (`hermes-adoption-design.md`) 헤더 = Archived. ADR cross-reference 깨짐 0건 + 5 영구 핵심 제약 보호 강도 HIGH 5/5 유지)
+13. ~~**system-identity-prequel.md Archive 적격성 검토 + Archive 전환**~~ ✅ 완료 (2026-05-09 후속 8, 단축 합의 APPROVE Reviewer-only — 8/8 검토 기준 PASS + 6/6 풀 3+1 승격 트리거 0건 발화 + 옵션 A 채택. system-identity-prequel.md 헤더 = Archived. 16 영역 이관 매트릭스 (12 완전 흡수 + 4 부분/분산) + AI Dev Company OS 정체성 보존 HIGH (§2 본문 영구 보존) + prequel §1.2 자체 archive 예고 정합. ADR-011 §2.3 / §2.4 영구 권위 승격 + ADR-012 §6.4 트리거 실현 답습)
 11. **P2 v3 정식 채택 합의** (G2 §1.2 P10 정식 등록 후 진입) — **풀 3+1 합의** (C-14 응답 2건 모두 풀 3+1 권고 답습) + 본 CONTEXT C-14 체크리스트 11 조건 흡수 의무. **C-14 cross-vendor 1+ 충족 (2건) ✅** + **C-N ADR-009 갱신 ✅** 후 진입 적격
     - 시나리오 X: P2 v3 단독 합의 (풀 3+1, C-14 응답 evidence 포함)
     - 시나리오 Y: P2 v3 + ADR-013 / ADR-014 후보 통합 합의 (PR 묶음)
@@ -180,7 +181,7 @@ G1b: DB-level fallback prevents plaintext secret persistence
 15. **P2 v2 / system-identity-prequel.md archive 처리** (P2 v3 정식 채택 시점에)
 16. **Hermes PMO 격상 후보** (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 사람 리뷰 + 사용자 명시 결정 후 별도 — Claude C-3 답습)
 
-**권고 시작점** (2026-05-09 후속 7 P2 v2 Archived 전환 후): "system-identity-prequel.md archive 결정 진행해주세요 (별도 작업 — 사용자 명시 분리)" 또는 "ADR-008 / 010 / 011 본문 갱신 PR 묶음 진행해주세요" — P2 v3 §9.2 별도 PR 우선순위 #2 ~ #5 답습.
+**권고 시작점** (2026-05-09 후속 8 system-identity-prequel Archived 후): "ADR-008 / 010 / 011 본문 갱신 PR 묶음 진행해주세요 (cross-reference + Hermes PMO 격상 절차 추가)" 또는 "G2 / G3 / G4 헤더 P2 v3 cross-reference 갱신 PR 진행해주세요" — P2 v3 §9.2 별도 PR 우선순위 #3 ~ #6 답습.
 
 ### 2026-05-09 후속 2 결정 사항 (사용자 명시 3건)
 - **결정 1 (PR 묶음)**: 옵션 β — 2-PR 묶음 (PR-1 단축 합의 본문 보강 6건 + PR-2 풀 3+1 ADR-012 + G4 hash chain)

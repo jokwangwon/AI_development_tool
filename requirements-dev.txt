@@ -1,0 +1,13 @@
+# Dev-only dependencies (G2 GP-5 2차 PoC — TR-2 발화 답습)
+#
+# 답습 출처:
+#   - docs/review/3plus1-consensus-2026-05-10-g2-gp5-poc2-depcruise-full.md §5.4 TR-2
+#   - docs/phase0/g2-gp5-poc2-depcruise-rule-scope.md §8.1 T-2 (import-linter)
+#   - C-9 RA-9 사전 검증 PASS (2026-05-10)
+#
+# 본 manifest 는 dev-dep 만 등재. runtime application 의존성 0건.
+# pyproject.toml (PEP 621) 신설은 *별도 합의* 답습 (R-RF2 답습).
+
+# Provider Adapter Enforcement Layer 1 (Static graph)
+# C-9 검증 환경: import-linter 2.11 + grimp 3.14
+import-linter==2.11

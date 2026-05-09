@@ -1,0 +1,35 @@
+; G2 GP-5 2차 PoC — Provider Adapter Enforcement Layer 1 (T-2 import-linter)
+;
+; 답습 출처:
+;   - docs/architecture/llm-providers-design.md §9.3 (allow path / forbidden path 시제 의도)
+;   - docs/review/3plus1-consensus-2026-05-10-g2-gp5-poc2-depcruise-full.md §5.2
+;   - docs/phase0/g2-gp5-poc2-depcruise-rule-scope.md §2.1, §3.1
+;
+; 책무 분담:
+;   - 본 룰: 4종 (openai, anthropic, litellm, ollama) direct/from/transitive 차단
+;   - google.generativeai: 1차 AST scanner 단독 책무 (각주 1 — import-linter 제약 답습)
+;   - 동적 import (importlib, __import__): 1차 AST scanner 전담 (책무 분리)
+;   - 모델명 분기 (문자열): 1차 AST scanner 전담
+;   - URL/endpoint 하드코딩: 3차 별도 합의 영역 외
+;   - 의미적 lock-in: 라운드트립 검증 (P2-5) 영역 외
+;
+; 핵심 옵션 — include_external_packages = True:
+;   forbidden 모듈 미설치 환경에서도 정상 검출 (C-9 RA-9 사전 검증 PASS, 2026-05-10).
+
+[importlinter]
+root_packages =
+    src
+include_external_packages = True
+
+[importlinter:contract:no-direct-llm-sdk]
+name = No direct LLM SDK imports outside facade
+type = forbidden
+source_modules =
+    src
+forbidden_modules =
+    openai
+    anthropic
+    litellm
+    ollama
+ignore_imports =
+    src.adapters.llm.facade -> *

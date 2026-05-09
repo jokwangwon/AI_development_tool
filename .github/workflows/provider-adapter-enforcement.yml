@@ -1,13 +1,24 @@
 # Provider Adapter Enforcement — G2 GP-5 Layer 1 (Entry) PoC
 #
-# 답습 출처:
+# 답습 출처 (1차):
 #   - docs/phase0/g2-gp5-provider-adapter-enforcement-poc.md (1차 PoC 사양)
 #   - docs/architecture/llm-providers-design.md §9.1 / §9.4
 #   - docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md §5
 #
-# 본 workflow 는 양방향 검증:
-#   1. PASS fixture → scanner exit 0 기대
-#   2. FAIL fixture → scanner exit 1 기대 (역전 검증)
+# 답습 출처 (2차):
+#   - docs/review/3plus1-consensus-2026-05-10-g2-gp5-poc2-depcruise-full.md (T-2 import-linter)
+#   - docs/phase0/g2-gp5-poc2-depcruise-rule-scope.md (7항목 + 4 옵션)
+#   - .importlinter (config) + requirements-dev.txt (TR-2 답습)
+#
+# 본 workflow 는 *2 도구 양방향 검증* (책무 분담 답습):
+#   - 1차 (AST scanner): PASS exit 0 + FAIL exit 1 (≥5 패턴)
+#   - 2차 (import-linter): PASS (정상 src/) exit 0 + FAIL (임시 probe) exit 1
+#
+# 책무 분담 (합의 §5.5 답습):
+#   - 4종 forbidden (openai/anthropic/litellm/ollama): 1차 + 2차 중첩 강화
+#   - google.generativeai: 1차 단독 (각주 1 — import-linter 제약 답습)
+#   - 동적 import / 모델명 분기: 1차 전담
+#   - transitive (A→B→openai): 2차 신규 가치
 #
 # 양쪽 중 하나라도 기대값과 다르면 fail-closed (Layer 1 무력화 감지).
 name: Provider Adapter Enforcement
@@ -22,7 +33,10 @@ on:
       - "tools/provider_import_scanner.py"
       - "tests/fixtures/provider_adapter_enforcement/**"
       - ".github/workflows/provider-adapter-enforcement.yml"
-      # PoC 1차 — runtime src/ 코드 0줄. real source tree 가 추가되면 본 paths 도 확장
+      - ".importlinter"
+      - "requirements-dev.txt"
+      - "src/**"
+      # 2차 PoC — src/ placeholder 추가. real source tree 변경 시 TR-1 풀 재합의
   pull_request:
     branches:
       - main
@@ -71,6 +85,48 @@ jobs:
           fi
           echo "FAIL fixture verified — $violation_count violations reported (rc=1)"
 
+      # 2차 (T-2 import-linter) — Static graph + transitive 차단
+      - name: Install import-linter (2차 dev-dep)
+        run: |
+          pip install -r requirements-dev.txt
+          lint-imports --version
+
+      - name: 2차 PASS — expect kept (exit 0)
+        run: |
+          set +e
+          PYTHONPATH=. lint-imports
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::2차 PASS check failed (rc=$rc) — facade-only src/ should be kept"
+            exit 1
+          fi
+          echo "2차 PASS verified — Contracts kept (rc=0)"
+
+      - name: 2차 FAIL probe — expect broken (exit 1)
+        run: |
+          # 임시 probe — src/ 안에 transitive violator 삽입 → lint-imports 실행 → 제거
+          # 책무 분담 §5.5 답습 — transitive (A→B→openai) 차단 효과 검증
+          cat > src/__transitive_probe__.py <<'EOF'
+          # 의도적 위반 — import-linter 가 src.__transitive_probe__ -> openai 보고해야 함
+          import openai  # noqa
+          EOF
+          set +e
+          PYTHONPATH=. lint-imports > linter_output.txt 2>&1
+          rc=$?
+          set -e
+          rm -f src/__transitive_probe__.py
+          cat linter_output.txt
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::2차 FAIL probe did not return exit 1 (rc=$rc) — Layer 1 (T-2) disabled?"
+            exit 1
+          fi
+          if ! grep -q "src.__transitive_probe__ -> openai" linter_output.txt; then
+            echo "::error::Expected violation 'src.__transitive_probe__ -> openai' missing — pattern regression"
+            exit 1
+          fi
+          echo "2차 FAIL probe verified — transitive violation detected (rc=1)"
+
       - name: Evidence summary
         if: always()
         run: |
@@ -78,3 +134,6 @@ jobs:
           echo "- commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- ref: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
           echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- event: provider_adapter_enforcement_layer1_static" >> $GITHUB_STEP_SUMMARY
+          echo "- agent: user" >> $GITHUB_STEP_SUMMARY
+          echo "- ledger_layer: Layer 1 (Entry) — 1차 AST scanner + 2차 import-linter" >> $GITHUB_STEP_SUMMARY

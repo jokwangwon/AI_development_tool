@@ -1,0 +1,13 @@
+{
+  "anchor_id": "anchor-2026-05-10-fail-substitution",
+  "anchor_ts": "2026-05-10T10:30:00Z",
+  "anchor_method": "ci_run_id",
+  "ledger_path": "substitution_ledger.jsonl",
+  "expected_entry_count": 5,
+  "expected_tail_hash": "e08c46be7575f0d2af68ecdfc7b3f002087e2ee3a077314e09d4ade344f5df24",
+  "expected_genesis_hash": "41773a975288c776944ef8fa8d4b5c6bc79504d2197874aec2bfe27b820db5b5",
+  "schema_version": "0.1",
+  "external_run_id": "github-actions-run-25618490324",
+  "external_run_url": "https://github.com/owner/repo/actions/runs/25618490324",
+  "notes": "본 PoC 한정 — 실 signed git tag / external timestamping = 별도 합의"
+}

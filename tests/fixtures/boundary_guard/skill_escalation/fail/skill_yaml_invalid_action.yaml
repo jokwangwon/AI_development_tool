@@ -1,0 +1,25 @@
+id: skill-policy-overreach
+name: Policy Overreach Skill (Group G PoC FAIL fixture)
+version: 0.1.0
+scope: project
+owner: user
+description: G-1 FAIL fixture — allowed_actions 에 enum 외 action + policy_write 권한 + forbidden ∩ allowed
+inputs:
+  type: object
+outputs:
+  type: object
+allowed_actions:
+  - shell
+  - network
+  - policy_write
+  - hack
+forbidden_actions:
+  - shell
+  - db
+required_evidence:
+  - test_pass
+promotion_status: proposed
+provider_bindings:
+  anthropic: {}
+  openai: {}
+last_verified_at: 2026-05-10T11:10:00Z

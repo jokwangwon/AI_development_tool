@@ -1,0 +1,3 @@
+{"skill_id": "skill-tdd-runner", "allowed_actions": ["shell", "read"], "action": "shell", "call_id": "call-2026-05-10-001", "result": "OK"}
+{"skill_id": "skill-tdd-runner", "allowed_actions": ["shell", "read"], "action": "network", "call_id": "call-2026-05-10-002", "result": "ATTEMPT", "note": "network call attempted but skill only allowed shell+read"}
+{"skill_id": "skill-tdd-runner", "allowed_actions": ["shell", "read"], "action": "db", "call_id": "call-2026-05-10-003", "result": "ATTEMPT", "note": "db write attempted — escalation"}

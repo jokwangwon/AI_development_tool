@@ -1,0 +1,11 @@
+# Safe git command log (Group C 후속 후속 PoC L3 PASS fixture)
+# 답습: 사양 §7 — dangerous pattern catalog 외 정상 명령
+git status
+git fetch origin
+git pull --ff-only origin main
+git checkout -b feature/example
+git add tools/example.py
+git commit -m "feat(example): add example tool"
+git push origin feature/example
+git log --oneline -5
+git diff main..feature/example

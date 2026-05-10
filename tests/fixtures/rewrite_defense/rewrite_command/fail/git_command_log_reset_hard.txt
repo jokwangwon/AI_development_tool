@@ -1,0 +1,5 @@
+# L3 FAIL fixture — git reset --hard 시도 검출
+# 답습: 사양 §7.1 #3 (ADR-012 §2.8 Layer 3)
+git reset --hard HEAD~5
+git reset --hard origin/main
+git reset --hard 9999999

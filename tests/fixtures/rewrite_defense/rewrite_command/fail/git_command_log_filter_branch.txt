@@ -1,0 +1,5 @@
+# L3 FAIL fixture — git filter-branch / filter-repo 시도 검출
+# 답습: 사양 §7.1 #2 (ADR-012 §2.8 Layer 3)
+git filter-branch --tree-filter 'rm -f docs/evidence/ledger.jsonl' HEAD
+git filter-repo --path docs/evidence/ --invert-paths
+git filter-branch -f --index-filter 'git rm --cached --ignore-unmatch docs/evidence/ledger.jsonl' HEAD

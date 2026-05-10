@@ -1,0 +1,6 @@
+# L3 FAIL fixture — git push --force / commit --amend 시도 검출
+# 답습: 사양 §7.1 #4 (ADR-012 §2.8 Layer 3)
+git commit --amend -m "feat: rewritten message"
+git push --force origin main
+git push -f origin feature/example
+git push origin +main

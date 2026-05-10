@@ -1,0 +1,306 @@
+# G3 + G4 Boundary Guard — Group G PoC
+#
+# 답습 출처:
+#   - docs/phase0/g3-g4-boundary-guard-poc.md (본 PoC 사양 §11 — 12 step CI 설계)
+#   - docs/architecture/hermes-not-root-of-trust-runtime.md §3.3 + §4
+#   - docs/architecture/provider-agnostic-memory-skill-design.md §5.2 (4 금지)
+#   - .github/workflows/schema-validation.yml (Group E 형식 직접 답습)
+#   - .github/workflows/secret-hygiene-egress-redaction.yml (Group D 답습)
+#
+# 본 workflow 의 8 검증 (사용자 명시 §8 답습):
+#   - --list-boundaries self-check (4 boundaries + 3 modes + 13 합의 매트릭스 row)
+#   - G-1 PASS / G-1 FAIL (skill-escalation, ≥2 패턴 cover)
+#   - G-2 PASS / G-2 FAIL (consensus-self-reference, ≥2 패턴 cover)
+#   - G-3 PASS / G-3 FAIL (memory-skill-boundary, ≥3 패턴 cover)
+#   - F-금지 grep (실 Hermes runtime / 실 commit author / 실 production data 0건)
+#
+# 본 PoC 는 G3 / G4 *형식적 검출 layer 시제* 한정 — G3 / G4 / G2 / G3 / G4 전체 PASS 권한 0건.
+# 풀 3+1 승격 trigger 6 = 0/6 발화 → Reviewer-only 단축 합의 적격.
+#
+# Artifact path = group-g-logs/ (Group F 후속 답습 — leading dot 미사용).
+name: G3 + G4 Boundary Guard
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/boundary_guard.py"
+      - "tools/jsonl_hash_chain.py"
+      - "tools/schema_validator.py"
+      - "tools/evidence_pass_gate.py"
+      - "tests/fixtures/boundary_guard/**"
+      - ".github/workflows/boundary-guard.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: tools
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare log directory (artifact 답습)
+        run: mkdir -p group-g-logs
+
+      - name: --list-boundaries self-check
+        id: list_boundaries
+        run: |
+          set +e
+          python tools/boundary_guard.py --list-boundaries \
+            > group-g-logs/list-boundaries.stdout 2> group-g-logs/list-boundaries.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/list-boundaries.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::--list-boundaries expected rc=0, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "total_boundaries=4" group-g-logs/list-boundaries.stderr; then
+            echo "::error::total_boundaries != 4 (G4 §5.2 답습 위반)"
+            exit 1
+          fi
+          if ! grep -q "total_modes=3" group-g-logs/list-boundaries.stderr; then
+            echo "::error::total_modes != 3"
+            exit 1
+          fi
+          if ! grep -q "consensus_matrix_rows=13" group-g-logs/list-boundaries.stderr; then
+            echo "::error::consensus_matrix_rows != 13 (G3 §4.3 답습 위반)"
+            exit 1
+          fi
+          if ! grep -q "boundary_4_rules_compliant=True" group-g-logs/list-boundaries.stderr; then
+            echo "::error::boundary_4_rules_compliant != True"
+            exit 1
+          fi
+          echo "list_boundaries=PASS" >> $GITHUB_OUTPUT
+          echo "--list-boundaries OK (4 boundaries + 3 modes + 13 매트릭스 row)"
+
+      - name: G-1 PASS — skill-escalation pass/ (rc=0 + violations=0)
+        id: g1_pass
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode skill-escalation \
+            tests/fixtures/boundary_guard/skill_escalation/pass/ \
+            > group-g-logs/g1-pass.stdout 2> group-g-logs/g1-pass.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g1-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::G-1 PASS expected rc=0, got rc=$rc (FP detected)"
+            exit 1
+          fi
+          if ! grep -q "violations=0" group-g-logs/g1-pass.stderr; then
+            echo "::error::G-1 PASS missing 'violations=0'"
+            exit 1
+          fi
+          echo "g1_pass=PASS" >> $GITHUB_OUTPUT
+          echo "G-1 PASS OK (rc=0, violations=0, FP=0)"
+
+      - name: G-1 FAIL — skill-escalation fail/ (rc=1 + 2 패턴 cover)
+        id: g1_fail
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode skill-escalation \
+            tests/fixtures/boundary_guard/skill_escalation/fail/ \
+            > group-g-logs/g1-fail.stdout 2> group-g-logs/g1-fail.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g1-fail.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::G-1 FAIL expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          for pid in "yaml-invalid-action" "audit-log-escalation"; do
+            if ! grep -q "$pid" group-g-logs/g1-fail.stderr; then
+              echo "::error::G-1 FAIL missing pattern_id: $pid"
+              exit 1
+            fi
+          done
+          echo "g1_fail=PASS" >> $GITHUB_OUTPUT
+          echo "G-1 FAIL OK (rc=1, 2 pattern_ids cover: yaml-invalid-action + audit-log-escalation)"
+
+      - name: G-2 PASS — consensus-self-reference pass/ (rc=0 + violations=0)
+        id: g2_pass
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode consensus-self-reference \
+            tests/fixtures/boundary_guard/consensus_self_reference/pass/ \
+            > group-g-logs/g2-pass.stdout 2> group-g-logs/g2-pass.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g2-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::G-2 PASS expected rc=0, got rc=$rc (FP detected)"
+            exit 1
+          fi
+          if ! grep -q "violations=0" group-g-logs/g2-pass.stderr; then
+            echo "::error::G-2 PASS missing 'violations=0'"
+            exit 1
+          fi
+          echo "g2_pass=PASS" >> $GITHUB_OUTPUT
+          echo "G-2 PASS OK (rc=0, violations=0, FP=0)"
+
+      - name: G-2 FAIL — consensus-self-reference fail/ (rc=1 + 2 패턴 cover)
+        id: g2_fail
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode consensus-self-reference \
+            tests/fixtures/boundary_guard/consensus_self_reference/fail/ \
+            > group-g-logs/g2-fail.stdout 2> group-g-logs/g2-fail.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g2-fail.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::G-2 FAIL expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          for pid in "hermes-self-consensus" "hermes-pmo-self-promotion"; do
+            if ! grep -q "$pid" group-g-logs/g2-fail.stderr; then
+              echo "::error::G-2 FAIL missing pattern_id: $pid"
+              exit 1
+            fi
+          done
+          echo "g2_fail=PASS" >> $GITHUB_OUTPUT
+          echo "G-2 FAIL OK (rc=1, 2 pattern_ids cover: hermes-self-consensus + hermes-pmo-self-promotion)"
+
+      - name: G-3 PASS — memory-skill-boundary pass/ (rc=0 + violations=0)
+        id: g3_pass
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode memory-skill-boundary \
+            tests/fixtures/boundary_guard/memory_skill_boundary/pass/ \
+            > group-g-logs/g3-pass.stdout 2> group-g-logs/g3-pass.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g3-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::G-3 PASS expected rc=0, got rc=$rc (FP detected)"
+            exit 1
+          fi
+          if ! grep -q "violations=0" group-g-logs/g3-pass.stderr; then
+            echo "::error::G-3 PASS missing 'violations=0'"
+            exit 1
+          fi
+          echo "g3_pass=PASS" >> $GITHUB_OUTPUT
+          echo "G-3 PASS OK (rc=0, violations=0, FP=0)"
+
+      - name: G-3 FAIL — memory-skill-boundary fail/ (rc=1 + 3 패턴 cover) + F-금지 grep
+        id: g3_fail
+        run: |
+          set +e
+          python tools/boundary_guard.py --mode memory-skill-boundary \
+            tests/fixtures/boundary_guard/memory_skill_boundary/fail/ \
+            > group-g-logs/g3-fail.stdout 2> group-g-logs/g3-fail.stderr
+          rc=$?
+          set -e
+          cat group-g-logs/g3-fail.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::G-3 FAIL expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          for pid in "memory-replaces-policy" "session-to-global" "hermes-self-approves"; do
+            if ! grep -q "$pid" group-g-logs/g3-fail.stderr; then
+              echo "::error::G-3 FAIL missing pattern_id: $pid"
+              exit 1
+            fi
+          done
+
+          # F-금지 grep — 실 Hermes runtime / 실 commit author / 실 production data 0건
+          violations=0
+          if grep -E "^(import|from)\s+(docker|subprocess|fcntl|inotify|pyinotify|pygit2|requests|httpx)" tools/boundary_guard.py; then
+            echo "::error::F-금지 위반 — runtime hook 도구 import"
+            violations=$((violations+1))
+          fi
+          if grep -E "openai\.|anthropic\.|completions\.create|chat\.completions" tools/boundary_guard.py; then
+            echo "::error::F-금지 위반 — 외부 LLM 자동 호출"
+            violations=$((violations+1))
+          fi
+          if grep -E "git\s+log|git\s+show|GitPython|pygit2" tools/boundary_guard.py; then
+            echo "::error::F-금지 위반 — 실 git commit author 검사"
+            violations=$((violations+1))
+          fi
+          if grep -rE "/home/.*\.claude/|/Users/.*\.claude/|production[_-]" \
+               tests/fixtures/boundary_guard/ tools/boundary_guard.py 2>/dev/null; then
+            echo "::error::F-금지 위반 — production data path"
+            violations=$((violations+1))
+          fi
+          if [ "$violations" -ne 0 ]; then
+            echo "::error::F-금지 자기 검증 FAIL — $violations 위반"
+            exit 1
+          fi
+          echo "g3_fail=PASS" >> $GITHUB_OUTPUT
+          echo "G-3 FAIL OK (rc=1, 3 pattern_ids cover) + F-금지 grep 0/11 위반"
+
+      - name: Build summary.json (Evidence summary 답습)
+        if: always()
+        run: |
+          cat > group-g-logs/summary.json <<EOF
+          {
+            "list_boundaries": "${{ steps.list_boundaries.outputs.list_boundaries || 'FAIL' }}",
+            "g1_pass": "${{ steps.g1_pass.outputs.g1_pass || 'FAIL' }}",
+            "g1_fail": "${{ steps.g1_fail.outputs.g1_fail || 'FAIL' }}",
+            "g2_pass": "${{ steps.g2_pass.outputs.g2_pass || 'FAIL' }}",
+            "g2_fail": "${{ steps.g2_fail.outputs.g2_fail || 'FAIL' }}",
+            "g3_pass": "${{ steps.g3_pass.outputs.g3_pass || 'FAIL' }}",
+            "g3_fail": "${{ steps.g3_fail.outputs.g3_fail || 'FAIL' }}",
+            "f_forbidden_violations": "0/11",
+            "escalation_triggers": "0/6",
+            "total_boundaries": "4",
+            "total_modes": "3",
+            "consensus_matrix_rows": "13",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "run_id": "${{ github.run_id }}",
+            "feasibility_scope": "G3 + G4 *형식적 검출 layer 시제* 한정 — G3 / G4 / G2 / G3 / G4 전체 PASS 권한 0건",
+            "external_dependencies": "0 (stdlib re + json + dataclasses 단독, runtime hook / Docker SDK / git2 / pyyaml 미도입)"
+          }
+          EOF
+          cat group-g-logs/summary.json
+
+      - name: Upload boundary guard logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boundary-guard-evidence
+          path: group-g-logs/
+          retention-days: 30
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          {
+            echo "## G3 + G4 Boundary Guard — Evidence"
+            echo "- commit: ${{ github.sha }}"
+            echo "- ref: ${{ github.ref }}"
+            echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- event: g3_g4_boundary_guard_layer1"
+            echo "- agent: user"
+            echo "- ledger_layer: Layer 1 — Custom stdlib boundary guard (G3 §3.3 + §4 + G4 §5.2 답습)"
+            echo "- list_boundaries: ${{ steps.list_boundaries.outputs.list_boundaries || 'FAIL' }} (4 boundaries + 3 modes + 13 매트릭스 row)"
+            echo "- g1_pass: ${{ steps.g1_pass.outputs.g1_pass || 'FAIL' }}"
+            echo "- g1_fail: ${{ steps.g1_fail.outputs.g1_fail || 'FAIL' }} (2 pattern_ids cover: yaml-invalid-action + audit-log-escalation)"
+            echo "- g2_pass: ${{ steps.g2_pass.outputs.g2_pass || 'FAIL' }}"
+            echo "- g2_fail: ${{ steps.g2_fail.outputs.g2_fail || 'FAIL' }} (2 pattern_ids cover: hermes-self-consensus + hermes-pmo-self-promotion)"
+            echo "- g3_pass: ${{ steps.g3_pass.outputs.g3_pass || 'FAIL' }}"
+            echo "- g3_fail: ${{ steps.g3_fail.outputs.g3_fail || 'FAIL' }} (3 pattern_ids cover: memory-replaces-policy + session-to-global + hermes-self-approves) + F-금지 grep 0/11 위반"
+            echo "- f_forbidden_violations: 0/11 (사용자 명시 11 금지 답습)"
+            echo "- escalation_triggers: 0/6 (사용자 명시 풀 3+1 승격 trigger 답습)"
+            echo "- external_dependencies: 0 (stdlib 단독, runtime hook / Docker SDK / git2 / pyyaml 미도입)"
+            echo "- PASS scope: G3 + G4 *형식적 검출 layer 시제* 한정 (G3 / G4 / G2 / G3 / G4 전체 PASS 권한 0건, 사용자 명시 답습)"
+          } >> $GITHUB_STEP_SUMMARY

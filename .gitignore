@@ -61,3 +61,6 @@ group-d-logs/
 
 # Group E PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
 group-e-logs/
+
+# Group G PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-g-logs/

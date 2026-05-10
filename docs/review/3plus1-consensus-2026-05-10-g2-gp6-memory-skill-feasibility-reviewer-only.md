@@ -216,6 +216,7 @@ Artifact `memory-skill-migration-feasibility-evidence` (retention 30일) 포함:
 5. **Round-trip nightly cron 미설정** — feasibility 한정, 별도 합의 영역.
 6. **chain violation fixture = `prev_hash_mismatch` 1건 한정** — Group C 의 4 패턴 (`hash_recalculation` / `genesis_mismatch` / `history_rewrite`) 은 Group C g4-hash-chain.yml 가 cover (본 PoC 는 Memory/Skill 시제 답습 한정).
 7. **CI workflow `actions/upload-artifact@v4` 외부 의존** — Group A/B/C 답습 (별도 합의 미발화).
+8. **Artifact upload empty (actual run 25620376305 발견)** — `.group-f-logs/` *leading dot = hidden directory* 인식 + `actions/upload-artifact@v4` `include-hidden-files: false` (default) → artifact zip 0 바이트. **검증 영향 0건** (workflow conclusion=success + 4/4 검증 gate PASS + 0/9 + 0/6, evidence 는 CI run log + `$GITHUB_STEP_SUMMARY` + `Build summary.json` step stdout 으로 보존). **후속 수정 후보**: (A) `include-hidden-files: true` 추가 / **(B) `.group-f-logs/` → `group-f-logs/` rename (사용자 명시 권고 — hidden dir 정책 미의존)**. 본 세션 미수정 — 후속 작업 (Group A G-1/G-2/G-3 답습 패턴) 으로 등록.
 
 ---
 
@@ -257,6 +258,27 @@ Artifact `memory-skill-migration-feasibility-evidence` (retention 30일) 포함:
 
 **APPROVE WITH CONDITIONS** — Group F PoC = G2 GP-6 *feasibility 시제* 답습 충실 (Reviewer 관점 10 영역 모두 충족, 풀 3+1 승격 trigger 0/6 발화, F-금지 0/9 위반, ADR-011 §2.1 5/5 충족, 사용자 명시 PASS 기준 9/9 충족, F-범위 10/10 충족, 로컬 4/4 PASS, CI workflow 12 step 형식 검증 PASS).
 
+### 5.1.1 GitHub Actions actual run 검증 결과 (run id `25620376305`)
+
+| 항목 | 결과 |
+|---|---|
+| conclusion | **success** |
+| status | completed |
+| Triggered | push (commit `8acbe18`) |
+| Duration | 14초 (Group C 33초 → 단축, fixture 24개 corpus 미포함 영향) |
+| URL | https://github.com/jokwangwon/AI_development_tool/actions/runs/25620376305 |
+| Step 합산 | **16/16 ✓** (12 본 step + 4 housekeeping) |
+| Memory PASS | rc=0 + `verdict=roundtrip_pass` ✓ |
+| Skill PASS | rc=0 + `verdict=roundtrip_pass` ✓ |
+| Hermes→Claude LOSSY | rc=1 + `verdict=roundtrip_lossy` + lost_fields=2 ✓ |
+| Chain violation FAIL | rc=2 + `chain_violation_detected` ✓ |
+| f_forbidden_violations | **0/9** ✓ |
+| escalation_triggers | **0/6** ✓ |
+| summary.json | 생성 (commit/ref/run_id/4 PASS/0-9/0-6/feasibility_scope) |
+| Artifact upload | **WARNING — empty zip** (§2.10 #8 know limitation 답습) |
+
+**actual run conclusion=success → C-F-6 GitHub Actions actual run 검증 충족.**
+
 ### 5.2 추가 조건 (C-F-1 ~ C-F-6)
 
 | # | 조건 | 답습 위치 |
@@ -290,3 +312,4 @@ Artifact `memory-skill-migration-feasibility-evidence` (retention 30일) 포함:
 | 일자 | 변경 | 비고 |
 |------|------|------|
 | 2026-05-10 | 신규 작성 | Group F 통합 PoC, Reviewer-only 단축 합의 APPROVE WITH CONDITIONS, 풀 3+1 승격 trigger 0/6 발화, F-금지 0/9 위반, F-범위 10/10 + PASS 기준 9/9 + ADR-011 §2.1 5/5 충족, 로컬 4/4 PASS, CI workflow 12 step 형식 검증 PASS, Group C 산출물 import 직접 (리팩토링 0 / 복제 0). evidence 별도 파일 미작성 — 본 보고서 §1~§4 매트릭스 통합 (Group B/C 답습). Step 9 actual run 결과 = 본 합의 *후속* meta 문서 영역. |
+| 2026-05-10 | actual run 결과 흡수 | GitHub Actions run `25620376305` SUCCESS 14초 16/16 step ✓ + 4/4 검증 gate PASS + 0/9 + 0/6 + summary.json 생성. **§2.10 알려진 한계 #8 추가** (artifact upload empty — `.group-f-logs/` hidden directory + `include-hidden-files: false` default → 0 바이트 zip, 후속 수정 후보 A/B 명시, 사용자 권고 = B (`group-f-logs/` rename)). **§5.1.1 신설** = actual run 결과 매트릭스. C-F-6 충족 명시. workflow 본문 수정 0건 (사용자 명시 — 후속 작업 등록). |

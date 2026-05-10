@@ -1,0 +1,257 @@
+# G4 JSONL Hash Chain + RFC 8785 JCS + Round-trip — Group C PoC
+#
+# 답습 출처:
+#   - docs/phase0/g4-jsonl-hash-chain-jcs-poc-spec.md (본 PoC 사양 §6)
+#   - docs/review/3plus1-consensus-2026-05-10-g4-jcs-library-selection.md (Q1 풀 3+1 합의 17 조건)
+#   - docs/review/3plus1-consensus-2026-05-10-g4-corpus-poc-scope-short.md (Q2/Q3 단축 합의 6 조건)
+#   - docs/decisions/ADR-012-evidence-ledger-protection.md §2.5 (RFC 8785 JCS Primary + jq fallback + corpus 검증)
+#   - docs/architecture/provider-agnostic-memory-skill-design.md §4.4 (hash chain) + §4.6 (round-trip)
+#   - .github/workflows/evidence-pass-gate.yml (Group B 시제 직접 답습)
+#
+# 본 workflow 의 양방향 검증:
+#   - corpus 24 회귀 (Primary 1 rfc8785 + Primary 2 jcs cross-check + sha256 일관성)
+#   - NaN/Inf reject 2건 (양 라이브러리 모두 raise 검증)
+#   - PASS fixture × 2: jsonl_hash_chain.py rc=0
+#   - FAIL fixture × 4: jsonl_hash_chain.py rc=1 + 4 violation_type cover
+#   - Round-trip PASS fixture: jsonl_roundtrip.py rc=0 (T2 strict)
+#
+# 본 PoC 는 G4 *부분 충족 시제* 한정 — G4 전체 PASS 권한 0건 (사용자 명시 답습).
+name: G4 Hash Chain + JCS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/canonical_json.py"
+      - "tools/jsonl_hash_chain.py"
+      - "tools/jsonl_roundtrip.py"
+      - "tests/canonical/**"
+      - "tests/fixtures/jsonl_ledger/**"
+      - ".github/workflows/g4-hash-chain.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: tools
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install jq (POSIX fallback)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y jq
+          jq --version
+
+      - name: Install Primary 1 + Primary 2 (Q1 합의 R-A2 답습)
+        run: |
+          python -m pip install --upgrade pip
+          # 본 PoC 한정 의존만 설치 (import-linter 등 G2 전용 dep 제외)
+          pip install rfc8785==0.1.4 jcs==0.2.1
+          python -c "import rfc8785, jcs; print('rfc8785:', rfc8785.__file__); print('jcs:', jcs.__file__)"
+
+      - name: Corpus regression — Primary 1 (rfc8785) byte + sha256
+        run: |
+          set -e
+          fail=0
+          total=0
+          for inp in tests/canonical/*/*.input.json; do
+            base="${inp%.input.json}"
+            exp_canonical="${base}.expected.canonical"
+            exp_sha256="${base}.expected.sha256"
+            total=$((total + 1))
+            if ! python tools/canonical_json.py --mode primary_1_only --input "$inp" \
+                  --expected-canonical "$exp_canonical" \
+                  --expected-sha256 "$exp_sha256" >/dev/null 2>err.log; then
+              echo "::error::Primary 1 regression FAIL: $inp"
+              cat err.log
+              fail=$((fail + 1))
+            fi
+          done
+          rm -f err.log
+          echo "Primary 1 corpus: ${total} cases, ${fail} fail"
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Primary 1 (rfc8785) corpus regression: $fail / $total cases failed"
+            exit 1
+          fi
+
+      - name: Corpus regression — Primary 2 (jcs) cross-check (TR-C-2 답습)
+        run: |
+          set -e
+          fail=0
+          total=0
+          for inp in tests/canonical/*/*.input.json; do
+            base="${inp%.input.json}"
+            exp_canonical="${base}.expected.canonical"
+            total=$((total + 1))
+            # Primary 2 단독 + expected 비교 (Q1 합의 D-1 — corpus 시점 cross-check 강제)
+            if ! python tools/canonical_json.py --mode primary_2_only --input "$inp" \
+                  --expected-canonical "$exp_canonical" >/dev/null 2>err.log; then
+              echo "::error::Primary 2 regression FAIL: $inp"
+              cat err.log
+              fail=$((fail + 1))
+            fi
+          done
+          rm -f err.log
+          echo "Primary 2 corpus: ${total} cases, ${fail} fail"
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Primary 2 (jcs) corpus regression: $fail / $total cases failed (TR-C-2 escalation)"
+            exit 1
+          fi
+
+      - name: Corpus regression — cross_check mode (Primary 1 ↔ Primary 2 byte equivalence)
+        run: |
+          set -e
+          fail=0
+          total=0
+          for inp in tests/canonical/*/*.input.json; do
+            base="${inp%.input.json}"
+            exp_canonical="${base}.expected.canonical"
+            total=$((total + 1))
+            if ! python tools/canonical_json.py --mode cross_check --input "$inp" \
+                  --expected-canonical "$exp_canonical" >/dev/null 2>err.log; then
+              echo "::error::cross_check FAIL: $inp"
+              cat err.log
+              fail=$((fail + 1))
+            fi
+          done
+          rm -f err.log
+          echo "cross_check corpus: ${total} cases, ${fail} fail"
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::cross_check corpus: $fail / $total cases failed (TR-C-2 escalation)"
+            exit 1
+          fi
+
+      - name: Fallback equivalence — jq -S -c vs Primary 1
+        run: |
+          set -e
+          fail=0
+          total=0
+          for inp in tests/canonical/*/*.input.json; do
+            base="${inp%.input.json}"
+            exp_canonical="${base}.expected.canonical"
+            total=$((total + 1))
+            if ! python tools/canonical_json.py --mode primary_1_only --input "$inp" \
+                  --expected-canonical "$exp_canonical" \
+                  --verify-fallback-equiv >/dev/null 2>err.log; then
+              echo "::warning::jq fallback equivalence DIFF: $inp"
+              cat err.log
+              fail=$((fail + 1))
+            fi
+          done
+          rm -f err.log
+          echo "jq fallback equivalence: ${total} cases, ${fail} differ"
+          # jq fallback 동등성 실패는 warning 한정 (ADR-012 §2.5 — `Fallback 사용 빈도 > 10%` 별도 합의 trigger 답습)
+
+      - name: NaN/Inf reject (Q1 합의 C-B8 + 본 합의 C-Q2 답습)
+        run: |
+          python - <<'PY'
+          import sys
+          import rfc8785, jcs
+          fail = 0
+          for label, val in [("nan", float("nan")), ("inf", float("inf")), ("-inf", float("-inf"))]:
+              for libname, fn in [("rfc8785", lambda v: rfc8785.dumps({"n": v})),
+                                  ("jcs", lambda v: jcs.canonicalize({"n": v}))]:
+                  try:
+                      fn(val)
+                      print(f"FAIL: {libname} accepted {label} (RFC 8785 §3.2.2.2 violation)")
+                      fail += 1
+                  except (ValueError, Exception) as e:
+                      print(f"OK: {libname} rejected {label}: {type(e).__name__}")
+          sys.exit(1 if fail else 0)
+          PY
+
+      - name: PASS fixture — jsonl_hash_chain rc=0 (× 2)
+        run: |
+          set -e
+          for f in tests/fixtures/jsonl_ledger/pass/*.jsonl; do
+            set +e
+            python tools/jsonl_hash_chain.py "$f"
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              echo "::error::PASS fixture $f returned rc=$rc (expected 0)"
+              exit 1
+            fi
+          done
+          echo "PASS fixtures verified (rc=0 for all)"
+
+      - name: FAIL fixture — jsonl_hash_chain rc=1 + 4 violation_type cover
+        run: |
+          set -e
+          # Expected violation_type per fixture (4 패턴 cover 강제)
+          declare -A EXPECTED=(
+            [prev_hash_mismatch.jsonl]=prev_hash_mismatch
+            [hash_recalculation.jsonl]=hash_recalculation
+            [missing_event_field.jsonl]=schema_missing_field
+            [genesis_mismatch.jsonl]=genesis_mismatch
+          )
+          for f in tests/fixtures/jsonl_ledger/fail/*.jsonl; do
+            name=$(basename "$f")
+            expected="${EXPECTED[$name]:-}"
+            set +e
+            python tools/jsonl_hash_chain.py "$f" 2> chain_out.txt
+            rc=$?
+            set -e
+            cat chain_out.txt
+            if [ "$rc" -ne 1 ]; then
+              echo "::error::FAIL fixture $name returned rc=$rc (expected 1)"
+              exit 1
+            fi
+            if [ -n "$expected" ] && ! grep -q "type=$expected" chain_out.txt; then
+              echo "::error::FAIL fixture $name missing violation_type=$expected"
+              exit 1
+            fi
+            echo "  $name OK (rc=1, violation_type=$expected)"
+          done
+          rm -f chain_out.txt
+          echo "FAIL fixtures verified — 4 violation_type cover (chain violation 4 패턴 답습)"
+
+      - name: Round-trip — T2 strict on PASS fixtures
+        run: |
+          set -e
+          for f in tests/fixtures/jsonl_ledger/pass/*.jsonl; do
+            set +e
+            python tools/jsonl_roundtrip.py --require-strict "$f"
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ]; then
+              echo "::error::Round-trip T2 strict FAIL on $f (rc=$rc, TR-C-4 trigger)"
+              exit 1
+            fi
+            echo "  $(basename $f) — T2 strict PASS"
+          done
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          echo "## G4 Hash Chain + JCS — Evidence" >> $GITHUB_STEP_SUMMARY
+          echo "- commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ref: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- event: g4_hash_chain_jcs_layer1" >> $GITHUB_STEP_SUMMARY
+          echo "- agent: user" >> $GITHUB_STEP_SUMMARY
+          echo "- ledger_layer: Layer 1 — Hash Chain + Canonical JSON + Round-trip (Group C PoC)" >> $GITHUB_STEP_SUMMARY
+          echo "- corpus: 24 cases × 4 axes (Primary 1 + Primary 2 + cross_check + jq fallback)" >> $GITHUB_STEP_SUMMARY
+          echo "- chain violation cover: 4 패턴 (prev_hash_mismatch + hash_recalculation + schema_missing_field + genesis_mismatch)" >> $GITHUB_STEP_SUMMARY
+          echo "- round-trip: T2 strict (PASS fixtures)" >> $GITHUB_STEP_SUMMARY
+          echo "- numeric reject: NaN + Inf + -Inf (rfc8785 + jcs)" >> $GITHUB_STEP_SUMMARY
+          echo "- PASS scope: G4 *부분 충족 시제* 한정 (G4 전체 PASS 권한 0건, 사용자 명시 답습)" >> $GITHUB_STEP_SUMMARY

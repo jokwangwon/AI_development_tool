@@ -11,3 +11,11 @@
 # Provider Adapter Enforcement Layer 1 (Static graph)
 # C-9 검증 환경: import-linter 2.11 + grimp 3.14
 import-linter==2.11
+
+# Group C PoC — RFC 8785 JCS Primary 1 + Primary 2 cross-check
+# 답습 출처:
+#   - docs/review/3plus1-consensus-2026-05-10-g4-jcs-library-selection.md (Q1 풀 3+1 합의 17 조건)
+#   - docs/phase0/g4-jsonl-hash-chain-jcs-poc-spec.md §3 (사용자 명시 결정 갱신 — pyjcs PyPI 미존재 → jcs 대체)
+# 양 라이브러리 모두 Apache-2.0 + 의존성 0 + RA-9 §B.2 11/11 sanity 동등성 PASS
+rfc8785==0.1.4
+jcs==0.2.1

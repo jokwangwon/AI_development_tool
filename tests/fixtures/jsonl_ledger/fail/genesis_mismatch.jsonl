@@ -1,0 +1,1 @@
+{"type": "memory", "scope": "project", "id": "ffffffff-ffff-4fff-8fff-ffffffffffff", "schema_version": "0.1", "ts": "2026-05-10T15:00:00Z", "agent": "user", "event": "memory_write", "content": {"k": "v"}, "evidence_refs": [], "prev_hash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "hash": "6f775a8b5e76b564dc64d322f92a2c469f2281cb857d1b8107d1d22512943180"}

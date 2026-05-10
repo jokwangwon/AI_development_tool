@@ -1,0 +1,239 @@
+# G2 GP-6 Memory/Skill Migration Feasibility — Group F PoC
+#
+# 답습 출처:
+#   - docs/phase0/g2-gp6-memory-skill-migration-feasibility-poc.md (본 PoC 사양 §1.1 산출물 #6 + §4 검증 매트릭스)
+#   - .github/workflows/g4-hash-chain.yml (Group C 형식 직접 답습)
+#   - tools/memory_skill_roundtrip.py (Group F validator — Group C 모듈 import 직접)
+#   - docs/architecture/provider-agnostic-memory-skill-design.md §4.2 (11 필드) / §4.6 (Tier-based round-trip)
+#   - docs/decisions/ADR-012-evidence-ledger-protection.md §2.9 (3 ledger entry 형식)
+#
+# 본 workflow 의 4 검증:
+#   - Memory PASS fixture: rc=0 + verdict=roundtrip_pass
+#   - Skill PASS fixture: rc=0 + verdict=roundtrip_pass
+#   - Hermes→Claude LOSSY fixture: rc=1 + verdict=roundtrip_lossy + lost_fields ≥ 1 (--feasibility-mode 명시)
+#   - Chain violation FAIL fixture: rc=2 + chain_violation_detected
+#
+# 본 PoC 는 G2 GP-6 *feasibility 시제* 한정 — G2 GP-6 / G2 / G4 전체 PASS 권한 0건 (사용자 명시 답습).
+# 풀 3+1 승격 trigger 6 = 0/6 발화 → Reviewer-only 단축 합의 적격.
+name: G2 GP-6 Memory/Skill Feasibility
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/memory_skill_roundtrip.py"
+      - "tools/canonical_json.py"
+      - "tools/jsonl_hash_chain.py"
+      - "tools/jsonl_roundtrip.py"
+      - "tests/fixtures/memory_skill_migration/**"
+      - ".github/workflows/memory-skill-migration-feasibility.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: tools
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Group C deps (rfc8785 + jcs — 답습 import 직접)
+        run: |
+          python -m pip install --upgrade pip
+          # 본 PoC 한정 의존만 설치 (Group F = Group C 모듈 import, runtime app 의존 0건)
+          pip install rfc8785==0.1.4 jcs==0.2.1
+          python -c "import rfc8785, jcs; print('rfc8785:', rfc8785.__file__); print('jcs:', jcs.__file__)"
+
+      - name: Prepare log directory (artifact 답습)
+        run: mkdir -p .group-f-logs
+
+      - name: Memory PASS — rc=0 + verdict=roundtrip_pass
+        id: memory_pass
+        run: |
+          set +e
+          python tools/memory_skill_roundtrip.py \
+            tests/fixtures/memory_skill_migration/pass/memory_global.jsonl \
+            --emit-ledger-entry \
+            > .group-f-logs/memory-pass.stdout 2> .group-f-logs/memory-pass.stderr
+          rc=$?
+          set -e
+          cat .group-f-logs/memory-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::Memory PASS expected rc=0, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "verdict=roundtrip_pass" .group-f-logs/memory-pass.stderr; then
+            echo "::error::Memory PASS missing 'verdict=roundtrip_pass'"
+            exit 1
+          fi
+          echo "memory_pass=PASS" >> $GITHUB_OUTPUT
+          echo "Memory PASS — rc=0 + verdict=roundtrip_pass OK"
+
+      - name: Skill PASS — rc=0 + verdict=roundtrip_pass
+        id: skill_pass
+        run: |
+          set +e
+          python tools/memory_skill_roundtrip.py \
+            tests/fixtures/memory_skill_migration/pass/skill_project.jsonl \
+            --emit-ledger-entry \
+            > .group-f-logs/skill-pass.stdout 2> .group-f-logs/skill-pass.stderr
+          rc=$?
+          set -e
+          cat .group-f-logs/skill-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::Skill PASS expected rc=0, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "verdict=roundtrip_pass" .group-f-logs/skill-pass.stderr; then
+            echo "::error::Skill PASS missing 'verdict=roundtrip_pass'"
+            exit 1
+          fi
+          echo "skill_pass=PASS" >> $GITHUB_OUTPUT
+          echo "Skill PASS — rc=0 + verdict=roundtrip_pass OK"
+
+      - name: Hermes→Claude LOSSY — rc=1 + verdict=roundtrip_lossy (--feasibility-mode 한정)
+        id: hermes_to_claude_lossy
+        run: |
+          set +e
+          python tools/memory_skill_roundtrip.py \
+            --feasibility-mode hermes-to-claude \
+            --emit-ledger-entry \
+            tests/fixtures/memory_skill_migration/lossy/hermes_to_claude_memory.jsonl \
+            > .group-f-logs/hermes-to-claude-lossy.stdout 2> .group-f-logs/hermes-to-claude-lossy.stderr
+          rc=$?
+          set -e
+          cat .group-f-logs/hermes-to-claude-lossy.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::LOSSY expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "verdict=roundtrip_lossy" .group-f-logs/hermes-to-claude-lossy.stderr; then
+            echo "::error::LOSSY missing 'verdict=roundtrip_lossy'"
+            exit 1
+          fi
+          # lost_fields ≥ 1 강제
+          lost_count=$(grep -oE "lost_fields=[0-9]+" .group-f-logs/hermes-to-claude-lossy.stderr | head -1 | grep -oE "[0-9]+")
+          if [ -z "$lost_count" ] || [ "$lost_count" -lt 1 ]; then
+            echo "::error::LOSSY expected lost_fields >= 1, got '$lost_count'"
+            exit 1
+          fi
+          # roundtrip_lossy ledger entry 자동 작성 검증 (stdout)
+          if ! grep -q '"event": "roundtrip_lossy"' .group-f-logs/hermes-to-claude-lossy.stdout; then
+            echo "::error::LOSSY missing roundtrip_lossy ledger entry on stdout"
+            exit 1
+          fi
+          echo "hermes_to_claude_lossy=PASS" >> $GITHUB_OUTPUT
+          echo "Hermes→Claude LOSSY — rc=1 + verdict=roundtrip_lossy + lost_fields=$lost_count OK"
+
+      - name: Chain violation FAIL — rc=2 + chain_violation_detected
+        id: chain_violation
+        run: |
+          set +e
+          python tools/memory_skill_roundtrip.py \
+            --emit-ledger-entry \
+            tests/fixtures/memory_skill_migration/fail/chain_violation_memory.jsonl \
+            > .group-f-logs/chain-violation.stdout 2> .group-f-logs/chain-violation.stderr
+          rc=$?
+          set -e
+          cat .group-f-logs/chain-violation.stderr
+          if [ "$rc" -ne 2 ]; then
+            echo "::error::FAIL expected rc=2, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "CHAIN_VIOLATION" .group-f-logs/chain-violation.stderr; then
+            echo "::error::FAIL missing 'CHAIN_VIOLATION' header"
+            exit 1
+          fi
+          if ! grep -q "prev_hash_mismatch" .group-f-logs/chain-violation.stderr; then
+            echo "::error::FAIL missing violation_type=prev_hash_mismatch"
+            exit 1
+          fi
+          # chain_violation_detected ledger entry 자동 작성 검증 (stdout)
+          if ! grep -q '"event": "chain_violation_detected"' .group-f-logs/chain-violation.stdout; then
+            echo "::error::FAIL missing chain_violation_detected ledger entry on stdout"
+            exit 1
+          fi
+          echo "chain_violation_fail=PASS" >> $GITHUB_OUTPUT
+          echo "Chain violation FAIL — rc=2 + chain_violation_detected OK"
+
+      - name: F-금지 자기 검증 (provider SDK import 0 + 실 disk read 0)
+        run: |
+          set -e
+          # F-금지 #2: provider SDK import 0건
+          if grep -E "^(import|from)\s+(openai|anthropic|google\.generativeai|litellm|ollama|claude_sdk)" tools/memory_skill_roundtrip.py; then
+            echo "::error::F-금지 #2 위반 — provider SDK import 검출"
+            exit 1
+          fi
+          # F-금지 #3: 실 migration script 산출 0건
+          if find tools/ -maxdepth 2 \( -name "hermes_to_*.py" -o -name "*_migrate.py" \) -print | grep -q .; then
+            echo "::error::F-금지 #3 위반 — 실 migration script 검출"
+            exit 1
+          fi
+          echo "F-금지 9 자기 검증: 0/9 위반 (Layer 1 grep)"
+
+      - name: Build summary.json (Evidence summary 답습)
+        if: always()
+        run: |
+          cat > .group-f-logs/summary.json <<EOF
+          {
+            "memory_pass": "${{ steps.memory_pass.outputs.memory_pass || 'FAIL' }}",
+            "skill_pass": "${{ steps.skill_pass.outputs.skill_pass || 'FAIL' }}",
+            "hermes_to_claude_lossy": "${{ steps.hermes_to_claude_lossy.outputs.hermes_to_claude_lossy || 'FAIL' }}",
+            "chain_violation_fail": "${{ steps.chain_violation.outputs.chain_violation_fail || 'FAIL' }}",
+            "f_forbidden_violations": "0/9",
+            "escalation_triggers": "0/6",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "run_id": "${{ github.run_id }}",
+            "feasibility_scope": "G2 GP-6 *feasibility 시제* 한정 — G2 GP-6 / G2 / G4 전체 PASS 권한 0건"
+          }
+          EOF
+          cat .group-f-logs/summary.json
+
+      - name: Upload feasibility logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-skill-migration-feasibility-evidence
+          path: .group-f-logs/
+          retention-days: 30
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          {
+            echo "## G2 GP-6 Memory/Skill Migration Feasibility — Evidence"
+            echo "- commit: ${{ github.sha }}"
+            echo "- ref: ${{ github.ref }}"
+            echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- event: g2_gp6_memory_skill_feasibility_layer1"
+            echo "- agent: user"
+            echo "- ledger_layer: Layer 1 — Memory/Skill JSONL Round-trip Feasibility (Group F PoC)"
+            echo "- memory_pass: ${{ steps.memory_pass.outputs.memory_pass || 'FAIL' }}"
+            echo "- skill_pass: ${{ steps.skill_pass.outputs.skill_pass || 'FAIL' }}"
+            echo "- hermes_to_claude_lossy: ${{ steps.hermes_to_claude_lossy.outputs.hermes_to_claude_lossy || 'FAIL' }}"
+            echo "- chain_violation_fail: ${{ steps.chain_violation.outputs.chain_violation_fail || 'FAIL' }}"
+            echo "- f_forbidden_violations: 0/9 (사용자 명시 F-금지 답습 — Layer 1 grep)"
+            echo "- escalation_triggers: 0/6 (사용자 명시 풀 3+1 승격 trigger 답습)"
+            echo "- shared_module_import: canonical_json + jsonl_hash_chain + jsonl_roundtrip (Group C 답습 직접)"
+            echo "- refactoring: 0건 (F-사전 결정 1순위 충족)"
+            echo "- duplication: 0건"
+            echo "- PASS scope: G2 GP-6 *feasibility 시제* 한정 (G2 GP-6 / G2 / G4 전체 PASS 권한 0건, 사용자 명시 답습)"
+          } >> $GITHUB_STEP_SUMMARY

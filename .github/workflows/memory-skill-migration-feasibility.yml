@@ -62,7 +62,7 @@ jobs:
           python -c "import rfc8785, jcs; print('rfc8785:', rfc8785.__file__); print('jcs:', jcs.__file__)"
 
       - name: Prepare log directory (artifact 답습)
-        run: mkdir -p .group-f-logs
+        run: mkdir -p group-f-logs
 
       - name: Memory PASS — rc=0 + verdict=roundtrip_pass
         id: memory_pass
@@ -71,15 +71,15 @@ jobs:
           python tools/memory_skill_roundtrip.py \
             tests/fixtures/memory_skill_migration/pass/memory_global.jsonl \
             --emit-ledger-entry \
-            > .group-f-logs/memory-pass.stdout 2> .group-f-logs/memory-pass.stderr
+            > group-f-logs/memory-pass.stdout 2> group-f-logs/memory-pass.stderr
           rc=$?
           set -e
-          cat .group-f-logs/memory-pass.stderr
+          cat group-f-logs/memory-pass.stderr
           if [ "$rc" -ne 0 ]; then
             echo "::error::Memory PASS expected rc=0, got rc=$rc"
             exit 1
           fi
-          if ! grep -q "verdict=roundtrip_pass" .group-f-logs/memory-pass.stderr; then
+          if ! grep -q "verdict=roundtrip_pass" group-f-logs/memory-pass.stderr; then
             echo "::error::Memory PASS missing 'verdict=roundtrip_pass'"
             exit 1
           fi
@@ -93,15 +93,15 @@ jobs:
           python tools/memory_skill_roundtrip.py \
             tests/fixtures/memory_skill_migration/pass/skill_project.jsonl \
             --emit-ledger-entry \
-            > .group-f-logs/skill-pass.stdout 2> .group-f-logs/skill-pass.stderr
+            > group-f-logs/skill-pass.stdout 2> group-f-logs/skill-pass.stderr
           rc=$?
           set -e
-          cat .group-f-logs/skill-pass.stderr
+          cat group-f-logs/skill-pass.stderr
           if [ "$rc" -ne 0 ]; then
             echo "::error::Skill PASS expected rc=0, got rc=$rc"
             exit 1
           fi
-          if ! grep -q "verdict=roundtrip_pass" .group-f-logs/skill-pass.stderr; then
+          if ! grep -q "verdict=roundtrip_pass" group-f-logs/skill-pass.stderr; then
             echo "::error::Skill PASS missing 'verdict=roundtrip_pass'"
             exit 1
           fi
@@ -116,26 +116,26 @@ jobs:
             --feasibility-mode hermes-to-claude \
             --emit-ledger-entry \
             tests/fixtures/memory_skill_migration/lossy/hermes_to_claude_memory.jsonl \
-            > .group-f-logs/hermes-to-claude-lossy.stdout 2> .group-f-logs/hermes-to-claude-lossy.stderr
+            > group-f-logs/hermes-to-claude-lossy.stdout 2> group-f-logs/hermes-to-claude-lossy.stderr
           rc=$?
           set -e
-          cat .group-f-logs/hermes-to-claude-lossy.stderr
+          cat group-f-logs/hermes-to-claude-lossy.stderr
           if [ "$rc" -ne 1 ]; then
             echo "::error::LOSSY expected rc=1, got rc=$rc"
             exit 1
           fi
-          if ! grep -q "verdict=roundtrip_lossy" .group-f-logs/hermes-to-claude-lossy.stderr; then
+          if ! grep -q "verdict=roundtrip_lossy" group-f-logs/hermes-to-claude-lossy.stderr; then
             echo "::error::LOSSY missing 'verdict=roundtrip_lossy'"
             exit 1
           fi
           # lost_fields ≥ 1 강제
-          lost_count=$(grep -oE "lost_fields=[0-9]+" .group-f-logs/hermes-to-claude-lossy.stderr | head -1 | grep -oE "[0-9]+")
+          lost_count=$(grep -oE "lost_fields=[0-9]+" group-f-logs/hermes-to-claude-lossy.stderr | head -1 | grep -oE "[0-9]+")
           if [ -z "$lost_count" ] || [ "$lost_count" -lt 1 ]; then
             echo "::error::LOSSY expected lost_fields >= 1, got '$lost_count'"
             exit 1
           fi
           # roundtrip_lossy ledger entry 자동 작성 검증 (stdout)
-          if ! grep -q '"event": "roundtrip_lossy"' .group-f-logs/hermes-to-claude-lossy.stdout; then
+          if ! grep -q '"event": "roundtrip_lossy"' group-f-logs/hermes-to-claude-lossy.stdout; then
             echo "::error::LOSSY missing roundtrip_lossy ledger entry on stdout"
             exit 1
           fi
@@ -149,24 +149,24 @@ jobs:
           python tools/memory_skill_roundtrip.py \
             --emit-ledger-entry \
             tests/fixtures/memory_skill_migration/fail/chain_violation_memory.jsonl \
-            > .group-f-logs/chain-violation.stdout 2> .group-f-logs/chain-violation.stderr
+            > group-f-logs/chain-violation.stdout 2> group-f-logs/chain-violation.stderr
           rc=$?
           set -e
-          cat .group-f-logs/chain-violation.stderr
+          cat group-f-logs/chain-violation.stderr
           if [ "$rc" -ne 2 ]; then
             echo "::error::FAIL expected rc=2, got rc=$rc"
             exit 1
           fi
-          if ! grep -q "CHAIN_VIOLATION" .group-f-logs/chain-violation.stderr; then
+          if ! grep -q "CHAIN_VIOLATION" group-f-logs/chain-violation.stderr; then
             echo "::error::FAIL missing 'CHAIN_VIOLATION' header"
             exit 1
           fi
-          if ! grep -q "prev_hash_mismatch" .group-f-logs/chain-violation.stderr; then
+          if ! grep -q "prev_hash_mismatch" group-f-logs/chain-violation.stderr; then
             echo "::error::FAIL missing violation_type=prev_hash_mismatch"
             exit 1
           fi
           # chain_violation_detected ledger entry 자동 작성 검증 (stdout)
-          if ! grep -q '"event": "chain_violation_detected"' .group-f-logs/chain-violation.stdout; then
+          if ! grep -q '"event": "chain_violation_detected"' group-f-logs/chain-violation.stdout; then
             echo "::error::FAIL missing chain_violation_detected ledger entry on stdout"
             exit 1
           fi
@@ -191,7 +191,7 @@ jobs:
       - name: Build summary.json (Evidence summary 답습)
         if: always()
         run: |
-          cat > .group-f-logs/summary.json <<EOF
+          cat > group-f-logs/summary.json <<EOF
           {
             "memory_pass": "${{ steps.memory_pass.outputs.memory_pass || 'FAIL' }}",
             "skill_pass": "${{ steps.skill_pass.outputs.skill_pass || 'FAIL' }}",
@@ -205,14 +205,14 @@ jobs:
             "feasibility_scope": "G2 GP-6 *feasibility 시제* 한정 — G2 GP-6 / G2 / G4 전체 PASS 권한 0건"
           }
           EOF
-          cat .group-f-logs/summary.json
+          cat group-f-logs/summary.json
 
       - name: Upload feasibility logs (artifact)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: memory-skill-migration-feasibility-evidence
-          path: .group-f-logs/
+          path: group-f-logs/
           retention-days: 30
 
       - name: Evidence summary

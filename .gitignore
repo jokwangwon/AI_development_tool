@@ -53,4 +53,5 @@ src/__*_probe__.py
 .venv-group-f/
 
 # Group F PoC CI artifact 임시 로컬 디렉토리 (workflow step 자동 생성, 우발적 commit 차단)
-.group-f-logs/
+# 후속 보완 (Option B 답습) — leading dot 제거하여 hidden directory 정책 미의존 (artifact upload 정상화)
+group-f-logs/

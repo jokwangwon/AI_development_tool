@@ -1,0 +1,5 @@
+[INFO] config loaded with broken redaction
+OPENAI_API_KEY=sk-FAKE-GROUP-D-NOT-A-REAL-SECRET
+[WARN] partial redaction: prefix retained -> sk-FAK[REDACTED]
+GITHUB_TOKEN=ghp_FAKE_GROUP_D_NOT_REAL_TOKEN
+[INFO] residual scan expected: >=1 violation (leak detected)

@@ -1,0 +1,7 @@
+[INFO] config loaded with base64-encoded canary (advanced evasion test)
+[NOTE] base64 evasion is a known limitation in Group D PoC scope.
+[NOTE] base64 advanced evasion = Hermes upstream R2-6 area, separate consensus.
+[NOTE] direct prefix/regex/alternation matching does NOT decode base64.
+encoded_canary=c2stRkFLRS1HUk9VUC1ELU5PVC1BLVJFQUwtU0VDUkVU
+[NOTE] this fixture documents the limitation; PoC is not blocked by missed detection.
+[NOTE] decoding the value above yields a fake canary used elsewhere in tests.

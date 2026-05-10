@@ -2,7 +2,7 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: 2026-05-10 (**Group C 후속 후속 통합 PoC 종료 — G4 Rewrite Defense Layer 2/3/4 정적 검출, Reviewer-only 단축 합의 APPROVE WITH CONDITIONS, GitHub Actions actual run `25631422222` SUCCESS + 로컬 10/10 + actual run 11/11 step ✓ + 9 금지 0/9 + 풀 3+1 trigger 0/5 + ADR-011 §2.1 5/5 + ADR-012 §2.8 + §2.12 + G4 §4.4.5 직접 답습 (외부 의존 0 / 실 git command 호출 0 / 실 GitHub API 호출 0 / 실 branch protection·git hook·signed commit 미진입). **본 PoC 종료 = ADR-012 §2.8 *Full Rewrite 5 Layer* 답습 5/5 완결 milestone** — Layer 1 (Group C `25618490324`) + Layer 2/3/4 (본 PoC `25631422222`) + Layer 5 (Group C 후속 `25630561391`)**). 본 세션 누적 59+ commits (`35cbf4b → 95fc8aa` + meta):
+**최종 업데이트**: 2026-05-10 (**세션 중간 종료 — cross-vendor LLM 의뢰 자료 작성 후 응답 회수 대기** — (1) Group C 후속 후속 통합 PoC 종료 (G4 Rewrite Defense Layer 2/3/4 정적 검출, actual run `25631422222` SUCCESS, ADR-012 §2.8 5 Layer 답습 5/5 완결 milestone) + (2) cross-vendor LLM blind 의뢰 자료 작성 (`docs/external-review/2026-05-10-cross-vendor-evidence-ledger-protection-request.md` 411줄 11 섹션, 6 질문 — 5 Layer 타당성 / Group H 진입 가부 / 운영 적용 시점 / Group H vs Group I 순서 / 거버넌스 적정성 / 최종 판정. blind 강도 최대 — 내부 Agent / Reviewer / 사용자 선호 결론 / APPROVE 유도 모두 의도적 미포함. §9 5 답안 차단 + §부록 B 영원 격리). **다음 세션 진입점 = cross-vendor 응답 회수 (ChatGPT GPT-5.x / Gemini / 기타 비-Claude vendor) → Reviewer-only 또는 풀 3+1 종합 → Group H ADR-014 발행 여부 결정**). 본 세션 누적 60+ commits (`35cbf4b → 58a4e04` + meta):
 
 - **Group C 후속 후속 통합 PoC** (G4 Rewrite Defense Layer 2/3/4 — commits `f754511 → 95fc8aa`, GitHub Actions actual run `25631422222` SUCCESS): 산출물 8건 + fixture 17 files — `tools/rewrite_defense_check.py` (~340줄, **stdlib `re` + `json` + `dataclasses` 단독** 외부 의존 0건 / 실 git command 호출 0건 / 실 GitHub API 호출 0건 / 실 branch protection·git hook·signed commit 미진입) + 3 mode CLI (`--mode append-only` L2 / `--mode rewrite-command` L3 / `--mode line-regression` L4) + `--list-defenses` self-check (5 layers + dangerous command catalog 4 + line regression types 3 + 3 compliant flags) + Group C `jsonl_hash_chain.parse_jsonl` import 직접 답습 + commit history diff (L2 non_fast_forward + history_reorder) + dangerous command catalog 4 (rebase / filter-branch / reset-hard / push-force-or-amend) + line regression detector 3 types (line_deletion / line_rewrite / line_reorder) + violation reporter + fixture 17 files / 8 logical (L2 PASS append_only/pass + FAIL force_push + FAIL reorder / L3 PASS safe + FAIL rebase + FAIL filter_branch + FAIL reset_hard + FAIL push_force / L4 PASS head_extends_base + FAIL line_deletion + FAIL line_rewrite) + CI workflow `rewrite-defense.yml` 15 step (rfc8785+jcs install + artifact path = `group-cff-logs/` Group F 후속 답습) + 사양 (451줄 17 섹션) + Reviewer-only 단축 합의 (314줄). **로컬 10/10 + actual run 11/11 step PASS** (L2 PASS rc=0 + L2 FAIL rc=1 force-push 3 + reorder 1 cover / L3 PASS rc=0 + L3 FAIL rc=1 4 patterns cover (rebase + filter-branch + reset-hard + push-force-or-amend) / L4 PASS rc=0 + L4 FAIL rc=1 line_deletion 1 + line_rewrite 3 cover / `--list-defenses` 5 layers + 4 commands + 3 regression types + 3 compliant flag True / F-금지 grep 0/9). **10/10 PASS 기준 + 0/9 금지 위반 + 0/5 풀 3+1 trigger 발화 + ADR-011 §2.1 5/5 충족**. **본 PoC 핵심 evidence = ADR-012 §2.8 *Full Rewrite 5 Layer* 답습 5/5 완결 milestone** (Layer 1 Group C / Layer 2 + Layer 3 + Layer 4 본 PoC / Layer 5 Group C 후속). Layer 2/3/4 = *사전 차단* layer ; Layer 1/5 = *사후 검출* layer 책무 분리 시연. 7 attack 시나리오 cover (단일 entry 변조 / force-push / dangerous command 4 / line deletion / in-place rewrite / substitution / full rewrite). **알려진 한계 11건** (실 branch protection·git hook·CI base branch fetch 미진입 / 실 git command·repo rewrite·GitHub API 호출 미진입 / `git filter-repo` Tier-2 / `git reset --soft/--mixed` Tier-2 / Reflog 통합 미진입 / Commit signature verification Layer 5 영역 / 1인 동일 호스트 SPOF ADR-012 §2.8 답습 / markdown 본문 자기 검출 — 모두 분리 영역 명시). **G4 *Layer 2/3/4 정적 검출 시제* 한정 — G4 / G2 / G3 / G4 전체 Implementation/Runtime PASS 권한 0건 + Hermes PMO 격상 0건 + ADR 본문 변경 0건 + 실 branch protection·git hook·signed commit·external service 미진입**.
 
@@ -28,9 +28,31 @@
 
 **Implementation/Runtime PASS 자동 선언 미발생** + **Hermes PMO 격상 0건** + **G2 GP-5 6 금지목록 0/6 위반** + **G3 7 금지목록 0/7 위반** + **G4 7 금지목록 0/7 위반** + **G2 GP-6 9 금지목록 0/9 위반** + **G2 GP-2/GP-3 12 금지목록 0/12 위반** + **G2 GP-4/G4 10 금지목록 0/10 위반** + **G3/G4 boundary 11 금지목록 0/11 위반** + **G2 GP-5 3차 8 금지목록 0/8 위반** + **G4 Layer 5 7 금지목록 0/7 위반** + **G4 Layer 2/3/4 9 금지목록 0/9 위반** + **신규 정책 발명 0건** + **ADR 본문 변경 0건**. 본 세션 = G2 GP-5 *부분 충족 시제* (1차/2차/3차 Layer 1a/1b/1c 답습 완결) + G3 *부분 충족 시제* + G4 *부분 충족 시제* + G2 GP-6 *feasibility 시제* + G2 GP-2/GP-3 *형식적 검출 layer 시제* + G2 GP-4/G4 *형식적 검증 layer 시제* + G3/G4 boundary *형식적 검출 layer 시제* + G4 Layer 5 *정적 검출 시제* + G4 Layer 2/3/4 *정적 검출 시제* 한정 (G2 / G3 / G4 전체 PASS 권한 없음 — 사용자 명시 답습). **본 세션 종료 = ADR-012 §2.8 *Full Rewrite 5 Layer* 답습 5/5 완결 milestone** (Layer 1 Group C + Layer 2/3/4 Group C 후속 후속 + Layer 5 Group C 후속). 자세한 세션 로그는 `docs/sessions/SESSION_2026-05-10.md`.
 
-**다음 진입점**: 사용자 명시 결정 — (a) Group F 후속 — Memory `hermes_to_openai` 변환 feasibility 추가 또는 Skill 변환 feasibility 추가 / (b) cross-vendor LLM 의뢰 (Group D/E/G/A3/CF/CFF 산출물) / (c) Group H (ADR-014 발행, 풀 3+1 + 외부 LLM 1+) / (d) Group I (G3 22 권한 분해, 풀 3+1 + 외부 LLM 1+) / (e) **ADR-012 §2.8 5 Layer 답습 5/5 완결 후속 — Layer 1~5 통합 운영 적용** (실 branch protection / 실 git hook 활성화 / 실 signed commit 강제 / 실 external anchor service / multi-host 전환 — 별도 합의 + 풀 3+1 + 외부 LLM 1+).
+**다음 진입점 (다음 세션)**: **cross-vendor LLM 응답 회수 → Reviewer-only 또는 풀 3+1 종합 → Group H ADR-014 발행 여부 결정** (사용자 명시 결정).
 
-**이전 업데이트**: 2026-05-10 (Group C 후속 통합 PoC 종료 — G4 History Rewrite Layer 5 External Anchor Verifier)
+**다음 세션 진입 시 즉시 확인 영역**:
+1. **의뢰 자료**: `docs/external-review/2026-05-10-cross-vendor-evidence-ledger-protection-request.md` (411줄, 6 질문)
+2. **응답 저장 영역**: `docs/external-review/2026-05-10-cross-vendor-evidence-ledger-protection-response{,-gemini,-claude,-<vendor>}.md` (응답자 vendor별 분리)
+3. **의뢰 형식 답습 출처**: `docs/external-review/2026-05-09-c14-cross-vendor-p2v3-pre-adoption-request.md` (~340줄) + 응답 2건
+4. **본 의뢰의 *영원 격리* 보장 (§부록 B 명시)**: 응답 = *입력* 한정, 자동 운영 적용 / Hermes PMO 격상 / ADR 본문 자동 갱신 모두 *불가*
+5. **응답 회수 후 합의 형식**:
+   - 응답 1건 + 본 PoC 산출물 단순 검토 → **Reviewer-only 단축 합의** 적격 (5 trigger 0/5 발화 시)
+   - 응답 1건 이상 BLOCK 또는 PARTIAL 시 → **풀 3+1 합의 + 외부 LLM 1+ 의무**
+6. **종합 합의 산출 후 진입 후보**:
+   - (B-1) Group H — ADR-014 발행 (cross-vendor APPROVE / APPROVE WITH CONDITIONS 수용 시)
+   - (B-2) Group I — G3 22 권한 분해 (cross-vendor §4 순서 결정에 따라)
+   - (B-3) ADR-012 §2.8 5 Layer 운영 적용 (cross-vendor §3 운영 적용 시점에 따라 — 실 branch protection / 실 git hook / 실 signed commit / 실 external service / multi-host 전환)
+   - (B-4) Group F 후속 — `hermes_to_openai` / Skill 변환 feasibility (별도 영역)
+   - (B-5) BLOCK 시 — 결함 수정 + 재의뢰 또는 재합의
+
+**현 시점 미선언 (cross-vendor 응답 *전*)**:
+- ❌ G2/G3/G4 전체 Implementation/Runtime PASS
+- ❌ Hermes PMO 격상
+- ❌ ADR-014 발행
+- ❌ 실 branch protection / 실 git hook / 실 signed commit / 실 external timestamping service / Multi-host external service
+- ❌ ADR 본문 자동 갱신
+
+**이전 업데이트**: 2026-05-10 (Group C 후속 후속 통합 PoC 종료 — G4 Rewrite Defense Layer 2/3/4 정적 검출, ADR-012 §2.8 5 Layer 답습 5/5 완결 milestone)
 
 ### C-14 cross-vendor 응답 7+4 핵심 조건 — P2 v3 정식 채택 합의 전 체크리스트 (사용자 명시 답습)
 

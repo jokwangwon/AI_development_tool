@@ -53,6 +53,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Group C deps (rfc8785 + jcs — Group C `compute_entry_hash` 의존)
+        run: |
+          python -m pip install --upgrade pip
+          # validate_chain → compute_entry_hash → canonical_json → rfc8785 의존성 답습
+          pip install rfc8785==0.1.4 jcs==0.2.1
+          python -c "import rfc8785, jcs; print('rfc8785 + jcs OK')"
+
       - name: Prepare log directory (artifact 답습)
         run: mkdir -p group-c-followup-logs
 

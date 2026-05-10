@@ -2,7 +2,7 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: 2026-05-10 (Group B 통합 PoC 종료 — G3 Hermes-originated marker + Evidence 없는 PASS 차단, GitHub Actions actual run `25605665191` PASS 8s, Reviewer-only 단축 합의 APPROVE WITH CONDITIONS, escalation 0/4)
+**최종 업데이트**: 2026-05-10 (**Group C 통합 PoC 종료** — G4 JSONL hash chain + RFC 8785 JCS + round-trip, Q1 풀 3+1 합의 (`rfc8785` + `jcs` 병렬 cross-check, `pyjcs` PyPI 미존재 사용자 결정 갱신 흡수) + Q2/Q3 + PoC 구현 단축 합의 모두 APPROVE WITH CONDITIONS, GitHub Actions actual run `25618490324` SUCCESS 33s 14/14 step PASS, escalation TR-C-2~5 0/4 발화)
 
 ---
 
@@ -87,11 +87,17 @@ docs/
 │   ├── ADR-011-means-vs-ends-redaction.md        # 수단/목적 분리 원칙 (R-4~R-7 모법)
 │   └── ...
 │
-├── phase0/                              # Phase 0 evidence (사실 확인 / R-1 / R-2 / R-4.1)
+├── phase0/                              # Phase 0 evidence (사실 확인 / R-1 / R-2 / R-4.1 / Group A/B/C PoC 사양)
 │   ├── day1-environment-and-fact-check.md           # Day 1 사실 확인
 │   ├── day2-r1-redaction-location-verification.md   # R-1 FAIL evidence
 │   ├── day3-r2-sqlite-trigger-poc.md                # R-2 PASS evidence (baseline 5 patterns)
-│   └── r4-1-trigger-extension-evidence.md           # R-4.1 PASS evidence (Tier-1 42 + baseline 5)
+│   ├── r4-1-trigger-extension-evidence.md           # R-4.1 PASS evidence (Tier-1 42 + baseline 5)
+│   ├── redaction-verification-sop.md                # R-7 SOP — Phase 1 acceptance
+│   ├── g2-gp5-provider-adapter-enforcement-poc.md   # Group A 1차 PoC 사양 (Layer 1 형식 차단)
+│   ├── g2-gp5-poc2-depcruise-rule-scope.md          # Group A 2차 풀 3+1 의제 (T-1~T-4 옵션)
+│   ├── g2-gp5-poc2-import-linter-implementation.md  # Group A 2차 PoC 구현 사양 (T-2 import-linter)
+│   ├── g3-evidence-pass-gate-poc.md                 # Group B 통합 PoC 사양 (G3 Hermes marker + PASS 차단)
+│   └── g4-jsonl-hash-chain-jcs-poc-spec.md          # Group C 통합 PoC 사양 (G4 hash chain + JCS + round-trip + RA-9 §B evidence)
 │
 ├── sessions/                             # 세션 로그
 │   └── ...

@@ -67,3 +67,6 @@ group-g-logs/
 
 # Group A 3차 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
 group-a3-logs/
+
+# Group C 후속 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-c-followup-logs/

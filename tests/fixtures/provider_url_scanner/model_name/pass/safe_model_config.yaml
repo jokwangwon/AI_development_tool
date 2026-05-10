@@ -1,0 +1,18 @@
+# Model configuration — yaml allowlist 통과 (§9.3 "yaml만 허용" 답습)
+# 본 fixture 는 Tier-1 model ID 가 yaml 파일에 *적법* 위치한 정상 사례.
+models:
+  primary:
+    name: claude-opus-4-1-20250805
+    provider: anthropic
+  fallback:
+    name: gpt-4o
+    provider: openai
+  long_context:
+    name: gemini-1.5-pro
+    provider: google
+  oss:
+    name: llama3-70b-instruct
+    provider: meta
+  reasoning:
+    name: o1-preview
+    provider: openai

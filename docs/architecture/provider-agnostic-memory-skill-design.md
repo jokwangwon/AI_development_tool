@@ -411,13 +411,17 @@ provider_bindings:
 | 검증 항목 | 메커니즘 | 권위 |
 |---------|--------|-----|
 | Hermes 의존 import 0건 | `scripts/hermes-migration/` 변환 스크립트가 `import hermes_agent` 등 의존 0건 | depcruise (G2 GP-5 답습) |
-| 표준 도구로 검증 가능 | `jq` 로 parse + sha256 검증 + canonical JSON 검증 가능 | POSIX 표준 |
-| schema_version 호환성 | 본 `0.1` 이외 버전은 명시 declaration 후만 import 가능 | §4.5 답습 |
+| 표준 도구로 검증 가능 | `jq` 로 parse + sha256 검증 + canonical JSON 검증 가능 (RFC 8785 reference output 동등성, §4.4.2 답습) | POSIX 표준 + RFC 8785 |
+| schema_version 호환성 | 본 `0.1` 이외 버전은 **명시 declaration 후만 import 가능** (T2 사용자 승인 + §10.2 합의 절차 충족 + §4.5.3 import 검증 절차 통과 의무) | §4.5 + §10.2 + §4.6.5 답습 |
 | 외부 오케스트레이터 import 가능 | claude / openai / gemini / local LLM 등 최소 2+ 로 재해석 가능 | §3.5 + GP-6 답습 |
 
-### 4.4 Hash Chain 변조 방지 (**ADR-012 §2.3 + §2.5 + §2.6 + §2.7 + §2.8 답습 — 2026-05-09 PR-2 풀 3+1 합의 보강**)
+**P-3 흡수 완료** (2026-05-11): G4 DRAFT 검토 §3.1 P-3 (자기 발견 잠재 위험 — "§4.5 외부 형식 → 본 G4 import 시 schema_version 호환성 (§4.3 #3) — 호환 부재 시 처리 절차 부재") 흡수 완료. **schema_version declaration 절차 = T2 사용자 명시 승인 + §10.2 합의 절차 + §4.5.3 정밀 import 검증 단계**. 본 절차 충족 *전* import = BLOCK (§4.6.5 #1~#3 답습).
+
+### 4.4 Hash Chain 변조 방지 (**ADR-012 §2.3 + §2.5 + §2.6 + §2.7 + §2.8 답습 — 2026-05-09 PR-2 풀 3+1 합의 보강 + 2026-05-11 P-1 흡수 완료**)
 
 > **ADR-012 §2.3~§2.8 갱신**: 본 §4.4 = ADR-012 §2.3 (Append-only + Hash Chain 다층 강제) + §2.5 (RFC 8785 JCS) + §2.6 (Genesis Hash) + §2.7 (prev_hash 검증 실패 처리) + §2.8 (Full Rewrite 방어) 답습. 이전 (보강 전) "둘 중 하나 의무" 약 사양 → 다층 강제 사양 + canonical JSON 표준 인용 + 실패 처리 + full rewrite 방어 명시.
+>
+> **P-1 흡수 완료** (2026-05-11): G4 DRAFT 검토 §3.1 P-1 (자기 발견 잠재 위험 — "JSON canonicalization 표준은 RFC 8785 (JCS) 등 명시 표준 존재. 본 초안은 JCS 직접 인용 안 함") 흡수 완료. **canonical JSON 표준 = RFC 8785 (JCS) IETF informational track 명시 인용** — §4.4.2 Primary 정의 + ADR-012 §2.5 권위. 본 §4.4 의 모든 hash 계산은 RFC 8785 (https://www.rfc-editor.org/rfc/rfc8785) 기준 canonical 형식에 SHA-256 적용. fallback (RFC 8259 escape + lex sort + `jq -S -c` 등) 은 RFC 8785 reference output 동등성 의무 (§4.4.2 답습).
 
 #### 4.4.1 다층 강제 (Layer 1 ~ Layer 5)
 
@@ -544,9 +548,55 @@ genesis_hash = sha256("genesis:" + canonical_json({
 
 - Hermes 의존 0건 (depcruise 검증)
 - 표준 라이브러리 + 표준 dependencies 만 사용 (provider SDK 직접 import 금지 — §6.4 답습)
-- 라운드트립 검증: `export → 변환 → import → re-export → 원본 hash 일치` (또는 의미 보존 검증)
-- schema_version 명시
-- `--dry-run` flag 지원 (검증 only)
+- 라운드트립 검증: `export → 변환 → import → re-export → 원본 hash 일치` (또는 의미 보존 검증, §4.6.2 Tier-based 답습)
+- **schema_version 명시 의무** — 변환 input / output 양쪽 모두 `schema_version` 필드 존재 확인 (§4.5.3 답습)
+- `--dry-run` flag 지원 (검증 only — 실 import / write 0건)
+- **`--declare-schema-version <version>` flag 지원** — 비표준 `schema_version` import 시 사용자 명시 declaration 통로 (§4.5.3 답습)
+- canonical JSON RFC 8785 (JCS) 기준 (§4.4.2 답습)
+
+#### 4.5.3 Import 시 schema_version 검증 절차 (**P-3 흡수 — 2026-05-11**)
+
+> **본 §4.5.3 는 G4 DRAFT 검토 §3.1 P-3 흡수** (출처: `3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` §3.1 P-3 — "§4.5 외부 형식 import 시 schema_version declaration 절차 약함"). §4.3 #3 + §4.6.5 와 결합하여 *정밀 검증 절차* 본문화. **본 §4.5.3 = *절차 사양*까지 — 실 import 코드 구현 = Implementation/Runtime PASS 영역 별도 합의**.
+
+외부 오케스트레이터 (claude / openai / gemini / local LLM) 또는 다른 `schema_version` JSONL 을 본 G4 형식으로 import 시 다음 단계를 통과 의무:
+
+**Step 1 — `schema_version` 필드 존재 확인**:
+- 필드 부재 = **즉시 BLOCK** (ADR-012 §2.10 답습)
+- `event: import_block_missing_schema_version` ledger entry append 의무 (§4.2 답습)
+- 사용자 명시 manual review 의무 (자동 default 부여 금지 — T3 위반)
+
+**Step 2 — `schema_version` 호환성 매트릭스 조회**:
+- 현 MVP `0.1` only. 본 매트릭스 = §10.2 답습.
+- `schema_version` 일치 (`0.1` == `0.1`) → Step 3 진입
+- `schema_version` 호환 (예: MVP `0.1` ⊂ `0.2` MINOR 호환 — backward compat 보장 시) → Step 3 진입 + `event: import_compat_minor` ledger entry
+- `schema_version` 비호환 (MAJOR 차이 / 호환성 매트릭스 미등록) → **BLOCK** + Step 4 진입
+
+**Step 3 — schema validation + canonical JSON 재해석**:
+- §4.6.5 #4 + §4.4.2 답습
+- canonical JSON RFC 8785 기준 재계산 + hash chain 검증 통과
+- 검증 통과 → import 허용 + `event: import_pass` ledger entry
+- 검증 실패 → BLOCK + `event: chain_violation_detected` ledger entry (§4.4.4 답습) + 사용자 명시 review
+
+**Step 4 — 비호환 `schema_version` Declaration 절차** (T2 사용자 승인):
+1. **사용자 명시 declaration 의무** — `--declare-schema-version <version>` flag (§4.5.2 답습) 또는 별도 합의 보고서 작성
+2. **합의 절차** — declaration 형태 분기:
+   - MINOR 호환 (backward compat 가능) → **단축 합의 (Reviewer-only)** + §10.2 답습
+   - MAJOR 비호환 → **풀 3+1 합의 + ADR Amendment 절차** + §10.2 답습
+3. **호환성 매트릭스 갱신** — declaration 결과 매트릭스 등록 (Implementation/Runtime PASS 영역 별도 합의)
+4. **`event: schema_version_declared` ledger entry append** — declaration 의 evidence trail 형성 (§4.2 답습)
+5. **`event: import_pass_after_declaration` 또는 `event: import_block_after_declaration`** — Step 3 재검증 결과 ledger entry
+
+**금지 사항** (T3 영역 — ADR-011 §2.4 + ADR-012 §3.2 답습):
+- ❌ schema_version 자동 default 부여 (필드 부재 시)
+- ❌ schema_version silent drift (Hermes-originated 변경 — G3 §6.4 답습)
+- ❌ 비호환 `schema_version` 자동 import (사용자 명시 declaration 없이)
+- ❌ Step 1~3 통과 ledger entry 부재 상태에서 PASS 선언 (G3 §1.3 + §5.3 답습)
+
+**본 §4.5.3 가 *하지 않는* 것**:
+- ❌ 호환성 매트릭스 *내용* 자동 생성 (현 MVP `0.1` only 명시, 외부 형식 매핑은 별도 합의)
+- ❌ 실 import 코드 구현 (Implementation/Runtime PASS 영역, §4.6.7 답습)
+- ❌ 자동 declaration 발급 (T3 위반 — 모든 declaration = 사용자 명시 T2)
+- ❌ Hermes 자기 declaration 발급 (G3 §6.4 + §2.2 #18 답습)
 
 ### 4.6 라운드트립 검증 절차 (**ADR-012 §2.9 + §2.10 답습 — 2026-05-09 PR-2 풀 3+1 합의 보강**)
 
@@ -599,11 +649,12 @@ genesis_hash = sha256("genesis:" + canonical_json({
 - 표준 도구 (`jq` + `sha256sum`) 만으로 검증 가능
 - 외부 오케스트레이터 (claude / openai / gemini / local) 최소 2+ 재해석 가능
 
-**Import 의무 검증**:
-1. `schema_version` 필드 존재 확인 (없으면 BLOCK — ADR-012 §2.10)
-2. 호환성 매트릭스 조회 — 현 MVP 0.1 only, 외부 형식 매핑은 별도 (Implementation 영역)
-3. 미일치 시 BLOCK + 사용자 명시 manual approval 요구
-4. Hash chain 검증 (§4.4.4 답습)
+**Import 의무 검증** (**§4.5.3 정밀 절차 답습 — 2026-05-11 P-3 흡수**):
+1. `schema_version` 필드 존재 확인 (없으면 BLOCK — ADR-012 §2.10 + §4.5.3 Step 1)
+2. 호환성 매트릭스 조회 — 현 MVP 0.1 only, 외부 형식 매핑은 별도 (Implementation 영역, §4.5.3 Step 2)
+3. 미일치 시 BLOCK + 사용자 명시 manual approval 요구 (§4.5.3 Step 4 declaration 절차 — T2 사용자 승인 + §10.2 합의 절차)
+4. Hash chain 검증 (§4.4.4 답습, §4.5.3 Step 3)
+5. **Step 1~4 결과 ledger entry 의무** — `event: import_pass` / `import_block_*` / `schema_version_declared` (§4.5.3 답습)
 
 #### 4.6.6 Migration 검증 실패 시 Rollback 조건 (ADR-012 §2.10 답습)
 
@@ -885,11 +936,13 @@ G3 §6.5 답습:
 
 본 G4 통합 설계 초안은 DRAFT 상태에서 다음 절차를 따른다:
 
+### 10.1 일반 변경 절차
+
 | 변경 유형 | 절차 |
 |---------|------|
 | 단순 오타 / 문구 정리 | 사용자 단독 결정 가능 |
 | §2 ~ §4 본문 갱신 (Memory scope / Skill schema / JSONL 형식) | 단축 합의 (Reviewer-only) |
-| §3.1 17 필드 schema 본문 갱신 | 단축 합의 — 단, 필드 *추가* 는 schema_version 증가 (semver MINOR) |
+| §3.1 17 필드 schema 본문 갱신 | 단축 합의 — 단, 필드 *추가* 는 schema_version 증가 (semver MINOR, §10.2 답습) |
 | §3.5 `provider_bindings` 검증 규칙 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — Provider Liquidity 핵심) |
 | §4.4 hash chain 변조 방지 본문 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — Evidence 무결성 핵심) |
 | §5.2 4 금지 사항 본문 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경) |
@@ -897,6 +950,37 @@ G3 §6.5 답습:
 | §7 G2 GP-6 인터페이스 갱신 | 단축 합의 — GP-6 본문 변경 시 동시 갱신 |
 | **DRAFT 상태 해제 → 정식 채택** | **단축 합의 또는 풀 3+1 합의 APPROVE** + 각 § (a)~(e) 충족 검증 + 외부 LLM 의견 권장 (G3 §4.4.2 답습) |
 | §9 영구 핵심 제약 변경 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 매우 신중) |
+
+### 10.2 Schema 진화 정책 (**P-2 흡수 — 2026-05-11**)
+
+> **본 §10.2 는 G4 DRAFT 검토 §3.1 P-2 흡수** (출처: `3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` §3.1 P-2 — "§10 schema 진화 정책 — 필드 *제거* / *변경* 정책 미명시"). §11.4.1 권고 사양을 §10 본문으로 정식 흡수. **schema_version pin** (§4.2 답습) 이 변경 시점에 증가. import 시 `schema_version` 호환성 검증 의무 (§4.5 + §4.6.5 답습).
+
+본 §10.2 는 §3.1 17 필드 Skill schema + §4.2 JSONL entry 11 필드 schema 의 진화 (필드 추가 / 제거 / 이름 변경 / 타입 변경) 에 공통 적용된다. **semver 정책 = `MAJOR.MINOR.PATCH`** (MVP 시작점 `schema_version = 0.1`, ADR-012 §3.2 답습).
+
+| 변경 유형 | semver 증가 | 합의 절차 | 추가 의무 |
+|---------|-----------|---------|---------|
+| **필드 *추가*** (선택 필드, 기존 entry 호환) | MINOR (예: `0.1` → `0.2`) | 단축 합의 (Reviewer-only) | import 시 backward compatibility 보장 (구 schema_version entry 도 import 가능 — 추가 필드는 `null` / 기본값) |
+| **필드 *추가*** (필수 필드, 기존 entry 비호환) | MAJOR (예: `0.1` → `1.0`) | **풀 3+1 합의 + ADR Amendment 절차** | migration script 의무 (§4.5 답습) + 구 schema_version entry 는 read-only |
+| **필드 *제거*** | MAJOR (예: `0.1` → `1.0`) | **풀 3+1 합의 + ADR Amendment 절차** | migration script 의무 (§4.5 답습) + 제거 필드 보존 ledger entry append (`event: schema_field_removed`) + 사용자 명시 review |
+| **필드 *이름 변경*** | MAJOR (예: `0.1` → `1.0`) | **풀 3+1 합의 + ADR Amendment 절차** | alias 호환성 *최소 1 release* 유지 (구 이름 alias → 신 이름) + `event: schema_field_renamed` ledger entry + 사용자 명시 review |
+| **필드 *타입 변경*** | MAJOR (예: `0.1` → `1.0`) | **풀 3+1 합의 + ADR Amendment 절차** | migration script 의무 (§4.5 답습) + 타입 변환 손실 enumeration + `event: schema_field_type_changed` ledger entry + 사용자 명시 review |
+| **필드 *검증 규칙 강화*** (예: `provider_bindings` exclusive 금지 강화) | MINOR (예: `0.1` → `0.2`) — 단, 기존 entry 검증 통과 가능 시 / MAJOR — 기존 entry 비호환 시 | 단축 합의 (MINOR) / **풀 3+1 합의** (MAJOR) | 비호환 entry import 시 BLOCK + 사용자 명시 review |
+| **`hash_algo` 변경** (예: SHA-256 → SHA-3) | MAJOR (전 chain 영향) | **풀 3+1 합의 + ADR Amendment 절차** | 새 chain 생성 (§4.4.3 Genesis 답습) + 구 chain read-only + 외부 LLM 의견 의무 |
+
+**schema_version 발급 권한** (ADR-011 §2.4 T1/T2/T3 답습):
+- **T1 (자동)**: 본 §10.2 *적용 자체* 는 본 G4 PASS / 본 G4 정식 채택 후 가능 (DRAFT 상태에서는 사양 명시 한정)
+- **T2 (사용자 승인)**: `schema_version` MINOR / MAJOR 증가 발생 시 사용자 명시 결정 의무
+- **T3 (금지)**: schema_version 자동 증가 / Hermes-originated schema_version 증가 / silent drift 모두 금지 (ADR-012 §3.2 + G3 §6.4 답습)
+
+**import 호환성 매트릭스** (§4.5 + §4.6.5 답습):
+- 현 MVP `0.1` only. 외부 형식 (claude / openai / gemini / local LLM) 매핑 + 다른 `schema_version` 호환성 매트릭스 = Implementation/Runtime PASS 영역 별도 합의.
+- import 시 `schema_version` 미일치 = BLOCK + 사용자 명시 manual approval 의무 (§4.6.5 #3 답습).
+
+**본 §10.2 가 *하지 않는* 것**:
+- ❌ schema_version 자동 증가 (T3 금지)
+- ❌ Implementation/Runtime 호환성 매트릭스 자동 생성 (별도 합의)
+- ❌ migration script 자동 실행 (T3 금지)
+- ❌ DRAFT 상태에서 본 §10.2 강제 적용 (DRAFT 상태 = 사양 명시 한정, G4 PASS 후 강제)
 
 ---
 
@@ -917,7 +1001,7 @@ G3 §6.5 답습:
 - 본 초안은 *자기 작성 산출* (P2 v3 / G2 / G3 / G4 모두 동일 컨텍스트). **G3 §4.4.2 답습**: 자기 작성 산출 검증은 외부 LLM 의견 *권장* — 본 초안 정식 채택 시점에 외부 LLM 의견 의무화 가능.
 - §3.1 17 필드 schema 는 *본 초안 원안* — 합의 §164 / 합의 §103 (Memory 2단계) / 합의 §103 (Skill 자동 추출 T1) 흡수했으나 *17 필드 자체* 는 본 초안 첫 명시. 후속 합의에서 필드 분류 / 검증 규칙 적정성 검증 대상.
 - §2.3 Session Memory + §2.4 Team/Agent Memory 는 *후속 진입 사양 예고* 한정 — 정식 정의는 후속 ADR + 정량 트리거 충족 후. 본 초안에서는 *예고만* 정확.
-- §4.4 canonical JSON 정의 — JSON canonicalization 표준은 RFC 8785 (JCS) 등 명시 표준 존재. 본 초안은 JCS 직접 인용 안 함 (간단 명시 한정). 정식 채택 시 JCS RFC 인용 권고.
+- ~~§4.4 canonical JSON 정의 — JSON canonicalization 표준은 RFC 8785 (JCS) 등 명시 표준 존재. 본 초안은 JCS 직접 인용 안 함 (간단 명시 한정). 정식 채택 시 JCS RFC 인용 권고.~~ **✅ 흡수 완료** (2026-05-11 P-1, §4.4 헤더 + §4.4.2 본문 RFC 8785 IETF 직접 인용 — `https://www.rfc-editor.org/rfc/rfc8785` + ADR-012 §2.5 권위. fallback 동등성 의무 + test corpus 의무 + canonical_json_fallback ledger entry 의무).
 - §6.4 3-way 인터페이스 (G2 GP-5 + G3 §6.4 + G4 §3.5 + §4.3) — 본 초안 첫 명시. 후속 합의 검증 대상.
 - §7.2 GP-6 ↔ G3 ↔ G4 3-way 인터페이스 — G3 §6.5 와 본 §7.2 동시 명시. G3 단축 검토 §3.1 P-2 와 일관 — GP-6 후속 갱신 권고.
 
@@ -949,17 +1033,28 @@ G3 §6.5 답습:
 
 본 5건 즉시 강제는 **본 G4 가 정식 채택되지 않더라도** 현 시점에서 유효 — *Hermes 가 4 게이트 통과 전 ADR-008 합의 자동화 + R-6 CI 회귀 검증* 책임 한정으로 작동하는 현 상태에 적용.
 
-### 11.4 G4 후속 권고 P-1 ~ P-5 흡수 진행 상태 (C-L 흡수 — 2026-05-09 후속 2)
+### 11.4 G4 후속 권고 P-1 ~ P-5 흡수 진행 상태 (C-L 흡수 — 2026-05-09 후속 2, **P-1/P-2/P-3 RESOLVED — 2026-05-11**)
 
 > **본 §11.4 는 합의 보고서 §11.2 P1 조건 C-L 흡수** (출처: `3plus1-consensus-2026-05-09-g4-provider-agnostic-memory-skill-draft.md` §3.1 자기 발견 잠재 위험 5건). G4 DRAFT 검토 시점 (2026-05-09 첫 검토) 자기 발견 5 후속 권고 P-1 ~ P-5 의 *처리 시점·방법* 을 명시 기록.
+>
+> **2026-05-11 갱신**: P-1 / P-2 / P-3 **본문 흡수 완료 (RESOLVED)** — 사용자 명시 범위 한정 (RFC 8785 JCS 인용 + schema 진화 정책 + import schema_version 절차 보강). Hermes PMO 격상 / Operational Readiness PASS / runtime 구현 = **본 흡수 작업 범위 외** (사용자 명시 답습).
 
-| # | 위험 (G4 검토 §3.1) | 처리 시점 | 처리 방법 |
-|---|------------|--------|--------|
-| **P-1** | §11.1 자기 명시 한계 — RFC 8785 JCS 미인용 (self-disclosed) | **PR-2 풀 3+1** (ADR-012 + G4 §4.4 hash chain 사양 보강 — C-G 흡수와 *동시*) | §4.4 본문에 RFC 8785 JCS 명시 인용 + canonical JSON 사양 보강 (별도 PR-2) |
-| **P-2** | §10 schema 진화 정책 — 필드 *제거* / *변경* 정책 미명시 | **PR-2 풀 3+1** (ADR-012 와 *동시*) 또는 **본 PR-1 §10 보강** | §10 변경 절차 표에 "필드 *추가* / *제거* / *이름 변경* / *타입 변경*" 4 행 추가 + schema_version 증가 정책 명시 (본 §11.4.1 권고) |
-| **P-3** | §4.5 외부 형식 import 시 schema_version declaration 절차 약함 | **PR-2 풀 3+1** (G4 §4.5 보강과 *동시*) 또는 별도 합의 | §4.5 import 시 schema_version 검증 + 호환성 매트릭스 명시 |
-| **P-4** | §6.4 "3-way 인터페이스" 명명 정확성 — 실제 G4 두 § (§3.5 + §4.3) + GP-5 + G3 §6.4 = 4-way | **PR-1 본문 보강** (현 §11.4.2 흡수) | §6.4 명명 "3-way" → "4-way" 정정 또는 *별 명명* (예: "Provider Liquidity Multi-layer Defense") — 본 §11.4.2 답습 |
-| **P-5** | §2.2.1 Global Memory `~/.claude/global/` Claude Code 표준 디렉토리 충돌 가능성 | **Implementation/Runtime PASS** 합의 (실 path 결정 시점) | 별도 합의 — Claude Code 표준 디렉토리 구조 점검 후 path 정정 또는 prefix 추가 |
+| # | 위험 (G4 검토 §3.1) | 처리 시점 | 처리 방법 | 상태 |
+|---|------------|--------|--------|----|
+| **P-1** | §11.1 자기 명시 한계 — RFC 8785 JCS 미인용 (self-disclosed) | PR-2 풀 3+1 (§4.4.2 본문) + **2026-05-11 §4.4 헤더 / §11.1 갱신** | §4.4 헤더 P-1 흡수 완료 명시 + §4.4.2 본문 RFC 8785 IETF 직접 인용 (`https://www.rfc-editor.org/rfc/rfc8785`) + ADR-012 §2.5 권위 + fallback 동등성 의무 + canonical_json_fallback ledger entry 의무 + §11.1 자기 명시 한계 strikethrough + 흡수 완료 표기 | ✅ **RESOLVED** (2026-05-11) |
+| **P-2** | §10 schema 진화 정책 — 필드 *제거* / *변경* 정책 미명시 | §11.4.1 권고 사양 → **2026-05-11 §10.2 본문 흡수** | §10 → §10.1 (일반 변경 절차) + §10.2 신설 (schema 진화 정책 — 7 행 매트릭스 + T1/T2/T3 발급 권한 + import 호환성 매트릭스 + 본 §10.2 가 *하지 않는* 것 4건) | ✅ **RESOLVED** (2026-05-11) |
+| **P-3** | §4.5 외부 형식 import 시 schema_version declaration 절차 약함 | §4.3 #3 단순 명시 → **2026-05-11 §4.3 #3 보강 + §4.5.2 보강 + §4.5.3 신설 + §4.6.5 cross-reference 보강** | §4.3 #3 schema_version 호환성 행 T2 + §10.2 + §4.5.3 cross-reference 명시 + §4.5.2 `--declare-schema-version` flag + canonical JSON RFC 8785 의무 + §4.5.3 신설 (Step 1~4 정밀 절차 + 5 ledger entry 형식 + 4 금지 사항 + 4 본 §4.5.3 가 *하지 않는* 것) + §4.6.5 Step 1~5 답습 cross-reference 보강 | ✅ **RESOLVED** (2026-05-11) |
+| **P-4** | §6.4 "3-way 인터페이스" 명명 정확성 — 실제 G4 두 § (§3.5 + §4.3) + GP-5 + G3 §6.4 = 4-way | **PR-1 본문 보강** (현 §11.4.2 흡수) | §6.4 명명 "3-way" → "4-way" 정정 또는 *별 명명* (예: "Provider Liquidity Multi-layer Defense") — 본 §11.4.2 답습 | ✅ RESOLVED (2026-05-09 PR-1, §11.4.2 답습) |
+| **P-5** | §2.2.1 Global Memory `~/.claude/global/` Claude Code 표준 디렉토리 충돌 가능성 | **Implementation/Runtime PASS** 합의 (실 path 결정 시점) | 별도 합의 — Claude Code 표준 디렉토리 구조 점검 후 path 정정 또는 prefix 추가 | ⏳ **PENDING** (Implementation/Runtime PASS 영역, 본 2026-05-11 흡수 범위 외) |
+
+**2026-05-11 P-1/P-2/P-3 흡수 범위 명시 한계** (사용자 명시 답습):
+- ✅ 본 흡수 작업 = G4 설계 문서 본문 정합화 한정
+- ❌ Hermes PMO 격상 = 본 흡수 범위 외 (4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2 + 인간 리뷰 + 사용자 명시 결정 후 별도)
+- ❌ Operational Readiness PASS / Implementation/Runtime PASS = 본 흡수 범위 외 (별도 합의)
+- ❌ runtime 구현 (Memory boundary hook / Skill wrapper / promotion hook / JSONL writer / hash chain 검증 / migration script) = 본 흡수 범위 외
+- ❌ ADR 본문 자동 갱신 = 본 흡수 범위 외
+- ❌ P2 v3 / G2 / G3 / G4 PASS 자동 격상 = 본 흡수 범위 외
+- ❌ P-5 (Global path) 자동 처리 = 본 흡수 범위 외 (Implementation/Runtime PASS 영역)
 
 #### 11.4.1 P-2 schema 진화 정책 보강 (본 §10 흡수)
 
@@ -1003,11 +1098,16 @@ G3 4건 후속 권고 모두 **본 PR-1 흡수 완료** (별도 후속 권고 �
 
 #### 11.4.4 본 §11.4 가 *하지 않는* 것
 
-- ❌ §4.4 RFC 8785 JCS 본문 인용 (PR-2 풀 3+1 영역 — C-G 흡수와 *동시*)
-- ❌ §10 본문 자동 갱신 (본 §11.4.1 은 *권고 사양* 명시까지, §10 본문 변경은 PR-2 또는 별도 합의)
+- ~~❌ §4.4 RFC 8785 JCS 본문 인용 (PR-2 풀 3+1 영역 — C-G 흡수와 *동시*)~~ **✅ 흡수 완료** (2026-05-09 PR-2 §4.4.2 + 2026-05-11 §4.4 헤더 / §11.1 보강)
+- ~~❌ §10 본문 자동 갱신 (본 §11.4.1 은 *권고 사양* 명시까지, §10 본문 변경은 PR-2 또는 별도 합의)~~ **✅ 흡수 완료** (2026-05-11 §10.2 신설 — §11.4.1 권고 사양 본문화)
 - ❌ §6.4 / §3.5 / §4.3 본문 *용어 자동 갱신* (본 §11.4.2 는 *명명 정정 명시 기록* 까지)
 - ❌ P-5 (`~/.claude/global/` path 정정) 자동 처리 (Implementation/Runtime PASS 영역, 별도 합의)
-- ❌ P-3 (§4.5 import schema_version 검증) 자동 구현 (PR-2 또는 별도 합의)
+- ~~❌ P-3 (§4.5 import schema_version 검증) 자동 구현 (PR-2 또는 별도 합의)~~ **✅ *사양*까지 흡수 완료** (2026-05-11 §4.5.3 신설 — 실 import 코드 구현은 여전히 Implementation/Runtime PASS 영역 별도 합의)
+- ❌ Hermes PMO 격상 자동 (4 게이트 Implementation/Runtime PASS + 외부 LLM 2 + 인간 리뷰 + 사용자 명시 결정 후 별도)
+- ❌ Operational Readiness PASS / Implementation/Runtime PASS 자동 (별도 합의)
+- ❌ runtime 코드 자동 구현 (Memory boundary hook / Skill wrapper / promotion hook / JSONL writer / hash chain 검증 / migration script — 모두 Implementation/Runtime PASS 영역)
+- ❌ ADR 본문 자동 갱신 (별도 PR 묶음)
+- ❌ P2 v3 / G2 / G3 / G4 PASS 자동 격상 (Design/Governance Gate PASS ↔ Implementation/Runtime PASS 분리 유지 — ADR-008 부록 C §C.5 답습)
 
 ---
 

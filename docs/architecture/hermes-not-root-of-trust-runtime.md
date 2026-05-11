@@ -15,7 +15,8 @@
 > **Hermes PMO 격상은 본 PASS 에 포함되지 않는다** (사용자 명시 답습) — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 후 별도 (P2 v3 §2.6.1 12 조건 PMO 격상 체크리스트 답습). G3 운영 구현 PASS / ADR 본문 자동 갱신 / archive 자동 처리도 본 PASS 미포함.
 
 **작성일**: 2026-05-07
-**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G4)
+**Status (2026-05-07 통합 합의)**: **Design/Governance Gate PASS (Bundled, 2026-05-07)** — `docs/review/3plus1-consensus-2026-05-07-g2-g3-g4-gate-adoption.md` (4/4 입력 만장일치 APPROVE WITH CONDITIONS — Agent A/B/C + 외부 LLM GPT-5.5 Thinking, 12 통합 조건 + Gap-N 6건 흡수 처리). 본 PASS 는 Design/Governance Gate 한정 — Implementation/Runtime PASS / Operational Readiness PASS / Hermes PMO 격상 / P2 v3 정식 채택 모두 미포함.
+**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G4 — 2026-05-07 통합 합의의 후속 reaffirmation)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **상위 권위**: 헌법 제8조 (보안), 헌법 제5조 관용 (Provider Liquidity), **ADR-011 §2.3 (권위 위계 + 운영 함의 5항목, 영구 권위 — `system-identity-prequel.md` §3 → 본 ADR-011 §2.3 영구 승격, "prequel 폐기 후에도 보존" 직접 명시)**, **ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리, 영구 권위 — prequel §6 3-tier 선언 → ADR-011 §2.4 영구 승격)**, **ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목, 2026-05-09 후속 3 PR-2 신규 발행)**
 **상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 (수단/목적 분리), **ADR-009 C-N §2.3 (Hermes PMO ↔ provider 분리 영구 권위, 2026-05-09 후속 4 갱신)**, **ADR-012 (Evidence Ledger Protection — 본 G3 §1.3 + §5 PASS 성립 4 요건 (ii) Evidence Ledger entry 의 *형식적 무결성* 권위 출처)**
@@ -204,7 +205,7 @@ T3 (절대 금지)        : 12 건 (§2.2 #9~#14, #17~#22)
 | #21 (T3 catalog 확장) | ✅ catalog read-only | ❌ 불필요 | ✅ ROLLBACK §3.2 |
 | #22 (T3 사용자 override reject) | ✅ override 거부 시도 audit | ⚠️ 보조 | ✅ 사용자 alert |
 
-**합산**: 계산적 22/22, 추론적 보조 6/22, 자동 롤백 14/22 (T1 #1~#7 외 전부).
+**합산**: 계산적 22/22, 추론적 보조 6/22, 자동 롤백 15/22 (T1 #1~#7 외 전부 — #8 + #9~#22 = 15건. 2026-05-07 통합 합의 C-11 답습 정정, 이전 "14/22" 오기. 본문 의미 "T1 #1~#7 외 전부" 정확).
 
 ### 2.5 보호 대상 파일·디렉토리 enumeration (T3, C-D 흡수 — 2026-05-09 후속 2)
 

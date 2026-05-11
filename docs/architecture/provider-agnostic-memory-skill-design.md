@@ -17,7 +17,8 @@
 > **Hermes PMO 격상은 본 PASS 에 포함되지 않는다** (사용자 명시 답습) — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2개 또는 외부 LLM 1개 + 인간 전문 리뷰 (Human-in-the-loop) + 사용자 명시 결정 후 별도 (P2 v3 §2.6.1 12 조건 PMO 격상 체크리스트 답습). G4 운영 구현 PASS / ADR 본문 자동 갱신 (신규 ADR-014 후보 검토 포함) / archive 자동 처리도 본 PASS 미포함.
 
 **작성일**: 2026-05-07
-**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G3)
+**Status (2026-05-07 통합 합의)**: **Design/Governance Gate PASS (Bundled, 2026-05-07)** — `docs/review/3plus1-consensus-2026-05-07-g2-g3-g4-gate-adoption.md` (4/4 입력 만장일치 APPROVE WITH CONDITIONS — Agent A/B/C + 외부 LLM GPT-5.5 Thinking, 12 통합 조건 + Gap-N 6건 흡수 처리). 본 PASS 는 Design/Governance Gate 한정 — Implementation/Runtime PASS / Operational Readiness PASS / Hermes PMO 격상 / P2 v3 정식 채택 모두 미포함.
+**정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G2 + G3 — 2026-05-07 통합 합의의 후속 reaffirmation)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **§4 hash chain 보강 합의**: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (PR-2 풀 3+1 + 외부 LLM 2건 — ADR-012 발행 + G4 §4.2/§4.4/§4.6 보강, 2026-05-09 후속 3 PR-2)
 **산출 방식**: 옵션 B (Memory + Skill 통합 단일 문서) — 사용자 명시 결정 답습. 사유: G4 핵심은 *Memory/Skill 공통 형식 — provider-agnostic schema*. 분리 작성 시 lock-in 방지 *공통 보장*이 약화될 위험.

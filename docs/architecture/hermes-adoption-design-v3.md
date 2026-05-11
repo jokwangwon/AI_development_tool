@@ -269,13 +269,17 @@ Constitution
 
 #### 3.1.2 Adoption-time Status (2026-05-09 후속 6 정식 채택 시점, 현 시점)
 
+> **2026-05-07 통합 합의 cross-reference 보강**: G2 / G3 / G4 *Design/Governance Gate PASS (Bundled)* 원 합의는 **`docs/review/3plus1-consensus-2026-05-07-g2-g3-g4-gate-adoption.md`** (4/4 입력 만장일치 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + 외부 LLM GPT-5.5 Thinking, 12 통합 조건 + Gap-N 6건 흡수 처리). 2026-05-09 후속 reaffirmation 답습.
+
 | 게이트 | 정의 | Adoption-time Status (2026-05-09 후속 6) | 정식 산출 |
 |-------|------|--------------------|----------|
 | **G1a** | Hermes native redaction → DB | ❌ **FAIL 확정 (영구 폐기)** | ADR-011 §2.2 권위 |
 | **G1b** | DB-level fallback (SQLCipher trigger + Tier-1 42 catalog) | ✅ **PASS — Implementation/Runtime PASS** (2026-05-07 승격, R-2~R-7 + R-6 actual run `25482284523`) | `docs/phase0/redaction-verification-sop.md` + 합의 보고서 |
-| **G2** | 6 거버넌스 사전조건 (P1~P8 + **P10 정식 등록 (Evidence Integrity)**) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — GP-1 Implementation/Runtime PASS (G1b evidence 흡수) / **GP-2 ~ GP-6 = Design PASS / Implementation Pending** + **§1.2.6 P10 정식 등록 완료 (2026-05-09 후속 5)** | `docs/architecture/governance-preconditions.md` (정식 산출) + `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` |
-| **G3** | "Hermes ≠ root of trust" 운영 구현 (22 권한 + 자기참조 차단 + Evidence decision principle 5 운영 규칙 + Hermes 변조 차단 매트릭스 4항목) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** — **운영 구현 = Design PASS / Implementation Pending** | `docs/architecture/hermes-not-root-of-trust-runtime.md` (정식 산출) |
-| **G4** | Provider-agnostic Memory/Skill 형식 (Memory scope 4 + Skill schema 17 + JSONL 11 필드 + hash chain Layer 1~5 + Tier-based round-trip) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-09)** + **§4.2 11 필드 schema 갱신 + §4.4 hash chain 사양 보강 + §4.6 round-trip 검증 절차 보강 (2026-05-09 후속 3 PR-2)** — **라운드트립 + migration script = Design PASS / Implementation Pending** | `docs/architecture/provider-agnostic-memory-skill-design.md` (정식 산출) |
+| **G2** | 6 거버넌스 사전조건 (P1~P8 + **P10 정식 등록 (Evidence Integrity)**) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-07 원 합의 + 2026-05-09 후속 reaffirmation)** — GP-1 Implementation/Runtime PASS (G1b evidence 흡수) / **GP-2 ~ GP-6 = Design PASS / Implementation Pending** + **§1.2.6 P10 정식 등록 완료 (2026-05-09 후속 5)** | `docs/architecture/governance-preconditions.md` (정식 산출) + `docs/review/3plus1-consensus-2026-05-07-g2-g3-g4-gate-adoption.md` (원 합의) + `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (후속 reaffirmation) |
+| **G3** | "Hermes ≠ root of trust" 운영 구현 (22 권한 + 자기참조 차단 + Evidence decision principle 5 운영 규칙 + Hermes 변조 차단 매트릭스 4항목) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-07 원 합의 + 2026-05-09 후속 reaffirmation)** — **운영 구현 = Design PASS / Implementation Pending** | `docs/architecture/hermes-not-root-of-trust-runtime.md` (정식 산출) |
+| **G4** | Provider-agnostic Memory/Skill 형식 (Memory scope 4 + Skill schema 17 + JSONL 11 필드 + hash chain Layer 1~5 + Tier-based round-trip) | ✅ **Design/Governance Gate PASS (Bundled, 2026-05-07 원 합의 + 2026-05-09 후속 reaffirmation)** + **§4.2 11 필드 schema 갱신 + §4.4 hash chain 사양 보강 + §4.6 round-trip 검증 절차 보강 (2026-05-09 후속 3 PR-2)** — **라운드트립 + migration script = Design PASS / Implementation Pending** | `docs/architecture/provider-agnostic-memory-skill-design.md` (정식 산출) |
+
+**Hermes PMO Activation**: ❌ **Still not declared** (사용자 명시 답습) — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 추가 vendor + 인간 전문 리뷰 + 사용자 명시 결정 후 별도.
 
 #### 3.1.3 Delta (DRAFT 시점 → Adoption-time, 2026-05-09 후속 6 정식 채택 시점)
 

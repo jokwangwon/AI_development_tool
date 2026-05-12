@@ -8,6 +8,8 @@
 >
 > **Hermes 변조 차단 매트릭스 4항목** (Hermes-originated ledger entry / 파일 변조 / git commit / 외부 LLM 응답 위조 — ADR-012 §2.12 답습): G3 §2.5 #11 (filesystem ACL on Evidence Ledger / ADR / G2-G3-G4 정의 / external-review 등 15건) + §4.5 (audit log + 컨테이너 정지) + §2.2 #20 (Hermes-originated commit auto-reject) + 본 G3 §1.3 PASS 성립 4 요건 (Tools 검증 + Evidence Ledger entry + 사용자 명시 승인 + 합의 보고서 commit) — 모두 본 G3 의 정식 권위.
 >
+> **Gate Enforcement Layer 보호 보강 (2026-05-12)**: 본 G3 §2.6 신설 — Gate 자체 (G1b/G2/G3/G4 정의 / verdict / evidence / sequence / failure override) + Layer 0~6 enforcement mechanism (lint/test/CI/hook 결과 silent override 차단) *통합* 보호. 10 보호 항목 매트릭스 + 8 위협 모델 (TM-1 ~ TM-8) + Gate 자체 5 기준 + Layer 0~6 5 기준 + G4 §3.7 / §3.8 cross-reference. **본 §2.6 = *설계 문서 수준 보호 규칙*까지 — 실 runtime hook / CI 수정 / Hermes PMO 격상 / Operational Readiness PASS / Implementation/Runtime PASS 선언 / Gate PASS 재선언 / ADR 본문 자동 갱신 모두 본 작업 범위 외** (사용자 명시 답습).
+>
 > **P2 v3 (`hermes-adoption-design-v3.md`) = Adopted (Design Adoption only, 2026-05-09 후속 6)** 후속 권위. 본 G3 = P2 v3 §5 (G3 정의) + §2.1.2 Hermes 가 *하지 않는* 것 6항목 + §2.2 권위 위계 + §10.1 Normative Constraints #2 (Hermes ≠ root of trust 5 layer 보호) + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화 답습.
 >
 > **P2 v2 (`hermes-adoption-design.md`) = Archived (옵션 A 최소 침습, 2026-05-09 후속 7)** + **`system-identity-prequel.md` = Archived (옵션 A, 2026-05-09 후속 8 — 본 G3 §1 권위 위계 운영 매트릭스의 권위 출처 prequel §3 → ADR-011 §2.3 영구 권위 승격 답습으로 archive 후에도 권위 보존)** — 본 G3 cross-reference 영향 0건 (path 변경 0건).
@@ -239,6 +241,192 @@ T3 (절대 금지)        : 12 건 (§2.2 #9~#14, #17~#22)
 **G2 §9.2 와의 인터페이스**: G2 §9.2 #1 ("filesystem read-only on `docs/architecture/governance-preconditions.md`") 의 *대상 범위* 가 본 §2.5 #1~#15 로 확장. G2 §9.2 본문 *변경 없이* 본 §2.5 가 대상 enumeration 을 흡수.
 
 **Implementation 상태**: 본 §2.5 는 *enumeration 명시* 까지. 실 hook / filesystem ACL / pre-commit / CI step 구현은 **DESIGN PASS / IMPLEMENTATION PENDING** (별도 합의, Implementation/Runtime PASS 영역).
+
+### 2.6 Gate Enforcement Layer 보호 (**Gate 자체 + Layer 0~6 통합 보강 — 2026-05-12**)
+
+> **본 §2.6 은 Gate Enforcement Layer 보호 보강 작업 신설** (사용자 명시 결정 — Gate 자체 + Layer 0~6 enforcement mechanism 양쪽 통합 보호 영역). §2.2 #12 (Harness Gate 실패 무시) / #13 (G2/G3/G4 PASS 자동 선언) / #14 (Hermes PMO 자기 격상) + §2.5 보호 대상 enumeration + §1.3 Evidence 없는 PASS 차단 + §5.3 PASS 성립 요건 의 *통합 강화* 영역. **본 §2.6 = *설계 문서 수준 보호 규칙*까지 — 실 runtime hook / CI workflow 수정 / filesystem ACL 구현 = Implementation/Runtime PASS 영역 별도 합의**.
+
+#### 2.6.1 보호 목적 + 위협 모델
+
+**보호 목적**: Hermes / Worker Agent / Hermes-originated automation 이 다음 행위 시도 시 *자동 차단 + audit log + 사용자 alert*:
+
+1. **Gate 정의 자체 변경** (G1b/G2/G3/G4 정의 문서 본문)
+2. **Gate verdict 변조** (PASS / FAIL verdict 본문 위조)
+3. **Gate Evidence ledger forge** (gate_pass / gate_fail ledger entry 자동 작성)
+4. **Gate 검증 순서 skip** (G1b → G2 → G3 → G4 ordered enforcement 우회)
+5. **Gate failure override** (실패한 게이트를 PASS 처리)
+6. **CI / hook / lint / test 결과 무시** (Layer 1~4 결과 silent skip)
+7. **Hermes-originated gate approval** (Hermes 단독 게이트 승인)
+8. **Worker-originated self-pass** (Worker Agent 가 자기 작업의 게이트 PASS 자기 선언)
+9. **Gate policy 변경 자동 수행** (T3 또는 사용자 승인 영역의 자동 우회)
+10. **Gate protection 실패 silent 처리** (보호 메커니즘 실패 시 rollback trigger 미발화)
+
+**위협 모델** (본 §2.6 의 *방어 대상*):
+
+| 위협 | 발생 시나리오 | 본 §2.6 대응 |
+|----|----------|-----------|
+| **TM-1 Gate 정의 silent 약화** | Hermes 가 `governance-preconditions.md` / 본 G3 / G4 본문에서 *금지 조항 제거 또는 완화* commit 시도 | §2.6.2 (a) + §2.5 #6 + §2.2 #9 #20 다중 보호 |
+| **TM-2 Gate verdict 위조** | Hermes-originated commit 이 `headers` "Status: PASS" 변조 또는 합의 보고서 verdict 본문 변조 | §2.6.2 (b) + §2.2 #13 #20 + §4.5 합의 결과 처리 권한 |
+| **TM-3 Evidence ledger forge** | Hermes 가 `event: gate_pass` ledger entry 자동 append (사용자 명시 결정 0건 + 합의 보고서 부재) | §2.6.2 (c) + §1.3 + ADR-012 §2.1 원칙 7 (`agent="user"` 강제) + §5.3 (ii) |
+| **TM-4 Gate sequence skip** | G1b 미충족 상태에서 G2 PASS 시도 / G2 미충족 상태에서 G3 PASS 시도 / G3 미충족 상태에서 G4 PASS 시도 / G4 미충족 상태에서 Hermes PMO 격상 시도 | §2.6.2 (d) + ADR-008 부록 C §C.2 (PMO 격상 12 조건 체크리스트) + P2 v3 §2.6.1 |
+| **TM-5 Layer 1~4 결과 silent override** | CI step FAIL → Hermes 가 retry / skip / mock PASS 자동 처리 | §2.6.3 (a) + §2.2 #12 + §3.2 (upstream silent breakage 답습 확장) |
+| **TM-6 Hook 비활성화** | Hermes 가 `.pre-commit-config.yaml` / `.husky/` / `.github/workflows/` 본문 변경 또는 `--no-verify` flag 사용 PR 자동 머지 | §2.6.3 (b) + §2.5 #2 #3 #4 + §2.2 #12 |
+| **TM-7 Skill 통한 Gate enforcement 우회** | Skill A 가 `RUN_LOCAL_TOOLS` 권한으로 `git commit --no-verify` 또는 hook bypass 시도 | §2.6.6 + G4 §3.7.3 (T3 신설 카테고리) + §6.5 답습 |
+| **TM-8 Memory 통한 Gate verdict 대체** | Memory entry 에 `G2 PASS = true` 자기 작성 → Hermes 가 Memory 참조 후 후속 게이트 PASS 진행 | §2.6.6 + G4 §5.2 #1 (Memory 가 policy 대체 금지) + 본 §1.3 (Evidence Ledger entry 만 권위) |
+
+#### 2.6.2 Gate 자체 보호 5 기준 (G1b / G2 / G3 / G4)
+
+> **본 §2.6.2 는 4 게이트 자체 (정의 + verdict + evidence + sequence + failure override) 의 무결성 5 기준 명시.**
+
+**(a) Gate 정의 무결성 — `governance-preconditions.md` / 본 G3 / `provider-agnostic-memory-skill-design.md` / 4 게이트 PASS 합의 보고서 본문 변경 차단**:
+- 4 게이트 정의 문서 = §2.5 #6 답습 (filesystem read-only on Hermes container + 본 §4 자기참조 차단)
+- 4 게이트 PASS 합의 보고서 = §2.5 #10 답습 (작성 후 immutable + Hermes-originated 수정 자동 reject)
+- 합의 시점 이후 *조항 약화* / *T 분류 하향* / *금지 사항 제거* 모두 §10 변경 절차 답습 (T3 변경 = 풀 3+1 + ADR Amendment + 사용자 명시 결정)
+- *권위 근거*: 본 §2.2 #9, #10, #11, #13, #20 + ADR-011 §2.3 권위 위계 + ADR-008 부록 C §C.2
+
+**(b) Gate verdict 변조 차단 — PASS / FAIL verdict 본문은 합의 보고서 + Evidence ledger entry 양쪽 일치 시만 권위**:
+- G1b/G2/G3/G4 verdict 변경 = *문서 + Evidence + 합의 보고서* 3 출처 모두 일치 시점에만 가능
+- Hermes 는 verdict 를 *제안* 가능 (§2.1 #6 답습), *승인 불가* (본 §1.3 + §4.5 + §5.3 답습)
+- 합의 보고서 본문에 verdict 명시 + Evidence ledger `event: gate_pass` / `event: gate_fail` entry 의 양쪽 무결성 chain 일치 의무 (§4.2 답습 + ADR-012 §2.3)
+- *권위 근거*: 본 §2.2 #13 + §4.5 합의 결과 처리 권한 + §5.3 PASS 성립 요건 (i)~(iv) + ADR-012 §2.12
+
+**(c) Gate Evidence ledger forge 차단 — `event: gate_pass` / `event: gate_fail` entry 는 `agent="user"` 강제**:
+- Gate 관련 ledger entry (`event: gate_pass` / `event: gate_fail` / `event: gate_promotion_attempted`) 의 `agent` 필드 = `user` 강제 (ADR-012 §2.1 원칙 7 + §2.12 #4 답습)
+- Hermes-originated `agent: hermes` gate ledger entry append 시도 = 즉시 BLOCK + `event: gate_evidence_forgery_attempt` ledger entry
+- ledger entry 의 `evidence_refs` 필드 = 합의 보고서 git commit SHA + R-6 actual run ID 동시 명시 의무
+- hash chain 검증 통과 + canonical JSON (RFC 8785 JCS, §4.4.2 + ADR-012 §2.5 답습) 통과 의무
+- *권위 근거*: ADR-012 §2.1 원칙 7 (External LLM `agent="user"` 강제) + §2.2 (11 필드 schema) + §2.12 #4 (외부 LLM 응답 위조 차단)
+
+**(d) Gate 검증 순서 skip 차단 — Ordered enforcement (G1b → G2 → G3 → G4 → Hermes PMO 격상)**:
+- G1b PASS 부재 상태에서 G2 PASS 합의 진입 = BLOCK (R-7 SOP §0 답습)
+- G2 PASS 부재 상태에서 G3 PASS 합의 진입 = BLOCK
+- G3 PASS 부재 상태에서 G4 PASS 합의 진입 = BLOCK
+- 4 게이트 모두 Implementation/Runtime PASS 부재 상태에서 Hermes PMO 격상 시도 = BLOCK (ADR-008 부록 C §C.2 + P2 v3 §2.6.1 12 조건 체크리스트 답습)
+- *단축 합의 옵션 3 패턴* (G2 + G3 + G4 통합 풀 3+1 합의 — Design/Governance Gate PASS Bundled) 답습 시에도 **각 게이트의 (a)~(e) Exit 기준 모두 충족 evidence 의무** (P2 v3 §9.2 옵션 A 답습)
+- *권위 근거*: 본 §2.2 #13 + §8.2 (G3 통합 Exit) + ADR-008 부록 C §C.5 (Design vs Implementation 분리 매트릭스)
+
+**(e) Gate failure override 차단 — 실패한 게이트를 PASS 처리하는 자동 경로 0건**:
+- Layer 1~4 hook / CI 결과 FAIL = 자동 차단 (Layer 별 차단 layer 답습)
+- Hermes 가 FAIL 결과를 PASS 로 *재해석* 시도 = §2.2 #13 자동 reject + audit log
+- 사용자 override = §5.4 절차 답습 (사용자 명시 결정 + audit log + Evidence Ledger entry `event: override` + 사후 ADR Amendment 절차)
+- *권위 근거*: 본 §1.3 Evidence 없는 PASS 금지 + §5.2.4 (Evidence decides) + §5.2.5 (Human overrides)
+
+#### 2.6.3 Layer 0~6 Enforcement Mechanism 보호 5 기준 (CLAUDE.md Layer 답습)
+
+> **본 §2.6.3 는 CLAUDE.md "피드백 루프 계층" Layer 0~6 의 *enforcement mechanism 자체* 보호. Layer 1~4 자동 강제 + Layer 5 합의 + Layer 6 Human review 의 silent 우회 차단.**
+
+**(a) Layer 1~4 결과 silent 무시 차단 — lint / test / CI / hook 결과**:
+- Layer 1 (PostToolUse Hook lint) FAIL → Hermes 자동 retry / skip / mock PASS 시도 = §2.2 #12 자동 reject
+- Layer 2 (PreCommit Hook test) FAIL → 커밋 자동 차단 (이미 §1.2.3 답습)
+- Layer 3 (git pre-commit hook) FAIL → push 자동 차단
+- Layer 4 (CI Pipeline) FAIL → merge 자동 차단 (branch protection + R-6 actual run 답습)
+- 4 Layer 결과 모두 Evidence ledger entry 의무 (`event: lint_fail` / `event: test_fail` / `event: hook_fail` / `event: ci_fail` — §4.2 답습)
+- *권위 근거*: 본 §2.2 #12 + CLAUDE.md "피드백 루프 계층" Layer 1~4 + §3.2 (upstream silent breakage 답습 확장 — `hermes-version.yaml` 변경 PR 의 R-6 actual run FAIL 시 자동 차단)
+
+**(b) Hook / CI workflow 비활성화 차단 — `.pre-commit-config.yaml` / `.husky/` / `.github/workflows/` / `--no-verify` / branch protection 해제**:
+- §2.5 #2 (`.github/workflows/`) + #3 (`.pre-commit-config.yaml` / `.husky/`) + #4 (branch protection) 답습 — filesystem read-only on Hermes container + git pre-commit hook + Hermes-originated commit auto-reject
+- `git commit --no-verify` / `git push --no-verify` 시도 = §3.2 Hermes-originated commit detection + pre-commit hook 답습 (Group C 후속 후속 PoC 답습 — `tools/rewrite_defense_check.py` Layer 2/3/4 dangerous command catalog)
+- branch protection 해제 시도 (GitHub API audit 답습) = 즉시 BLOCK + `event: branch_protection_disable_attempt`
+- *권위 근거*: 본 §2.2 #12 + §2.5 #2~#4 + §3.2 + ADR-012 §2.8 (Full Rewrite 5 Layer 답습)
+
+**(c) Evidence ledger 누락 시 PASS 불가 — `event: gate_pass` ledger entry 부재 = PASS 미성립**:
+- 모든 PASS 판정 = Evidence Ledger entry 존재 의무 (§1.3 + §5.3 (ii) 답습)
+- ledger entry 부재 상태에서 헤더 "Status: PASS" / 합의 보고서 verdict "APPROVE" 작성 = §1.3 위반 검출 → `event: pass_without_evidence_attempt` ledger entry + 사용자 명시 review 의무
+- ledger entry 의 `evidence_refs` 필드 = Markdown evidence 파일 경로 + 합의 보고서 git commit SHA + (해당 시) CI actual run ID 동시 명시 의무
+- *권위 근거*: 본 §1.3 + §5.3 (ii) + ADR-012 §2.2 (11 필드 schema) + 본 §5.2.4 (Evidence decides)
+
+**(d) 검증 결과 수정 / 삭제 / 재작성 차단 — 별도 review 의무**:
+- JSONL Evidence Ledger append-only 강제 — entry 수정 / 삭제 / 재작성 모두 T3 영역 (ADR-011 §2.4 + ADR-012 §2.3 답습)
+- Layer 4 CI artifact (R-6 등) 수정 / 삭제 시도 = §2.5 #11 답습 + ADR-012 §2.8 Full Rewrite 방어
+- 합의 보고서 작성 후 본문 수정 = §2.5 #10 답습 (git append-only + Hermes-originated 수정 자동 reject + 별도 commit + 사용자 명시 결정 의무)
+- *권위 근거*: 본 §2.2 #20 + §2.5 #10, #11 + ADR-012 §2.3 (Append-only) + §2.8 (Full Rewrite 방어 5 Layer)
+
+**(e) Git commit history + artifact 우선 — Evidence source priority**:
+- PASS 판정 시 Evidence source 우선순위: (1) git commit (immutable) (2) CI actual run artifact (3) ledger entry (4) 합의 보고서 (5) Markdown evidence
+- Markdown evidence 본문이 git commit / artifact / ledger 와 불일치 시 = git/artifact/ledger 우선 (Markdown 본문 자기 검출 한계 답습)
+- Hermes Memory 내부 상태 = Evidence source 권위 *없음* (G4 §5.2 #1 답습 — Memory 가 policy 대체 금지)
+- *권위 근거*: ADR-012 §2.3 (Append-only + hash chain) + §2.8 (Full Rewrite 5 Layer) + ADR-008 부록 C §C.5
+
+#### 2.6.4 10 보호 항목 강제 메커니즘 매트릭스
+
+| # | 보호 항목 | 분류 | 강제 메커니즘 | 권위 근거 |
+|---|--------|----|----------|--------|
+| 1 | Gate definition tampering 방지 | T3 | filesystem read-only on Hermes container + git pre-commit hook + Hermes-originated commit auto-reject | 본 §2.5 #6 + §2.2 #9, #20 |
+| 2 | Gate verdict mutation 방지 | T3 | 합의 보고서 + Evidence ledger entry 양쪽 일치 의무 + Hermes-originated verdict 변경 reject | 본 §2.2 #13, #20 + §4.5 + §5.3 |
+| 3 | Gate evidence ledger forge 방지 | T3 | `agent="user"` 강제 (ADR-012 §2.1 원칙 7) + hash chain 검증 + Hermes-originated `agent: hermes` gate entry reject | ADR-012 §2.1 원칙 7 + §2.2 + §2.12 #4 |
+| 4 | Gate sequence skip 방지 | T3 | Ordered enforcement (G1b → G2 → G3 → G4 → PMO) + 각 게이트 (a)~(e) Exit 기준 evidence 의무 | 본 §2.2 #13 + §8.2 + ADR-008 부록 C §C.2 + P2 v3 §2.6.1 |
+| 5 | Gate failure override 방지 | T3 | Layer 1~4 FAIL 자동 차단 + Hermes 의 FAIL → PASS 재해석 시도 reject + 사용자 override 시 §5.4 절차 의무 | 본 §1.3 + §2.2 #12, #13 + §5.2.4, §5.2.5 |
+| 6 | CI / hook / test result 무시 방지 | T3 | Layer 1~4 결과 모두 Evidence ledger entry 의무 + Hermes-originated silent skip reject | 본 §2.2 #12 + §3.2 + CLAUDE.md Layer 1~4 |
+| 7 | Hermes-originated gate approval 금지 | T3 | Hermes-originated commit auto-reject (gate 관련 본문) + 합의 보고서 author = user 강제 | 본 §2.2 #13, #20 + §4.5 + §5.5 SPOF accepted risk |
+| 8 | Worker-originated self-pass 금지 | T3 | Worker Agent 자기 작업 검증 분리 — Reviewer Agent (별도 worker) + 사용자 명시 결정 + Tools 검증 의무 (§1.3 답습) | 본 §1.2.2 + §1.3 + §5.2.3 (Tools verify) |
+| 9 | Gate policy 변경은 T3 또는 사용자 승인 영역 | T3 | filesystem read-only + 풀 3+1 합의 + ADR Amendment 절차 + 사용자 명시 결정 | 본 §10 변경 절차 + §2.2 #9, #11 + ADR-011 §2.4 T3 |
+| 10 | Gate protection 실패 시 rollback trigger 발화 | T3 자동 안전 | Layer 1~4 결과 FAIL → Skill `revoked` 자동 전이 (G4 §3.4.2 답습) + Hermes 컨테이너 정지 (§3.1.3 답습) + 사용자 명시 alert | 본 §3.1.5 + §3.3.5 + G4 §3.8.2 + ADR-011 §2.4 T3 자동 안전 동작 |
+
+#### 2.6.5 Gate Enforcement 우회 시 Rollback Trigger 발화 (G4 §3.8.2 연결)
+
+본 §2.6 위반 검출 시 다음 rollback trigger 자동 발화 + G4 §3.8.2 9 rollback_trigger × Permission Revocation 매트릭스 연동:
+
+| 검출 위반 | G4 §3.8.2 rollback_trigger | 자동 revoke 효과 |
+|---------|-----------------------|--------------|
+| Gate definition tampering 시도 (TM-1) | `policy_drift_detected` (§3.8.2 #9) | 시도 주체 Skill 의 모든 T1+T2 권한 revoke + 완전 비활성화 |
+| Gate verdict mutation 시도 (TM-2) | `consensus_self_reference_detected` (§3.8.2 #7) | 동상 + 합의 자기참조 분석 |
+| Gate evidence ledger forge 시도 (TM-3) | `chain_violation_detected` (§3.8.2 #8) | 동상 + ADR-012 §2.7 답습 |
+| Gate sequence skip 시도 (TM-4) | `policy_drift_detected` (§3.8.2 #9) | 동상 |
+| Layer 1~4 결과 silent override 시도 (TM-5/TM-6) | `evidence_missing` (§3.8.2 #2) 또는 `t3_violation` (§3.8.2 #3) | 동상 + Evidence 보완 의무 |
+| Skill 통한 Gate enforcement 우회 시도 (TM-7) | `escalation_detected` (§3.8.2 #1) | 동상 + escalation 분석 |
+| Memory 통한 Gate verdict 대체 시도 (TM-8) | `policy_drift_detected` (§3.8.2 #9) | 동상 + Memory/Skill boundary 분석 |
+
+**신규 rollback_trigger 후보** (G4 §3.8.2 enum 확장 영역 — 본 §2.6 흡수와 *동시*):
+- `gate_enforcement_bypass_detected` — 본 §2.6 (a)~(e) 5 기준 + §2.6.3 (a)~(e) 5 기준 위반 *공통 trigger* (G4 §3.8.2 #10 신규 — G4 본문 cross-reference 보강 영역)
+
+**자동 revoke 시점 ledger entry 의무** (G4 §3.8.2 답습):
+
+```jsonl
+{"type":"meta","scope":"<scope>","schema_version":"0.1","ts":"<ts>","agent":"user","event":"gate_enforcement_bypass_detected","content":{"violation_type":"<TM-1|TM-2|TM-3|TM-4|TM-5|TM-6|TM-7|TM-8>","affected_gate":"<G1b|G2|G3|G4>","detected_layer":"<schema|self-escalation|runtime>","skill_id":"<uuid_or_null>","memory_entry_id":"<uuid_or_null>","reason":"<diff or detection summary>"},"evidence_refs":["<commit_sha>","<run_id>"],...}
+```
+
+#### 2.6.6 G4 인터페이스 (Skill Permission ↔ Gate Enforcement Layer 분리)
+
+> **본 §2.6.6 은 G4 §3.7 12 카테고리 / §3.8 self-escalation + revocation chain / §5.2 4 금지 사항 답습 cross-reference 강화**. Skill 이 Gate enforcement layer 를 변경하거나 우회할 수 없도록 명시.
+
+**원칙**: Skill permission 이 `WRITE_CODE` 또는 `RUN_LOCAL_TOOLS` (T2) 를 갖더라도 **Gate definition / Gate verdict / Evidence ledger / CI policy 변경 권한은 포함하지 않는다**.
+
+| Skill 권한 범위 | Gate Enforcement Layer 접근 |
+|------------|---------------------|
+| T1 (`READ_ONLY` / `SUGGEST_ONLY` / `WRITE_DRAFT` 등 — G4 §3.7.1) | Gate 정의 / verdict / evidence *조회만* 가능 (변경 0건) |
+| T2 (`WRITE_CODE` / `RUN_LOCAL_TOOLS` / `NETWORK_ACCESS` 등 — G4 §3.7.2) | Gate 본문 영역 (§2.5 #6, #7, #8, #10, #11) *변경 시도 시 BLOCK* — Skill `WRITE_CODE` 권한이 있어도 `docs/architecture/*` / `docs/decisions/ADR-*.md` / `docs/review/3plus1-consensus-*.md` / Evidence ledger 본문 변경 시도 = §2.5 답습 BLOCK |
+| T3 (G4 §3.7.3 절대 금지) | Gate enforcement layer 변경 자동 시도 = 즉시 schema-level BLOCK + 자동 revoke (G4 §3.4.2 답습) |
+
+**Gate enforcement layer modification = T3 영역** (사용자 명시 결정 + 풀 3+1 합의 + ADR Amendment 절차 의무):
+- Gate 정의 본문 변경 = §10 변경 절차 답습 (T3 — 풀 3+1 + ADR Amendment + 사용자 명시 결정)
+- Gate verdict 변경 = 합의 보고서 + Evidence ledger 양쪽 갱신 의무 (사용자 명시 결정)
+- Evidence ledger schema 변경 = G4 §10.2 schema 진화 정책 답습 (T2 사용자 승인 + §10.2 합의 절차 통과)
+- CI workflow 변경 = §2.5 #2 답습 (filesystem read-only on Hermes container + 사용자 명시 PR merge 결정)
+
+**G4 본문 cross-reference 영역** (G4 보강 작업으로 흡수):
+- G4 §3.7.3 — T3 카테고리 8번째 신설 후보 (`GATE_ENFORCEMENT_LAYER_MODIFY` — Gate definition / verdict / Evidence ledger / CI policy 변경 시도) — Skill schema 차원 강제 BLOCK
+- G4 §3.8.2 — rollback_trigger 10번째 신설 후보 (`gate_enforcement_bypass_detected`) — TM-1 ~ TM-8 공통 trigger
+- G4 §6.1 — 3-layer Permission Defense 매트릭스에 본 §2.6 cross-reference 추가
+
+#### 2.6.7 본 §2.6 이 *하지 않는* 것
+
+본 §2.6 = *설계 문서 수준 보호 규칙 보강*까지. 다음 모두 본 §2.6 범위 외 (사용자 명시 답습):
+
+- ❌ 실 runtime hook 구현 (filesystem ACL / pre-commit hook / git hook 본문 변경 감지 / CI step 본문 변경 감지 등 — Implementation/Runtime PASS 영역, 별도 합의)
+- ❌ 실 CI workflow 수정 (R-6 워크플로우 ledger 검증 step 추가 등 — Implementation 영역, 별도 합의)
+- ❌ 실 hook 구현 (pre-commit / Husky / Layer 1~4 자동 차단 hook 본문 — Implementation 영역)
+- ❌ Hermes PMO 격상 선언 (4 게이트 Implementation/Runtime PASS + 외부 LLM 2 + 인간 리뷰 + 사용자 명시 결정 후 별도 — ADR-008 부록 C §C.2 답습)
+- ❌ Operational Readiness PASS 선언 (별도 합의)
+- ❌ Implementation/Runtime PASS 선언 (별도 합의)
+- ❌ G2 / G3 / G4 PASS 재선언 (본 §2.6 보강 = G3 Design/Governance Gate PASS 권위 변경 0건, cross-reference 강화만)
+- ❌ ADR-008 / ADR-009 / ADR-010 / ADR-011 본문 자동 갱신 (cross-reference 보강만 — 본문 갱신은 별도 PR 묶음)
+- ❌ G4 본문 보강 자동 수행 (본 §2.6.6 = G4 cross-reference 후보 명시까지 — 실 G4 본문 갱신은 별도 흡수 작업)
+- ❌ G3 §2.2 22 권한 분해 합의 (Group I 영역, 풀 3+1 + 외부 LLM 1+ 의무)
+- ❌ ADR-013 / ADR-014 발행 (Group H / Group I 영역)
+
+**합의 형태**: 본 §2.6 = §10 *§1 ~ §7 본문 갱신 (운영 구현 정의)* 영역 — **단축 합의 (Reviewer-only) 적격 영역**. T3 카테고리 신설 (§2.6.6 cross-reference 한정) + 10 보호 항목 매트릭스 (§2.6.4) 모두 본문 *추가*까지 — *§2.2 22 권한 항목 / §4.3 합의 형태 매트릭스 / §5 Evidence 결정 원칙 본문 변경 0건*. 별도 합의 보고서 작성 = 후속 사용자 명시 결정 영역.
+
+**Implementation 상태**: 본 §2.6 = *보호 규칙 명시*까지. 실 hook / filesystem ACL / pre-commit / CI step 구현은 **DESIGN PASS / IMPLEMENTATION PENDING** (별도 합의, Implementation/Runtime PASS 영역).
 
 ---
 
@@ -863,6 +1051,7 @@ Human overrides.   (사람이 최종 방향을 선택한다)
 | 단순 오타 / 문구 정리 | 사용자 단독 결정 가능 |
 | §1 ~ §7 본문 갱신 (운영 구현 정의) | 단축 합의 (Reviewer-only) |
 | §2.2 22 금지 권한 표 본문 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 매우 신중) |
+| §2.6 Gate Enforcement Layer 보호 본문 갱신 — 10 보호 항목 매트릭스 / Gate 자체 5 기준 / Layer 0~6 5 기준 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — Gate enforcement 무력화 위험) |
 | §4.3 합의 형태 매트릭스 본문 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — 자기참조 차단의 핵심) |
 | §5 Evidence 결정 원칙 본문 갱신 | **풀 3+1 합의 + ADR Amendment 절차** (T3 변경 — system-identity-prequel §6.1 영구 명제) |
 | §6 / §7 G2 / G4 인터페이스 갱신 | 단축 합의 (Reviewer-only) — G2 / G4 진행 상태 변경 시 |
@@ -915,6 +1104,73 @@ Human overrides.   (사람이 최종 방향을 선택한다)
 4. 메타포 강제 금지 답습 (P2 v3 §10 + 본 §0.2)
 
 본 4건 즉시 강제는 **본 G3 가 정식 채택되지 않더라도** 현 시점에서 유효 — *Hermes 가 4 게이트 통과 전 ADR-008 합의 자동화 + R-6 CI 회귀 검증* 책임 한정으로 작동하는 현 상태에 적용.
+
+### 11.4 Gate Enforcement Layer 보호 보강 작업 흡수 기록 (2026-05-12)
+
+> **본 §11.4 는 Gate Enforcement Layer 보호 보강 작업** (사용자 명시 결정 — Gate 자체 + Layer 0~6 enforcement mechanism 양쪽 통합 보호 영역) 의 *처리 위치·방법·상태* 본문화. **본 작업 = G3 §2.6 신설 + G4 cross-reference 한정 — Hermes PMO 격상 / Operational Readiness PASS / Implementation/Runtime PASS / runtime 구현 / CI workflow 수정 / hook 구현 / G2/G3/G4 PASS 재선언 / ADR 본문 자동 갱신 모두 본 작업 범위 외** (사용자 명시 답습).
+
+#### 11.4.1 10 보호 항목 흡수 매트릭스
+
+| # | 사용자 명시 보호 항목 | 흡수 위치 | 흡수 방법 | 상태 |
+|---|----------|--------|--------|----|
+| 1 | Gate definition tampering 방지 | §2.6.2 (a) + §2.6.4 #1 | filesystem read-only + git pre-commit hook + Hermes-originated commit auto-reject (§2.5 #6 + §2.2 #9, #20 답습) | ✅ **RESOLVED** (2026-05-12) |
+| 2 | Gate verdict mutation 방지 | §2.6.2 (b) + §2.6.4 #2 | 합의 보고서 + Evidence ledger entry 양쪽 일치 의무 + §4.5 합의 결과 처리 권한 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 3 | Gate evidence ledger forge 방지 | §2.6.2 (c) + §2.6.4 #3 | `agent="user"` 강제 (ADR-012 §2.1 원칙 7) + hash chain 검증 + Hermes-originated gate entry reject | ✅ **RESOLVED** (2026-05-12) |
+| 4 | Gate sequence skip 방지 | §2.6.2 (d) + §2.6.4 #4 | Ordered enforcement (G1b → G2 → G3 → G4 → PMO) + 각 게이트 (a)~(e) Exit 기준 evidence 의무 + ADR-008 부록 C §C.2 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 5 | Gate failure override 방지 | §2.6.2 (e) + §2.6.4 #5 | Layer 1~4 FAIL 자동 차단 + Hermes FAIL → PASS 재해석 시도 reject + §5.4 사용자 override 절차 의무 | ✅ **RESOLVED** (2026-05-12) |
+| 6 | CI / hook / test result 무시 방지 | §2.6.3 (a) + §2.6.4 #6 | Layer 1~4 결과 모두 Evidence ledger entry 의무 + Hermes-originated silent skip reject + CLAUDE.md Layer 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 7 | Hermes-originated gate approval 금지 | §2.6.4 #7 | Hermes-originated commit auto-reject (gate 관련 본문) + 합의 보고서 author = user 강제 + §4.5 + §5.5 SPOF accepted risk 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 8 | Worker-originated self-pass 금지 | §2.6.4 #8 | Worker Agent 자기 작업 검증 분리 — Reviewer Agent 별도 + 사용자 명시 결정 + Tools 검증 의무 + §1.2.2 + §1.3 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 9 | Gate policy 변경은 T3 또는 사용자 승인 영역으로 분리 | §2.6.4 #9 + §2.6.6 | filesystem read-only + 풀 3+1 합의 + ADR Amendment 절차 + 사용자 명시 결정 + Skill T3 카테고리 (G4 §3.7.3) cross-reference | ✅ **RESOLVED** (2026-05-12) |
+| 10 | Gate protection 실패 시 rollback trigger 발화 | §2.6.4 #10 + §2.6.5 | Layer 1~4 FAIL → Skill `revoked` 자동 전이 (G4 §3.4.2 답습) + 컨테이너 정지 + 사용자 명시 alert + G4 §3.8.2 rollback_trigger 매트릭스 연동 | ✅ **RESOLVED** (2026-05-12) |
+
+#### 11.4.2 Gate 자체 보호 5 기준 + Layer 0~6 보호 5 기준 통합 흡수 매트릭스
+
+| 구분 | 5 기준 | §2.6 본문 위치 |
+|-----|-----|-----------|
+| **Gate 자체 보호 5 기준** | (a) Gate 정의 무결성 / (b) Gate verdict 변조 차단 / (c) Gate evidence ledger forge 차단 / (d) Gate 검증 순서 skip 차단 / (e) Gate failure override 차단 | §2.6.2 (a)~(e) |
+| **Layer 0~6 enforcement 보호 5 기준** | (a) Layer 1~4 silent 무시 차단 / (b) Hook / CI workflow 비활성화 차단 / (c) Evidence ledger 누락 시 PASS 불가 / (d) 검증 결과 수정 / 삭제 / 재작성 차단 / (e) Git commit history + artifact 우선 | §2.6.3 (a)~(e) |
+
+#### 11.4.3 위협 모델 (TM-1 ~ TM-8) 흡수 매트릭스
+
+| 위협 | 본 §2.6 위치 | G4 cross-reference 위치 |
+|-----|---------|-----------------|
+| TM-1 Gate 정의 silent 약화 | §2.6.1 + §2.6.2 (a) + §2.6.4 #1 + §2.6.5 | G4 §3.7.3 `GATE_ENFORCEMENT_LAYER_MODIFY` (T3) |
+| TM-2 Gate verdict 위조 | §2.6.1 + §2.6.2 (b) + §2.6.4 #2 + §2.6.5 | (동상) |
+| TM-3 Evidence ledger forge | §2.6.1 + §2.6.2 (c) + §2.6.4 #3 + §2.6.5 | (동상) |
+| TM-4 Gate sequence skip | §2.6.1 + §2.6.2 (d) + §2.6.4 #4 + §2.6.5 | (동상) |
+| TM-5 Layer 1~4 결과 silent override | §2.6.1 + §2.6.3 (a) + §2.6.4 #5, #6 + §2.6.5 | G4 §3.8.2 `gate_enforcement_bypass_detected` (rollback_trigger) |
+| TM-6 Hook 비활성화 | §2.6.1 + §2.6.3 (b) + §2.6.4 #6 + §2.6.5 | (동상) |
+| TM-7 Skill 통한 Gate enforcement 우회 | §2.6.1 + §2.6.6 + §2.6.5 | G4 §3.7.3 `GATE_ENFORCEMENT_LAYER_MODIFY` + G4 §6.1 3-layer Defense |
+| TM-8 Memory 통한 Gate verdict 대체 | §2.6.1 + §2.6.6 + §2.6.5 | G4 §5.2 #1 Memory 가 policy 대체 금지 답습 |
+
+#### 11.4.4 본 §11.4 가 *하지 않는* 것 (사용자 명시 답습 8 영역)
+
+- ❌ **runtime code 구현** — filesystem ACL / pre-commit hook / git hook 본문 변경 감지 / CI step 본문 변경 감지 등 (Implementation/Runtime PASS 영역, 별도 합의)
+- ❌ **CI workflow 수정** — R-6 워크플로우 ledger 검증 step 추가 / branch protection rule 자동 설정 등 (Implementation 영역, 별도 합의)
+- ❌ **hook 구현** — pre-commit / Husky / Layer 1~4 자동 차단 hook 본문 (Implementation 영역)
+- ❌ **Hermes PMO 격상 선언** — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2 + 인간 리뷰 + 사용자 명시 결정 후 별도 (ADR-008 부록 C §C.2 답습)
+- ❌ **Operational Readiness PASS 선언** — 별도 합의
+- ❌ **Implementation/Runtime PASS 선언** — 별도 합의
+- ❌ **G2 / G3 / G4 PASS 재선언** — 본 작업 = Gate Enforcement Layer 보호 보강 한정, G3 Design/Governance Gate PASS 권위 변경 0건
+- ❌ **ADR-008 / ADR-009 / ADR-010 / ADR-011 본문 자동 갱신** — cross-reference 보강만, 본문 갱신은 별도 PR 묶음
+
+#### 11.4.5 본 §11.4 의 권위 한계
+
+- 본 §11.4 = *설계 문서 수준 Gate Enforcement Layer 보호 보강* 까지
+- ❌ 실 runtime hook 구현 (Implementation/Runtime PASS 영역)
+- ❌ Skill wrapper / sandbox / cap_drop runtime 구현 (G3 §3.3 영역)
+- ❌ filesystem ACL on Hermes container 실 구현 (Implementation 영역)
+- ❌ pre-commit / pre-push hook 본문 변경 감지 자동 (Implementation 영역)
+- ❌ CI workflow ledger 검증 step 추가 (Implementation 영역)
+- ❌ Hermes-originated commit / `agent: hermes` ledger entry 자동 검출 hook (Implementation 영역)
+- 본 §11.4 변경 (10 보호 항목 추가 / 제거 / 분류 변경) 자체는 풀 3+1 합의 + ADR Amendment 절차 (T3 변경 — Gate enforcement 무력화 위험)
+
+#### 11.4.6 본 §11.4 의 합의 형태 (사용자 명시 결정 대기)
+
+- 본 §11.4 = §10 *§1 ~ §7 본문 갱신 (운영 구현 정의)* 영역 — **단축 합의 (Reviewer-only) 적격 영역** (§2.6 신설 + G4 cross-reference 한정 — *§2.2 22 권한 / §4.3 합의 형태 매트릭스 / §5 Evidence 결정 원칙 본문 변경 0건*)
+- 단, §2.6.2 (a)~(e) + §2.6.3 (a)~(e) + §2.6.4 10 보호 항목 + §2.6.6 G4 T3 카테고리 후보 명시 = *원안* 한정 — 후속 합의 검증 대상
+- 별도 합의 보고서 작성 = 후속 사용자 명시 결정 영역 (본 §11.4 본문 흡수 자체는 §11.3 즉시 강제 사항 답습 패턴)
 
 ---
 

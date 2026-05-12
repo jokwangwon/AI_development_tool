@@ -10,6 +10,8 @@
 >
 > **ADR-012 (Evidence Ledger Protection) Mandatory Reference (2026-05-09 후속 3 PR-2 신규 발행)**: 본 G4 §4.2 11 필드 schema (`event` 신규) + §4.4 hash chain 사양 (Layer 1~5 + RFC 8785 JCS Primary + Genesis Hash + prev_hash 검증 실패 BLOCK + Full Rewrite 5 Layer) + §4.6 round-trip 검증 절차 (Tier-based + 3 ledger entry 형식 + Migration rollback) 의 *권위 출처*. **G4 §4 = ADR-012 §2.1 ~ §3.5 답습 권위**.
 >
+> **Gate Enforcement Layer 보호 cross-reference (2026-05-12)**: 본 G4 §3.7.3 #18 (`GATE_ENFORCEMENT_LAYER_MODIFY` T3) + §3.8.2 #10 (`gate_enforcement_bypass_detected` rollback_trigger) + §6.1 매트릭스 row + 인터페이스 Layer 4 신설 = **G3 §2.6 권위 정의 답습 cross-reference 한정**. *권위 정의 = G3 §2.6* (Gate 자체 5 기준 + Layer 0~6 5 기준 + 위협 모델 TM-1~TM-8 + 10 보호 항목 매트릭스 + Rollback Trigger 발화 매트릭스). 본 G4 = Skill permission schema 차원 연결 한정 — **Skill permission 이 `WRITE_CODE` / `RUN_LOCAL_TOOLS` (T2) 를 갖더라도 Gate definition / Gate verdict / Evidence ledger / CI policy 변경 권한은 자동 포함되지 *않는다*** (§3.7.3 #18 = T3 `forbidden_actions` 자동 포함 강제). 본 cross-reference 흡수 = G4 Design/Governance Gate PASS 권위 변경 0건. 본 §11.6 답습.
+>
 > **P2 v3 (`hermes-adoption-design-v3.md`) = Adopted (Design Adoption only, 2026-05-09 후속 6)** 후속 권위. 본 G4 = P2 v3 §6 (G4 정의 + ADR-012 Mandatory Reference cross-reference) + §10.1 #1 (Provider Liquidity 5-way Multi-layer Defense 5 Layer — 본 G4 §3.5 + §4.3 Layer 3/4 + ADR-012 §원칙 6 Layer 5) + §10.2 Archive Migration Note + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화 답습.
 >
 > **P2 v2 (`hermes-adoption-design.md`) = Archived (옵션 A 최소 침습, 2026-05-09 후속 7)** + **`system-identity-prequel.md` = Archived (옵션 A, 2026-05-09 후속 8 — 본 G4 §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary) 의 *원본 권위 출처* prequel §6.3 + §8.4 → 본 G4 + ADR-012 §1.4 답습 권위 발행으로 archive 후에도 권위 보존)** — 본 G4 cross-reference 영향 0건 (path 변경 0건).
@@ -410,9 +412,11 @@ provider_bindings:
 - C-H (provider_bindings lint 룰 강제) 는 본 §3.6 *후속* 영역 — 본 §3.6 은 *schema 차원* 까지, lint 룰 강제 (depcruise + schema validation 자동 차단) 는 Implementation/Runtime PASS 별도 합의
 - 본 §3.6 변경 (격상/하향) 자체는 풀 3+1 합의 + ADR Amendment 절차 (T3 변경)
 
-### 3.7 Permission Granularity Matrix (**Permission Granularity 세분화 — 2026-05-11**)
+### 3.7 Permission Granularity Matrix (**Permission Granularity 세분화 — 2026-05-11 + Gate Enforcement Layer 보호 cross-reference — 2026-05-12**)
 
 > **본 §3.7 은 Permission Granularity 세분화 작업 신설**. §3.2 #9 `allowed_actions` / #10 `forbidden_actions` 의 12 카테고리 semantic enum 정의 + T1/T2/T3 분류 매트릭스 + 카테고리별 정의 / 예시 / 권한 범위. **schema-level 차단 layer** (G3 §3.3 runtime wrapper 차단 layer 와 책무 분리 — §6.1 답습). **본 §3.7 = *형식 정의*까지 — 실 schema validator / Skill wrapper runtime hook 구현 = Implementation/Runtime PASS 영역 별도 합의**.
+>
+> **2026-05-12 Gate Enforcement Layer 보호 보강 cross-reference**: §3.7.3 T3 7 종 → **8 종** (#18 `GATE_ENFORCEMENT_LAYER_MODIFY` 신설, G3 §2.6 cross-reference 한정 — *권위 정의는 G3 §2.6*). 본 G4 = G3 §2.6.6 답습 schema-level enum entry + §3.8.2 rollback_trigger #10 신설 + §6.1 매트릭스 cross-reference 추가 한정. **고유 카테고리 = 13 종** (이전 12 + GATE_ENFORCEMENT_LAYER_MODIFY).
 
 #### 3.7.1 T1 — 자동 가능 카테고리 (5 종)
 
@@ -448,9 +452,11 @@ provider_bindings:
 - 사용자 명시 승인 = 단축 합의 / Reviewer 승인 / 사용자 명시 결정 중 하나 — *Hermes 자기 승인 0건* (G3 §2.2 #16 답습)
 - Skill `promotion_status: promoted` 미진입 상태 = T2 카테고리 사용 BLOCK
 
-#### 3.7.3 T3 — 절대 금지 카테고리 (7 종)
+#### 3.7.3 T3 — 절대 금지 카테고리 (8 종, **#18 GATE_ENFORCEMENT_LAYER_MODIFY G3 §2.6 cross-reference 추가 — 2026-05-12**)
 
 > **모든 Skill 의 `forbidden_actions` 자동 포함 강제** (§3.2 #10 답습). 사용자 명시 override *불가* (T3 영역, ADR-011 §2.4). `allowed_actions` 에 T3 카테고리 진입 시 schema validation 즉시 BLOCK.
+>
+> **2026-05-12 Gate Enforcement Layer 보호 보강 cross-reference 추가**: #18 `GATE_ENFORCEMENT_LAYER_MODIFY` 신설 (G3 §2.6 cross-reference 한정 — *권위 정의는 G3 §2.6*). 본 G4 §3.7.3 = G3 §2.6.6 답습 schema-level enum entry 한정.
 
 | # | 카테고리 | 정의 | 차단 사유 | schema-level 차단 |
 |---|--------|----|--------|---------------|
@@ -461,6 +467,7 @@ provider_bindings:
 | 15 | `PROVIDER_LOCK_IN_ENFORCE` | provider_bindings `required: true` / `exclusive: true` / lock-in 강제 코드 작성 | Provider Liquidity (헌법 5조 관용) 위반 + 4-way Multi-layer Defense 회피 (GP-5 + G3 §6.4 + G4 §3.5 + GP-6) | `allowed_actions` 진입 시 즉시 BLOCK + provider_bindings §3.5 검증 BLOCK + `event: t3_provider_lockin_attempt` |
 | 16 | `REDACTION_POLICY_RELAX` | R-4.1 Tier-1 42 catalog / baseline 5 redaction 정책 완화 / 우회 | ADR-011 §2.1 본질 (DB 평문 저장 차단 결과) + R-1~R-7 redaction 6단계 답습 | `allowed_actions` 진입 시 즉시 BLOCK + `event: t3_redaction_relax_attempt` |
 | 17 | `CONSTITUTION_BYPASS` | Constitution 본문 우회 (memory / skill 로 정책 이전 시도) | G4 §5.2 #1 Memory 가 policy 대체 / §5.2 #2 Skill 이 ADR 우회 위반 + 권위 위계 (ADR-011 §2.3) 위반 | `allowed_actions` 진입 시 즉시 BLOCK + Memory/Skill boundary §5.2 검증 BLOCK + `event: t3_constitution_bypass_attempt` |
+| 18 | `GATE_ENFORCEMENT_LAYER_MODIFY` (**G3 §2.6 cross-reference — 2026-05-12**) | Gate enforcement layer 변경 시도 — Gate 정의 본문 (`docs/architecture/governance-preconditions.md` / `hermes-not-root-of-trust-runtime.md` / `provider-agnostic-memory-skill-design.md`) / Gate verdict 본문 / Evidence Ledger `event: gate_pass` / `event: gate_fail` entry 위조 / CI workflow / hook 설정 변경 / Gate 순서 skip 시도 *모두 포함*. **Skill permission 이 `WRITE_CODE` 또는 `RUN_LOCAL_TOOLS` (T2) 를 갖더라도 본 카테고리는 자동 포함 강제** (Gate enforcement layer 변경 권한 *분리*) | 권위 위계 (ADR-011 §2.3) + Gate enforcement layer = ADR-011 §2.3 운영 함의 1~5 + Hermes ≠ root of trust (ADR-011 §2.3 영구 권위) + ADR-008 부록 C §C.2 + G3 §2.6 (권위 정의) | `allowed_actions` 진입 시 즉시 BLOCK + `event: t3_gate_enforcement_modify_attempt` + G3 §2.6.5 rollback_trigger 발화 (`gate_enforcement_bypass_detected`, §3.8.2 #10 답습) |
 
 **T3 강제 메커니즘**:
 - **schema-level**: `allowed_actions` validation 시 본 7 카테고리 진입 시 즉시 BLOCK (G4 §3.2 #9 + §3.7.3 답습)
@@ -478,6 +485,7 @@ provider_bindings:
 - ❌ Skill `revoked` 자동 전이 runtime 강제 (runtime hook 영역)
 - ❌ G3 §2.2 22 권한 분해 합의 (Group I 영역, 풀 3+1 + 외부 LLM 1+ 의무)
 - ❌ ADR-014 발행 (Group H 영역, 풀 3+1 + 외부 LLM 1+ 의무)
+- **❌ Gate Enforcement Layer 보호 권위 정의** (**G3 §2.6 권위 정의 영역** — 본 §3.7.3 #18 = cross-reference schema-level enum entry 한정. Gate 자체 5 기준 + Layer 0~6 5 기준 + 위협 모델 TM-1~TM-8 + 10 보호 항목 매트릭스 + Rollback trigger 발화 매트릭스 모두 G3 §2.6 본문 권위)
 
 ### 3.8 Self-Permission Escalation 차단 + Revocation Chain (**Permission Granularity 세분화 — 2026-05-11**)
 
@@ -511,9 +519,9 @@ provider_bindings:
 
 #### 3.8.2 Rollback Triggers ↔ Permission Revocation 연결
 
-> **§3.2 #14 `rollback_triggers` ↔ §3.4.2 `revoked` 상태 전이 매트릭스 본문화** (Permission Granularity 세분화 — 2026-05-11). rollback_trigger 매치 시 Skill 의 *모든 권한* 자동 revoke + READ_ONLY 한정 (운영 차단).
+> **§3.2 #14 `rollback_triggers` ↔ §3.4.2 `revoked` 상태 전이 매트릭스 본문화** (Permission Granularity 세분화 — 2026-05-11 + Gate Enforcement Layer 보호 cross-reference — 2026-05-12). rollback_trigger 매치 시 Skill 의 *모든 권한* 자동 revoke + READ_ONLY 한정 (운영 차단). **2026-05-12 갱신**: enum 9 → **10 종** (#10 `gate_enforcement_bypass_detected` G3 §2.6 cross-reference 추가).
 
-**`rollback_triggers` enum 확장** (§3.2 #14 답습 + Permission Granularity 카테고리 신규):
+**`rollback_triggers` enum 확장** (§3.2 #14 답습 + Permission Granularity 카테고리 신규 + Gate Enforcement Layer 보호 cross-reference):
 
 | # | rollback_trigger | 정의 | 자동 revoke 권한 범위 | 후속 절차 |
 |---|--------------|----|--------------|--------|
@@ -526,6 +534,7 @@ provider_bindings:
 | 7 | `consensus_self_reference_detected` | Skill 본문에 Hermes 자기 합의 marker / 자기 reviewer 격상 marker 검출 (G3 §4 답습) | 모든 T1+T2 권한 자동 revoke | 사용자 명시 review + 합의 자기참조 분석 |
 | 8 | `chain_violation_detected` | Evidence Ledger hash chain 위반 (§4.4.4 답습) | 모든 T1+T2 권한 자동 revoke + Skill 완전 비활성화 | 사용자 명시 review + ADR-012 §2.7 답습 |
 | 9 | `policy_drift_detected` | Memory 가 policy 대체 시도 (§5.2 #1) / Skill 이 ADR 우회 시도 (§5.2 #2) 검출 | 모든 T1+T2 권한 자동 revoke + Skill 완전 비활성화 | 사용자 명시 review + Memory/Skill boundary 분석 |
+| 10 | `gate_enforcement_bypass_detected` (**G3 §2.6 cross-reference — 2026-05-12**) | Gate enforcement layer 우회 검출 — Gate 정의 변경 / Gate verdict 변조 / Evidence ledger `event: gate_pass` forge / Gate 순서 skip / Layer 1~4 결과 silent override / Hook 비활성화 / Skill 통한 Gate enforcement 우회 / Memory 통한 Gate verdict 대체 (G3 §2.6 위협 모델 TM-1 ~ TM-8 통합 trigger) | 모든 T1+T2 권한 자동 revoke + Skill 완전 비활성화 | 사용자 명시 review + G3 §2.6.5 답습 (Hermes 컨테이너 정지 + audit log + Gate enforcement 분석) + ADR-008 부록 C §C.2 답습 |
 
 **Revocation Chain 자동 전이** (T3 자동 안전 동작 — ADR-011 §2.4):
 
@@ -560,6 +569,7 @@ provider_bindings:
 - ❌ Skill chain 검증 runtime (별도 합의)
 - ❌ 외부 Reviewer (사용자 / 외부 LLM) 자동 호출 (T3 영역, ADR-011 §2.4)
 - ❌ G3 §2.2 22 권한 분해 합의 (Group I 영역, 풀 3+1 + 외부 LLM 1+ 의무)
+- **❌ Gate Enforcement Layer 보호 권위 정의** (**G3 §2.6 권위 정의 영역** — 본 §3.8.2 #10 = G3 §2.6 cross-reference rollback_trigger entry 한정. G3 §2.6.5 Rollback Trigger 발화 매트릭스 + 위협 모델 TM-1 ~ TM-8 권위 모두 G3 §2.6 본문 권위)
 
 ---
 
@@ -912,9 +922,11 @@ genesis_hash = sha256("genesis:" + canonical_json({
 
 > **본 §6 은 G3 (`hermes-not-root-of-trust-runtime.md`) §6.5 / §7 답습** — G4 = *형식*, G3 = *권한* 분리.
 
-### 6.1 Skill Escalation 방지 (**Permission Granularity 세분화 답습 — 2026-05-11**)
+### 6.1 Skill Escalation 방지 (**Permission Granularity 세분화 답습 — 2026-05-11 + Gate Enforcement Layer 보호 cross-reference — 2026-05-12**)
 
 **G3 §3.3 답습**: Skill 이 정의된 권한 등급 (`allowed_actions`) 을 *넘어* 작동 시 차단. **2026-05-11 Permission Granularity 세분화 후 = 3-layer Permission Defense** (schema-level §3.7 + self-escalation §3.8 + runtime G3 §3.3).
+
+**2026-05-12 Gate Enforcement Layer 보호 cross-reference**: Skill permission `WRITE_CODE` / `RUN_LOCAL_TOOLS` (T2) 권한이 있어도 **Gate enforcement layer 변경 권한은 자동 제외** (`GATE_ENFORCEMENT_LAYER_MODIFY` = T3 #18 자동 `forbidden_actions` 포함). Gate 정의 / Gate verdict / Evidence ledger / CI policy 변경 = T3 영역 (사용자 명시 결정 + 풀 3+1 합의 + ADR Amendment 절차). 권위 정의 = **G3 §2.6** — 본 §6.1 = G3 §2.6.6 답습 매트릭스 entry 한정.
 
 | 메커니즘 | G4 책임 (형식) | G3 책임 (권한) |
 |--------|------------|--------------|
@@ -929,13 +941,15 @@ genesis_hash = sha256("genesis:" + canonical_json({
 | Sandbox cap_drop / read_only / tmpfs noexec | (위임) | ✅ G3 §3.3.3 |
 | Audit log on escalation 시도 | ✅ **§3.7.3 + §3.8.1 — `event: t3_*_attempt` / `event: skill_self_escalation_attempt` ledger entry 형식** | ✅ G3 §3.3.4 (실 audit log 작성) |
 | 자동 비활성화 + 사용자 alert | ✅ **§3.4.2 + §3.8.2 — `promotion_status: revoked` 자동 전이 형식** | ✅ G3 §3.3.5 (실 revoke runtime + alert) |
+| **Gate Enforcement Layer 변경 시도 차단** (**G3 §2.6 cross-reference — 2026-05-12**) | ✅ **§3.7.3 #18 `GATE_ENFORCEMENT_LAYER_MODIFY` (T3 자동 `forbidden_actions` 포함) + §3.8.2 #10 `gate_enforcement_bypass_detected` rollback_trigger** — schema-level enum entry 한정 | ✅ **G3 §2.6** (Gate 자체 5 기준 + Layer 0~6 5 기준 + 위협 모델 TM-1~TM-8 + 10 보호 항목 매트릭스 + Rollback trigger 발화 — *권위 정의*) |
 
-**인터페이스 (3-layer Permission Defense)**:
-- **Layer 1 (schema-level)** — G4 §3.7 12-category enum + §3.2 #9/#10 schema validation 필드 *정의* + T3 7-category 자동 차단 *형식*
-- **Layer 2 (self-escalation)** — G4 §3.8.1 6 차단 메커니즘 *규칙* + §3.8.2 9 rollback_trigger × revoke 매트릭스 *연결*
+**인터페이스 (3-layer Permission Defense + Gate Enforcement Layer 보호 cross-reference)**:
+- **Layer 1 (schema-level)** — G4 §3.7 13-category enum (12 Permission Granularity + 1 Gate Enforcement #18) + §3.2 #9/#10 schema validation 필드 *정의* + T3 8-category 자동 차단 *형식*
+- **Layer 2 (self-escalation)** — G4 §3.8.1 6 차단 메커니즘 *규칙* + §3.8.2 10 rollback_trigger × revoke 매트릭스 *연결* (9 Permission Granularity + 1 Gate Enforcement #10)
 - **Layer 3 (runtime)** — G3 §3.3 wrapper + sandbox + audit log + 자동 revoke *runtime 강제*
+- **Layer 4 (Gate Enforcement)** — **G3 §2.6** 권위 정의 (Gate 정의 / verdict / evidence / sequence / failure override + Layer 0~6 enforcement mechanism 보호) — G4 §3.7.3 #18 + §3.8.2 #10 cross-reference
 
-3 layer 모두 결합 시 escalation 차단의 *완결성*. 1 layer 만 깨져도 escalation 위험 잔존 (예: schema OK + self-escalation OK 이지만 runtime wrapper 부재 시 격리 실패).
+3 layer + Gate Enforcement Layer 모두 결합 시 escalation 차단 + Gate enforcement 우회 차단의 *완결성*. 1 layer 만 깨져도 escalation 또는 Gate enforcement 우회 위험 잔존 (예: schema OK + self-escalation OK + runtime wrapper OK 이지만 Gate enforcement layer 부재 시 Gate verdict 직접 변조 가능).
 
 ### 6.2 Hermes-originated Skill Auto-approval 금지
 
@@ -1363,6 +1377,53 @@ G3 4건 후속 권고 모두 **본 PR-1 흡수 완료** (별도 후속 권고 �
 - 본 §11.5 = §10.1 *§2~§4 본문 갱신* 영역 (Skill schema §3 + G3 인터페이스 §6.1 본문 보강) — **단축 합의 (Reviewer-only) 적격 영역**
 - T3 카테고리 신설 (§3.7.3) 은 §10.1 *§5.2 4 금지 사항 본문 갱신* 영역과 유사한 무게 — 단, 본 §3.7.3 은 *4 금지 사항 본문 변경 0건* + Skill schema enum 형식 확장 한정 → 단축 합의 영역 유지
 - 별도 합의 보고서 작성 = 후속 사용자 명시 결정 영역 (본 §11.5 본문 흡수 자체는 §11.4.1 권고 사양 → §10.2 본문화 답습 패턴)
+
+### 11.6 Gate Enforcement Layer 보호 cross-reference 흡수 기록 (2026-05-12)
+
+> **본 §11.6 은 Gate Enforcement Layer 보호 보강 작업 cross-reference 흡수 기록** (G3 §2.6 신설 답습). **본 작업 = G3 가 주 권위 정의 문서, G4 = cross-reference 추가 한정** (사용자 명시 결정 — Gate 자체 + Layer 0~6 enforcement mechanism 양쪽 통합 보호 영역의 *권위 정의* 는 G3 §2.6, *Skill permission schema 차원 연결* 만 본 G4 에 흡수). **본 cross-reference 흡수 = G4 Design/Governance Gate PASS 권위 변경 0건 — runtime 구현 / CI workflow 수정 / hook 구현 / Hermes PMO 격상 / Operational Readiness PASS / Implementation/Runtime PASS 선언 / G2/G3/G4 PASS 재선언 / ADR 본문 자동 갱신 모두 본 작업 범위 외** (사용자 명시 답습).
+
+#### 11.6.1 4 영역 흡수 매트릭스
+
+| # | 흡수 항목 | 흡수 위치 | 흡수 방법 | 상태 |
+|---|---------|--------|--------|----|
+| 1 | T3 카테고리 #18 신설 (`GATE_ENFORCEMENT_LAYER_MODIFY`) | §3.7.3 표 row #18 추가 + §3.7 헤더 (T3 7→8 / 12→13 종) | G3 §2.6 cross-reference schema-level enum entry 한정 — 권위 정의 = G3 §2.6 본문 | ✅ **RESOLVED** (2026-05-12) |
+| 2 | rollback_trigger #10 신설 (`gate_enforcement_bypass_detected`) | §3.8.2 표 row #10 추가 + §3.8.2 헤더 (9→10 종) | G3 §2.6 cross-reference rollback_trigger entry 한정 — G3 §2.6.5 Rollback Trigger 발화 매트릭스 권위 | ✅ **RESOLVED** (2026-05-12) |
+| 3 | §6.1 매트릭스 row + Layer 4 신설 | §6.1 표 row 추가 + 인터페이스 본문 (3-layer → 4-layer Gate Enforcement Layer 추가) | G3 §2.6 = Layer 4 (Gate Enforcement Layer) 권위 정의 명시 cross-reference | ✅ **RESOLVED** (2026-05-12) |
+| 4 | §3.7.4 / §3.8.3 권위 한계 갱신 | §3.7.4 / §3.8.3 마지막 항목 추가 | "Gate Enforcement Layer 보호 권위 정의 = G3 §2.6 권위 정의 영역" 명시 | ✅ **RESOLVED** (2026-05-12) |
+
+#### 11.6.2 Skill Permission ↔ Gate Enforcement Layer 분리 명시
+
+**원칙** (G3 §2.6.6 답습 G4 cross-reference):
+
+- **Skill permission 이 `WRITE_CODE` 또는 `RUN_LOCAL_TOOLS` (T2) 를 갖더라도, Gate definition / Gate verdict / Evidence ledger / CI policy 변경 권한은 자동 포함되지 *않는다*** (§3.7.3 #18 = T3 `forbidden_actions` 자동 포함 강제).
+- **Gate enforcement layer modification = T3 또는 별도 사용자 승인 영역** (사용자 명시 결정 + 풀 3+1 합의 + ADR Amendment 절차 의무).
+- Skill 이 Gate enforcement layer 를 변경하거나 우회 시도 시 = §3.7.3 #18 schema-level BLOCK + §3.8.2 #10 rollback_trigger 발화 + Skill `promotion_status: revoked` 자동 전이 (G3 §2.6.5 답습).
+
+#### 11.6.3 본 §11.6 이 *하지 않는* 것 (사용자 명시 답습 9 영역)
+
+- ❌ **G3 §2.6 권위 정의 G4 본문 흡수** — G3 §2.6 의 10 보호 항목 매트릭스 / Gate 자체 5 기준 / Layer 0~6 5 기준 / 위협 모델 TM-1~TM-8 모두 G4 본문에 *복사하지 않음* (cross-reference 한정)
+- ❌ **runtime code 구현** — Skill wrapper / sandbox / cap_drop / audit log / rollback_trigger 자동 검출 / 자동 revoke 모두 (Implementation/Runtime PASS 영역, 별도 합의)
+- ❌ **CI workflow 수정** — R-6 워크플로우 ledger 검증 step 추가 등 (Implementation 영역)
+- ❌ **hook 구현** — pre-commit / pre-push / Husky / Layer 1~4 자동 차단 hook 본문 (Implementation 영역)
+- ❌ **Hermes PMO 격상 선언** — 4 게이트 모두 Implementation/Runtime PASS + 외부 LLM 2 + 인간 리뷰 + 사용자 명시 결정 후 별도
+- ❌ **Operational Readiness PASS 선언** — 별도 합의
+- ❌ **Implementation/Runtime PASS 선언** — 별도 합의
+- ❌ **G2 / G3 / G4 PASS 재선언** — 본 작업 = G4 cross-reference 추가 한정, G4 Design/Governance Gate PASS 권위 변경 0건
+- ❌ **ADR-008 / ADR-009 / ADR-010 / ADR-011 본문 자동 갱신** — cross-reference 보강만, 본문 갱신은 별도 PR 묶음
+
+#### 11.6.4 본 §11.6 의 권위 한계
+
+- 본 §11.6 = *G4 cross-reference 흡수 기록* 까지
+- 본 §11.6 의 Gate Enforcement Layer 보호 권위 정의 = **G3 §2.6 본문** (G3 §2.6 변경 시 본 §11.6 cross-reference 도 동시 갱신 의무)
+- 본 §11.6 변경 (cross-reference 항목 추가/제거) 자체는 G3 §2.6 변경과 동시 단축 합의 (Reviewer-only) 적격 영역
+- ❌ G3 §2.6 본문 권위 별도 검증 (G3 §2.6 합의 자체 권위 답습)
+- ❌ Gate Enforcement Layer 보호 권위 정의 자체 G4 본문 흡수 (G3 §2.6 권위 위임)
+
+#### 11.6.5 본 §11.6 의 합의 형태 (사용자 명시 결정 대기)
+
+- 본 §11.6 = §10.1 *§2~§4 본문 갱신 (Memory scope / Skill schema / JSONL 형식)* 영역 (Skill schema §3.7.3 + §3.8.2 + §6.1 cross-reference 보강) — **단축 합의 (Reviewer-only) 적격 영역**
+- T3 카테고리 신설 (§3.7.3 #18 = cross-reference 한정) + rollback_trigger 신설 (§3.8.2 #10 = cross-reference 한정) 모두 *권위 정의 = G3 §2.6 답습* → G3 §2.6 합의와 동시 단축 합의 영역
+- 별도 합의 보고서 작성 = G3 §2.6 합의와 통합 후속 사용자 명시 결정 영역
 
 ---
 

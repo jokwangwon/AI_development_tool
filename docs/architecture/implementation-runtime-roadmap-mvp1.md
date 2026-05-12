@@ -627,6 +627,104 @@ Docker: docker secret 사용 (ST-3 답습)
   - GP-3 / GP-5 양 GP 진입 합의 후속 *통합 책무* 명시
   - 후속 작업 (MVP-1 진입 합의 / Operational Readiness 단계 / G5-5 Layer 2 / Vault HSM) 분리 영역 명시
 
+### 5.5 9 sub-수단 본문 채택 매트릭스 (Layer B `f40423f` 발효 결과 행사 — Backlog #6 Implementation Entry 합의 §1 답습)
+
+본 §은 Backlog #6 Layer B Implementation Entry 합의 (`docs/review/3plus1-consensus-2026-05-12-backlog6-implementation-entry.md`, commit `f40423f` push 완료, APPROVE 발효) 의 *결과 행사* — **9 sub-수단 *권고 → 본문 채택* 격상 *문서상 확정* 한정**.
+
+#### 5.5.0 본문 채택 의미 명시 (사용자 명시 강조 답습)
+
+```
+본문 채택 = MVP-1 implementation entry 에서 사용할 수단을 *문서상 확정*
+본문 채택 ≠ runtime code 구현
+본문 채택 ≠ CI workflow 구현
+본문 채택 ≠ hook 구현
+본문 채택 ≠ Implementation Evidence PASS
+```
+
+본 §5.5 *발효 후*에도 다음은 **별도 사용자 명시 결정 의무 영역**:
+- runtime code / CI workflow / hook 실 구현 (사용자 명시 결정 후 별도 commit 진입)
+- Layer C (Implementation Evidence PASS) 진입 (별도 합의 + ADR-011 §2.1 (a)~(e) 5/5 evidence + 사용자 명시)
+
+#### 5.5.1 GP-3 본문 채택 4 sub-수단 매트릭스
+
+| ID | 수단 | 영역 | 본문 채택 권위 | 본문 채택 *범위 한계* |
+|----|------|------|----------|--------------|
+| **S-1** | custom regex secret scanner (R-4.1 Tier-1 45 patterns) | GP-3 코드 본문 secret 검출 (G3-2) | Group D PoC `tools/secret_scanner.py` 261줄 답습 + actual run `25623028888` SUCCESS + Layer A §1.2 + Layer B §1.1 답습 | Tier-2/3 catalog 확장 0건 / 외부 의존 도입 0건 / runtime code *실 구현* 0건 (별도 단계) |
+| **ST-3** | docker secret (저장 경로 isolation) | GP-3 저장 경로 secret 검출 (G3-1) | ADR-008 §2.6.2 R2-1 답습 + Layer A §1.2 + Layer B §1.1 답습 | Vault HSM ST-4 미진입 (Backlog #7 분리) / entrypoint stat ST-1 / inotify ST-2 미진입 (Backlog #1 1.5차 보강 분리) |
+| **PC-3** | CI-only enforcement (pre-commit) | GP-3 pre-commit hook 통합 (G3-2 부분 / G5-2 부분 공유) | T2 영역 답습 + Group D actual run SUCCESS 답습 + Layer A §1.2 + Layer B §1.1 답습 | local pre-commit framework PC-4 미진입 (Backlog #1 1.5차 보강 분리) |
+| **AR-1** | CI step fail-closed (PR auto-reject) | GP-3 PR auto-reject layer (G3-3 부분 / G5-3 부분 공유) | T2 영역 답습 + Layer A §1.2 + Layer B §1.1 답습 | branch protection AR-2 미진입 (Backlog #3 T3 영역 별도 풀 3+1 분리) |
+
+**추가 본문 채택 영역 (G3-7 row — `secret` MVP-1 영역 4 항목)**:
+- (i) GitHub Actions secrets 사용 0건 검증 (F-금지 grep step) — 본문 채택
+- (ii) `secrets.*` 참조 감지 (workflow grep step or S-1 확장) — 본문 채택
+- (iv) fork PR secret 접근 차단 default 정책 보존 — 본문 채택
+- (v) workflow `permissions: contents: read` 명시 강제 (R-6 답습) — 본문 채택
+
+**분리 영역 (G3-7 row 2 항목 — MVP-1 영역 외)**:
+- (iii) CI 로그 secret 노출 방지 (전체 책무) = MVP-2 (GP-2 송신 redaction 영역) — 분리
+- `pull_request_target` workflow 도입 = 별도 합의 영역 (T2/T3) — 분리
+
+#### 5.5.2 GP-5 본문 채택 3 sub-수단 매트릭스 (PC-3 + AR-1 = GP-3 와 일관성 답습)
+
+| ID | 수단 | 영역 | 본문 채택 권위 | 본문 채택 *범위 한계* |
+|----|------|------|----------|--------------|
+| **T-6 = T-2 + T-5 병행** | T-2 import-linter + T-5 custom AST 병행 (Layer 1 정적 차단) | GP-5 Layer 1 정적 차단 도구 (G5-1) | Group A 2차 풀 3+1 합의 (Agent A/B/C 1206줄 + Reviewer 380줄) T-2 채택 답습 + Group A 1차/3차 답습 T-5 답습 + `.importlinter` TR-1~TR-5 답습 + actual run `25605665191` + `25629390384` SUCCESS + Layer A §1.3 + Layer B §1.2 답습 | T-1 dependency-cruiser / T-3 grimp / T-4 ruff / T-5 단독 미진입 (Backlog #2 1.5차 보강 분리) + Layer 2 runtime block G5-5 미진입 (MVP-3 분리) + 의미적 lock-in (G4 §4.6) 미진입 (MVP-3 분리) |
+| **PC-3** | CI-only enforcement (pre-commit) | GP-5 pre-commit hook 통합 (G5-2) — GP-3 동일 채택 답습 | T2 영역 답습 + 양 GP 일관성 답습 + Layer A §1.3 + Layer B §1.2 답습 | local pre-commit framework PC-4 미진입 (Backlog #2 분리) |
+| **AR-1** | CI step fail-closed (PR auto-reject) | GP-5 PR auto-reject layer (G5-3) — GP-3 동일 채택 답습 | T2 영역 답습 + 양 GP 일관성 답습 + Layer A §1.3 + Layer B §1.2 답습 | branch protection AR-2 미진입 (Backlog #3 T3 영역 별도 풀 3+1 분리) |
+
+**추가 본문 채택 영역 (Group A 1차/2차/3차 답습 — Layer 1a + 1b + 1c 분리 답습 완결)**:
+- `tools/provider_import_scanner.py` (Group A 1차 답습, AST 5종 패턴) — Layer 1a 본문 채택
+- `.importlinter` (Group A 2차 답습, TR-1~TR-5) — Layer 1b 본문 채택
+- `tools/provider_url_scanner.py` (Group A 3차 답습, URL Tier-1 10 + Model Tier-1 19) — Layer 1c 본문 채택
+
+**분리 영역**:
+- P1 v2 facade real 본문 (G5-4 = `src/adapters/llm/facade.py` LiteLLM 실 import) — Backlog #4 별도 P1 v2 facade MVP 합의 분리
+- Layer 2 runtime block (G5-5) — MVP-3 분리
+- 의미적 lock-in (G4 §4.6) — MVP-3 분리
+
+#### 5.5.3 본문 채택 합산 매트릭스
+
+| GP | 단독 sub-수단 | 공유 sub-수단 (양 GP 동일) | 합산 |
+|----|----------|----------|------|
+| GP-3 | S-1 + ST-3 = 2 단독 | PC-3 + AR-1 = 2 공유 | 4 |
+| GP-5 | T-6 (T-2 + T-5 병행) = 1 단독 | PC-3 + AR-1 = 2 공유 | 3 |
+| 합산 | 3 단독 + 2 공유 = 5 unique + 2 일관성 | — | **9 (7 unique + 2 일관성 중복)** |
+
+본 합산 = **9 sub-수단 본문 채택** (Layer B 합의 §1.1 + §1.2 답습 — 양 GP 5/5 + 5/5 충족 + 7 sub-수단 본문 채택 적격 + 2 sub-수단 일관성 검증).
+
+#### 5.5.4 18 Rollback Trigger 본문 확정 답습 (Layer B §1.7 답습)
+
+본 §은 §3.5 + §4.6 답습 — Rollback Trigger *본문 확정* (발화 시연 = Layer C 영역 분리):
+
+- **GP-3 8개 trigger** = §3.5 답습 (S-1 FP_rate 폭증 / S-2 라이선스 변경 / ST-3 Docker secret 도입 실패 / PC-3 CI runtime 폭증 / AR-1 hook 우회 시도 / R-4.1 Tier-1 catalog 변경 / Tier-2 확장 필요 / Operational Readiness parity 필요)
+- **GP-5 10개 trigger** = §4.6 답습 (T-2 FP_rate 폭증 / T-5 단독 FN 폭증 / T-6 병행 충돌 / `.importlinter` rule 충돌 / PC-3 hook 우회 / AR-1 fail-closed 폭증 / P1 v2 facade real 본문 필요 / branch protection 필요 / 의미적 lock-in 검출 / Layer 2 runtime 진입 필요)
+
+**합산: 18/18 Rollback Trigger 본문 확정** (Layer B 합의 §1.7 답습).
+
+#### 5.5.5 본 §5.5 *범위 한계* (사용자 명시 답습 — 본문 채택 ≠ 구현)
+
+본 §5.5 = **9 sub-수단 본문 채택 *문서상 확정* 한정**. 다음은 본 §5.5 *영역 외*:
+
+- ❌ runtime code *실 구현* (Layer B 결과 *행사* 별도 단계 — 사용자 명시 결정 의무)
+- ❌ CI workflow *실 신설* / hook *실 구현* (동상)
+- ❌ Implementation Evidence PASS *발효* (Layer C 별도 합의)
+- ❌ MVP-1 PASS *선언* (Layer D)
+- ❌ Operational Readiness PASS *선언* (Layer E)
+- ❌ Hermes PMO 격상 *선언* (Layer F)
+- ❌ 7 backlog 자동 진입 (1.5차 보강 / T3 / P1 v2 facade / ADR-012 enum / Operational Readiness)
+- ❌ ADR 본문 자동 갱신 (cross-reference 답습 한정 — ADR-008 / ADR-009 / ADR-010 / ADR-011 / ADR-012 본문 변경 0건)
+- ❌ Tier-2 / Tier-3 catalog 자동 확장 (Tier-1 답습 한정)
+- ❌ threshold *고정* (FP/FN/latency 모두 *후보 한정* 유지)
+- ❌ event enum 정식 등록 (4 + 3 = 7 enum *후보 한정*)
+- ❌ 외부 LLM 자동 호출 / 실 API key / provider SDK / 외부 API 호출
+- ❌ §3.5 + §4.6 Rollback Trigger 발화 시연 (Layer C 영역 분리)
+- ❌ Group A 1차/2차/3차 PoC + Group D PoC 본문 변경 (답습 한정)
+- ❌ §3 GP-3 / §4 GP-5 / §5.1 / §5.2 / §5.3 / §5.4 / §6 / §7 본문 변경 (cross-reference 답습 한정)
+
+본 §5.5 *발효 후*에도 다음은 **별도 사용자 명시 결정 의무 영역**:
+- runtime code / CI workflow / hook 실 구현 → 별도 commit + 사용자 명시 결정
+- Layer C (Implementation Evidence PASS) 진입 → 별도 합의 + ADR-011 §2.1 (a)~(e) 5/5 evidence + 사용자 명시
+
 ---
 
 ## 6. MVP-1 → MVP-2 진입 조건 권고
@@ -718,6 +816,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 | 일자 | 변경 | 비고 |
 |------|------|------|
+| 2026-05-12 후속 4 | §5.5 9 sub-수단 본문 채택 매트릭스 신설 — Layer B `f40423f` 발효 결과 행사 | Backlog #6 Layer B Implementation Entry 합의 (`docs/review/3plus1-consensus-2026-05-12-backlog6-implementation-entry.md` APPROVE, commit `f40423f` push 완료) §1.1 + §1.2 + §1.7 답습 + 사용자 명시 진입 명령 (2026-05-12 열한 번째 — "9 sub-수단 본문 채택 commit 진입"). §5.5 신설 = §5.5.0 본문 채택 의미 명시 (본문 채택 ≠ runtime code 구현 / CI workflow 구현 / hook 구현 / Implementation Evidence PASS) + §5.5.1 GP-3 4 sub-수단 (S-1 + ST-3 + PC-3 + AR-1) + G3-7 row 4 항목 + §5.5.2 GP-5 3 sub-수단 (T-6 = T-2 + T-5 / PC-3 + AR-1) + Group A 1차/2차/3차 답습 + §5.5.3 합산 매트릭스 (9 = 7 unique + 2 일관성 중복) + §5.5.4 18 Rollback Trigger 본문 확정 답습 + §5.5.5 *범위 한계* (runtime code / CI workflow / hook 실 구현 0건 / Layer C 발효 0건 / 7 backlog 자동 진입 0건 / ADR 본문 갱신 0건 / Tier-2/3 자동 확장 0건 / threshold 고정 0건 / event enum 정식 등록 0건). **본 흡수 = §5.5 신설 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.2 / §5.3 / §5.4 / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. **본문 채택 = 문서상 확정 한정 — runtime code 실 구현 / CI workflow 실 신설 / hook 실 구현 모두 본 흡수 영역 외 (사용자 명시 결정 의무 영역)**. |
 | 2026-05-12 후속 2 | §5.4 GP-3 + GP-5 Integrated Risk Matrix 신설 — Observation O-2 흡수 (GP-5 진입 합의 Condition C-4) | GP-5 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp5-mvp1-entry.md` APPROVE WITH CONDITIONS) §6.3 + §7.4 답습 + 사용자 명시 진입 명령 (2026-05-12 여섯 번째). §5.4 신설 = 3 통합 위험 (IR-1 Provider key adapter bypass / IR-2 Direct SDK + secret leakage 결합 / IR-3 Local-CI-Docker mismatch) + 3 신규 evidence enum 후보 (`provider_key_adapter_bypass_risk_detected` / `direct_sdk_with_secret_leakage_detected` / `secret_handling_environment_mismatch_detected`) + MVP-1 handling vs Deferred handling 분리 + §5.4.4 *범위 한계* (실 combined check 도구 구현 0건 / enum 정식 등록 0건 / Runtime enforcement 0건 / Operational parity 0건 / Provider key auto revoke 0건 / Combined fail PR auto-reject 0건). §5.2 cross-reference 갱신 — 4 enum → 7 enum 후보 합산. **본 흡수 = §5.4 신설 + §5.2 cross-reference 갱신 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.3 / §6 / §7 본문 변경 0건**. |
 | 2026-05-12 후속 | §3.1.2 G3-7 row 추가 (CI secret 관리) — Condition C-1 흡수 | GP-3 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` APPROVE WITH CONDITIONS) §2 (Observation O-1 흡수) + §6.1 + §7.1 답습. G3-7 = 6 항목 中 (i)(ii)(iv)(v)(vi) = MVP-1 영역 4 항목 + (iii) = MVP-2 (GP-2 영역) + (`pull_request_target` 도입) = 별도 합의 영역 분리. 핵심 요약 (line 169) 갱신 — "G3-1 + G3-2 + G3-3 + G3-7" 영역 명시. **본 흡수 = §3.1.2 본문 갱신 + 핵심 요약 갱신 한정 — §3.5 Rollback / §3.6 Evidence / §5 통합 PASS / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. |
 | 2026-05-12 | 신규 작성 (DRAFT) | MVP-1 deepening (GP-3 + GP-5) — 사용자 명시 답습: 단일 새 문서 + 수단 후보 비교 + threshold 후보 + Reviewer-only 단축 합의 진행 예정. 실 runtime code 구현 / CI/hook 구현 / Hermes PMO 격상 / Operational Readiness PASS 선언 모두 본 작업 범위 외. `implementation-runtime-roadmap.md` 17 항목 우선순위 매트릭스 (Order 1 = GP-5, Order 4 = GP-3) 의 MVP-1 영역 deepening 한정. 외부 LLM 응답 line 242 + C-7 line 378 + 본 문서 §1 통합 = MVP-1 = G2 GP-3 + GP-5 (GP-2 = MVP-2 분리 답습). 3-layer PASS 분리 (Design Gate / Implementation Evidence / Operational Readiness) 재명시 + MVP-1 위치 = Implementation Evidence PASS 1차. GP-3 PoC (Group D) + GP-5 PoC (Group A 1차/2차/3차) 답습. GP-3 코드 본문 5 수단 (S-1~S-5) + 저장 경로 5 수단 (ST-1~ST-5) + GP-5 Layer 1 도구 6 수단 (T-1~T-6) + pre-commit 4 수단 (PC-1~PC-4) + PR auto-reject 3 수단 (AR-1~AR-3). Rollback Trigger 통합 18 + Evidence Ledger 4 enum 후보 + 합의 형태 권고. |

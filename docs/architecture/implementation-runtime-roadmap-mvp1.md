@@ -507,7 +507,7 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | `provider_adapter_enforcement_layer1_static` | GP-5 Layer 1a/1b/1c 통합 | T2 (CI step) |
 | `mvp1_gate_pass` | MVP-1 = GP-3 + GP-5 양쪽 PASS | T3 (사용자 명시 + ADR-011 §2.1 5/5 evidence) |
 
-본 4 enum 후보는 **본 문서 권고 한정** — `event` enum 정식 등록 = ADR-012 §2.2 답습 + G4 §10.2 schema 진화 정책 (추가 필드 MINOR 호환 영역) 답습 별도 합의.
+본 4 enum 후보는 **본 문서 권고 한정** — `event` enum 정식 등록 = ADR-012 §2.2 답습 + G4 §10.2 schema 진화 정책 (추가 필드 MINOR 호환 영역) 답습 별도 합의. **본 4 enum 외 §5.4 통합 위험 매트릭스 IR-1 / IR-2 / IR-3 의 3 enum 후보** (`provider_key_adapter_bypass_risk_detected` / `direct_sdk_with_secret_leakage_detected` / `secret_handling_environment_mismatch_detected`) **추가 = 합산 7 enum 후보** (정식 등록 = 동일 별도 합의 영역).
 
 ### 5.3 통합 Rollback Trigger 매트릭스
 
@@ -518,6 +518,114 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | Hermes upstream 변경 (G3-7) / facade real 본문 (G5-3) | ✅ | ✅ | 풀 3+1 합의 + Hermes/P1 v2 영역 진입 |
 | T3 영역 (정책 변경 / branch protection) | ✅ | ✅ | 풀 3+1 합의 + 외부 LLM 1+ + 사용자 명시 |
 | FP/FN 측정 결과 threshold 미달 | ✅ | ✅ | threshold 재결정 합의 (단축 합의 적격) |
+
+### 5.4 GP-3 + GP-5 Integrated Risk Matrix (Observation O-2 흡수 — Condition C-4)
+
+본 §5.4 = **GP-3 + GP-5 양 GP 진입 합의 (`6dc5bdc` + `6808d17`) 후속, MVP-1 roadmap 단축 합의 (`95be2e5`) Observation O-2 흡수 영역**. 사용자 명시 진입 명령 답습 (2026-05-12 여섯 번째 명령 — "MVP-1 roadmap §5.4 통합 위험 sub-section 신설"). GP-3 / GP-5 각각은 진입 적격성 발효 완료, 둘이 *함께 적용될 때* 발생하는 결합 위험 3 영역을 본 §5.4 에 명시.
+
+#### 5.4.0 통합 위험 매트릭스 표 (사용자 명시 형식 답습)
+
+| ID | Integrated Risk | GP-3 Side | GP-5 Side | MVP-1 Handling | Deferred Handling | Evidence Enum |
+|----|----------------|-----------|-----------|----------------|------------------|---------------|
+| IR-1 | Provider key adapter bypass | Provider key exists (S-1 detect) | P1 facade bypass (T-6 detect direct/transitive/dynamic) | Detect combined signal in CI report | Runtime enforcement (G5-5 Layer 2 영역, MVP-3/4) | `provider_key_adapter_bypass_risk_detected` |
+| IR-2 | Direct SDK + secret leakage | Secret scanner hit (S-1 D-1 mode) | Direct SDK import hit (T-2 / T-5 cover) | Combined fail in report (same file/module) | Runtime block (G5-5 Layer 2) + 자동 alert | `direct_sdk_with_secret_leakage_detected` |
+| IR-3 | Local/CI/Docker mismatch | Secret source differs (.env / `secrets.*` / docker secret) | Enforcement differs (local CI miss / Docker SDK 부재) | CI-only baseline + evidence 기록 | Operational parity check (Operational Readiness PASS 영역) | `secret_handling_environment_mismatch_detected` |
+
+#### 5.4.1 IR-1 — Provider key 가 adapter 를 우회하는 경로
+
+**위험**:
+
+Provider API key 가 존재하면 개발자/에이전트가 P1 facade 를 우회하여 직접 provider SDK 를 사용할 수 있음.
+
+**예시**:
+
+```
+OPENAI_API_KEY 존재
+→ openai SDK 직접 import
+→ P1 facade 우회
+→ GP-5 위반 + GP-3 secret 노출 위험 결합
+```
+
+**대응** (MVP-1 영역):
+
+- GP-3 secret scanner (S-1) 에서 provider key 존재 여부 감지 — 본 PoC fixture 답습 (Group D fake canary 의무, 실 secret 0건)
+- GP-5 T-6 (T-2 + T-5 병행) 에서 direct provider SDK import 감지 — Group A 1차/2차/3차 PoC 답습
+- 둘이 *동시 발생* 시 combined-risk event 로 분류 — CI report 통합 (별도 보고서 또는 단일 step 에서 cross-reference)
+- Evidence enum 후보 = `provider_key_adapter_bypass_risk_detected` (T2 + T3 영역 — combined 분류 시 사용자 명시 결정 영역)
+
+**deferred 영역** (MVP-3/4):
+
+- Runtime enforcement (G5-5 Layer 2 영역) — `g2-gp5-provider-adapter-enforcement-poc.md` §9 Layer 2 답습
+- Provider key 자동 revoke (T3 영역, 별도 합의)
+
+#### 5.4.2 IR-2 — Direct SDK import + secret leakage 결합 위험
+
+**위험**:
+
+direct SDK import 자체는 provider lock-in 위험 (GP-5),
+secret leakage 자체는 credential hygiene 위험 (GP-3),
+둘이 *결합* 되면 provider-specific secret 사용 경로가 직접 코드에 고정됨 — 단일 위험보다 *높은 심각도*.
+
+**대응** (MVP-1 영역):
+
+- direct SDK import 감지 결과 (T-6 출력) 와 secret scanner 결과 (S-1 출력) 를 *같은 report* 에서 교차 확인 — CI 통합 step (`combined_check.py` 또는 별도 grep step)
+- 같은 *파일* 또는 같은 *module boundary* 에서 둘 다 발견되면 GP-3/GP-5 *combined fail* 로 기록 — 별도 보고서 분류
+- GP-3 단독 또는 GP-5 단독보다 *높은 심각도* 로 분류 — Evidence ledger 우선순위 ↑
+- Evidence enum 후보 = `direct_sdk_with_secret_leakage_detected` (T2 + T3 영역)
+
+**deferred 영역** (MVP-3/4):
+
+- Runtime block (G5-5 Layer 2) + 자동 alert
+- Combined fail 시 자동 PR auto-reject (T3 영역, AR-2 + AR-3 답습)
+
+#### 5.4.3 IR-3 — Local / CI / Docker secret handling 불일치
+
+**위험**:
+
+local 에서는 `.env` 를 사용하고,
+CI 에서는 GitHub Actions secret (`secrets.*`) 을 사용하고,
+Docker 에서는 docker secret 을 사용하는 식으로 환경별 secret handling 이 달라지면,
+GP-3 검증과 GP-5 adapter enforcement 가 서로 다른 결과를 낼 수 있음.
+
+**예시**:
+
+```
+local: .env 에 provider key 존재
+CI: secrets.* 미사용 (G3-7 (i) 답습)
+Docker: docker secret 사용 (ST-3 답습)
+→ 한 환경에서는 direct SDK import 가 실패하지만 다른 환경에서는 성공
+→ enforcement 결과 불일치
+```
+
+**대응** (MVP-1 영역):
+
+- local / CI / Docker 각각의 secret source boundary 를 명시 — 본 §5.4 표 + Group D §1.2 #6 (Hermes upstream 분리) + ST-3 (docker secret) + G3-7 (CI secret) 답습
+- MVP-1 에서는 최소한 **CI-only enforcement 기준을 우선** (PC-3 + AR-1 답습)
+- 환경별 차이는 evidence 에 기록 — `event: secret_handling_environment_mismatch_detected` 신규 enum 후보 + secret source boundary 명시 (local / CI / Docker 별 enforcement 결과)
+- Evidence enum 후보 = `secret_handling_environment_mismatch_detected` (T2 + T3 영역)
+
+**deferred 영역** (Operational Readiness 단계):
+
+- Multi-environment parity 검증으로 승격 — local/CI/Docker 모두 동일 enforcement 결과 보장
+- Vault HSM (ST-4, ADR-010 답습) 통합 시 단일 secret source 로 수렴
+
+#### 5.4.4 본 §5.4 의 *범위 한계*
+
+본 §5.4 = **사양 한정** (mvp1.md §5 통합 PASS 기준 内부 sub-section). 본 §5.4 는:
+
+- **하지 *않는* 것**:
+  - 실 combined check 도구 구현 (예: `tools/combined_check.py` 본문 작성) 0건 — MVP-1 진입 합의 시점 별도 작업 영역
+  - Evidence enum 정식 등록 (3 신규 enum 모두 *후보 한정* — ADR-012 §2.2 + G4 §10.2 별도 합의)
+  - Runtime enforcement 자동 구현 (G5-5 Layer 2 영역, MVP-3/4 분리)
+  - Operational parity 자동 강제 (Operational Readiness PASS 영역, MVP-6 분리)
+  - Provider key 자동 revoke (T3 영역, 별도 합의)
+  - Combined fail 시 자동 PR auto-reject (T3 영역, AR-2 + AR-3 별도 합의)
+
+- **하는 것**:
+  - 통합 위험 3 영역 (IR-1 / IR-2 / IR-3) *영역 분리* + *MVP-1 vs deferred handling* 명시
+  - 3 evidence enum 후보 권위 권고
+  - GP-3 / GP-5 양 GP 진입 합의 후속 *통합 책무* 명시
+  - 후속 작업 (MVP-1 진입 합의 / Operational Readiness 단계 / G5-5 Layer 2 / Vault HSM) 분리 영역 명시
 
 ---
 
@@ -610,6 +718,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 | 일자 | 변경 | 비고 |
 |------|------|------|
+| 2026-05-12 후속 2 | §5.4 GP-3 + GP-5 Integrated Risk Matrix 신설 — Observation O-2 흡수 (GP-5 진입 합의 Condition C-4) | GP-5 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp5-mvp1-entry.md` APPROVE WITH CONDITIONS) §6.3 + §7.4 답습 + 사용자 명시 진입 명령 (2026-05-12 여섯 번째). §5.4 신설 = 3 통합 위험 (IR-1 Provider key adapter bypass / IR-2 Direct SDK + secret leakage 결합 / IR-3 Local-CI-Docker mismatch) + 3 신규 evidence enum 후보 (`provider_key_adapter_bypass_risk_detected` / `direct_sdk_with_secret_leakage_detected` / `secret_handling_environment_mismatch_detected`) + MVP-1 handling vs Deferred handling 분리 + §5.4.4 *범위 한계* (실 combined check 도구 구현 0건 / enum 정식 등록 0건 / Runtime enforcement 0건 / Operational parity 0건 / Provider key auto revoke 0건 / Combined fail PR auto-reject 0건). §5.2 cross-reference 갱신 — 4 enum → 7 enum 후보 합산. **본 흡수 = §5.4 신설 + §5.2 cross-reference 갱신 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.3 / §6 / §7 본문 변경 0건**. |
 | 2026-05-12 후속 | §3.1.2 G3-7 row 추가 (CI secret 관리) — Condition C-1 흡수 | GP-3 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` APPROVE WITH CONDITIONS) §2 (Observation O-1 흡수) + §6.1 + §7.1 답습. G3-7 = 6 항목 中 (i)(ii)(iv)(v)(vi) = MVP-1 영역 4 항목 + (iii) = MVP-2 (GP-2 영역) + (`pull_request_target` 도입) = 별도 합의 영역 분리. 핵심 요약 (line 169) 갱신 — "G3-1 + G3-2 + G3-3 + G3-7" 영역 명시. **본 흡수 = §3.1.2 본문 갱신 + 핵심 요약 갱신 한정 — §3.5 Rollback / §3.6 Evidence / §5 통합 PASS / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. |
 | 2026-05-12 | 신규 작성 (DRAFT) | MVP-1 deepening (GP-3 + GP-5) — 사용자 명시 답습: 단일 새 문서 + 수단 후보 비교 + threshold 후보 + Reviewer-only 단축 합의 진행 예정. 실 runtime code 구현 / CI/hook 구현 / Hermes PMO 격상 / Operational Readiness PASS 선언 모두 본 작업 범위 외. `implementation-runtime-roadmap.md` 17 항목 우선순위 매트릭스 (Order 1 = GP-5, Order 4 = GP-3) 의 MVP-1 영역 deepening 한정. 외부 LLM 응답 line 242 + C-7 line 378 + 본 문서 §1 통합 = MVP-1 = G2 GP-3 + GP-5 (GP-2 = MVP-2 분리 답습). 3-layer PASS 분리 (Design Gate / Implementation Evidence / Operational Readiness) 재명시 + MVP-1 위치 = Implementation Evidence PASS 1차. GP-3 PoC (Group D) + GP-5 PoC (Group A 1차/2차/3차) 답습. GP-3 코드 본문 5 수단 (S-1~S-5) + 저장 경로 5 수단 (ST-1~ST-5) + GP-5 Layer 1 도구 6 수단 (T-1~T-6) + pre-commit 4 수단 (PC-1~PC-4) + PR auto-reject 3 수단 (AR-1~AR-3). Rollback Trigger 통합 18 + Evidence Ledger 4 enum 후보 + 합의 형태 권고. |
 

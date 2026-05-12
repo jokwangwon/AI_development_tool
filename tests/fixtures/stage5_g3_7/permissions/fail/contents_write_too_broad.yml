@@ -1,0 +1,26 @@
+# Stage 5 Cycle 4 fixture — FAIL expected (contents: write — too broad)
+#
+# 본 fixture = top-level permissions: contents: write (read 기준 초과).
+#   - contents: write 는 repo 쓰기 권한 → contents: read 기준 위반
+# → tools/workflow_permissions_check.py rc=1, violations>=1 (permissions-contents-broader)
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — contents write too broad (FAIL)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+permissions:
+  contents: write
+
+jobs:
+  sample_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sample step
+        run: |
+          set -e
+          echo "sample_job runs with contents: write — FAIL"

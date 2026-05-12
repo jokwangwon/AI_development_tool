@@ -1,0 +1,40 @@
+# Stage 5 Cycle 2 fixture — PASS expected
+#
+# 본 fixture = secrets 참조 0건 sample workflow snippet.
+#   - env / with / run / if 모든 context 에서 ``secrets.*`` 없음
+#   - ``secrets:`` block header 없음
+# → tools/workflow_secrets_reference_check.py rc=0, violations=0
+#
+# 본 fixture 는 실 workflow 가 아니며 (CI 실행 0건) — 정적 verifier 입력 데이터 한정.
+
+name: Fixture — secrets reference 0 (PASS)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+permissions:
+  contents: read
+
+jobs:
+  clean_ref:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    env:
+      BUILD_MODE: "release"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Sample non-secret env step
+        env:
+          LOG_LEVEL: "info"
+        if: ${{ env.BUILD_MODE == 'release' }}
+        run: |
+          set -e
+          echo "BUILD_MODE=$BUILD_MODE"
+          echo "LOG_LEVEL=$LOG_LEVEL"
+          echo "clean_ref=PASS"

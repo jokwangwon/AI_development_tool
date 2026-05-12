@@ -136,6 +136,37 @@ jobs:
           rm -f src/__transitive_probe__.py
           echo "Probe cleanup: $(ls src/__transitive_probe__.py 2>/dev/null && echo "STILL EXISTS — 우발적 commit 차단 by .gitignore" || echo "removed")"
 
+      - name: MVP-1 entry — provider AST scanner coverage check (mvp1_entry/ fixtures)
+        id: mvp1_entry_ast
+        run: |
+          set +e
+          python tools/provider_import_scanner.py tests/fixtures/provider_adapter_enforcement/mvp1_entry/fail/ > mvp1_entry_ast_fail.txt
+          rc_fail=$?
+          python tools/provider_import_scanner.py tests/fixtures/provider_adapter_enforcement/mvp1_entry/pass/ > mvp1_entry_ast_pass.txt
+          rc_pass=$?
+          set -e
+          cat mvp1_entry_ast_fail.txt
+          cat mvp1_entry_ast_pass.txt
+          if [ "$rc_fail" -ne 1 ]; then
+            echo "::error::MVP-1 entry AST fail scan expected rc=1, got rc=$rc_fail"
+            exit 1
+          fi
+          if [ "$rc_pass" -ne 0 ]; then
+            echo "::error::MVP-1 entry AST pass scan expected rc=0, got rc=$rc_pass (FP detected)"
+            exit 1
+          fi
+          # Verify ollama direct + google.generativeai from + openai aliased cover
+          for token in "direct-import:ollama" "from-import:google.generativeai" "direct-import:openai"; do
+            if ! grep -q "$token" mvp1_entry_ast_fail.txt; then
+              echo "::error::MVP-1 entry AST fail scan missing token: $token"
+              exit 1
+            fi
+          done
+          echo "mvp1_entry_ast=PASS" >> $GITHUB_OUTPUT
+          # Ledger entry candidate (사용자 명시 답습 — Backlog #5 별도 합의 영역)
+          echo "ledger_event_candidate=provider_adapter_enforcement_layer1_static" >> $GITHUB_OUTPUT
+          echo "MVP-1 entry AST scan OK — fail rc=1 + ollama/google.generativeai/openai-alias cover, pass rc=0"
+
       - name: Evidence summary
         if: always()
         run: |
@@ -146,3 +177,7 @@ jobs:
           echo "- event: provider_adapter_enforcement_layer1_static" >> $GITHUB_STEP_SUMMARY
           echo "- agent: user" >> $GITHUB_STEP_SUMMARY
           echo "- ledger_layer: Layer 1 (Entry) — 1차 AST scanner + 2차 import-linter" >> $GITHUB_STEP_SUMMARY
+          echo "- mvp1_entry_ast: ${{ steps.mvp1_entry_ast.outputs.mvp1_entry_ast || 'FAIL' }} (ollama + google.generativeai + openai-alias cover)" >> $GITHUB_STEP_SUMMARY
+          echo "- mvp1_entry_ledger_event_candidate: ${{ steps.mvp1_entry_ast.outputs.ledger_event_candidate || 'provider_adapter_enforcement_layer1_static' }} (후보 한정 — Backlog #5 별도 합의 영역)" >> $GITHUB_STEP_SUMMARY
+          echo "- mvp1_entry_evidence_form: Markdown step summary + AST scanner stdout/stderr + actual run URL (Layer C 발효 시점 의무)" >> $GITHUB_STEP_SUMMARY
+          echo "- mvp1_entry_scope: Stage 3 (T-6 = T-2 + T-5) MVP-1 entry coverage 회귀 — Layer C / MVP-1 PASS / Operational Readiness / Hermes PMO 격상 0건" >> $GITHUB_STEP_SUMMARY

@@ -212,6 +212,54 @@ jobs:
           echo "forbidden_check=PASS" >> $GITHUB_OUTPUT
           echo "F-금지 자기 검증 OK — 0/8 위반"
 
+      - name: MVP-1 entry — URL/model coverage check (mvp1_entry/ fixtures)
+        id: mvp1_entry_url_model
+        run: |
+          set +e
+          # URL endpoint MVP-1 entry fail (6 remaining vendors)
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/mvp1_entry/url_endpoint/fail/ \
+            > group-a3-logs/mvp1-entry-e1-fail.stdout 2> group-a3-logs/mvp1-entry-e1-fail.stderr
+          rc_e1_fail=$?
+          # URL endpoint MVP-1 entry pass (yaml allowlist)
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/mvp1_entry/url_endpoint/pass/ \
+            > group-a3-logs/mvp1-entry-e1-pass.stdout 2> group-a3-logs/mvp1-entry-e1-pass.stderr
+          rc_e1_pass=$?
+          # Model name MVP-1 entry fail (o-series + Mistral family)
+          python tools/provider_url_scanner.py --mode model-name \
+            tests/fixtures/provider_url_scanner/mvp1_entry/model_name/fail/ \
+            > group-a3-logs/mvp1-entry-e2-fail.stdout 2> group-a3-logs/mvp1-entry-e2-fail.stderr
+          rc_e2_fail=$?
+          set -e
+          cat group-a3-logs/mvp1-entry-e1-fail.stderr
+          cat group-a3-logs/mvp1-entry-e1-pass.stderr
+          cat group-a3-logs/mvp1-entry-e2-fail.stderr
+          if [ "$rc_e1_fail" -ne 1 ]; then
+            echo "::error::MVP-1 entry E-1 fail expected rc=1, got rc=$rc_e1_fail"; exit 1
+          fi
+          if [ "$rc_e1_pass" -ne 0 ]; then
+            echo "::error::MVP-1 entry E-1 pass expected rc=0, got rc=$rc_e1_pass (FP detected)"; exit 1
+          fi
+          if [ "$rc_e2_fail" -ne 1 ]; then
+            echo "::error::MVP-1 entry E-2 fail expected rc=1, got rc=$rc_e2_fail"; exit 1
+          fi
+          # Cover check — 6 URL vendors + 5 model patterns
+          for pid in "replicate" "perplexity" "cohere" "huggingface" "together" "openrouter"; do
+            if ! grep -q "$pid" group-a3-logs/mvp1-entry-e1-fail.stderr; then
+              echo "::error::MVP-1 entry E-1 fail missing vendor: $pid"; exit 1
+            fi
+          done
+          for pid in "openai-o1" "openai-o3" "mistral-mistral" "mistral-mixtral" "mistral-codestral"; do
+            if ! grep -q "$pid" group-a3-logs/mvp1-entry-e2-fail.stderr; then
+              echo "::error::MVP-1 entry E-2 fail missing pattern: $pid"; exit 1
+            fi
+          done
+          echo "mvp1_entry_url_model=PASS" >> $GITHUB_OUTPUT
+          # Ledger entry candidate (사용자 명시 답습 — Backlog #5 별도 합의 영역)
+          echo "ledger_event_candidate=provider_adapter_enforcement_layer1_static" >> $GITHUB_OUTPUT
+          echo "MVP-1 entry URL/model scan OK — E-1 6 vendors + E-2 5 patterns cover"
+
       - name: Build summary.json (Evidence summary 답습)
         if: always()
         run: |
@@ -223,6 +271,11 @@ jobs:
             "e2_pass": "${{ steps.e2_pass.outputs.e2_pass || 'FAIL' }}",
             "e2_fail": "${{ steps.e2_fail.outputs.e2_fail || 'FAIL' }}",
             "forbidden_check": "${{ steps.forbidden_check.outputs.forbidden_check || 'FAIL' }}",
+            "mvp1_entry_url_model": "${{ steps.mvp1_entry_url_model.outputs.mvp1_entry_url_model || 'FAIL' }}",
+            "mvp1_entry_ledger_event_candidate": "${{ steps.mvp1_entry_url_model.outputs.ledger_event_candidate || 'provider_adapter_enforcement_layer1_static' }}",
+            "mvp1_entry_ledger_event_registration": "candidate-only (Backlog #5 분리 — ADR-012 §2.2 enum 정식 등록 별도 합의)",
+            "mvp1_entry_evidence_form": "Markdown step summary + JSONL stub (mvp1-entry-e1/e2 stderr) + actual run URL — Layer C 발효 시점 의무",
+            "mvp1_entry_scope": "Stage 3 Layer 1c MVP-1 entry coverage 회귀 — Layer C / MVP-1 PASS / Operational Readiness / Hermes PMO 격상 0건",
             "f_forbidden_violations": "0/8",
             "escalation_triggers": "0/6",
             "url_endpoint_catalog": "10",
@@ -263,6 +316,9 @@ jobs:
             echo "- e2_pass: ${{ steps.e2_pass.outputs.e2_pass || 'FAIL' }}"
             echo "- e2_fail: ${{ steps.e2_fail.outputs.e2_fail || 'FAIL' }} (4 vendor cover: anthropic-claude + openai-gpt + google-gemini + meta-llama)"
             echo "- forbidden_check: ${{ steps.forbidden_check.outputs.forbidden_check || 'FAIL' }} (실 API key / endpoint 호출 / production data 0건)"
+            echo "- mvp1_entry_url_model: ${{ steps.mvp1_entry_url_model.outputs.mvp1_entry_url_model || 'FAIL' }} (E-1 6 vendors + E-2 5 patterns cover)"
+            echo "- mvp1_entry_ledger_event_candidate: ${{ steps.mvp1_entry_url_model.outputs.ledger_event_candidate || 'provider_adapter_enforcement_layer1_static' }} (후보 한정 — Backlog #5 별도 합의 영역)"
+            echo "- mvp1_entry_evidence_form: Markdown step summary + JSONL stub + actual run URL (Layer C 발효 시점 의무)"
             echo "- f_forbidden_violations: 0/8 (사용자 명시 8 금지 답습)"
             echo "- escalation_triggers: 0/6 (사용자 명시 풀 3+1 승격 trigger 답습)"
             echo "- external_dependencies: 0 (stdlib 단독)"

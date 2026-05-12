@@ -10,6 +10,8 @@
 >
 > **§1.2.6 P10 Evidence Forgery 정식 등록 (2026-05-09 후속 5 단축 합의 APPROVE Reviewer-only)**: ADR-012 §1.4 cross-reference + Hermes 변조 차단 매트릭스 4항목 + Layer 1~5 enforcement.
 >
+> **§1.2.7 P11 Supply-chain Compromise 정식 등록 (2026-05-12 단축 합의 적격 — Reviewer-only)**: Gate Enforcement Layer 보호 보강 (G3 §2.6, 2026-05-12 commits `3e46440` + `fa2cbdb`) 시점 트리거 답습. 5 측면 (Dependency Pinning Integrity / Checksum / Action SHA Pin / Docker Digest Pin / Vendor Change Auto-recheck) + 5 Layer 다층 강제 + Enforcement Tool Self-protection + 5 기준 (감지/차단/Evidence/Rollback/사용자 승인). **Hermes PMO 격상 *전* precondition 권장 (blocking 아님)** — Implementation/Runtime PASS 영역의 우선 권장 항목 (Claude C-3 + C-6 답습). 외부 LLM Gap-N 중 N-5 (supply chain / dependency integrity) 답습. **본 §1.2.7 = P11 row 추가 한정 — runtime code 구현 / CI workflow 수정 / hook 구현 / 신규 GP 신설 / 신규 ADR 발행 / Hermes PMO 격상 / Operational Readiness PASS / Implementation/Runtime PASS / G2/G3/G4 PASS 재선언 / ADR 본문 자동 갱신 모두 본 작업 범위 외** (사용자 명시 답습).
+>
 > **P2 v3 (`hermes-adoption-design-v3.md`) = Adopted (Design Adoption only, 2026-05-09 후속 6)** 후속 권위. 본 G2 = P2 v3 §4 (G2 정의) + P2 v3 §3.1.4 Implementation Pending 표 + P2 v3 §10.1 Normative Constraints + §10.2 Archive Migration Note + §11.1 Hermes PMO 격상 전 인간 전문 리뷰 의무화 답습.
 >
 > **P2 v2 (`hermes-adoption-design.md`) = Archived (옵션 A 최소 침습, 2026-05-09 후속 7)** + **`system-identity-prequel.md` = Archived (옵션 A, 2026-05-09 후속 8)** — 본 G2 cross-reference 영향 0건 (path 변경 0건).
@@ -111,18 +113,21 @@
 | **P7** | **모델명/Provider 분기 코드** | `if model == "claude-opus-4-7": ... elif model == "gpt-5.5": ...` 또는 provider 별 후처리 분기 / Skill 내 모델 가정 (ADR-008 §결과 §주의사항 6종) | Provider 교체 자유 (코드 변경 없이) | **차단조건 #4** (P1 v2 depcruise 룰) |
 | **P8** | **Memory / Skill Hermes 종속 형식** | Skill 정의 / Memory entry 가 Hermes 자체 schema (binary protocol / proprietary key) 사용으로 다른 오케스트레이터 import 불가 | Provider 교체 자유 (학습 자산 유지) | **차단조건 #2** (JSONL export) + **G4** (Provider-agnostic Memory/Skill 형식) |
 
-#### 1.2.3 정식 위반 경로 합산 (P1~P8 + P10, 2026-05-09 후속 5 갱신)
+#### 1.2.3 정식 위반 경로 합산 (P1~P8 + P10 + P11, 2026-05-12 갱신)
 
 ```
 헌법 8조 (보안) 위반 경로 = 5건 (P1~P5)
 Provider Liquidity 위반 경로 = 3건 (P6~P8)
 Evidence Integrity 위반 경로 = 1건 (P10)            ← 2026-05-09 후속 5 정식 등록
+Supply-chain Integrity 위반 경로 = 1건 (P11)        ← 2026-05-12 정식 등록
 ─────────────────────────────────────────────────
-정식 위반 경로 합계 = 9건 (P1~P8 + P10)            ← ✅ 합의 §29~§30 일치 + ADR-012 발행 시점 P10 흡수
-Deferred candidates = 3건 (P9 / P11 / P12, §1.2.5)
+정식 위반 경로 합계 = 10건 (P1~P8 + P10 + P11)     ← ✅ 합의 §29~§30 일치 + ADR-012 발행 시점 P10 흡수 + Gate Enforcement Layer 보호 보강 시점 P11 흡수
+Deferred candidates = 2건 (P9 / P12, §1.2.5)
 ```
 
 P10 정식 등록 = ADR-012 (Evidence Ledger Protection) 발행 시점 (2026-05-09 후속 3 PR-2) 트리거 답습 — §1.2.5.2 명시 "P10 정식 등록 시점 = PR-2 신규 ADR-012 발행 시점" 답습. 본 §1.2.6 답습.
+
+P11 정식 등록 = Gate Enforcement Layer 보호 보강 (2026-05-12, commits `3e46440` + `fa2cbdb`) 시점 트리거 — §1.2.5 명시 "P11 정식 등록 시점 = SBOM + supply-chain 검증 PoC 합의 시점, Hermes PMO 격상 *전* 권장" + 본 보강 작업의 Layer 2 (CI / hook / test) enforcement mechanism 이 supply-chain compromise 로 무력화 가능 + 외부 LLM Gap-N 중 N-5 supply chain / dependency integrity 답습. 본 §1.2.7 답습.
 
 #### 1.2.4 본 §1.2 가 *다루지 않는* 위반 경로
 
@@ -141,7 +146,7 @@ P10 정식 등록 = ADR-012 (Evidence Ledger Protection) 발행 시점 (2026-05-
 |--------|-------------|--------|----------|----------|
 | **P9 (후보)** | **Prompt Injection** — Hermes / Worker / LLM 출력 내 *지시 명령* 이 후속 LLM / Tool 에 의해 *명령* 으로 해석 (예: "ignore previous instructions ...") | 합의 결과 silent override / 자동 정책 변경 위장 / Skill escalation | deferred (GPT 조건 7) | 외부 입력 검증 GP-4 PoC 진입 시점에 P5 (외부 입력 검증) 와 *별 카테고리* 로 정식 등록 검토 |
 | ~~**P10 (후보)**~~ → **P10 (정식 등록 완료, §1.2.6 답습, 2026-05-09 후속 5)** | **Evidence Forgery** — JSONL ledger / 합의 보고서 / GitHub Actions run artifact 위조 또는 변조 | PASS 위장 / Hermes-originated 변경 위장 / 합의 권위 침해 | ✅ **정식 등록 완료 (§1.2.6 답습)** | ✅ **2026-05-09 후속 5** — PR-2 ADR-012 발행 (2026-05-09 후속 3) 시점 트리거 답습 → 본 단축 합의 (Reviewer-only) 로 정식 등록 |
-| **P11 (후보)** | **Supply-chain Compromise** — Hermes / pysqlcipher3 / litellm / Hermes-agent 의존성 또는 GitHub Actions runner / Docker base image 침해 | 자동 redaction 무력화 / SQLCipher trigger silent 깨짐 / canary catalog silent 변경 / R-6 actual run 위장 | deferred (GPT 조건 7) | 의존성 SBOM (Software Bill of Materials) + supply-chain 검증 PoC 합의 시점에 정식 등록 — Hermes PMO 격상 *전* 권장 (Claude C-3 + C-6 답습) |
+| ~~**P11 (후보)**~~ → **P11 (정식 등록 완료, §1.2.7 답습, 2026-05-12)** | **Supply-chain Compromise** — Hermes / pysqlcipher3 / litellm / Hermes-agent 의존성 또는 GitHub Actions runner / Docker base image 침해 | 자동 redaction 무력화 / SQLCipher trigger silent 깨짐 / canary catalog silent 변경 / R-6 actual run 위장 / Gate Enforcement Layer Layer 1~4 (lint/test/hook/CI) 무력화 | ✅ **정식 등록 완료 (§1.2.7 답습)** | ✅ **2026-05-12** — Gate Enforcement Layer 보호 보강 (commits `3e46440` + `fa2cbdb`) 시점 트리거 답습 → 본 단축 합의 (Reviewer-only) 로 정식 등록. **Hermes PMO 격상 *전* precondition (권장)** — blocking 까지는 아님, Implementation/Runtime PASS 영역의 *우선 권장 항목* (Claude C-3 + C-6 답습) |
 | **P12 (후보)** | **Memory Poisoning Side-channel** — Memory / Skill 의 *우회 경로* (CLAUDE.md prompt-level lock-in / 외부 import skill / Memory 자동 흡수) 를 통한 Memory 오염 + 후속 결정 silent 영향 | 자동 학습 → 자동 정책 변경 위장 (T1 → T3 우회) / Skill 권한 escalation 우회 / Provider lock-in 우회 | deferred (Claude C-4 + GPT 조건 7) | G4 (provider-agnostic-memory-skill-design.md) Implementation/Runtime PASS 합의 시점에 정식 등록 — Memory boundary hook + Skill wrapper 실 구현 후 |
 
 ##### 1.2.5.1 추가 후보 (lower priority, 2 건)
@@ -160,9 +165,9 @@ P10 정식 등록 = ADR-012 (Evidence Ledger Protection) 발행 시점 (2026-05-
 
 ##### 1.2.5.3 본 §1.2.5 가 *하지 않는* 것
 
-- ❌ P9 / P11 / P12 자동 정식 등록 (각 후보 별도 합의 시점) — **P10 은 §1.2.6 답습 정식 등록 완료 (2026-05-09 후속 5)**
+- ❌ P9 / P12 자동 정식 등록 (각 후보 별도 합의 시점) — **P10 은 §1.2.6 답습 정식 등록 완료 (2026-05-09 후속 5) / P11 은 §1.2.7 답습 정식 등록 완료 (2026-05-12)**
 - ❌ 현 G2 PASS 무력화 (deferred 는 *후속* 영역)
-- ❌ Hermes PMO 격상 전 P9 / P11 / P12 enforcement 의무 (격상 합의 시점 또는 별도 합의)
+- ❌ Hermes PMO 격상 전 P9 / P12 enforcement 의무 (격상 합의 시점 또는 별도 합의) — **P11 = Hermes PMO 격상 전 precondition 권장 (blocking 아님, Implementation/Runtime PASS 영역, §1.2.7 답습)**
 - ❌ P13 ~ P14 정식 등록 (관용 권위로 흡수, 별도 P 불필요)
 
 #### 1.2.6 Evidence Integrity 위반 경로 1건 (P10) — 정식 등록 (2026-05-09 후속 5)
@@ -223,13 +228,105 @@ P10 정식 등록 = ADR-012 (Evidence Ledger Protection) 발행 시점 (2026-05-
 - ❌ ADR-009 추가 갱신 (C-N 별도)
 - ❌ G3 / G4 본문 자동 갱신 (cross-reference 만)
 - ❌ 신규 GP 신설 (별도 합의 영역)
-- ❌ P9 / P11 / P12 자동 정식 등록 (각 후보 별도 합의 시점 답습)
+- ❌ P9 / P12 자동 정식 등록 (각 후보 별도 합의 시점 답습) — **P11 은 §1.2.7 답습 정식 등록 완료 (2026-05-12)**
 - ❌ P10 enforcement Implementation 자동 (Implementation/Runtime PASS 별도)
 - ❌ R-6 workflow ledger 검증 step 자동 추가 (Implementation 영역)
 - ❌ Hermes-originated commit auto-reject 자동 구현 (Implementation 영역)
 - ❌ Hermes PMO 격상 자동 선언
 - ❌ P2 v3 정식 채택 자동 선언 (다음 진입점 풀 3+1 합의)
 - ❌ P2 v2 / system-identity-prequel archive 자동 처리
+
+#### 1.2.7 Supply-chain Integrity 위반 경로 1건 (P11) — 정식 등록 (2026-05-12)
+
+> **본 §1.2.7 은 §1.2.5 명시 "P11 정식 등록 시점 = SBOM + supply-chain 검증 PoC 합의 시점, Hermes PMO 격상 *전* 권장" 답습 흡수.** Gate Enforcement Layer 보호 보강 (2026-05-12, commits `3e46440` + `fa2cbdb`) 시점이 P11 정식 등록 *트리거* — 본 보강 작업의 Layer 2 (CI / hook / test) enforcement mechanism 이 supply-chain compromise 로 무력화 가능 + 외부 LLM Gap-N 중 N-5 supply chain / dependency integrity 답습. 본 후속 단축 합의 (Reviewer-only) 로 정식 등록.
+
+##### 1.2.7.1 P11 정식 row
+
+| # | 경로 | 시나리오 | Supply-chain Integrity 측면 (5건) | 관련 ADR / 게이트 / 합의 |
+|---|------|---------|--------------------------|------------------|
+| **P11** | **Supply-chain Compromise** | (a) Hermes / pysqlcipher3 / litellm / Hermes-agent / agents-sdk 의존성 (PyPI / 외부 소스) 침해 — 악성 코드 주입 / typosquatting / dependency confusion (b) GitHub Actions runner image / 3rd-party action 침해 — workflow step 위장 / artifact 변조 (c) Docker base image 침해 — 자동 redaction 무력화 / canary catalog silent 변경 / SQLCipher trigger silent 깨짐 (d) Vendor 변경 silent — `hermes-version.yaml` / `requirements.txt` / `pyproject.toml` / lock 파일의 silent drift (e) Tooling supply chain — `import-linter` / `grimp` / `rfc8785` / `jcs` / `gitleaks` 등 *enforcement tool 자체* 침해 → Gate Enforcement Layer Layer 1~4 무력화 | (i) **Dependency Pinning Integrity** — `hermes-version.yaml` v0.12.0 명시 + `requirements.txt` / `pyproject.toml` / `poetry.lock` 정확 핀 + lock 파일 git diff 회귀 검출 (G3 §3.2.2 #3 답습) / (ii) **Checksum / Hash Verification** — pip install `--require-hashes` + SBOM 정합성 + 패키지 sha256 매니페스트 검증 / (iii) **GitHub Actions Action SHA Pinning** — `uses: actions/checkout@<commit_sha>` (not `@v4` tag) + 3rd-party action 사용 시 commit SHA pin 강제 / (iv) **Docker Base Image / Runner Image Immutability** — `FROM python:3.11@sha256:<digest>` digest 고정 + reproducible build + cosign 또는 동등 image signing verification (별도 합의 영역) / (v) **Vendor Change Auto-recheck** — 의존성 lock diff 검출 시 R-6 actual run 자동 R-2 / R-4.1 PoC 재실행 + canary 자동 검증 PASS 후만 merge (G3 §3.2.3 #2 답습) | **G3 §3.2** (Upstream Silent Breakage 5 측면 + ROLLBACK trigger R6) + **G3 §2.5 #14** (`hermes-version.yaml` + dependency lock T2 사용자 명시 PR merge) + **G3 §2.6** (Gate Enforcement Layer 보호 — Layer 1~4 enforcement mechanism 무력화 위험 cross-reference) + **GP-2 / GP-3 / GP-5** (redaction / credential / provider lock-in supply-chain 침해 시 무력화 위험 cross-reference) + **ADR-008 차단조건 #3** (Hermes 의존성 업그레이드 자동 R-2 재실행) + **외부 LLM Gap-N 중 N-5** (supply chain / dependency integrity 답습) + 본 §1.2.7 단축 합의 (Reviewer-only) |
+
+##### 1.2.7.2 P11 enforcement layer 매핑 (5 Layer 다층 강제)
+
+본 P11 enforcement 는 **G3 §3.2 직접 권위** + **G3 §2.5 #14** + **GP-2/GP-3/GP-5 cross-reference** 답습. *별도 GP 신설 부재* (사용자 명시 답습 — 본 §1.2.7 = P11 row 추가 한정, GP 신설은 별도 합의 영역):
+
+| Enforcement Layer | 책임 영역 | 권위 |
+|----|--------|----|
+| **Layer 1** (Lockfile + Version Pin) | Dependency drift 차단 | G3 §2.5 #14 (T2 사용자 명시 PR merge) + ADR-008 차단조건 #3 + `hermes-version.yaml` v0.12.0 핀 + `requirements.txt` / `pyproject.toml` / `poetry.lock` 정확 핀 |
+| **Layer 2** (GitHub Actions Action SHA Pin + Docker Image Digest Pin) | CI / Image silent 변경 차단 | G3 §2.6 §2.6.3 (b) (Hook / CI workflow 비활성화 차단) cross-reference + 별도 합의 영역 (Implementation/Runtime PASS — 3rd-party action 사용 시 commit SHA pin 강제 hook + Docker FROM digest 고정) |
+| **Layer 3** (Checksum / Hash Verification + SBOM) | Tampered package 차단 | pip `--require-hashes` + SBOM 정합성 (예: `pip-audit` / `safety` / `cyclonedx-py`) + 별도 합의 영역 (Implementation/Runtime PASS — SBOM 생성 / 검증 hook) |
+| **Layer 4** (CI 회귀 검증 — Vendor Change Auto-recheck) | 의존성 lock diff 감지 시 자동 R-2 / R-4.1 PoC 재실행 + canary 자동 검증 + R-6 actual run PASS 후만 merge | G3 §3.2.2 #3 + §3.2.3 #2 (이미 G3 본문 권위) + R-6 workflow 답습 확장 (Implementation 영역) |
+| **Layer 5** (External SBOM Publication + Cross-vendor Verification) | 1인 SPOF 완화 + 침해 후 발견 | 별도 합의 영역 (Implementation/Runtime PASS — Hermes PMO 격상 *전* precondition 권장, Claude C-3 + C-6 답습) — 외부 SBOM 게시 + 외부 verification 서비스 (예: sigstore / Rekor) 통합 |
+| **Enforcement Tool Self-protection** | `import-linter` / `grimp` / `rfc8785` / `jcs` / `gitleaks` 등 Gate Enforcement Layer 가 사용하는 도구 자체의 SBOM + pin 강제 | 본 P11 핵심 — Gate Enforcement Layer Layer 1~4 가 *사용하는 도구* 자체가 supply-chain 침해 시 Layer 1~4 무력화 위험. G3 §2.6.3 (b) Hook / CI workflow 비활성화 차단 답습 확장 |
+
+##### 1.2.7.3 P11 5 기준 (감지 / 차단 / Evidence / Rollback / 사용자 승인)
+
+| 기준 | 사양 | 권위 |
+|----|----|----|
+| **감지 (Detection)** | (1) `requirements.txt` / `pyproject.toml` / `poetry.lock` / `hermes-version.yaml` git diff 자동 점검 (every commit + nightly) (2) GitHub Actions workflow `uses:` action 의 `@<tag>` vs `@<sha>` 패턴 자동 점검 (3) Docker `FROM` 의 `@sha256:<digest>` 정합성 점검 (4) `pip install --require-hashes` 강제 — hash 부재 시 install 차단 (5) SBOM diff 검출 (cyclonedx-py 등, 별도 합의) | G3 §3.2.2 답습 + Layer 2 / Layer 3 cross-reference |
+| **차단 (Blocking)** | (1) `hermes-version.yaml` / lock 파일 미명시 또는 silent drift = PR auto-reject (2) Action `@<tag>` 형태 사용 = workflow 검증 step FAIL (3) Docker base image digest 부재 = image build BLOCK (4) `pip install` hash mismatch = install BLOCK (5) Vendor 변경 PR 시 R-2 / R-4.1 PoC 자동 재실행 FAIL = merge BLOCK (G3 §3.2.3 #2 답습) | G3 §3.2.3 + Layer 1 ~ Layer 4 |
+| **Evidence** | (i) Markdown report: 의존성 변경 본문 + lock diff + SBOM diff (ii) JSONL ledger entry: `{"event": "upstream_recheck", "agent": "user", "result": "PASS"|"FAIL", "ref": "<run_id>", "content": {"diff": "<lock_diff_summary>", "sbom_delta": [...]}}` (G3 §3.2.4 답습) (iii) GitHub Actions run ID + verdict PASS evidence (iv) Artifact `r2-r4-canary-evidence` 답습 (canary-output.log + canary-evidence.json) (v) **`agent="user"` 강제** (ADR-012 §2.1 원칙 7 답습 — Hermes-originated dependency upgrade PR 자동 merge 차단) | G3 §3.2.4 + ADR-012 §2.1 + Layer 4 |
+| **Rollback** | (1) R-7 SOP §5 ROLLBACK trigger R6 (upstream breakage) 답습 — `hermes-version.yaml` 변경 PR 의 R-6 actual run FAIL 시 (2) 이전 버전 핀 복귀 + canary catalog 재검증 + 사용자 명시 검토 (3) supply-chain 침해 의심 시 → 침해 의심 dependency 영구 격리 + 외부 LLM 의견 의무 (cross-vendor verification) (4) Gate Enforcement Layer Layer 1~4 무력화 의심 시 → Hermes 컨테이너 정지 + 사용자 명시 alert + G3 §2.6.5 답습 (`gate_enforcement_bypass_detected` rollback_trigger 발화) | G3 §3.2.5 + R-7 SOP §5 + G3 §2.6.5 |
+| **사용자 승인 (User Approval)** | (i) 의존성 업그레이드 PR merge = **T2 사용자 명시 결정** (G3 §3.2.6 답습 — Hermes 자동 PR 생성 OK, 자동 merge 금지) (ii) `hermes-version.yaml` 신규 핀 등록 = T2 사용자 명시 + 사후 R-6 actual run PASS 의무 (iii) Action `@<sha>` 신규 등록 = T2 사용자 명시 (iv) Docker base image digest 변경 = T2 사용자 명시 + canary catalog 자동 재검증 (v) **Rollback 자체는 자동** (FAIL 시 차단 = 자동 안전 동작, ADR-011 §2.4 T3 자동 안전) | G3 §3.2.6 + ADR-011 §2.4 T2/T3 |
+
+##### 1.2.7.4 P11 처리 범위 (사용자 명시 답습)
+
+| 차원 | 본 §1.2.7 처리 |
+|----|----|
+| **상태** | Deferred Candidate (§1.2.5) → **Formal P-row (§1.2.7)** |
+| **처리 범위** | Design/Governance row 추가 한정 |
+| **Implementation status** | **Pending** — 별도 Implementation/Runtime PASS 합의 (실 SBOM 생성 / 검증 hook / Action SHA pin lint / Docker digest 검증 / pip --require-hashes 강제 / SBOM diff 회귀 검증 step 모두 미구현) |
+| **GP 매핑** | 별도 합의 영역 (본 §1.2.7 = P11 row 추가 한정, GP 신설 또는 기존 GP 매핑 갱신은 별도) — 단, *enforcement 권위* = G3 §3.2 + §2.5 #14 + §2.6 직접 답습 |
+| **Hermes PMO 격상 전 blocking 또는 precondition** | **Precondition 권장 (blocking 아님)** — Implementation/Runtime PASS 영역의 *우선 권장 항목* (Claude C-3 + C-6 답습). 격상 합의 시점에 P11 enforcement layer 5 layer 中 Layer 1 + Layer 4 *최소* 충족 의무 (Layer 2 + 3 + 5 = 격상 *후* 단계적 강화 권장) |
+
+##### 1.2.7.5 P11 정식 등록의 합의 권위
+
+본 P11 정식 등록 = **단축 합의 (Reviewer-only) 적격** (사용자 명시 답습):
+- Gate Enforcement Layer 보호 보강 (2026-05-12, commits `3e46440` + `fa2cbdb`) 권위 *내부* 작업 — Layer 2 enforcement mechanism 보호의 *논리적 연장*
+- 외부 LLM Gap-N 중 N-5 (supply chain / dependency integrity) 답습 — *원안 도입 아님*
+- §1.2.5 명시 "P11 정식 등록 시점 = SBOM + supply-chain 검증 PoC 합의 시점, Hermes PMO 격상 *전* 권장" → 본 시점 = Gate Enforcement Layer 보호 보강 + 외부 LLM Gap-N N-5 trigger 답습
+- 본 P11 정식 row 본문 = G3 §3.2 / §2.5 #14 / §2.6 / ADR-008 차단조건 #3 / R-7 SOP §5 답습 한정 (새 권위 결정 0건)
+
+**5 풀 3+1 승격 트리거 검증** (사용자 명시 답습):
+
+| 트리거 | 본 §1.2.7 |
+|----|----|
+| P11 이 기존 P1~P12 구조와 충돌 | ❌ — §1.2.5 deferred 에 이미 등록, 정식 row 승격은 §1.2.5 명시 트리거 답습 |
+| Supply-chain Compromise 가 G3 §3.2 범위를 넘어 새 정책 변경 요구 | ❌ — G3 §3.2 + §2.5 #14 + §2.6 + ADR-008 차단조건 #3 답습 한정, 새 정책 0건 |
+| G2 / G3 / G4 Design PASS 상태를 흔드는 내용 | ❌ — §1.2 본문 추가, GP 매핑 변경 0건, 게이트 PASS 상태 영향 0 |
+| T3 자동 정책 변경 영역 발생 | ❌ — 정식 row 등록 자체는 T3 변경이지만 *Gate Enforcement Layer 보호 보강 권위 내부* 작업, 사용자 명시 결정 답습 |
+| Hermes PMO 격상 blocking 결정 발생 | ❌ — precondition 권장 (blocking 아님) 답습 — 격상 자체는 별도 합의 |
+
+→ **5/5 트리거 0건 발화** → **단축 합의 (Reviewer-only) 적격**.
+
+##### 1.2.7.6 본 §1.2.7 이 *하지 않는* 것
+
+- ❌ runtime code 구현 (SBOM 생성 / 검증 hook / Action SHA pin lint / Docker digest 검증 / pip --require-hashes 강제 / SBOM diff 회귀 검증 step / cosign 통합 / sigstore Rekor 통합 등)
+- ❌ CI workflow 수정 (R-6 workflow Layer 2/3/4 검증 step 자동 추가 등)
+- ❌ hook 구현 (pre-commit / GitHub Actions workflow lint / Docker image build hook 등)
+- ❌ 신규 GP 신설 (별도 합의 영역)
+- ❌ 신규 ADR 발행 (Supply-chain Integrity ADR 후보 검토는 별도)
+- ❌ G3 / G4 본문 자동 갱신 (cross-reference 한정 — 본 §1.2.7 권위는 G3 §3.2 + §2.5 #14 + §2.6 답습)
+- ❌ ADR-008 / ADR-009 / ADR-010 / ADR-011 / ADR-012 본문 자동 갱신
+- ❌ Hermes PMO 격상 자동 선언 — P11 = **precondition 권장 (blocking 아님)**
+- ❌ Operational Readiness PASS / Implementation/Runtime PASS 자동 선언
+- ❌ G2 / G3 / G4 PASS 재선언 (Design/Governance Gate PASS 권위 변경 0건)
+- ❌ P9 / P12 자동 정식 등록 (각 후보 별도 합의 시점 답습)
+- ❌ 외부 supply-chain verification 서비스 자동 통합 (sigstore / Rekor / cosign 등 — Implementation 영역)
+- ❌ Layer 2 / 3 / 5 자동 강제 (격상 후 단계적 강화 권장 — Implementation/Runtime PASS 영역)
+- ❌ P2 v3 정식 채택 자동 갱신
+- ❌ archive 자동 처리
+
+##### 1.2.7.7 G3 §2.6 / G4 §3.7.3 #18 / G4 §3.8.2 #10 cross-reference
+
+본 P11 정식 등록은 Gate Enforcement Layer 보호 보강 (G3 §2.6) 의 **Layer 1~4 enforcement mechanism 무력화 위험** 흡수:
+
+- **G3 §2.6.3 (b)** Hook / CI workflow 비활성화 차단 = P11 Layer 2 답습 (Action SHA pin + Docker digest pin)
+- **G3 §2.6.5 위협 모델 TM-5 ~ TM-6** Layer 1~4 silent override / Hook 비활성화 = P11 supply-chain compromise 의 *직접 발생 경로* (의존성 침해 시 lint/test/CI/hook *도구 자체* 가 침해되어 silent PASS 가능)
+- **G4 §3.7.3 #18** `GATE_ENFORCEMENT_LAYER_MODIFY` (T3) = Skill 이 supply-chain 통한 Gate enforcement 우회 시도 시 schema-level BLOCK
+- **G4 §3.8.2 #10** `gate_enforcement_bypass_detected` rollback_trigger = P11 침해 의심 시 자동 발화 + Skill `revoked` 자동 전이
+
+본 cross-reference 강화로 **Gate Enforcement Layer 보호 (G3 §2.6) ↔ Supply-chain Integrity (P11)** 양방향 보호 *완결성* 확보 — 1 layer 만 깨져도 enforcement 무력화 위험 잔존 (예: Layer 1~4 hook 정상 + supply-chain 침해 시 hook *도구 자체* 가 침해되어 silent PASS).
 
 ---
 

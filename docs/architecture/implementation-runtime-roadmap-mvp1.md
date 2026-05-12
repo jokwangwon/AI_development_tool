@@ -165,8 +165,9 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | G3-4 | base64 / URL-encoded / 압축 evasion | **MVP-1 → MVP-2/3 영역** — Hermes upstream R2-6 또는 P1 facade RedactionFilter 영역 (Group D PoC §8 #1 답습) | 본 문서 범위 외 (분리 영역 명시) |
 | G3-5 | log file canary inject + grep nightly | **MVP-1 → MVP-2 영역** — R-6 workflow 확장 영역, R-7 SOP §5 ROLLBACK trigger R5 답습 (Group D PoC §8 #5 답습) | 본 문서 범위 외 (분리 영역 명시) |
 | G3-6 | Tier-2 / Tier-3 catalog 확장 (Slack / GCP / Azure 등) | **MVP-1 → 별도 합의 영역** — gitleaks/detect-secrets 도입 시점 결정 + 풀 3+1 합의 + 외부 LLM 1+ (Group D PoC §8 #7 답습) | 본 문서 범위 외 (분리 영역 명시) |
+| **G3-7** | **CI secret 관리 (GitHub Actions secret boundary)** | **MVP-1 진입 의사결정 영역 — 6 검토 항목 분리** — (i) GitHub Actions secrets 사용 0건 검증 (F-금지 grep step 답습) + (ii) `secrets.*` 참조 감지 (workflow grep step 또는 S-1 확장) + (iv) fork PR secret 접근 차단 default 정책 보존 + (v) workflow `permissions: contents: read` 명시 강제 (R-6 답습) + (vi) `event: ci_secret_access_attempted` 신규 enum 후보 (ADR-012 §2.2 답습) = **MVP-1 영역 4 항목** / (iii) CI 로그 secret 노출 방지 (전체 책무) = **MVP-2 (GP-2 송신 redaction 영역)** + GitHub Actions log mask 부분 활용은 MVP-1 적격 / `pull_request_target` workflow 도입 = **별도 합의 영역** (secret 접근 활성화 trigger = T2/T3) | `3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` §2 (Observation O-1 흡수, GP-3 진입 합의 Condition C-1) — Group D PoC + ADR-012 §2.2 + R-6 `r2-canary.yml` 답습 |
 
-**MVP-1 deepening 핵심 = G3-1 + G3-2 + G3-3 의 *수단 후보 비교 + threshold 후보 + 합의 형태 권고*** (G3-4/5/6 = MVP-2 이후 또는 별도 합의 영역).
+**MVP-1 deepening 핵심 = G3-1 + G3-2 + G3-3 + G3-7 의 *수단 후보 비교 + threshold 후보 + 합의 형태 권고*** (G3-4/5/6 = MVP-2 이후 또는 별도 합의 영역).
 
 ### 3.2 수단 후보 비교 — 코드 본문 secret 검출 (G3-2)
 
@@ -609,6 +610,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 | 일자 | 변경 | 비고 |
 |------|------|------|
+| 2026-05-12 후속 | §3.1.2 G3-7 row 추가 (CI secret 관리) — Condition C-1 흡수 | GP-3 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` APPROVE WITH CONDITIONS) §2 (Observation O-1 흡수) + §6.1 + §7.1 답습. G3-7 = 6 항목 中 (i)(ii)(iv)(v)(vi) = MVP-1 영역 4 항목 + (iii) = MVP-2 (GP-2 영역) + (`pull_request_target` 도입) = 별도 합의 영역 분리. 핵심 요약 (line 169) 갱신 — "G3-1 + G3-2 + G3-3 + G3-7" 영역 명시. **본 흡수 = §3.1.2 본문 갱신 + 핵심 요약 갱신 한정 — §3.5 Rollback / §3.6 Evidence / §5 통합 PASS / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. |
 | 2026-05-12 | 신규 작성 (DRAFT) | MVP-1 deepening (GP-3 + GP-5) — 사용자 명시 답습: 단일 새 문서 + 수단 후보 비교 + threshold 후보 + Reviewer-only 단축 합의 진행 예정. 실 runtime code 구현 / CI/hook 구현 / Hermes PMO 격상 / Operational Readiness PASS 선언 모두 본 작업 범위 외. `implementation-runtime-roadmap.md` 17 항목 우선순위 매트릭스 (Order 1 = GP-5, Order 4 = GP-3) 의 MVP-1 영역 deepening 한정. 외부 LLM 응답 line 242 + C-7 line 378 + 본 문서 §1 통합 = MVP-1 = G2 GP-3 + GP-5 (GP-2 = MVP-2 분리 답습). 3-layer PASS 분리 (Design Gate / Implementation Evidence / Operational Readiness) 재명시 + MVP-1 위치 = Implementation Evidence PASS 1차. GP-3 PoC (Group D) + GP-5 PoC (Group A 1차/2차/3차) 답습. GP-3 코드 본문 5 수단 (S-1~S-5) + 저장 경로 5 수단 (ST-1~ST-5) + GP-5 Layer 1 도구 6 수단 (T-1~T-6) + pre-commit 4 수단 (PC-1~PC-4) + PR auto-reject 3 수단 (AR-1~AR-3). Rollback Trigger 통합 18 + Evidence Ledger 4 enum 후보 + 합의 형태 권고. |
 
 ---

@@ -220,6 +220,8 @@ docs/architecture/multi-agent-system-design.md 수정 시 → CLAUDE.md 섹션 3
 docs/architecture/idea-driven-stack-decision-design.md 수정 시 → multi-agent-system-design.md, automated-review-questionnaire-design.md 교차 확인
 docs/decisions/ADR-011-means-vs-ends-redaction.md 수정 시 → ADR-008 부록 B Amendment, system-identity-prequel §3 (R-7 후 P2 v3 흡수 시) 교차 확인
 docs/decisions/ADR-008-hermes-adoption-decision.md 부록 B 수정 시 → ADR-011 §2.1~§2.3 교차 확인 (일반 원칙 본문은 ADR-011 우선)
+docs/architecture/implementation-runtime-roadmap.md 수정 시 → 17 항목 우선순위 변경은 implementation-runtime-roadmap-mvp1.md (MVP-1 deepening) + governance-preconditions.md §3~§8 (각 GP Entry/Exit) + ADR-011 §2.1 (a)~(e) 5조건 패턴 교차 확인
+docs/architecture/implementation-runtime-roadmap-mvp1.md 수정 시 → implementation-runtime-roadmap.md (source roadmap, Order 1 + Order 4) + governance-preconditions.md §5 (GP-3) + §7 (GP-5) + Group D PoC + Group A 1차/2차/3차 PoC + 외부 LLM 응답 line 242 + 합의 §C-7 line 378 교차 확인
 ```
 
 ---
@@ -243,4 +245,6 @@ docs/decisions/ADR-008-hermes-adoption-decision.md 부록 B 수정 시 → ADR-0
 | 멀티에이전트 설계 | `docs/architecture/multi-agent-system-design.md` | 3+1 에이전트 상세 |
 | 개발 가이드 | `docs/guides/DEVELOPMENT_GUIDE.md` | 개발 프로세스 |
 | 테스트 전략 | `docs/guides/TEST_STRATEGY.md` | 테스트 방법론 |
+| 구현 로드맵 (전체) | `docs/architecture/implementation-runtime-roadmap.md` | 17 항목 우선순위 매트릭스 + 9 그룹 동시 진행 + ADR-011 §2.1 5조건 답습 |
+| **MVP-1 로드맵 (deepening)** | `docs/architecture/implementation-runtime-roadmap-mvp1.md` | **GP-3 + GP-5 MVP-1 진입 *직전* 의사결정 사전 정비 — 수단 후보 비교 + threshold 후보 + Rollback Trigger + Evidence + 합의 형태 권고. 수단 *결정* / threshold *고정* 0건** |
 | 컨텍스트 | `docs/CONTEXT.md` | 현재 프로젝트 상태 |

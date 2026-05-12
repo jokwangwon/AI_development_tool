@@ -1,0 +1,31 @@
+# Stage 4 PC-3 + AR-1 integration check fixture — FAIL expected (PC-3 violation)
+#
+# 본 fixture = PC-3 위반 (entry step 에 `continue-on-error: true` 적용).
+#   - entry step name 에 "MVP-1 entry" 포함 (감지 trigger)
+#   - `continue-on-error: true` 적용 → PC-3 FAIL (CI-only enforcement 무력화)
+#   - step body 에 `set -e` 존재 (AR-1 PASS) — PC-3 violation 단일 검출 시연
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — PC-3 violation (continue-on-error true)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+jobs:
+  fixture_fail_pc3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: MVP-1 entry — broken pc3 scanner
+        id: mvp1_entry_broken_pc3
+        continue-on-error: true
+        run: |
+          set -e
+          # PC-3 위반: continue-on-error: true 가 적용되어 CI step 실패 시도 통과
+          # → enforcement 무력화 (Layer 1 정적 차단 보장 X)
+          if [ ! -f "tools/sample_scanner.py" ]; then
+            exit 1
+          fi
+          echo "mvp1_entry_broken_pc3=PASS_BUT_NOT_REALLY"

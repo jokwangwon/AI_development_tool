@@ -1,0 +1,28 @@
+# Stage 4 PC-3 + AR-1 integration check fixture — FAIL expected (AR-1 violation)
+#
+# 본 fixture = AR-1 위반 (entry step body 에 fail-closed 패턴 부재).
+#   - entry step name 에 "MVP-1 entry" 포함 (감지 trigger)
+#   - `continue-on-error: true` 없음 → PC-3 PASS
+#   - step body 에 `set -e` 없음 + `exit 1` 없음 → AR-1 FAIL (fail-closed semantics 부재)
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — AR-1 violation (no fail-closed pattern)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+jobs:
+  fixture_fail_ar1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: MVP-1 entry — broken ar1 scanner
+        id: mvp1_entry_broken_ar1
+        run: |
+          # AR-1 위반: set -e 없음 + exit 1 없음
+          # → 내부 명령이 실패해도 step rc=0 → PR check 통과 (fail-closed 무력화)
+          echo "checking..."
+          some_command_that_might_fail || echo "ignored"
+          echo "mvp1_entry_broken_ar1=PASS_REGARDLESS"

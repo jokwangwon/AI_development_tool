@@ -1,0 +1,27 @@
+# Stage 5 Cycle 3 fixture — FAIL expected (workflow_run MEDIUM risk)
+#
+# 본 fixture = MEDIUM risk trigger ``workflow_run`` 검출 시연.
+#   - workflow_run 은 다른 workflow 가 종료된 후 repo secrets 권한으로 실행됨
+#   - fork PR 의 run 이 trigger workflow 를 발사 → 간접 secret 노출 위험
+# → tools/workflow_fork_pr_secret_policy_check.py rc=1, violations>=1 (MEDIUM)
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — workflow_run (FAIL, MEDIUM)
+
+on:
+  workflow_run:
+    workflows: ["Some Other Workflow"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  triggered_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sample triggered step
+        run: |
+          set -e
+          echo "triggered after another workflow with repo secrets — MEDIUM RISK"

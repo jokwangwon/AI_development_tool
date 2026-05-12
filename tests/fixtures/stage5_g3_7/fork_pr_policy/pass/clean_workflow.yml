@@ -1,0 +1,32 @@
+# Stage 5 Cycle 3 fixture — PASS expected
+#
+# 본 fixture = fork PR secret 위험 trigger 0건 sample workflow.
+#   - on: push + pull_request 한정 (fork PR 은 secrets 미노출)
+#   - pull_request_target / workflow_run 없음
+# → tools/workflow_fork_pr_secret_policy_check.py rc=0, violations=0
+#
+# 본 fixture 는 실 workflow 가 아니며 (CI 실행 0건) — 정적 verifier 입력 데이터 한정.
+
+name: Fixture — safe triggers (PASS)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  safe_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Sample non-risky step
+        run: |
+          set -e
+          echo "safe_job=PASS"

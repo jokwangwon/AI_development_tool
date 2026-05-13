@@ -111,7 +111,7 @@ PR-1 §1.4 (C-I 흡수, `commit 750faaf`) 에서 G2 §1.2.5 P9~P12 deferred cand
   "type": "memory|skill|meta",
   "scope": "global|project|session|team",
   "id": "<uuid-v4-or-slug>",
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "ts": "2026-05-09T10:00:00Z",
   "agent": "user|<worker_name>|hermes",
   "event": "<event-enum>",
@@ -124,7 +124,7 @@ PR-1 §1.4 (C-I 흡수, `commit 750faaf`) 에서 G2 §1.2.5 P9~P12 deferred cand
 
 **11번째 필드 = `event`** (4/5 합의, Agent A enumeration 결과적 일치 — 합의 §3.1).
 
-**`event` enum 후보 (17건, MVP 12건 의무, 5건 후속 확장)**:
+**`event` enum 후보 (25건, MVP 의무 12건 + 후속 확장 5건 + MVP-1 신규 8건 — schema_version 0.2)**:
 
 | # | enum | 정체성 | T 분류 |
 |---|------|------|------|
@@ -145,8 +145,16 @@ PR-1 §1.4 (C-I 흡수, `commit 750faaf`) 에서 G2 §1.2.5 P9~P12 deferred cand
 | 15 | `hash_chain_broken` | Hash chain 자체 단절 (외부 LLM 1) | T3 BLOCK |
 | 16 | `policy_change_attempted` | Hermes 가 정책 변경 시도 (T3 위반) | T3 BLOCK + audit |
 | 17 | `canonical_json_fallback` | Canonical JSON `jq -S -c` fallback 사용 | T1 audit |
+| 18 | `secret_scan_layer1_implementation` | Secret scan Layer 1 구현 ledger (MVP-1 Stage 1, GP-3 S-1) | T1 audit |
+| 19 | `docker_secret_isolation_layer1_implementation` | Docker secret 격리 Layer 1 구현 ledger (MVP-1 Stage 2, GP-3 ST-3) | T1 audit |
+| 20 | `provider_adapter_enforcement_layer1_static` | Provider adapter Layer 1 static 검출 ledger (MVP-1 Stage 3, GP-5 T-6) | T1 audit |
+| 21 | `pc3_ar1_integration_implementation` | pre-commit + auto-revert 통합 구현 ledger (MVP-1 Stage 4) | T1 audit |
+| 22 | `g3_7_workflow_hygiene_implementation` | Workflow hygiene 4 항목 구현 ledger (MVP-1 Stage 5, G3-7) | T1 audit |
+| 23 | `provider_key_adapter_bypass_risk_detected` | Provider lock-in 위반 detect (MVP-1 IR-1) | T2 사용자 review |
+| 24 | `direct_sdk_with_secret_leakage_detected` | Direct SDK + secret 검출 (MVP-1 IR-2) | T3 BLOCK + manual |
+| 25 | `secret_handling_environment_mismatch_detected` | 환경 secret mismatch detect (MVP-1 IR-3) | T2 사용자 review |
 
-**MVP 의무 12 enum** (1~12). **후속 확장 5 enum** (13~17, schema_version 0.2 또는 별도 합의).
+**MVP 의무 12 enum** (1~12, schema_version 0.1 도입). **후속 확장 5 enum** (13~17, schema_version 0.2 진입). **MVP-1 신규 8 enum** (18~25, schema_version 0.2 정식 등록 — Backlog #5 합의 `docs/review/3plus1-consensus-2026-05-13-adr-012-event-enum-registration.md` 권위, MVP-1 PASS §C-2 충족).
 
 **Provider-neutral 강제** (Agent B C-16): 11 필드 모두 provider-specific 식별자 미허용.
 
@@ -389,6 +397,7 @@ External LLM response 적재 시 의무 entry 형식:
 | 필드 *이름 변경* | **풀 3+1 합의 + ADR Amendment** + alias 1 release 유지 | MAJOR |
 | 필드 *타입 변경* | **풀 3+1 합의 + ADR Amendment** + migration script 의무 | MAJOR |
 | `event` enum 추가 (12 → 17) | 단축 합의 + 호환성 보장 | MINOR |
+| `event` enum 추가 (17 → 25, MVP-1 신규 8건) | 단축 합의 + 호환성 보장 + schema_version 0.1 → 0.2 격상 (Backlog #5 합의 `docs/review/3plus1-consensus-2026-05-13-adr-012-event-enum-registration.md` 권위) | MINOR |
 | `event` enum 제거 | **풀 3+1 합의** | MAJOR |
 | Hash 알고리즘 변경 (sha256 → blake3 등) | **풀 3+1 합의 + ADR Amendment** + `hash_algo` 필드 도입 + 마이그레이션 trigger 정의 | MAJOR (외부 LLM 2 C-5 답습) |
 

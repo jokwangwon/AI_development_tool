@@ -1,0 +1,136 @@
+# GP-3 ST-2 inotify sidecar PoC docker-compose (Cycle 3 feat commit)
+#
+# 사용자 명시 9 결정 답습:
+#   1. fail-closed = F-B 우선 (sidecar → status file → hermes-mock healthcheck unhealthy)
+#                  + F-C 보조 (depends_on: service_healthy)
+#                  + F-A 비채택 (docker socket 미마운트, privileged false)
+#   2. Multi-host parity 미요구 (단일 host 격리 PoC)
+#   3. inotify 감시 경로 = /run/secrets/*
+#   4. runtime secret 변경 = fail-closed
+#   5. inotify watch = inotifywait (sidecar Dockerfile 답습)
+#   8. init grace period = 10초 (SIDECAR_INIT_GRACE_SECONDS)
+#   9. healthcheck interval = 5초
+#
+# 영구 강제 안전 원칙:
+#   - 본 docker-compose 는 PoC 격리 영역 한정 — production docker-compose 영향 0건
+#   - Hermes upstream Dockerfile 변경 0건 (0e99a56 답습)
+#   - docker socket 미마운트 (F-A 비채택 답습)
+#   - cap_drop ALL + no-new-privileges (양쪽 service)
+#   - secret 본문 logging / hashing / export 0건 (R-4.1 답습)
+#
+# 사용 (직접):
+#   cd docker/gp3-st2-poc/
+#   SIDECAR_FIXTURE_DIR=$(realpath ../../tests/fixtures/gp3_st2/pass/normal_operation) \
+#       docker compose -f docker-compose.gp3-st2.yml up -d --build
+#   docker compose -f docker-compose.gp3-st2.yml down --volumes --remove-orphans
+#
+# 사용 (helper):
+#   ./scripts/run-poc-fixture.sh pass/normal_operation
+#   ./scripts/run-poc-fixture.sh fail/chmod_644
+
+services:
+  # fixture-init: bind-mounted fixture run-secrets/ 를 mock-secrets-vol 로 복사
+  # (read-write 격리 + chmod 600 시뮬레이션 = docker secret 기본 권한 답습)
+  # F-A 비채택 답습: docker socket 미접근 / privileged 미사용
+  fixture-init:
+    image: alpine:3.20
+    container_name: gp3-st2-fixture-init
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        if [ ! -d /src ]; then
+          echo "FATAL: fixture source dir /src not mounted" >&2
+          exit 1
+        fi
+        cp -a /src/. /dst/
+        chmod 600 /dst/* 2>/dev/null || true
+        echo "[fixture-init] copied $(ls /dst | wc -l) files to mock-secrets-vol"
+        ls -la /dst
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - type: bind
+        source: ${SIDECAR_FIXTURE_DIR:-../../tests/fixtures/gp3_st2/pass/normal_operation}/run-secrets
+        target: /src
+        read_only: true
+      - mock-secrets-vol:/dst:rw
+
+  # inotify-sidecar: F-B primary fail-closed source
+  inotify-sidecar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gp3-st2-inotify-sidecar
+    # F-A 비채택 답습: docker socket 미마운트 (volumes 항목에 docker.sock 없음)
+    # privileged 미사용 (Docker default false — 명시 시 false)
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SIDECAR_WATCH_DIR: /run/secrets
+      SIDECAR_STATUS_FILE: /var/sidecar-status/status
+      SIDECAR_INIT_GRACE_SECONDS: "10"  # 사용자 #8 결정 답습
+    volumes:
+      # 사용자 #3 결정: 감시 경로 = /run/secrets/* (read-only — sidecar = read 전용)
+      - mock-secrets-vol:/run/secrets:ro
+      # status file 공유 named volume (sidecar = write)
+      - sidecar-status-vol:/var/sidecar-status:rw
+    depends_on:
+      fixture-init:
+        condition: service_completed_successfully
+    healthcheck:
+      # F-C 보조 답습 (사용자 #1): sidecar process alive 확인
+      test: ["CMD-SHELL", "pgrep inotifywait > /dev/null || exit 1"]
+      interval: 5s  # 사용자 #9 결정 답습
+      timeout: 3s
+      retries: 2
+      start_period: 15s  # init grace 10s + 여유
+
+  # hermes-mock: F-B primary fail-closed signal target (Hermes 영향 0건)
+  hermes-mock:
+    build:
+      context: ./hermes-mock
+      dockerfile: Dockerfile
+    container_name: gp3-st2-hermes-mock
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SIDECAR_STATUS_FILE: /var/sidecar-status/status
+    volumes:
+      # mock-secrets-vol read-write — simulate.sh (fail/* fixture) 가 runtime 변경
+      # 시뮬레이션 시 chmod/modify/rm 가능해야 함
+      - mock-secrets-vol:/run/secrets:rw
+      # F-B primary: sidecar status file read-only
+      - sidecar-status-vol:/var/sidecar-status:ro
+      # fixture 디렉토리 read-only (simulate.sh 호출용)
+      - type: bind
+        source: ../../tests/fixtures/gp3_st2
+        target: /fixtures
+        read_only: true
+    depends_on:
+      fixture-init:
+        condition: service_completed_successfully
+      inotify-sidecar:
+        condition: service_healthy  # F-C 보조 답습
+    healthcheck:
+      # F-B primary 답습 (사용자 #1): sidecar status file 읽고 unhealthy 처리
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 5s  # 사용자 #9 결정 답습
+      timeout: 3s
+      retries: 2
+
+volumes:
+  # mock-secrets-vol: fixture-init 이 fixture run-secrets/ 를 복사하여 초기화
+  # sidecar = read-only mount, hermes-mock = read-write (simulate.sh 영역)
+  mock-secrets-vol:
+    driver: local
+  # sidecar-status-vol: sidecar (write) ↔ hermes-mock (read) 공유
+  sidecar-status-vol:
+    driver: local

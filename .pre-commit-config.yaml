@@ -38,7 +38,7 @@ repos:
         description: |
           Secret 검출 (Group D PoC 답습, actual run 25623028888 SUCCESS).
           tools/secret_scanner.py 답습 — 본문 변경 0건.
-        entry: python tools/secret_scanner.py --mode scan-source .
+        entry: bash -c 'for d in src .github; do python3 tools/secret_scanner.py --mode scan-source "$d" || exit 1; done'
         language: system
         pass_filenames: false
         always_run: true
@@ -74,7 +74,7 @@ repos:
         description: |
           src/ 내 direct/from/dynamic/double-underscore/model-name 5 패턴 검출.
           tools/provider_import_scanner.py 답습 — 본문 변경 0건.
-        entry: python tools/provider_import_scanner.py src
+        entry: python3 tools/provider_import_scanner.py src
         language: system
         pass_filenames: false
         always_run: true
@@ -88,7 +88,7 @@ repos:
           src/ 내 URL endpoint + Model name Tier-1 catalog 검출.
           tools/provider_url_scanner.py 답습 — 본문 변경 0건.
           mode 2개 (url-endpoint + model-name) 통합 호출.
-        entry: bash -c 'python tools/provider_url_scanner.py --mode url-endpoint src && python tools/provider_url_scanner.py --mode model-name src'
+        entry: bash -c 'python3 tools/provider_url_scanner.py --mode url-endpoint src && python3 tools/provider_url_scanner.py --mode model-name src'
         language: system
         pass_filenames: false
         always_run: true

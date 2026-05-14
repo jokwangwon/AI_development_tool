@@ -1,0 +1,110 @@
+# PC-4 T2 sub — Backlog #1 + #2 통합 local pre-commit framework config
+#
+# 답습 출처:
+#   - 구현 진입 합의 (Reviewer-only 단축 합의 APPROVE):
+#     docs/review/3plus1-consensus-2026-05-13-pc4-t2-implementation-entry.md (commit 3c0a1c1)
+#   - 구현 진입 brief: docs/phase0/backlog1-2-pc4-t2-implementation-brief.md (commit edf1f89)
+#   - Layer B 본문 채택: f40423f + 55c5b4b (양 GP PC-3 일관 채택)
+#   - 사용자 결정 3개 (α/ii/ii) 답습
+#
+# 본 config 의 본질:
+#   - opt-in 한정 local pre-commit framework (CI gating 보조)
+#   - 모든 hook = repo: local (외부 repo 의존 0건, Provider Liquidity 5-way 답습)
+#   - stages: [pre-commit] 한정 (commit-msg / pre-push / post-commit 등 추가 stage 0건)
+#   - hook entry = CI step 동등 명령 (단일 source-of-truth 답습)
+#
+# 본 config 가 *하지 않는* 것:
+#   - pre-commit install 의무화 0건 (T3 영역, 사용자 명시 답습)
+#   - dev 환경 강제 0건 (default_install_hook_types / fail_fast / minimum_pre_commit_version 모두 0건)
+#   - branch protection / commit signing / required check 0건
+#   - CI workflow 변경 0건 (CI gating = PC-3 본문 채택 답습 그대로)
+#   - 도구 본문 변경 0건 (모든 도구 답습)
+#   - .importlinter config 본문 변경 0건 (Group A 2차 답습)
+#
+# 사용 (opt-in):
+#   pip install pre-commit            # dev 자발적
+#   pre-commit install                # dev 자발적 (의무 0건)
+#   pre-commit run --all-files        # local 격리 검증
+
+repos:
+  - repo: local
+    hooks:
+
+      # === GP-3 hook 후보 (3) ===
+
+      # GP-3 #1 — secret-scanner (Layer B §5.5.1 S-1 본문 채택 답습)
+      - id: secret-scanner
+        name: Secret Scanner (R-4.1 Tier-1 45 patterns)
+        description: |
+          Secret 검출 (Group D PoC 답습, actual run 25623028888 SUCCESS).
+          tools/secret_scanner.py 답습 — 본문 변경 0건.
+        entry: python tools/secret_scanner.py --mode scan-source .
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      # GP-3 #2 — workflow-secret-usage-check (Layer B §5.5.1 G3-7 (i) 추가 본문 채택)
+      - id: workflow-secret-usage-check
+        name: Workflow Secrets Usage Check (G3-7 (i) F-금지)
+        description: |
+          GitHub Actions secrets 사용 0건 + secrets.* 참조 감지.
+          tools/workflow_secrets_usage_check.py 답습 (Stage 5 Cycle 1).
+        entry: python3 tools/workflow_secrets_usage_check.py
+        language: system
+        files: ^\.github/workflows/.*\.(yml|yaml)$
+        stages: [pre-commit]
+
+      # GP-3 #3 — workflow-permissions-check (Layer B §5.5.1 G3-7 (v) 추가 본문 채택)
+      - id: workflow-permissions-check
+        name: Workflow Permissions Check (G3-7 (v) R-6 default-deny)
+        description: |
+          모든 workflow top-level permissions: contents: read 명시 강제.
+          tools/workflow_permissions_check.py 답습 (Stage 5 Cycle 4).
+        entry: python3 tools/workflow_permissions_check.py
+        language: system
+        files: ^\.github/workflows/.*\.(yml|yaml)$
+        stages: [pre-commit]
+
+      # === GP-5 hook 후보 (3) ===
+
+      # GP-5 #4 — provider-import-scanner (Layer B §5.5.2 T-5 부분 본문 채택)
+      - id: provider-import-scanner
+        name: Provider Import Scanner (Group A 1차 AST 5종 패턴)
+        description: |
+          src/ 내 direct/from/dynamic/double-underscore/model-name 5 패턴 검출.
+          tools/provider_import_scanner.py 답습 — 본문 변경 0건.
+        entry: python tools/provider_import_scanner.py src
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      # GP-5 #5 — provider-url-model-scanner (Layer B §5.5.2 T-5 부분 본문 채택)
+      # mode 2개 (url-endpoint + model-name) 모두 src 대상 — bash wrapper 로 1 hook 통합
+      - id: provider-url-model-scanner
+        name: Provider URL/Model Scanner (URL Tier-1 10 + Model Tier-1 19)
+        description: |
+          src/ 내 URL endpoint + Model name Tier-1 catalog 검출.
+          tools/provider_url_scanner.py 답습 — 본문 변경 0건.
+          mode 2개 (url-endpoint + model-name) 통합 호출.
+        entry: bash -c 'python tools/provider_url_scanner.py --mode url-endpoint src && python tools/provider_url_scanner.py --mode model-name src'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      # GP-5 #6 — import-linter (Layer B §5.5.2 T-2 부분 본문 채택)
+      # 사용자 결정 (b) ii 답습: language: python + additional_dependencies (재현성 + venv 격리)
+      - id: import-linter
+        name: Import Linter (T-2 contract TR-1~TR-5)
+        description: |
+          .importlinter contract 검증 (Group A 2차 답습, actual run 25605665191 SUCCESS).
+          .importlinter config 본문 변경 0건 (사용자 명시 답습).
+        entry: lint-imports
+        language: python
+        additional_dependencies:
+          - import-linter==2.11
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

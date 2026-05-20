@@ -1,11 +1,13 @@
-# Backlog #3 Group I (Hermes-originated commit auto-reject) 단독 풀 3+1 합의 *진입 전 정비* Brief (DRAFT)
+# Backlog #3 Group I (Hermes-originated commit auto-reject) 단독 풀 3+1 합의 *진입 전 정비* Brief (DRAFT v2)
 
 > **본 brief = Group I (Hermes-originated commit auto-reject) 단독 합의 *진입 전 정비* DRAFT 한정** — 합의 보고서 작성 / commit / push / Hermes runtime 실 구현 / 실 차단 hook 구현 = 별도 단계 (staged cycle: brief → 승인 → 합의 → commit → push). 본 brief = **brief 단계 한정**.
+>
+> **v2 변경 (2026-05-20)**: 외부 cross-vendor blind 응답 1건 (GPT-5.5 Thinking, `docs/external-review/2026-05-20-group-i-hermes-originated-commit-autoreject-review-response-gpt.md`) 회수 → §7 trigger #7 충족. 응답의 5개 보강점을 I-1 / I-2 / I-5 / I-7 + §3.3 + §7.2 에 *입력 한정* 반영 (강제 채택 0건 — §0.4 + ADR-011 외부 LLM 입력 원칙). 응답의 framing 권고(설계명 재정의)는 §7.3 에 *외부 입력 flag* 로만 기록 — 채택/발효는 풀 3+1 + 사용자 결정 권한.
 
 ---
 
 **작성일**: 2026-05-20
-**Status**: **DRAFT** (진입 전 정비 — 합의 미발효)
+**Status**: **DRAFT v2** (진입 전 정비 — 합의 미발효, 외부 응답 1건 회수 반영)
 **진입 단위**: Backlog #3 — Group I (Group α §8 옵션 (E) 분리 권고 영역)
 **선행 발효 답습**: Group α `2026-05-14` (`3plus1-consensus-2026-05-14-backlog3-enforcement-defense.md`, AR-3 + PC-4 T3 sub 3/3 APPROVE WITH CONDITIONS) + Group β `aa8a29a` + Group γ-1 `9b1f8cd` + Group γ-2 `2e9d46b` + GP-3 C-3 / GP-5 C-2 resolution `0749970`
 **답습 입력 (1차 권위)**: **G3 §2.2 #20** (Hermes-originated 식별·차단 — `hermes-not-root-of-trust-runtime.md`) + Group α §6.1 (Group I cross-reference) + Group α C-2 (AI agent self-approval 차단 = Group I 결합 필수) + AR-3 × Group I Defense in depth (Group α §5.2 / §6.1)
@@ -32,6 +34,10 @@
 7. 외부 LLM 입력 영역 + *입력 한계* 명시 (§7)
 8. Rollback Trigger 통합 매트릭스 (Group I 한정) (§8)
 9. 다음 단계 (사용자 결정 영역 — 자동 진입 0건) (§9)
+
+**v2 추가**:
+10. 외부 응답(GPT-5.5) 회수 → §7 trigger #7 충족 + 5개 보강점 *입력* 반영 (§7.1~§7.2) — I-1 (positive allow-list / metadata = 참고 신호 한정) / I-2 (runtime = sensor, 최종 reject = Hermes 밖 + GHES pre-receive ≠ GitHub.com 기본) / I-5 (root of trust = Hermes 밖) / I-7 (T3 path 한정 + observe mode + quarantine) + §3.3 (`.git/` 직접 변조 gap) + negative-control-only 조항
+11. 외부 응답 framing 권고 *flag* (§7.3) — 설계명 "Hermes-originated commit auto-reject → Human-authorized T3 change enforcement with Hermes credential isolation" = 외부 입력 한정 (채택은 풀 3+1 + 사용자 결정)
 
 ### 0.3 본 brief 가 *하지 않는* 것 (사용자 명시 영구 답습)
 
@@ -95,13 +101,13 @@ G3 §2.2 #20 + ADR-012 §2.12 "Hermes 변조 차단 매트릭스 4항목" = (1) 
 
 | # | 결정 영역 | 핵심 의제 (검토 대상) | 권위 근거 |
 |----|----|----|----|
-| **I-1** | **Hermes-originated commit *식별* 방법** | commit author/committer 메타 (`agent=hermes`) / GPG 서명 부재 / commit trailer / container origin / process 출처 — *신뢰성 있게* Hermes-originated vs user-originated 구분하는 방법 (위장 가능성 평가 포함) | §4.5 + §3.1 Hermes-originated detection |
-| **I-2** | **차단 *지점* (blocking point) + layer** | git pre-commit hook (local) / pre-receive hook (server) / filesystem `read_only` mount on Hermes container (`:ro` bind + `cap_drop=ALL`) / CI step / branch protection 결합 — single layer vs Defense in depth | §2.5 #1 + §2.2 #20 강제 메커니즘 |
+| **I-1** | **Hermes-originated commit *식별* 방법** | commit author/committer 메타 (`agent=hermes`) / GPG 서명 부재 / commit trailer / container origin / process 출처 — *신뢰성 있게* Hermes-originated vs user-originated 구분하는 방법 (위장 가능성 평가 포함). **⚠️ v2 외부 입력(§7.2 #1): negative detection(metadata 판별) 보다 positive allow-list(사람 전용 signed commit 만 T3 허용) 권고. author/committer/trailer = 신뢰 신호 아님 → 참고 신호 한정 (신뢰 등급 분리 §7.2 표).** 식별 신뢰 등급 *결정* = Agent A/B 평가 | §4.5 + §3.1 Hermes-originated detection |
+| **I-2** | **차단 *지점* (blocking point) + layer** | git pre-commit hook (local) / pre-receive hook (server) / filesystem `read_only` mount on Hermes container (`:ro` bind + `cap_drop=ALL`) / CI step / branch protection 결합 — single layer vs Defense in depth. **⚠️ v2 외부 입력(§7.2 #2/#3): (a) GHES `pre-receive` hook ≠ GitHub.com 기본 수단 (Enterprise Server appliance 한정) → GitHub.com 에서 현실적 server-side = ruleset + CI provenance check. (b) Hermes runtime 내부 reject = sensor/audit producer 한정, 최종 reject 권한 = Hermes 밖 (ruleset / container ACL / hardware key).** | §2.5 #1 + §2.2 #20 강제 메커니즘 |
 | **I-3** | **보호 대상 *범위*** | §2.5 16건 全 적용 vs 핵심 경로 한정 (`.git/` + workflows + 합의 보고서 + ADR + Constitution + gate 정의 + external-review + redaction-policy + catalog) — silent expansion 차단 | §2.5 enumeration + §2.2 #9~#22 |
 | **I-4** | **AR-3 (Group α) × Group I 결합 형태** | `--no-verify` 우회 차단 (Group α branch protection + required CI) + Hermes-originated commit 식별 차단 (Group I) 의 *결합* — 책무 분리 유지 + Defense in depth (§3) | Group α §5.2 + §6.1 + C-2 |
 | **I-5** | **§4 self-reference 순환 권위 연결** | Group I = "Hermes 가 합의 결과 commit author 가 될 수 없음" enforcement (§4.5) → **AI agent self-approval 차단** (Group α C-2) 의 runtime 차원 구현 | §4.2 원칙 4 + §4.5 + Group α C-2 |
 | **I-6** | **Rollback Trigger / audit / Evidence ledger** | 검출 시 `consensus_self_reference_detected` (G4 §3.8.2 #7) / `policy_drift_detected` (#9) / `gate_enforcement_bypass_detected` (#10 후보) 발화 + audit JSONL + 컨테이너 정지 + 사용자 alert | §2.6.5 + G4 §3.8.2 |
-| **I-7** | **SPOF Accepted Risk (1인 single-host)** | 1인 동일 호스트에서 *사용자 자신* 의 commit 은 허용 + Hermes-originated 만 차단 → single-host 에서 식별 신뢰성·우회 한계 (사용자 = Hermes container 양쪽 제어) + multi-host 전환 시 추가 layer 트리거 | §5.5 SPOF Accepted Risk + ADR-012 §원칙 12 |
+| **I-7** | **SPOF Accepted Risk (1인 single-host)** | 1인 동일 호스트에서 *사용자 자신* 의 commit 은 허용 + Hermes-originated 만 차단 → single-host 에서 식별 신뢰성·우회 한계 (사용자 = Hermes container 양쪽 제어) + multi-host 전환 시 추가 layer 트리거. **⚠️ v2 외부 입력(§7.2 #4): false positive 통제 = "탐지 정확도 향상"보다 (a) 보호 범위 T3 protected path 한정 (일반 코드/문서 = audit-only/warn 시작) (b) 초기 1~2주 observe mode 로 FP/FN 측정 (c) reject 대신 quarantine branch / patch artifact 저장 (작업 손실 방지) (d) 사람 commit 허용 기준 = 사람 서명 + 사람 token + ruleset 통과. credential/process boundary 실분리가 Q6 가능성의 *전제* — 동일 credential 공유 시 FP 보다 FN(Hermes 가 사람으로 보이는 commit) 이 더 큰 위험.** | §5.5 SPOF Accepted Risk + ADR-012 §원칙 12 |
 | **I-8** | **구현 시점 의존성** | 실 강제 = Implementation/Runtime PASS 영역 (G3 DESIGN PASS / IMPLEMENTATION PENDING) + Backlog #6 Runtime + CI-hook 연결 (Group α C-1 답습) | Group α §6.2 + G3 §1 (b)/(d) |
 
 ---
@@ -133,6 +139,20 @@ Hermes-originated commit       →  Group I: 식별 + auto-reject (Hermes runtim
 ```
 
 > Defense in depth = 세 layer 의 *결합* (single layer 만으로는 불완전). Group I = 가운데 layer. **책무 분리 유지** (Group α/Group I/§2.5 ACL = 각 다른 enforcement 주체) = 5 영구 핵심 제약 #4 (단일 source-of-truth) 보존.
+
+#### 3.3.1 ⚠️ v2 외부 입력 — `.git/` 직접 변조 gap + 최종 reject 위치 (Q8 / Q3 / Q7)
+
+외부 응답(§7.2 #5)이 지적한 Defense in depth 보강 공백:
+
+1. **`.git/` 직접 변조는 commit 검사로 잡히지 않는다** — `.git/config`, hooks, refs, index, credential helper 변경은 commit-based 식별(I-1) 의 사각지대. → **반드시 filesystem read_only ACL layer(§2.5 #1)에서 차단** (Group I commit layer 가 아닌 *맨 아래 layer* 책무). brief §1.3 의 §2.5 #1 (`.git/` `read_only`) 가 이 gap 의 1차 대응 — v2 에서 명시 강조.
+2. **최종 reject 권한 = Hermes 밖** (Q3/Q7) — Group I runtime reject 가 *유일 enforcement* 이면 self-reference 잔존. → Group I runtime = **provenance sensor / audit producer**, 최종 reject = GitHub ruleset / container ACL / hardware-backed human key / 별도 사용자 관리 credential 中 1+ (Hermes 밖). 이는 핵심 제약 #1 (Hermes ≠ root of trust) *강화* 방향 — §5.1 trigger #5 + §4 self-reference 와 정합.
+3. **Group I enforcement *설정 변경 자체* = T3 분류** — Hermes 가 ruleset/CI workflow/audit log 를 수정할 token 을 가지면 안 됨 (§7.2 표). → R-I-CONFIG-CHANGE (신규 후보, §8) 와 연결.
+
+> 위 3건 = 외부 *입력 한정* (강제 채택 0건). Defense in depth 책무 재배치 *결정* = 풀 3+1 Agent B/C + Reviewer 종합.
+
+#### 3.3.2 ⚠️ v2 외부 입력 — negative control only 조항 (Q8 결함 #7)
+
+외부 응답이 권고한 신규 조항: **Group I = negative control only.** Group I 의 식별·차단 동작 또는 PASS 가 **PMO / Operational Readiness 의 *positive evidence* 로 오용되어서는 안 됨** (Group I 는 "무엇이 *안 됨*"을 강제하는 negative control 이지, "무엇이 *됨*"을 증명하는 positive evidence 아님). → §5.1 trigger #6 (Operational Readiness 경계) + brief §0.3 금지 사항과 정합. 조항 *채택* = 풀 3+1 / 사용자 결정.
 
 ---
 
@@ -167,7 +187,7 @@ G3 §4.1 "합의 인프라 순환 권위 역설": Hermes 가 3+1 합의 *실행 
 | #4 Provider Liquidity 5-way 약화 | ❌ 영향 없음 | enforcement layer = catalog/provider 영역과 직교 |
 | #5 5 영구 핵심 제약 약화 | ✅ **HIGH** | Group α §6.1 명시 — Group I = **핵심 제약 #1 (Hermes ≠ root of trust) + #4 (단일 source-of-truth) 직결**. §4 self-reference 순환 권위 자체가 대상 |
 | #6 Operational Readiness / Hermes PMO 격상 경계 | ⚠️ **MEDIUM** | §4 self-reference = Hermes PMO 격상 (Layer F) 을 gate 하는 메타-순환 차단 — 실 구현은 Backlog #6 / Implementation PASS 영역 |
-| #7 외부 LLM cross-vendor blind 없는 T3 결정 | ✅ **HIGH (미충족)** | 기존 외부 LLM 응답 2건 (`2026-05-13`) = AR-3 enforcement 중심 — **Group I 식별·차단 메커니즘 자체는 thin/간접** (§7). → 외부 LLM 1+ 신규 입력 의무 발화 가능성 |
+| #7 외부 LLM cross-vendor blind 없는 T3 결정 | ✅ **HIGH → v2 충족 (1건 회수)** | 기존 외부 LLM 응답 2건 (`2026-05-13`) = AR-3 중심, Group I thin. **v2: GPT-5.5 Thinking 신규 응답 1건 회수** (`2026-05-20-...-response-gpt.md`) — Group I 식별·차단(I-1/I-2) 직접 평가 + 5 보강점 (§7.2). → trigger #7 *충족*. (Gemini 등 2차 vendor 추가 입력 = 사용자 결정 영역, 의무 아님) |
 
 ### 5.2 형태 후보 비교
 
@@ -190,21 +210,59 @@ Group I 는 **합의 인프라의 순환 권위(self-reference) 자체를 대상
 
 | Agent | 관점 | 분석 영역 (Group I) |
 |----|----|----|
-| **Agent A** (구현 분석가) | "실제로 동작하는가?" | Hermes-originated commit *식별* 기술 신뢰성 (author 메타 / GPG 부재 / trailer / container origin — 위장 가능성) + 차단 지점 기술 (pre-commit / pre-receive / `read_only` mount + `cap_drop=ALL` / CI) + Backlog #6 Runtime + CI-hook 연결 의존 + 성능/false-positive |
-| **Agent B** (품질/안전성 검증가) | "안전하고 견고한가?" | **식별 우회·위장 시나리오** (Hermes 가 author 위장 / `--no-verify` / hook 비활성화 — TM-6) + §5.5 SPOF (1인 single-host 식별 신뢰성 한계) + false-negative (Hermes-originated 누락) vs false-positive (사용자 commit 오차단) + **Hermes ≠ root of trust (핵심 제약 #1) 보존** + 단일 source-of-truth (#4) + §4 self-reference 차단 견고성 |
+| **Agent A** (구현 분석가) | "실제로 동작하는가?" | Hermes-originated commit *식별* 기술 신뢰성 (author 메타 / GPG 부재 / trailer / container origin — 위장 가능성) + 차단 지점 기술 (pre-commit / pre-receive / `read_only` mount + `cap_drop=ALL` / CI) + Backlog #6 Runtime + CI-hook 연결 의존 + 성능/false-positive. **v2 외부 입력 평가: positive allow-list(signed commit) 기술 실현성 + GitHub.com ruleset/CI provenance check vs GHES pre-receive 운영 차이(§7.2 #2) + runtime=sensor 구조(§7.2 #3) 기술 타당성** |
+| **Agent B** (품질/안전성 검증가) | "안전하고 견고한가?" | **식별 우회·위장 시나리오** (Hermes 가 author 위장 / `--no-verify` / hook 비활성화 — TM-6) + §5.5 SPOF (1인 single-host 식별 신뢰성 한계) + false-negative (Hermes-originated 누락) vs false-positive (사용자 commit 오차단) + **Hermes ≠ root of trust (핵심 제약 #1) 보존** + 단일 source-of-truth (#4) + §4 self-reference 차단 견고성. **v2 외부 입력 평가: credential boundary 실패 = metadata 위조가 아닌 사건 분류(§7.2 표) + `.git/` 직접 변조 gap(§3.3.1) + 동일 credential 공유 시 FN > FP 위험(§7.2 #4) + negative-control-only(§3.3.2) 견고성** |
 | **Agent C** (대안 탐색가) | "더 나은 방법이 있는가?" | 식별 방법 대안 (signed commit 의무화 / 별도 committer identity / 격리 working tree) + 차단 지점 대안 (server-side vs local) + Group α/§2.5 ACL 과의 *최소 중복* 결합 + multi-host 전환 시 식별 강화 대안 + 신규 영역 발굴 (예: Hermes-originated PR auto-reject / commit trailer 표준) |
-| Reviewer | "최선의 합의는?" | 3 출력 교차 비교 (일치/부분/불일치/누락) + 8 결정 영역 (I-1~I-8) 최종 합의 권고 + **AR-3 × Group I Defense in depth 결합 적격성 판정** + Group α C-2 결합 완성 여부 + 실 구현 = Backlog #6 / Implementation PASS 분리 명시 |
+| Reviewer | "최선의 합의는?" | 3 출력 교차 비교 (일치/부분/불일치/누락) + 8 결정 영역 (I-1~I-8) 최종 합의 권고 + **AR-3 × Group I Defense in depth 결합 적격성 판정** + Group α C-2 결합 완성 여부 + 실 구현 = Backlog #6 / Implementation PASS 분리 명시 + **⭐ v2: 외부 framing 권고 판정** (§7.3 — "명칭 유지 + 중심 명제 명시" vs "Human-authorized T3 change enforcement with Hermes credential isolation 재정의") + **외부 5 보강점(§7.2) 채택/기각/조건부 판정** + negative-control-only 조항(§3.3.2) 채택 여부 |
 
 ---
 
 ## 7. 외부 LLM 입력 영역 + *입력 한계* 명시
 
-| 영역 | 기존 외부 LLM (`2026-05-13`) 응답 | Group I 적용 |
-|----|----|----|
-| AR-3 enforcement (branch protection / `--no-verify` / admin bypass) | Gemini + GPT 상세 응답 有 | ✅ Group α 영역 (입력 답습 완료) |
-| **Hermes-originated commit *식별·차단* 메커니즘 자체** | **thin/간접** — 요청 §264 row 8 에 MEDIUM cross-reference 로만 flag, 응답 본문은 AR-3/PC-4/catalog 중심 | ⚠️ **Group I 직접 입력 부족** |
+### 7.1 입력 회수 현황 (v2)
 
-> ⚠️ **핵심**: 기존 외부 LLM 응답 2건은 AR-3 enforcement 맥락 중심 — Group I 식별·차단 메커니즘(I-1/I-2) 에 대한 cross-vendor blind 평가는 *충분히 회수되지 않음*. → 트리거 #7 발화 (§5.1) → **Group I 합의 진입 시 외부 LLM 1+ 신규 입력 권장/의무** (사용자 결정 영역 — 본 brief 는 자동 호출 0건). 외부 LLM 응답 = *입력 한정* (강제 채택 0건).
+| 영역 | 외부 LLM 응답 | Group I 적용 |
+|----|----|----|
+| AR-3 enforcement (branch protection / `--no-verify` / admin bypass) | Gemini + GPT 상세 응답 有 (`2026-05-13`) | ✅ Group α 영역 (입력 답습 완료) |
+| **Hermes-originated commit *식별·차단* 메커니즘 자체 (I-1/I-2)** | **v2: GPT-5.5 Thinking 신규 응답 회수** (`2026-05-20-group-i-...-response-gpt.md`, Q1~Q8 직접 평가) | ✅ **trigger #7 충족** — §7.2 5 보강점 반영 |
+
+> ⚠️ **입력 한계 (불변)**: 외부 LLM 응답 = *입력 한정* (강제 채택 0건 — §0.4 + ADR-011). 본 brief v2 는 응답의 5 보강점을 해당 §에 *입력*으로 반영했을 뿐, 식별 방법 / 차단 지점 / framing *결정* 은 풀 3+1 Agent A/B/C 독립 평가 + Reviewer 종합 + 사용자 명시 권한. 2차 vendor (Gemini 등) 추가 입력 = 사용자 결정 영역 (의무 아님 — 1건 회수로 trigger #7 충족).
+
+### 7.2 ⭐ GPT-5.5 응답 5 보강점 (입력 — 반영 위치)
+
+| # | 보강점 | 외부 Q | 반영 위치 | 핵심 |
+|----|----|----|----|----|
+| 1 | **positive allow-list > negative detection** | Q1/Q2 | I-1 | 사람 전용 signed commit 만 T3 허용. author/committer/trailer = 신뢰 신호 아님 → 참고 신호 (신뢰 등급 표 ↓) |
+| 2 | **GHES pre-receive ≠ GitHub.com 기본** | Q4 | I-2 (a) | GitHub.com 현실적 server-side = ruleset + CI provenance check. pre-receive = Enterprise Server appliance 한정 |
+| 3 | **runtime = sensor, 최종 reject = Hermes 밖** | Q3/Q7 | I-2 (b) / I-5 / §3.3.1 | Group I runtime = provenance sensor/audit producer. 최종 reject 권한 = ruleset/container ACL/hardware key (Hermes ≠ root of trust *강화*) |
+| 4 | **false positive 통제 = 범위 한정 + observe mode + quarantine** | Q5/Q6 | I-7 | T3 path 한정 + 1~2주 observe mode + reject 대신 quarantine branch/patch artifact + 사람 commit 기준 명시 |
+| 5 | **`.git/` 직접 변조 gap + negative control only** | Q8 | §3.3.1 / §3.3.2 | `.git/` 변조는 commit 검사 사각 → filesystem ACL 책무. Group I = negative control only (PMO positive evidence 오용 금지) |
+
+#### 외부 응답 신뢰 등급 표 (Q2 — I-1 식별 신뢰성 평가 입력)
+
+| 신호 | 신뢰도 | 판단 |
+|----|----|----|
+| author / committer name·email | 낮음 | spoof 가능, 인증 신호 아님 |
+| commit trailer | 낮음 | convention 한정, Hermes 작성 가능 |
+| committer email domain | 낮음~중간 | 계정 관리 엄격 시만 보조 |
+| verified signature | 중간~높음 | 키 격리 시 강함 / 키 공유 시 무력화 |
+| server-observed pusher identity | 중간~높음 | token 격리 시 강함 / token 공유 시 무력화 |
+| **human-only hardware-backed key** | **높음** | 1인 운영 최실용 강신호 |
+
+> ⚠️ 위 신뢰 등급 = 외부 *입력* — I-1 식별 신뢰성 *결정* 은 Agent A(기술 신뢰) + Agent B(우회·위장 시나리오) 독립 평가가 발효. brief 기존 I-1 의 "author/committer 메타" 를 *root signal* 로 쓰지 말 것이라는 외부 경고를 합의 입력으로 명시.
+
+### 7.3 ⚠️ 외부 framing 권고 *flag* (채택 아님 — 풀 3+1 + 사용자 결정 영역)
+
+외부 응답 최종 권고는 Group I 설계명을 다음으로 바꾸라는 것:
+
+> **"Hermes-originated commit auto-reject"** → **"Human-authorized T3 change enforcement with Hermes credential isolation"**
+
+근거: "metadata 기반 Hermes 식별"을 중심에 두면 구현 단계에서 *잘못된 안전감(false sense of security)* 을 만들 수 있고, 중심은 **credential isolation + protected branch enforcement + CI provenance + filesystem ACL 의 결합**이어야 한다는 것.
+
+**본 brief v2 의 처리**: 이 framing 권고를 **flag 로만 기록** — *채택/발효 0건*. 근거:
+- 외부 응답 = 입력 한정 (§7.1) — framing 변경은 G3 §2.2 #20 / §2.5 / §4.5 본문 + Group α §6.1 cross-reference 명칭과 연동되는 *결정* → 풀 3+1 + 사용자 명시 권한 (brief §0.3 금지: "G3 §2.2 #20 본문 변경 0건").
+- ⚠️ **정합성 평가 (입력)**: 외부 framing 은 brief 와 *충돌하지 않고 강화* 방향 — brief §3.3 Defense in depth 3-layer + §4.5 self-reference + §5.1 trigger #5 (Hermes ≠ root of trust) 가 이미 "credential/enforcement boundary 중심" 골격을 가짐. 외부 권고는 *명칭*을 그 골격에 맞추라는 것 (실 설계 방향 전환 아님). → Reviewer 가 §6 에서 "명칭 유지 + 중심 명제 명시" vs "명칭 재정의" 를 판정 영역으로 다룰 것 권고.
+- framing *결정* = 풀 3+1 Reviewer 종합 + 사용자 명시 (자동 채택 0건).
 
 ---
 
@@ -218,6 +276,7 @@ Group I 는 **합의 인프라의 순환 권위(self-reference) 자체를 대상
 | **`gate_enforcement_bypass_detected`** (G4 §3.8.2 #10 후보) | §2.6 (a)~(e) 위반 공통 trigger | 동상 + Evidence 보완 의무 |
 | **R-I-MULTIHOST** (신규 후보) | multi-host / 다인 전환 결정 | §5.5 추가 layer 의무 발동 (ADR-012 §원칙 12 Layer 3/5) + Group I 식별 강화 재평가 |
 | **R-I-IMPL-BOUNDARY** (신규 후보) | Group I 실 강제 hook 구현 진입 | Implementation/Runtime PASS + Backlog #6 연결 + 별도 풀 3+1 |
+| **R-I-CONFIG-CHANGE** (v2 신규 후보 — 외부 §7.2 #5/Q7) | Group I enforcement *설정 자체* (ruleset / CI provenance workflow / audit log 보존 정책) 변경 시도 | T3 분류 → Hermes 는 해당 token 미보유 + 변경 = 풀 3+1 + 사용자 명시. self-reference 차단 (Hermes 가 자기 차단책을 끄지 못함) |
 
 ### 8.1 후속 단계 Rollback Trigger (본 brief 영역 외)
 
@@ -233,7 +292,7 @@ Group I 는 **합의 인프라의 순환 권위(self-reference) 자체를 대상
 
 | 옵션 | 영역 | 후속 단계 |
 |----|----|----|
-| **(A)** | 본 brief 그대로 승인 → **Group I 풀 3+1 합의 진입** (Agent A/B/C + Reviewer, §5 판정 발효 + 외부 LLM 1+ 입력 — §7) | 합의 보고서 작성 |
+| **(A)** | 본 brief v2 그대로 승인 → **Group I 풀 3+1 합의 진입** (Agent A/B/C + Reviewer, §5 판정 발효 + 외부 입력 = GPT-5.5 응답 §7.2/§7.3 회수 완료 — trigger #7 충족, 추가 vendor 의무 아님) | 합의 보고서 작성 |
 | (B) | 본 brief 일부 수정 요청 → 수정 후 승인 | v2 작성 |
 | (C) | 본 brief 승인 → commit (`docs/phase0/group-i-hermes-originated-commit-autoreject-full-3plus1-brief.md`) *까지만* (합의 보류) | 1 commit (사용자 명시 시) |
 | (D) | 본 brief 보류 → GP-5 C-2 완전 해소 trigger = facade real 본문 P1 v2 (Backlog #4 / GP-5 C-3) 별도 풀 3+1 | Backlog #4 |
@@ -246,7 +305,7 @@ Group I 는 **합의 인프라의 순환 권위(self-reference) 자체를 대상
 
 ## 10. 한 단락 요약
 
-Backlog #3 中 **Group I (Hermes-originated commit auto-reject)** 단독 풀 3+1 합의 *진입 전 정비* DRAFT — Group α `2026-05-14` 합의 condition **C-2** ("AI agent self-approval 차단 = Group I 결합 필수") + §8 옵션 (E) 분리 권고 영역. Group I = **G3 §2.2 #20** ("합의 결과 silent override 또는 수정", T3 절대 금지) 의 *git commit 차원 enforcement* — Hermes runtime 이 단독 생성한 commit (특히 `.git/` / 합의 보고서 / ADR / Constitution / gate 정의 / external-review / 정책성 파일) 을 자동 식별·차단 + audit + 사용자 alert. **AR-3 (Group α) × Group I = Defense in depth** — Group α (branch protection + `--no-verify` 차단, GitHub repo) + Group I (Hermes-originated commit 식별 차단, Hermes runtime) + G3 §2.5 (filesystem read_only ACL) 3-layer 결합 (책무 분리 유지 = 단일 source-of-truth 핵심 제약 #4 보존). 8 결정 영역 = 식별 방법(I-1) / 차단 지점(I-2) / 보호 범위(I-3) / Defense in depth 결합(I-4) / §4 self-reference 연결(I-5) / Rollback·audit(I-6) / SPOF(I-7) / 구현 시점 의존(I-8). **합의 형태 판정 (사용자 명시 요청 핵심): Group I = T3 보안 enforcement 영역 → 풀 3+1 (Agent A/B/C + Reviewer) *의무*, Reviewer-only 단축 *부적격*** — 트리거 #2 (T3 BLOCKING) + #5 (5 핵심 제약 #1 Hermes ≠ root of trust 직결, Group α §6.1 명시) + #7 (외부 LLM cross-vendor blind 미충족 — 기존 응답 AR-3 중심, Group I 식별·차단 thin) + §4 self-reference 순환 권위 구조 (§4.2 원칙 2 "Reviewer-only 또는 외부 LLM 필수"). 1인 single-host SPOF (§5.5) = 사용자 자신 commit 허용 + Hermes-originated 만 차단 → 식별 신뢰성 한계 의도적 수용 + multi-host 전환 시 추가 layer 트리거. 본 brief 는 결론을 *선취하지 않으며* (판정·식별 방법·차단 지점 *결정* = 풀 3+1 독립 평가 + Reviewer 종합), 실 강제 = Implementation/Runtime PASS + Backlog #6 연결 영역 별도. 본 brief = 진입 정비 DRAFT 한정 — 합의 보고서 작성 / commit / push / Hermes runtime 실 구현 / 실 차단 hook 구현 / Hermes upstream 변경 / 수단 결정 / threshold 고정 / CI workflow 변경 / actual run / Operational Readiness PASS / Hermes PMO 격상 / MVP-1 exit / Phase α defer-lockdown 변경 모두 0건이며, 모든 *결정* 은 별도 풀 3+1 합의 (사용자 명시 승인 후).
+Backlog #3 中 **Group I (Hermes-originated commit auto-reject)** 단독 풀 3+1 합의 *진입 전 정비* DRAFT — Group α `2026-05-14` 합의 condition **C-2** ("AI agent self-approval 차단 = Group I 결합 필수") + §8 옵션 (E) 분리 권고 영역. Group I = **G3 §2.2 #20** ("합의 결과 silent override 또는 수정", T3 절대 금지) 의 *git commit 차원 enforcement* — Hermes runtime 이 단독 생성한 commit (특히 `.git/` / 합의 보고서 / ADR / Constitution / gate 정의 / external-review / 정책성 파일) 을 자동 식별·차단 + audit + 사용자 alert. **AR-3 (Group α) × Group I = Defense in depth** — Group α (branch protection + `--no-verify` 차단, GitHub repo) + Group I (Hermes-originated commit 식별 차단, Hermes runtime) + G3 §2.5 (filesystem read_only ACL) 3-layer 결합 (책무 분리 유지 = 단일 source-of-truth 핵심 제약 #4 보존). 8 결정 영역 = 식별 방법(I-1) / 차단 지점(I-2) / 보호 범위(I-3) / Defense in depth 결합(I-4) / §4 self-reference 연결(I-5) / Rollback·audit(I-6) / SPOF(I-7) / 구현 시점 의존(I-8). **합의 형태 판정 (사용자 명시 요청 핵심): Group I = T3 보안 enforcement 영역 → 풀 3+1 (Agent A/B/C + Reviewer) *의무*, Reviewer-only 단축 *부적격*** — 트리거 #2 (T3 BLOCKING) + #5 (5 핵심 제약 #1 Hermes ≠ root of trust 직결, Group α §6.1 명시) + #7 (외부 LLM cross-vendor blind 미충족 — 기존 응답 AR-3 중심, Group I 식별·차단 thin) + §4 self-reference 순환 권위 구조 (§4.2 원칙 2 "Reviewer-only 또는 외부 LLM 필수"). 1인 single-host SPOF (§5.5) = 사용자 자신 commit 허용 + Hermes-originated 만 차단 → 식별 신뢰성 한계 의도적 수용 + multi-host 전환 시 추가 layer 트리거. **v2 (2026-05-20): 외부 cross-vendor blind 응답 1건 (GPT-5.5 Thinking) 회수 → trigger #7 충족.** 응답의 5 보강점 = (1) positive allow-list > negative detection (metadata = 참고 신호 한정, I-1) / (2) GHES pre-receive ≠ GitHub.com 기본 — ruleset+CI provenance check 중심 (I-2) / (3) runtime = sensor·audit producer, 최종 reject = Hermes 밖 (I-2/I-5/§3.3.1, Hermes ≠ root of trust 강화) / (4) false positive 통제 = T3 path 한정 + observe mode + quarantine (I-7) / (5) `.git/` 직접 변조 gap = filesystem ACL 책무 + negative-control-only 조항 (§3.3) — 모두 *입력 한정* 반영 (강제 채택 0건). 외부 framing 권고 ("Hermes-originated commit auto-reject → Human-authorized T3 change enforcement with Hermes credential isolation", §7.3) = *flag 한정* (채택/발효 0건 — 풀 3+1 Reviewer + 사용자 결정). 외부 권고는 brief 기존 골격(§3.3 Defense in depth + §4.5 + §5.1 trigger #5)과 *충돌 없이 강화* 방향. 본 brief 는 결론을 *선취하지 않으며* (판정·식별 방법·차단 지점·framing *결정* = 풀 3+1 독립 평가 + Reviewer 종합), 실 강제 = Implementation/Runtime PASS + Backlog #6 연결 영역 별도. 본 brief = 진입 정비 DRAFT v2 한정 — 합의 보고서 작성 / commit / push / Hermes runtime 실 구현 / 실 차단 hook 구현 / Hermes upstream 변경 / 수단 결정 / threshold 고정 / CI workflow 변경 / actual run / Operational Readiness PASS / Hermes PMO 격상 / MVP-1 exit / Phase α defer-lockdown 변경 모두 0건이며, 모든 *결정* 은 별도 풀 3+1 합의 (사용자 명시 승인 후).
 
 ---
 
@@ -262,6 +321,7 @@ Backlog #3 中 **Group I (Hermes-originated commit auto-reject)** 단독 풀 3+1
 | `governance-preconditions.md` §1.2.6 (P10) + §9.2 | Hermes 변조 차단 매트릭스 4항목 + 자기참조 차단 |
 | ADR-012 §2.12 #3 (git commit 차단) + §원칙 12 (single-host SPOF) | 변조 차단 4항목 中 git commit + multi-host 전환 |
 | `2026-05-13-backlog3-t3-zone-review-request.md` §264 row 8 + response 2건 | 외부 LLM 입력 한계 명시(§7) |
+| **`2026-05-20-group-i-hermes-originated-commit-autoreject-review-response-gpt.md` (GPT-5.5 Thinking)** | **v2 신규 외부 입력 — Q1~Q8 + 5 보강점(§7.2) + framing 권고(§7.3). trigger #7 충족.** |
 | `backlog3-groupgamma2-st4-vault-hsm-full-3plus1-brief.md` §5.2 | 풀 3+1 vs Reviewer-only trigger 매트릭스 형식 답습 |
 
 ## 부록 B — 금지 사항 (사용자 명시 영구 답습)

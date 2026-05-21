@@ -25,7 +25,7 @@
 - → 후속 72 N-2 citation 오류(§ 번호 오지목)와 **동형**. 같은 엄밀성으로 BLOCKING.
 
 ### BI4C-4 — 개인 이메일 public 노출 → **사실 확정 (조건부 BLOCKING)**
-- `grep -rn "tgdata200" docs/` = **3개 파일 plaintext commit 확정** (`docs/review/3plus1-consensus-2026-05-13-{mvp1-pass-c1-k2, adr-012-event-enum, k2-permissions}` 각 "승인자: 사용자 (`tgdata200@gmail.com`)").
+- `grep -rn "tgdata200" docs/` = **3개 파일 plaintext commit 확정** (`docs/review/3plus1-consensus-2026-05-13-{mvp1-pass-c1-k2, adr-012-event-enum, k2-permissions}` 각 "승인자: 사용자 (`<redacted>`)").
 - repo = public 확정 → **현존(현재 진행형) 노출**. brief §13 (C') "옵션" 격하는 위험 과소평가.
 - → entry 발효 *선결* 점검 항목 격상. (redaction 실 변경 = 별도 단계. `ghp_` 매치 = redaction 패턴 정의 예시 = false positive.)
 
@@ -70,7 +70,7 @@
 | **BI4C-1** | §11.3 line 268 citation 정정 — "G3 §5.5"(SPOF Accepted Risk, 문구 0건) → **`f29c772` line 118 + BI-7**. 후속 72 N-2 동형. (정정 = 별도 단계, 본 합의는 지목까지) |
 | **BI4C-2** ⭐ | **거짓 안전감 핵심** — CD-5("수단 라벨 ≠ 입증, 적대적 침투 시연 binary")를 anchor 에 대칭 적용. §11.3 "anchor observe=binary"에 **종료 조건 명문**: anchor 실효 = 에이전트 경로 실 우회 불가능 시연(token→ruleset off 실패 / `--no-verify` push→server reject / origin replace→audit alert) binary 통과, enforcement status 라벨 ≠ 충족. ADR-011 §2.1(b) 동형 |
 | **BI4C-3** | §3.1 (A)/(C) + §5 에 "required status check = merge 게이트, 직접 push 차단 = 별도 ruleset(restrict direct push/PR-required) 종속" 명문 + 진입 gate **G-BI4-6** 추가 |
-| **BI4C-4** ⚠️ | 개인 이메일 `tgdata200@gmail.com` 3개 파일 plaintext + repo public = **현존 노출**. §13 (C') 옵션 → **entry 발효 선결 점검 격상** (redaction 실 변경은 별도) |
+| **BI4C-4** ⚠️ | 개인 이메일 `<redacted>` 3개 파일 plaintext + repo public = **현존 노출**. §13 (C') 옵션 → **entry 발효 선결 점검 격상** (redaction 실 변경은 별도) |
 | **BI4C-5** | Sigstore Rekor transparency log(제3자 append-only = self-bypass 구조적 강함 + origin replace 외부 입증)을 **§3.1 anchor 후보표 (E) 행 병치**(채택 아님) — BI-3 §4 M5 대칭. CBI-4 = BI-3·BI-4 cross-ref |
 
 ### 권고 6건 (BI4R-1~6)

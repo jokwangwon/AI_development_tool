@@ -342,7 +342,7 @@ brief §4 본문 트리거 답습:
 ### 4.2 Provenance 기록
 
 **Approval provenance** (외부 LLM 응답 §7.4 답습):
-- 승인자: 사용자 (`tgdata200@gmail.com`)
+- 승인자: 사용자
 - 승인 일자: 2026-05-13
 - 승인 대상 artifact: 본 합의 보고서 + ADR-012 §2.2 + §3.2 본문 갱신
 - 승인 문구: "(1) brief 승인 / (2) A. APPROVE — Full 8 등록 / (3) R-A Reviewer-only 단축 합의 / (4) A-2 schema_version 0.2 MINOR 격상"

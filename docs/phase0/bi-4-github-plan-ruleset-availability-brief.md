@@ -160,7 +160,7 @@
 - **확인된 사실**(2026-05-21 비인증 API): repo = **public** → ruleset plan 종속(C-4/GA-2)의 가장 무거운 변수(private+Free)가 **소거**.
 - **쟁점 이동**: BI-4 의 무게 중심이 **"anchor 후보가 *존재* 하는가"(plan, 통과)** 에서 **"anchor 가 *실효* 하는가"(self-bypass §4 + token 분리 §6)** 로 이동. → 합의 Agent 분배 시 §4/§6 가 핵심, §3 plan 은 *통과 확인* 으로 격하.
 - **잔존 plan 종속**(entry 재확인): push ruleset / org-level ruleset = Team plan 종속(§3.2). 기본 anchor(require signed commits + required status check + restrict force-push/deletion)는 public 으로 가용.
-- **⭐ public 노출 = 현존 위험 (BI4C-4, 합의 BLOCKING 격상)**: repo = public → `docs/` 전체(CONTEXT·합의 보고서·brief)가 **세계 공개**. 합의 Reviewer grep 재검증 결과 — 개인 이메일 `tgdata200@gmail.com` 이 **`docs/review/3plus1-consensus-2026-05-13-{mvp1-pass-c1-k2, adr-012-event-enum, k2-permissions}.md` 3개 파일에 plaintext 로 *이미 commit·공개*** 됨 = 가설 아닌 **현존 노출**. → **entry 발효 *선결* 점검 항목으로 격상**(redaction 실 변경 = git history rewrite 얽힘, 별도 단계). 직전 "개인 데이터 = repo 밖 vault" 권고와 정합(공개 repo 에 개인 데이터 유입 = 노출). (`ghp_` 매치 = redaction 패턴 정의 *예시* = false positive.) 본 brief redaction 0건.
+- **⭐ public 노출 = 현존 위험 (BI4C-4, 합의 BLOCKING 격상)**: repo = public → `docs/` 전체(CONTEXT·합의 보고서·brief)가 **세계 공개**. 합의 Reviewer grep 재검증 결과 — 개인 이메일 `<redacted>` 이 **`docs/review/3plus1-consensus-2026-05-13-{mvp1-pass-c1-k2, adr-012-event-enum, k2-permissions}.md` 3개 파일에 plaintext 로 *이미 commit·공개*** 됨 = 가설 아닌 **현존 노출**. → **entry 발효 *선결* 점검 항목으로 격상**(redaction 실 변경 = git history rewrite 얽힘, 별도 단계). 직전 "개인 데이터 = repo 밖 vault" 권고와 정합(공개 repo 에 개인 데이터 유입 = 노출). (`ghp_` 매치 = redaction 패턴 정의 *예시* = false positive.) 본 brief redaction 0건.
 
 ---
 

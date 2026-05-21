@@ -325,7 +325,7 @@ T3 (절대 금지)        : 12 건 (§2.2 #9~#14, #17~#22)
 
 **(b) Hook / CI workflow 비활성화 차단 — `.pre-commit-config.yaml` / `.husky/` / `.github/workflows/` / `--no-verify` / branch protection 해제**:
 - §2.5 #2 (`.github/workflows/`) + #3 (`.pre-commit-config.yaml` / `.husky/`) + #4 (branch protection) 답습 — filesystem read-only on Hermes container + git pre-commit hook + Hermes-originated commit auto-reject
-- `git commit --no-verify` / `git push --no-verify` 시도 = §3.2 Hermes-originated commit detection + pre-commit hook 답습 (Group C 후속 후속 PoC 답습 — `tools/rewrite_defense_check.py` Layer 2/3/4 dangerous command catalog)
+- `git commit --no-verify` / `git push --no-verify` 시도 = §3.1.2 Hermes-originated commit provenance check (sensor 우회 시도) 답습 — pre-commit hook 이 우회(`--no-verify`)되어도 최종 reject = Hermes 밖 anchor (host 밖 *실* anchor) 가 차단 보장 (runtime sensor 단독 의존 금지) (Group C 후속 후속 PoC 답습 — `tools/rewrite_defense_check.py` Layer 2/3/4 dangerous command catalog)
 - branch protection 해제 시도 (GitHub API audit 답습) = 즉시 BLOCK + `event: branch_protection_disable_attempt`
 - *권위 근거*: 본 §2.2 #12 + §2.5 #2~#4 + §3.2 + ADR-012 §2.8 (Full Rewrite 5 Layer 답습)
 
@@ -357,7 +357,7 @@ T3 (절대 금지)        : 12 건 (§2.2 #9~#14, #17~#22)
 | 4 | Gate sequence skip 방지 | T3 | Ordered enforcement (G1b → G2 → G3 → G4 → PMO) + 각 게이트 (a)~(e) Exit 기준 evidence 의무 | 본 §2.2 #13 + §8.2 + ADR-008 부록 C §C.2 + P2 v3 §2.6.1 |
 | 5 | Gate failure override 방지 | T3 | Layer 1~4 FAIL 자동 차단 + Hermes 의 FAIL → PASS 재해석 시도 reject + 사용자 override 시 §5.4 절차 의무 | 본 §1.3 + §2.2 #12, #13 + §5.2.4, §5.2.5 |
 | 6 | CI / hook / test result 무시 방지 | T3 | Layer 1~4 결과 모두 Evidence ledger entry 의무 + Hermes-originated silent skip reject | 본 §2.2 #12 + §3.2 + CLAUDE.md Layer 1~4 |
-| 7 | Hermes-originated gate approval 금지 | T3 | Hermes-originated commit auto-reject (gate 관련 본문) + 합의 보고서 author = user 강제 | 본 §2.2 #13, #20 + §4.5 + §5.5 SPOF accepted risk |
+| 7 | Hermes-originated gate approval 금지 | T3 | Hermes-originated commit = positive allow-list 미통과 → default-deny (gate 관련 본문) + 합의 보고서 = 사람 권위 신호 positive 검증 (author/committer = 판정 입력 아님·audit 사후 대조 전용 — 단일 author 비교 아님) | 본 §2.2 #13, #20 + §4.5 + §5.5 SPOF accepted risk |
 | 8 | Worker-originated self-pass 금지 | T3 | Worker Agent 자기 작업 검증 분리 — Reviewer Agent (별도 worker) + 사용자 명시 결정 + Tools 검증 의무 (§1.3 답습) | 본 §1.2.2 + §1.3 + §5.2.3 (Tools verify) |
 | 9 | Gate policy 변경은 T3 또는 사용자 승인 영역 | T3 | filesystem read-only + 풀 3+1 합의 + ADR Amendment 절차 + 사용자 명시 결정 | 본 §10 변경 절차 + §2.2 #9, #11 + ADR-011 §2.4 T3 |
 | 10 | Gate protection 실패 시 rollback trigger 발화 | T3 자동 안전 | Layer 1~4 결과 FAIL → Skill `revoked` 자동 전이 (G4 §3.4.2 답습) + Hermes 컨테이너 정지 (§3.1.3 답습) + 사용자 명시 alert | 본 §3.1.5 + §3.3.5 + G4 §3.8.2 + ADR-011 §2.4 T3 자동 안전 동작 |
@@ -445,18 +445,23 @@ Hermes 자체 학습 결과 (T1 자동 학습) 가 **redaction 정책 / canary c
 | 감지 channel | 메커니즘 | 시점 |
 |------------|--------|-----|
 | **CI nightly diff** | 정책 파일 (redaction-policy.yaml / Tier-1 catalog / skill-permissions.yaml 등) git diff 자동 점검 | nightly |
-| **Hermes-originated commit detection** | git commit author / committer + Hermes audit log cross-reference | every commit |
+| **Hermes-originated commit provenance check**¹ | 사람 권위 신호 positive 검증 (default-deny) — author/committer 메타 = 판정 입력 아님·audit 사후 대조 전용 | sensor 평가 = every commit² |
 | **R-5 canary recheck (T13 강화)** | canary 패턴 변경 감지 시 alert | 6 trigger 시점 (R-5 §X) |
 | **Redaction 동작 회귀 (R-6 actual run)** | Tier-1 42 catalog 동작 변경 감지 | nightly + push/PR |
+
+> ¹ 본 채널: runtime = provenance sensor 신호 *생성만*, 최종 reject = **Hermes 밖 anchor (host 밖 최소 1개 *실* anchor, 명목 anchor 금지)**. **차단 보장 속성: 차단이 push/merge 전에 보장됨** (보장 *속성* = ends; *무엇으로* 차단 = 수단 후보 [GPG/SSH signed commit / hardware-backed key / GitHub ruleset required-signature / CI provenance step 의 키 fingerprint 대조] 中 — 결정 = Backlog #6). audit log cross-reference 는 **외부 read-only sink (Hermes 쓰기 불가)** 매체 격리 전제 (credential boundary 와 *별개 축*).
+> ² enforcement 시점 = 외부 anchor 가 push/merge 전 차단 보장 (sensor 신호 생성 = every commit).
 
 #### 3.1.3 차단 방법 (Blocking)
 
 | layer | 메커니즘 | 권위 |
 |------|--------|-----|
 | 파일시스템 | 정책 파일 read-only mount on Hermes container | system-identity-prequel §3.3 #1 |
-| Git | pre-commit hook on 정책 파일 — Hermes-originated commit 자동 reject | §2.2 #20 + system-identity-prequel §3.3 #2 |
+| Git (sensor) | runtime = provenance sensor 신호 생성 (pre-commit hook 등 = 수단 후보 — *차단권 아님*); 최종 reject = Hermes 밖 anchor (host 밖 최소 1개 *실* anchor, 명목 anchor 금지); 차단 보장 = push/merge 전. provenance check 기준·차단 설정 변경 = R-I-CONFIG-CHANGE = T3 (Hermes token 미보유) | §2.2 #20 + system-identity-prequel §3.3 #2 |
 | CI | nightly diff 발견 시 build FAIL | 본 §3.1.2 #1 |
 | Runtime | 정책 파일 변경 시 Hermes 컨테이너 자동 정지 | system-identity-prequel §3.3 #4 (권위 등급 위반 자동 reject) |
+
+> ⚠️ `.git/` 디렉터리 직접 변조는 **commit provenance check 범위 *밖*** 이며 filesystem ACL(§2.5)의 책무다. commit layer sensor 는 `.git/` 우회를 책임지지 않는다.
 
 #### 3.1.4 Evidence 요구사항
 
@@ -565,7 +570,7 @@ Skill 이 정의된 권한 등급 (read / write / shell / network / DB 등) 을 
 
 | 위험 | 감지 | 차단 | Evidence | Rollback | 사용자 승인 |
 |------|------|-----|--------|--------|---------|
-| 3.1 Learning silent drift | CI nightly diff + Hermes-originated detection + R-5 canary + R-6 actual run | filesystem read-only + git pre-commit + CI FAIL + 컨테이너 정지 | Markdown + JSONL ledger + audit | T3 위반 → 자동 정지 + revert | T3 변경 (자동 금지, 사용자도 ADR Amendment) |
+| 3.1 Learning silent drift | CI nightly diff + Hermes-originated commit provenance check (sensor 신호 — author 메타 = 판정 입력 아님·audit 사후 대조 전용) + R-5 canary + R-6 actual run | filesystem read-only + (provenance sensor 신호: pre-commit 등 = 수단 후보, 차단권 아님) → 최종 reject = Hermes 밖 anchor (host 밖 최소 1개 실 anchor, push/merge 전 보장) + CI FAIL + 컨테이너 정지 | Markdown + JSONL ledger + 외부 read-only audit sink | T3 위반 → 자동 정지 + revert | T3 변경 (자동 금지, 사용자도 ADR Amendment) |
 | 3.2 Upstream silent breakage | R-6 workflow trigger 확장 + nightly cron + lock diff + telemetry 차단 회귀 | version pin + PR PoC 재실행 + R-6 PASS branch protection + runtime healthcheck | GH run + artifact + JSONL + lock diff | R-7 SOP R6 (이전 버전 복귀) | PR merge T2 (Hermes 자동 PR 생성 OK / 자동 merge 금지) |
 | 3.3 Skill permission escalation | wrapper 권한 검증 + audit T1 분석 + sandbox syscall 추적 | wrapper BLOCK + Docker cap_drop + audit log + 자동 비활성화 | skill 정의 + audit log + escalation 본문 + JSONL | 자동 비활성화 + 반복 시 archive | Skill 등록 T2 + 재활성화 T2 |
 
@@ -645,7 +650,7 @@ Skill 이 정의된 권한 등급 (read / write / shell / network / DB 등) 을 
 |---------|-------------|--------|
 | 합의 진행 orchestrate | ✅ | Layer 5 Hermes 책임 |
 | 합의 결과 본문 보존 | ❌ Hermes 가 *수정 가능 형태* 보존 금지 | git commit 으로 immutable 보존 (system-identity-prequel §3.3 #2) |
-| 합의 결과 commit author | ❌ Hermes-originated commit auto-reject (Hermes 관련 결정 한정) | git pre-commit hook + audit log |
+| 합의 결과 commit author | ❌ Hermes-originated = positive allow-list 미통과 → default-deny (Hermes 관련 결정 한정) | runtime = provenance sensor 신호 (pre-commit hook 등 = 수단 후보); 최종 reject = Hermes 밖 anchor (host 밖 최소 1개 *실* anchor, push/merge 전 보장); audit = 외부 read-only sink (credential boundary 와 *별개 축*) |
 | 합의 결과 적용 (예: G1b PASS status 갱신) | ❌ 사용자 명시 commit 만 권위 인정 | filesystem read-only + 사용자 명시 결정 강제 |
 | 합의 결과 사용자에게 전달 | ✅ user-facing UI 직접 전달 가능 | system-identity-prequel §3.3 #2 |
 | 합의 결과를 다음 작업에 *참조* | ✅ read-only 참조 가능 | Hermes Memory read |
@@ -781,7 +786,7 @@ Human overrides.   (사람이 최종 방향을 선택한다)
 | 층 | 현 모델 | SPOF 위험 |
 |----|------|--------|
 | Constitution / ADR / SDD 변경 권한 | 단일 사용자 (`jokwangwon` git author) | 사용자 호스트 침해 시 모든 권위 위계 우회 가능 |
-| 합의 보고서 commit author | 동일 사용자 | Hermes-originated commit auto-reject (§2.2 #20) 의 *기준* 자체가 단일 author 비교 |
+| 합의 보고서 commit author | 동일 사용자 | auto-reject (§2.2 #20) 의 *기준* = 사람 권위 신호 positive allow-list (default-deny, author 비교 아님). SPOF 핵심 위험(사용자=Hermes 동일 credential 공유)은 credential boundary 실분리가 *선결 전제* — 미격리 시 allow-list 도 metadata detection 과 동일 FN 으로 붕괴 + *거짓 안전감* 추가. observe mode(= enforcement 미발효 관찰 기간, FN 통과) ≠ 발효; 방향성 = FN 우선 > FP (의심 시 quarantine) |
 | 사용자 명시 결정 (T2 / T3) | 단일 사용자 명시 | 사용자 호스트의 키체인 / SSH key / GPG key 침해 시 자동 승인 위장 가능 |
 | Evidence Ledger 보존 | 단일 git 저장소 + 단일 GitHub remote | 저장소 탈취 시 ledger 변조 가능 (hash chain 보강 후에도 origin replace 위험) |
 | 외부 LLM 의뢰·응답 회수 | 단일 사용자 → 외부 LLM 직접 의뢰 | 사용자 호스트 침해 시 외부 LLM 응답 위조 가능 |
@@ -1119,7 +1124,7 @@ Human overrides.   (사람이 최종 방향을 선택한다)
 | 4 | Gate sequence skip 방지 | §2.6.2 (d) + §2.6.4 #4 | Ordered enforcement (G1b → G2 → G3 → G4 → PMO) + 각 게이트 (a)~(e) Exit 기준 evidence 의무 + ADR-008 부록 C §C.2 답습 | ✅ **RESOLVED** (2026-05-12) |
 | 5 | Gate failure override 방지 | §2.6.2 (e) + §2.6.4 #5 | Layer 1~4 FAIL 자동 차단 + Hermes FAIL → PASS 재해석 시도 reject + §5.4 사용자 override 절차 의무 | ✅ **RESOLVED** (2026-05-12) |
 | 6 | CI / hook / test result 무시 방지 | §2.6.3 (a) + §2.6.4 #6 | Layer 1~4 결과 모두 Evidence ledger entry 의무 + Hermes-originated silent skip reject + CLAUDE.md Layer 답습 | ✅ **RESOLVED** (2026-05-12) |
-| 7 | Hermes-originated gate approval 금지 | §2.6.4 #7 | Hermes-originated commit auto-reject (gate 관련 본문) + 합의 보고서 author = user 강제 + §4.5 + §5.5 SPOF accepted risk 답습 | ✅ **RESOLVED** (2026-05-12) |
+| 7 | Hermes-originated gate approval 금지 | §2.6.4 #7 | Hermes-originated commit = positive allow-list 미통과 default-deny (gate 관련 본문) + 합의 보고서 = 사람 권위 신호 positive 검증 (author/committer = 판정 입력 아님·audit 사후 대조 전용, §2.6.4 #7 동기) + §4.5 + §5.5 SPOF accepted risk 답습 | ✅ **RESOLVED** (2026-05-12) |
 | 8 | Worker-originated self-pass 금지 | §2.6.4 #8 | Worker Agent 자기 작업 검증 분리 — Reviewer Agent 별도 + 사용자 명시 결정 + Tools 검증 의무 + §1.2.2 + §1.3 답습 | ✅ **RESOLVED** (2026-05-12) |
 | 9 | Gate policy 변경은 T3 또는 사용자 승인 영역으로 분리 | §2.6.4 #9 + §2.6.6 | filesystem read-only + 풀 3+1 합의 + ADR Amendment 절차 + 사용자 명시 결정 + Skill T3 카테고리 (G4 §3.7.3) cross-reference | ✅ **RESOLVED** (2026-05-12) |
 | 10 | Gate protection 실패 시 rollback trigger 발화 | §2.6.4 #10 + §2.6.5 | Layer 1~4 FAIL → Skill `revoked` 자동 전이 (G4 §3.4.2 답습) + 컨테이너 정지 + 사용자 명시 alert + G4 §3.8.2 rollback_trigger 매트릭스 연동 | ✅ **RESOLVED** (2026-05-12) |

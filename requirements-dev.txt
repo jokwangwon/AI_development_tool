@@ -19,3 +19,11 @@ import-linter==2.11
 # 양 라이브러리 모두 Apache-2.0 + 의존성 0 + RA-9 §B.2 11/11 sanity 동등성 PASS
 rfc8785==0.1.4
 jcs==0.2.1
+
+# Jarvis 오케스트레이터 MVP-0 트랙 A — 단위 테스트 (TDD)
+# 답습 출처:
+#   - docs/phase0/jarvis-orchestrator-mvp-design-brief.md (v4, MVP-0 트랙 A)
+#   - docs/review/3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp-v4-reviewer.md (APPROVE)
+# runtime application 의존성 0건 유지 (test-only).
+pytest==9.0.3
+pytest-cov==7.1.0

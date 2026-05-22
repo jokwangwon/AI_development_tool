@@ -1,11 +1,11 @@
-# Jarvis 오케스트레이터 MVP 설계 brief — 로컬 사장 + headless CLI 워커 (DRAFT v3)
+# Jarvis 오케스트레이터 MVP 설계 brief — 로컬 사장 + headless CLI 워커 (DRAFT v4)
 
-> **본 brief = 자비스 오케스트레이터 MVP 설계 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·런타임 설치·로컬 모델 다운로드·워커 격리 구현·sandbox 생성·git hook/CI 구성** 을 발생시키지 않는다. 본 brief = **3+1 합의(REVISE) 12 修正 + OpenShell PoC 발견 + v3 직접 검토(MVP-0↔V-2 의존 순서·Q-6 게이트) 반영한 설계 갱신** — 실 변경 0건. staged: brief v3 → 승인 → (재합의 or TDD 구현). 코드 전 문서 먼저(SDD).
+> **본 brief = 자비스 오케스트레이터 MVP 설계 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·런타임 설치·로컬 모델 다운로드·워커 격리 구현·sandbox 생성·git hook/CI 구성** 을 발생시키지 않는다. 본 brief = **3+1 합의(REVISE) 12 修正 + OpenShell PoC + v3 직접 검토 + v4 V-2 Landlock 실증 발견 반영한 설계 갱신** — 실 변경 0건(PoC=`/tmp` 격리, repo 코드 0). staged: brief v4 → 승인 → (재합의 or TDD 구현). 코드 전 문서 먼저(SDD).
 
 ---
 
 **작성일**: 2026-05-22
-**Status**: **DRAFT v3 — v2 직접 검토(의존 순서·게이트) 반영, 재합의 또는 구현 진입 대기**
+**Status**: **DRAFT v4 — V-2 Landlock 격리 실증(트랙 B de-risk) 반영, 재합의 또는 구현 진입 대기**
 **진입 단위**: 자비스 본연 기능 — 오케스트레이터 MVP (보안 거버넌스 트랙과 독립)
 **근거**: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] (REVISE, 12 修正) · [[jarvis-safety-layer-poc-findings]] (OpenShell→경량 격리) · `project_jarvis_local_boss_direction` · `feedback_provider_liquidity` (헌법 5조) · `feedback_proportionate_security_personal_tool` (비례성) · `project_minimize_user_intervention`
 
@@ -34,6 +34,15 @@
 | 🔴v3-1 | §5·§7 **MVP-0↔V-2 의존 순서 명시** — 워커 격리(증명 ⑤)는 V-2 통과에 의존하므로 "직교"가 아님. **2-트랙 시퀀싱**(트랙 A: 격리-제외 배관/headless 골격 TDD 선행 / 트랙 B: V-2 격리 실증 → 통합) 명문화 | v3 검토 지점 1 |
 | v3-2 | Q-6 **게이트 위치 잠정 결정 = "반영 전"** (착수 전 아님) — §8 self-change 게이트와 동형, 개입 최소화 정합. §5 다이어그램 주석 | v3 검토 지점 2 + `project_minimize_user_intervention` |
 | v3-3 | §6 워커 이중격리 효용 = V-2 측정 대상 명시(워커 자체 bwrap/Landlock 위 순이득 경계) | v3 검토 지점 3 |
+
+### v4 변경 이력 (V-2 Landlock 실증 반영)
+
+| # | v3 → v4 | 출처 |
+|---|---------|------|
+| v4-1 | §6·Q-9 **Landlock 단독 충분(무권한 환경) 확정** — 직접 Landlock C(ABI 7) 작업디렉터리 격리 실증(소스/SSH키 차단·밖 쓰기 차단). landrun/go 불요 | V-2: V2-3/V2-4 |
+| v4-2 | §6 **bubblewrap = 조건부(권한 작업 전제)로 강등** — 24.04 `apparmor_restrict_unprivileged_userns=1`로 무권한 bwrap 불가(uid map denied) | V-2: V2-5, V-F3 |
+| v4-3 | §6 **이중격리 순이득 확정(v3-3 측정 완료)** — claude.exe=`apt install bubblewrap` 의존 → 워커 자체 sandbox도 이 머신에서 막힘 → 외부 Landlock이 유일 실효 격리·커널 강제(워커 침해 무관). 강등 불요 | V-2: V2-6, V-F2 |
+| v4-4 | §5 트랙 B **de-risk 완료** — 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴 재사용 | V-2 종합 |
 
 ---
 
@@ -110,7 +119,7 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 - **사장 호출도 추상(A-7/C-4)**: 사장 LLM 호출 = provider 추상 대상(Ollama OpenAI-호환 endpoint). 사장도 교체 가능해야 헌법 5조 일관. MVP-0은 claude로 대체 → MVP-1에서 로컬로 교체.
 - **⚠️ MVP-0 내부 의존 순서 (v3-1, 검토 지점 1)**: 증명 ⑤(워커 격리)는 **V-2(§7) 통과에 의존** — V-2 미실증 상태로 MVP-0 전체를 짜면 격리 부분만 미검증 stub. 따라서 MVP-0 = **2-트랙 시퀀싱**:
   - **트랙 A (격리-직교 골격)**: 결정적 배관 + headless subprocess 분배(증명 ①②③) + 사람 게이트(④) + 무비판수용 금지 가드(결정적 패턴 검토). **V-2 없이 TDD 선행 가능** — 워커는 잠정적으로 비격리 작업디렉터리(`git worktree` 분리)에서만 실행.
-  - **트랙 B (격리 발효)**: V-2(Landlock+bwrap 실증) 통과 → 트랙 A의 작업디렉터리 실행을 격리 실행으로 *교체*(증명 ⑤ 완성). 트랙 A 인터페이스가 격리 backend를 주입받도록 설계(격리 = 교체 가능 의존성).
+  - **트랙 B (격리 발효) — ✅ V-2 de-risk 완료(v4-4)**: V-2 통과(Landlock 단독 충분 실증) → 트랙 A의 작업디렉터리 실행을 격리 실행으로 *교체*(증명 ⑤ 완성). 트랙 A 인터페이스가 격리 backend를 주입받도록 설계(격리 = 교체 가능 의존성). 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴.
   - 두 트랙 순서는 자유(A 먼저/B 먼저/병렬)이나 **MVP-0 *완료* 선언 = 트랙 B 통합까지** — "골격만 = MVP-0 부분 완료".
 - **범위 밖**: 로컬 사장 모델 / 실 fallback / SQLite(과설계) / 다중턴 의논 / 다중워커 병렬 / 자가진화 발효 / 넓은 비서.
 
@@ -121,10 +130,10 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 
 > **워커 실행경계는 "후속 층"이 아니라 MVP 첫 실행 전제.** MVP 자체가 워커에 실행 권한을 부여하므로(증명 ②), 격리 없는 MVP = thin=unsafe 함정.
 
-- **격리 수단 = Landlock 중심 + bubblewrap 보완** (OpenShell=참조only, k3s 회피 — PoC findings, 비례성). 워커 본인 제작사도 경량 격리: Claude Code=bubblewrap, Codex=Landlock+seccomp.
-  - **Landlock**(커널6.17 활성, userns·root 불요 → Ubuntu24.04 userns 제한 우회): 워커당 **작업디렉터리만 read/write**, 그 외 fs 차단. net 포트 제한(ABI4).
-  - **bubblewrap**(설치됨): mount/pid 네임스페이스 보완(필요 시).
-  - **⚠️ 이중격리 순이득 = V-2 측정 대상(v3-3, 검토 지점 3)**: claude/codex 워커는 *자체* bwrap/Landlock 격리를 이미 수행 → 우리가 한 번 더 감싸는 것의 한계 순이득(우리 작업디렉터리 경계 강제·net 정책)은 V-2 PoC에서 실측·정당화. 비례 초과(중복 비용>이득) 판명 시 §6은 "워커 자체 격리 신뢰 + 작업디렉터리 `git worktree` 분리"로 강등 가능 — V-2 결과에 종속.
+- **격리 수단 = Landlock 단독 충분(무권한 환경) + bubblewrap 조건부** (OpenShell=참조only, k3s 회피 — PoC findings, 비례성). 워커 본인 제작사도 경량 격리: Claude Code=bubblewrap, Codex=Landlock+seccomp. **✅ V-2 실증 완료(v4)**.
+  - **Landlock**(커널6.17 ABI 7, userns·root 불요): 워커당 **작업디렉터리만 read/write**, 그 외 fs 차단. **V-2 실증**: 직접 Landlock C(`ll_sandbox`, path_beneath)로 workspace RW / 프로젝트 소스·`~/.ssh` 읽기 차단 / 밖 쓰기 차단 = deny-by-default 동작 확인. **추가 권한 0**(24.04 AppArmor userns 제한과 무관). landrun/go 불요. (net 포트 제한 ABI4는 후속)
+  - **bubblewrap = 조건부(v4-2)**: 이 머신 24.04 `apparmor_restrict_unprivileged_userns=1` + bwrap 비-setuid → **무권한 동작 불가**(V-2: `uid map: Permission denied`). mount/pid ns가 *꼭* 필요하고 권한 작업(sudo/AppArmor 프로파일)이 허용될 때만 보완. **무권한 환경 기본 = Landlock 단독.**
+  - **✅ 이중격리 순이득 확정(v4-3, v3-3 측정 완료)**: claude.exe strings = `apt install bubblewrap` → **워커(claude) 자체 sandbox도 bwrap 의존 → 이 머신에서 동일하게 막힘**. 따라서 우리 외부 Landlock = 사실상 **유일한 실효 워커 격리** + 커널 강제(워커 침해·prompt injection으로 워커가 자기 sandbox를 꺼도 유효). **중복 아님 → 강등 불요, Landlock 채택 확정.** 비용 ~110줄 C wrapper = 비례 적합.
 - **무비판 수용 금지**: 사장은 워커 출력을 결정적 가드로 검토(파괴적 명령 패턴·diff 검토) 후 대표에 보고. prompt injection 체인 차단.
 - **OpenShell 참조 개념**: deny-by-default 정책 모델 / Privacy Router(로컬 vs 프론티어 라우팅) / skill 검증 + 정책변경=승인. 통째 채택(k3s)은 비례 초과로 미채택.
 
@@ -133,7 +142,7 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 > **v3 정정**: V-1·V-2가 *동등하게* "직교"는 아니다. **V-1 = MVP-1(로컬 사장) 블로커**(MVP-0는 claude 사장이라 불요). **V-2 = MVP-0 트랙 B(격리 발효) 선결**(증명 ⑤ 의존, §5). MVP-0 트랙 A(골격)는 둘 다 없이 진입 가능.
 
 - **V-1 (MVP-1 선결, MVP-0 직교)**: 로컬 추론 런타임 PoC. **vLLM 제외**(GB10 sm_121 aarch64 미동작, vllm #36821). 후보 = **Ollama**(NVIDIA 파트너십, out-of-box) / llama.cpp(sm_121 빌드). **CUDA13 toolkit 보유로 부분 de-risk** — 잔여 = 런타임 구동 + 모델 tok/s 실측.
-- **V-2 (MVP-0 트랙 B 선결)**: Landlock 워커 격리 실증(landrun 또는 직접 Landlock+seccomp) + bubblewrap unprivileged 클린 테스트(사용자 셸) + **이중격리 순이득 실측(v3-3)**. 통과 = §5 트랙 B 통합 = MVP-0 완료 조건. 미통과·비례초과 시 §6 강등 경로.
+- **V-2 (MVP-0 트랙 B 선결) — ✅ 완료(v4)**: Landlock 워커 격리 **실증 완료**(직접 Landlock C, ABI 7 — 작업디렉터리 격리·deny-by-default 동작) + bubblewrap unprivileged = **무권한 불가 확인**(24.04 제한) + **이중격리 순이득 확정**(claude 자체 sandbox=bwrap 의존→막힘→외부 Landlock 유일 실효). **트랙 B 격리 backend 설계 위험 해소** → MVP-0 트랙 B 통합 시 `ll_sandbox` path_beneath 패턴 재사용. 상세 = [[jarvis-safety-layer-poc-findings]] §6.
 
 ## 8. 자가진화 안전 모델 (🔴 immutable zone, B-1)
 
@@ -154,18 +163,18 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 | Q-6 | **대표 게이트 위치** | **잠정 결정 = "반영 전"**(v3-2). 착수-전 = 매 작업 승인=개입 과다 *기각* / 양쪽 = 후속 옵션 | §8 동형·개입 최소화. 확정은 재합의/구현 단계 |
 | Q-7 | **자가진화 첫 지점** | **Layer 0 메모리 누적** → 프롬프트 → 코어 | §8 |
 | Q-8 | ~~언어/패키징~~ | **확정 = Python** (D-5 CAO 차용으로 사실상 결정) | 강등(CON-4) |
-| **Q-9** | **워커 격리 구현** | Landlock(landrun/직접) + bubblewrap / 작업디렉터리·net 정책 | 신규(§6 BLOCKING) |
+| **Q-9** | **워커 격리 구현** | **✅ V-2 실증 = 직접 Landlock C(landrun 불요), 작업디렉터리 격리 동작**. bwrap=조건부. net 정책=후속(ABI4) | 신규(§6 BLOCKING) / V-2 완료 |
 
 ## 10. 다음 단계 (사용자 결정 — 자동 진입 0건)
 
 | 옵션 | 내용 |
 |------|------|
-| (A) | 본 v3 **재합의**(BLOCKING 5 + v3 의존순서/게이트 확인 — 단축 Reviewer-only 가능) 또는 **구현 진입 승인** |
-| (B) | **MVP-0 트랙 A 구현 진입**(격리-직교 배관/headless 골격 TDD) — V-2 없이 즉시 가능(§5 v3-1) |
-| (C) | V-2 **PoC**(Landlock 격리 + 이중격리 순이득 실측) 먼저 → 트랙 B de-risk |
+| (A) | 본 v4 **재합의**(BLOCKING 5 + v3 의존순서/게이트 + v4 V-2 결과 확인 — 단축 Reviewer-only 가능) 또는 **구현 진입 승인** |
+| (B) | **MVP-0 트랙 A 구현 진입**(격리-직교 배관/headless 골격 TDD) — 즉시 가능(§5 v3-1) |
+| (C) | ~~V-2 PoC~~ **✅ 완료(v4)** — Landlock 단독 충분·이중격리 순이득 확정 |
 | (D) | commit / push / 세션 정리 |
 
-- ⚠️ TDD 코드 구현 = 본 v3 승인 + (재합의 통과) 후. BLOCKING 5(§2·Q-2·Q-1·§6·§8) 반영 완료 = 구현 진입 게이트 충족. **v3 추가**: MVP-0 = 트랙 A(즉시 진입 가능)+트랙 B(V-2 선결). Q-6 게이트 = "반영 전" 잠정 확정.
+- ⚠️ TDD 코드 구현 = 본 v4 승인 + (재합의 통과) 후. BLOCKING 5(§2·Q-2·Q-1·§6·§8) 반영 완료 = 구현 진입 게이트 충족. **v3·v4 추가**: MVP-0 = 트랙 A(즉시 진입 가능)+트랙 B(**V-2 de-risk 완료**). Q-6 게이트 = "반영 전" 잠정 확정. **트랙 B 격리 backend = 검증된 `ll_sandbox` 패턴.**
 
 ---
 

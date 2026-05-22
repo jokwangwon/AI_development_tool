@@ -1,8 +1,8 @@
 # Jarvis 안전 레이어 PoC 발견 — OpenShell 평가 → 경량 격리 채택
 
-**작성일**: 2026-05-22
-**Status**: PoC 완료 — 결정 반영 대상(brief v2 §안전)
-**목적**: 3+1 합의가 찾은 BLOCKING(워커 신뢰경계 B-2/B-6, 자가진화 게이트 B-1)을 NVIDIA OpenShell로 해결할지 실증. "OpenShell 통째 채택 vs 참조만" 비례성 판단.
+**작성일**: 2026-05-22 (세션 1: OpenShell 평가 / **세션 3: V-2 Landlock 실증 — §6**)
+**Status**: PoC 완료 (OpenShell 평가 + **V-2 Landlock 격리 실증 완료**) — 결정 반영 대상(brief §6 / Q-9 / 트랙 B)
+**목적**: 3+1 합의가 찾은 BLOCKING(워커 신뢰경계 B-2/B-6, 자가진화 게이트 B-1)을 NVIDIA OpenShell로 해결할지 실증. "OpenShell 통째 채택 vs 참조만" 비례성 판단. **+ V-2: 채택한 Landlock 경량 격리의 실제 동작·이중격리 순이득 실측(§6).**
 **환경**: NVIDIA GB10 / aarch64 / Ubuntu 24.04.4 LTS / 커널 6.17 / Docker 29.2.1 (delangi=docker+sudo)
 
 ---
@@ -51,4 +51,35 @@ bubblewrap은 unprivileged userns 의존 → 24.04 AppArmor 제한 영향(에이
 - 후속 PoC 후보: landrun 설치 + Landlock fs/net 격리 실증, bubblewrap unprivileged(사용자 셸) 클린 테스트.
 
 ---
-**출처**: 본 세션 PoC(2026-05-22) / OpenShell GitHub README(NVIDIA/OpenShell) / DGX Spark 플레이북 README / PyPI openshell 버전 이력 / 웹 검색(경량 sandbox 2026: Claude Code bubblewrap, Codex Landlock+seccomp, firejail Gorgon) / 머신 실측. 답습: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] / `project_jarvis_local_boss_direction` / `feedback_proportionate_security_personal_tool`.
+
+## 6. V-2 PoC 실행 결과 (2026-05-22 세션 3 — brief v3 트랙 B de-risk)
+
+> **목적**: brief v3 §7 V-2 = Landlock 워커 격리 실증 + bubblewrap 클린 테스트 + **이중격리 순이득 실측(v3-3)**. landrun 미설치·go 미설치 → **직접 Landlock syscall(C ~110줄)**로 실증(머신 오염 최소화).
+
+| # | 검증 | 결과 |
+|---|------|------|
+| V2-1 | 빌드 도구 | ✅ gcc 13.3.0 / `/usr/include/linux/landlock.h`(풀 매크로) / seccomp.h. go 미설치 → 직접 C 채택 |
+| V2-2 | Landlock sandboxer 컴파일 | ✅ `/tmp/jarvis-v2-poc/ll_sandbox.c` (path_beneath 기반, RW/RO 디렉터리 분리) → **런타임 ABI = 7** (커널 6.17) |
+| V2-3 | **작업디렉터리 격리 실증** | ✅ workspace **RW** OK / 프로젝트 소스(`CLAUDE.md`) 읽기 **차단(EACCES)** / `~/.ssh` 접근 **차단** / workspace 밖 쓰기 **차단**(`PWNED.txt` 미생성 확인) / `/etc`는 명시 허용 시만 읽힘 = **deny-by-default** |
+| V2-4 | root/userns 불요 | ✅ uid 1000 평범 실행 — **24.04 AppArmor userns 제한과 무관하게 동작**(F-4 확정) |
+| V2-5 | bubblewrap unprivileged | ❌ `setting up uid map: Permission denied` — `apparmor_restrict_unprivileged_userns=1` + bwrap 비-setuid(`rwxr-xr-x`) → **추가 권한(sudo/AppArmor 프로파일/setuid) 없이는 불가**. 직전 F-4 예측이 *시스템 정책 차원*에서 확정(에이전트 셸 중첩 아님) |
+| V2-6 | **claude 워커 자체 격리 의존성** | ⚠️ `claude.exe`(236MB Bun 네이티브) strings에 **`apt install bubblewrap`** → claude 자체 sandbox = **bwrap 의존** → 이 머신에서 동일하게 막힘(V2-5) |
+
+### 핵심 발견 (V-2)
+
+- **V-F1 — Landlock = 이 머신에서 *유일하게* 추가 권한 0으로 작동하는 워커 격리.** bwrap(우리·claude 공통)은 24.04 기본 보안 정책(`apparmor_restrict_unprivileged_userns=1`)에 막힘. Codex가 Landlock+seccomp를 채택한 이유가 머신에서 재현됨.
+- **V-F2 — 이중격리 순이득 명백(검토 지점 3 / v3-3 측정 완료).** claude 자체 sandbox가 bwrap 의존 → 이 머신에서 비활성/제한 가능 → **우리 외부 Landlock이 사실상 유일한 실효 격리.** 게다가 외부 강제(커널)라 워커 침해·prompt injection으로 워커가 자기 sandbox를 끄거나 우회해도 유효. **중복 아님 → §6 강등 불요, Landlock 채택 유지 확정.**
+- **V-F3 — §6 "bubblewrap 보완"은 이 머신에서 *조건부*(권한 작업 전제)로 정정 권고.** 무권한 환경에서 bwrap은 사실상 제외 → "Landlock 단독으로 워커당 작업디렉터리 격리 충족(이 머신)" + bwrap은 mount/pid ns가 꼭 필요하고 권한 작업이 허용될 때만.
+- **비용 = ~110줄 C wrapper + execvp.** 매우 경량 → 비례 적합(`feedback_proportionate_security_personal_tool`). MVP-0 트랙 B 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴 재사용.
+
+### V-2 머신 상태 / 롤백
+- 추가물: `/tmp/jarvis-v2-poc/`(C 소스 + 바이너리 + workspace) — **`rm -rf /tmp/jarvis-v2-poc`로 완전 복구**. /tmp라 재부팅 시 자동 소멸.
+- **시스템 변경 0건**: sysctl/AppArmor/setuid/패키지 설치/sudo 변경 0. PWNED.txt 미생성(격리 입증). repo 변경 0(본 문서 기록만).
+
+### V-2 결정 영향 (brief 반영 대상)
+- **§6**: "Landlock 중심 + bubblewrap 보완" → "**Landlock 단독 충분(무권한 환경)**, bwrap=권한 작업 전제 조건부". v3-3 이중격리 순이득 = **측정 완료, 순이득 확인**.
+- **Q-9**: 워커 격리 구현 = **직접 Landlock C(landrun 불요) 실증됨**.
+- **V-2 = MVP-0 트랙 B de-risk 완료** → 트랙 B 격리 backend 설계 위험 해소. (V-1=MVP-1 선결은 미착수 — Ollama tok/s 별개)
+
+---
+**출처**: 본 세션 PoC(2026-05-22 세션 1·3) / OpenShell GitHub README(NVIDIA/OpenShell) / DGX Spark 플레이북 README / PyPI openshell 버전 이력 / 웹 검색(경량 sandbox 2026: Claude Code bubblewrap, Codex Landlock+seccomp, firejail Gorgon) / 머신 실측 + V-2 Landlock 직접 실증. 답습: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] / [[jarvis-orchestrator-mvp-design-brief]](v3) / `project_jarvis_local_boss_direction` / `feedback_proportionate_security_personal_tool`.

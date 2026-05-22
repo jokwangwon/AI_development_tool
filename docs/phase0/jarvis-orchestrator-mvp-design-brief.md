@@ -5,7 +5,7 @@
 ---
 
 **작성일**: 2026-05-22
-**Status**: **DRAFT v4 — V-2 Landlock 격리 실증(트랙 B de-risk) 반영. ✅ 트랙 A 구현(`9621600`) + 트랙 B 구현(`ece32bc`, LandlockIsolation 통합·증명 ⑤ 완성) 완료 — MVP-0 핵심 골격 완료**
+**Status**: **DRAFT v4 — V-2 Landlock 격리 실증(트랙 B de-risk) 반영. ✅ 트랙 A(`9621600`) + 트랙 B(`ece32bc`, LandlockIsolation·증명 ⑤) + A1 E2E 데모(`ed0df1b`, 실 claude 워커로 ①~⑤ 입증) 완료 — MVP-0 실동작 완료. PR #1(→main) 리뷰 대기**
 **진입 단위**: 자비스 본연 기능 — 오케스트레이터 MVP (보안 거버넌스 트랙과 독립)
 **근거**: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] (REVISE, 12 修正) · [[jarvis-safety-layer-poc-findings]] (OpenShell→경량 격리) · `project_jarvis_local_boss_direction` · `feedback_provider_liquidity` (헌법 5조) · `feedback_proportionate_security_personal_tool` (비례성) · `project_minimize_user_intervention`
 

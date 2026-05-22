@@ -1,136 +1,159 @@
-# Jarvis 오케스트레이터 MVP 설계 brief — 로컬 사장 + tmux 워커 (DRAFT v1)
+# Jarvis 오케스트레이터 MVP 설계 brief — 로컬 사장 + headless CLI 워커 (DRAFT v2)
 
-> **본 brief = 자비스 오케스트레이터 MVP 설계 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·CAO 설치·로컬 모델 다운로드·추론 런타임 설치·tmux 세션 생성·provider adapter 구현·git hook/CI 구성** 을 발생시키지 않는다. 본 brief = **비전 정식화 + 확정 제약 기록 + 아키텍처 후보 + 3+1 합의용 결정 항목 정리** — 실 변경 0건. staged: brief → 승인 → **3+1 합의(아키텍처 큰 결정 = 필수)** → (합의 후) TDD 구현.
+> **본 brief = 자비스 오케스트레이터 MVP 설계 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·런타임 설치·로컬 모델 다운로드·워커 격리 구현·sandbox 생성·git hook/CI 구성** 을 발생시키지 않는다. 본 brief = **3+1 합의(REVISE) 12 修正 + OpenShell PoC 발견 반영한 설계 갱신** — 실 변경 0건. staged: brief v2 → 승인 → (재합의 or TDD 구현). 코드 전 문서 먼저(SDD).
 
 ---
 
 **작성일**: 2026-05-22
-**Status**: **DRAFT v1 — 3+1 합의 진입 대기**
-**진입 단위**: 자비스 본연 기능 — 오케스트레이터 MVP (보안 거버넌스 트랙과 독립, [[feedback_proportionate_security_personal_tool]] 로 거버넌스 DEFER)
-**근거 메모리**: [[project_jarvis_local_boss_direction]] (방향 확정) · [[feedback_provider_liquidity]] (헌법 5조) · [[feedback_proportionate_security_personal_tool]] (비례성) · [[project_minimize_user_intervention]] (개입 최소화) · [[feedback_staged_consensus_workflow]] (단계 분리)
+**Status**: **DRAFT v2 — 3+1 REVISE 반영, 재합의 또는 구현 진입 대기**
+**진입 단위**: 자비스 본연 기능 — 오케스트레이터 MVP (보안 거버넌스 트랙과 독립)
+**근거**: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] (REVISE, 12 修正) · [[jarvis-safety-layer-poc-findings]] (OpenShell→경량 격리) · `project_jarvis_local_boss_direction` · `feedback_provider_liquidity` (헌법 5조) · `feedback_proportionate_security_personal_tool` (비례성) · `project_minimize_user_intervention`
+
+## v2 변경 이력 (3+1 12 修正 반영)
+
+| # | v1 → v2 | 출처 |
+|---|---------|------|
+| 🔴1 | §2 CUDA13 toolkit 보유 추가 + "70B 가능"→대역폭(273GB/s) 재기술 | GAP-A3 |
+| 🔴2 | Q-2 vLLM 제외(#36821) → Ollama/llama.cpp | A-2,C-4 |
+| 🔴3 | Q-1 MoE/30B이하 재조준 + tok/s 실측 기준 | A-3 |
+| 4 | Q-3·§3·§5 **headless subprocess 1급**, tmux=관전용, "tmux 강제" 정정 | DIV-1,C-2 |
+| 🔴5 | §6 워커 격리(작업디렉터리+무비판수용 금지) MVP 전제 + 신규 Q-9 | B-2/B-6,A-7 |
+| 🔴6 | §8 immutable zone | B-1 |
+| 7 | D-1 하이브리드 재정식화 + §0.1 "3+1 자동화" 매핑 삭제 | C-1,B-5 |
+| 8 | §5·Q-4 사장도 provider 추상 / Worker=CLI+endpoint | A-7,C-4 |
+| 9 | §5 MVP-0/MVP-1 단계 분리 | C-6,A-1 |
+| 10 | Q-7 Layer 0 메모리 누적 학습 | C-5 |
+| 11 | §0 egress·로컬 워커 부재 명시적 한계 | B-3 |
+| 12 | Q-8 "확정(Python)" 강등 / §4 shogun 후속 메모 | CON-4,DIV-2 |
+| + | §6 OpenShell=참조only + Landlock/bubblewrap 경량 격리 채택 | PoC findings |
 
 ---
 
-## 0. 비전 (사용자 확정, 2026-05-22 대화)
+## 0. 비전
 
-> **인터넷/구독에 묶이지 않는 나만의 자비스(Jarvis).** Provider-agnostic — Claude 비종속. 토큰 소진·구독 불가 시 GLM 등 fallback 워커로 계속 작업. 넓은 개인 비서를 지향하되, 개발자이므로 **개발 작업이 MVP 중심**.
+> **인터넷/구독에 묶이지 않는 나만의 자비스(Jarvis).** Provider-agnostic — Claude 비종속. 토큰 소진·구독 불가 시 다른 워커(GLM 등)로 계속 작업. 넓은 개인 비서 지향, **개발 작업이 MVP 중심**.
 
-### 0.1 조직 모델 (사용자 제시 은유 — 기능에 봉사하는 선에서만, "메타포 강제 금지" 준수)
+**⚠️ 비전 vs MVP 간극 (명시적 한계, B-3)**: MVP 워커는 대부분 클라우드 CLI(claude/codex…) → 이 단계에선 "인터넷 비종속"이 *부분적*으로만 성립(사장만 로컬). **완전 로컬 워커 + egress 통제는 §6 Privacy 정책 + MVP-1 이후**. fallback 시 동일 프롬프트(코드)가 다른 provider 클라우드로 전송됨을 인지 — egress 정책 대상(§6).
+
+### 0.1 조직 모델 (사용자 은유 — 기능에 봉사하는 선에서만, "메타포 강제 금지")
 
 | 역할 | 정체 | 권한 |
 |------|------|------|
-| **대표** | 사용자 본인 | **최종 결정** (승인 게이트) |
-| **사장** | 로컬 LLM (항상 ON) | 작업 수령·계획·분배·결과 검토 |
-| **워커** | claude / gpt / GLM … CLI 에이전트 | 작업 수행 + **자기 의견 표현 가능**, **언제든 교체** |
+| **대표** | 사용자 | **최종 결정** (승인 게이트) |
+| **사장** | 로컬 LLM + 결정적 오케스트레이터 | 작업 수령·계획·분배·결과 검토 |
+| **워커** | claude/codex/opencode … CLI 에이전트 | 작업 수행, **격리 환경에서**, 언제든 교체 |
 
-- 사장↔워커 **의논 → 점진 강화** = 자가진화 루프 (기존 3+1 합의 프로토콜의 자동화 형태와 매핑)
-- 워커 교체 = [[feedback_provider_liquidity]] 구현 형태 (헌법 5조 비협상)
+- ~~사장↔워커 의논 = 3+1 합의 자동화~~ **(삭제, B-5)**: 단일 사장은 독립성이 없어 3+1 교차검증과 동형이 아니며 단일 실패점. 사장↔워커는 "위임+검토"이지 "독립 합의"가 아니다. 자가진화 학습은 §8 별도 메커니즘.
+- 워커 교체 = `feedback_provider_liquidity` 구현 (헌법 5조 비협상).
 
-## 1. 확정된 선행 결정 (본 세션 대화에서 사용자 명시)
+## 1. 확정 결정 (D-1~D-5)
 
-| # | 결정 | 근거 |
+| # | 결정 | 비고 |
 |---|------|------|
-| D-1 | **코어 두뇌 = 로컬 LLM(사장)이 직접 추론·지휘** (안 (a)) | 사용자 명시. GB10/121GB 로 현실적 |
-| D-2 | **워커 = CLI 에이전트, tmux 로 구동·교체** | provider liquidity 가 CLI-via-tmux 를 사실상 강제 (§3) |
-| D-3 | **개발 작업 MVP 중심**, 비서 기능은 후속 확장 | 검증 용이(테스트/lint/git), 자가진화 부착 용이 |
-| D-4 | **자가진화 = 깊게 지향, 무리면 중간 타협**. self-change 는 git+테스트+사람승인 게이트 통과해야 반영 | 비례성 — 하드웨어 서명 같은 과잉 인프라 불요 |
-| D-5 | **구현 형태 = 제3안(하이브리드)**: 우리 얇은 오케스트레이터 직접 구축 + CAO(Apache-2.0)를 참조 구현으로 검증된 배관 패턴 차용 | 본 세션 비교표 (§4), 사용자 명시 |
+| **D-1** | **사장 = 결정적 오케스트레이터(배관·라우팅·완료감지) + 판단 지점(작업 분해·워커 선택·결과 품질 평가)에서만 로컬 LLM 호출** | **하이브리드 재정식화(C-1)**. CLAUDE.md "계산적 검증 우선·추론적 보조" 동형. 순수 LLM-매-hop 폐기(지연·비결정·TDD 곤란) |
+| **D-2** | 워커 = CLI 에이전트, **headless subprocess 우선** 구동·교체 (§3) | tmux=선택적 관전 |
+| **D-3** | 개발 작업 MVP 중심, 비서 기능 후속 | 검증 용이 |
+| **D-4** | 자가진화 = 깊게 지향, 무리면 중간. self-change = git+테스트+사람승인 게이트 + **immutable zone**(§8) | 비례성 |
+| **D-5** | 제3안: 우리 얇은 오케스트레이터 직접 구축 + CAO 패턴 차용 + **OpenShell=안전 참조**(§6) | PoC 반영 |
 
-## 2. 환경 실측 (2026-05-22 확인, read-only)
+## 2. 환경 실측 (2026-05-22, read-only)
 
 | 항목 | 값 | 함의 |
 |------|----|----|
-| SoC | **NVIDIA GB10** (Grace Blackwell, DGX Spark급) | 로컬 사장 LLM 구동 충분 |
-| 메모리 | **121GB 통합** (104GB 여유) | 대형 모델(70B급 양자화 등) 가능 |
-| 디스크 | 1.9TB (332GB 여유) | 모델 가중치 다수 보관 OK |
-| 아키텍처 | ARM64 (Grace) + Blackwell(sm_12x) | ⚠️ 추론 런타임 ARM64+CUDA 빌드 필요 |
-| 보유 | tmux 3.4 ✅ · claude CLI ✅ · python 3.12 ✅ | 워커 구동 토대 확보 |
-| 미보유 | ollama / llama.cpp / vllm | 로컬 추론 런타임 설치 필요 (별도 검증) |
+| SoC | NVIDIA GB10 (Grace Blackwell, DGX Spark급) | 로컬 사장 구동 |
+| 메모리 | 121GB 통합 (104GB 여유) | 용량은 충분 |
+| **대역폭** ⚠️ | **~273GB/s LPDDR5X** | **decode는 memory-bound — dense 70B = 한자릿수 tok/s. MoE/적정크기 필수(§Q-1)** |
+| 아키텍처 | aarch64 + Blackwell sm_121 | — |
+| **CUDA** | **CUDA 13.0 toolkit(nvcc) 설치됨** | 빌드 환경 확보 → V-1 부분 de-risk |
+| 보유 | tmux 3.4 · claude CLI · python3.12 · **bwrap** · **Landlock 활성 LSM(커널6.17)** · uv · openshell-CLI(venv) | 워커 구동 + 경량 격리 토대 |
+| 미보유 | ollama / llama.cpp / vllm / landrun | 추론 런타임 설치 필요(§7) |
 
-## 3. 왜 CLI-via-tmux 인가 (Provider Liquidity 정합)
+## 3. 통신 = headless subprocess 우선 (tmux=관전용)
 
-오케스트레이션 방식 두 갈래:
+- **1급 = headless subprocess**: `claude -p --output-format json` / `codex exec` 등. **exit code = 결정적 완료신호**, json = 출력 + `total_cost_usd`(비용신호 공짜). send-keys 타이밍·ANSI/alt-screen·idle 오탐·출력잘림 함정을 통째 회피. CLAUDE.md "계산적 검증 우선" 부합.
+- **tmux = 선택적 관전 래퍼**: 사용자가 작업 화면을 보고 싶을 때(human attach)만. 완료감지를 tmux에 의존하지 않음.
+- **fallback**: headless json 미지원 provider는 idle-pattern watchdog(CAO 차용) 보조.
+- **§3 정정(C-2)**: "provider liquidity가 tmux를 강제"는 **과장**. provider 교체 = "다른 바이너리를 headless 호출"로 동일 충족 — tmux 불필수.
 
-- **(A) CLI-via-tmux**: 워커 = 별도 프로세스/바이너리(claude·codex·glm CLI). tmux 가 프로세스 경계 추상화 → **provider 교체 = "다른 바이너리 띄우기"로 공짜**. GLM fallback = "GLM CLI 추가".
-- **(B) API 프레임워크**(LangGraph/CrewAI): provider SDK 코드 결합 → **헌법 5조 Provider Liquidity 와 정면충돌**. CLI 워커 교체 모델과 불일치.
+## 4. 제3안 — 차용 전략
 
-→ **결론: 비협상 제약(Provider Liquidity) 때문에 (A) CLI-via-tmux 가 사실상 강제.** D-2 의 근거.
+CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base.py`)** 차용. handoff/assign 프리미티브 참고.
+- **MVP 차용원 = CAO provider 추상**으로 한정.
+- **후속 메모(DIV-2)**: multi-agent-shogun의 file-queue(zero coordination cost)는 *후속 다중워커 층* 검토 대상(feudal 메타포 주의). DIV-1로 통신이 headless면 SQLite/file-queue의 MVP 필요성 약함.
 
-## 4. 제3안 근거 — CAO 비교표 (§ 본 세션 조사)
+## 5. MVP 척추 (2단계 분리, C-6)
 
-CAO(awslabs/cli-agent-orchestrator) 실측: Python 92% / Python 3.10+ / **tmux 3.3+** / **Apache-2.0** / 계층(CLI·MCP server·FastAPI:9889·service·SQLite·**provider 추상 `base.py`**) / provider 추가 = `glm.py`+`provider_manager.py` 등록 / handoff·assign·send_message + agent profile(.md).
-
-| 관점 | (가) CAO 기반 | (나) 직접 구축 | **제3안(채택)** |
-|------|--------------|--------------|----------------|
-| 배관 확보 | ⭐ 80% 완성 | 0% | CAO 패턴 **차용** |
-| send-keys 함정 | 이미 해결 | 재발견 위험 | 차용 |
-| provider liquidity | ⭐ 추상 내장 | 직접 설계 | 차용 + 우리 정책 |
-| 철학 정렬(SDD/TDD/한국어) | △ 강제 어려움 | ⭐ | ⭐ 우리 코드 |
-| 자가진화 깊이 | △ fork 발산 | ⭐ 1급 설계 | ⭐ |
-| 비례성(의존성 최소) | △ FastAPI·웹UI 무거움 | ⭐ 얇게 | ⭐ |
-
-**차용 대상 패턴**: ① send-keys 타이밍 처리(텍스트→sleep→`C-m` 분리) ② handoff(동기)/assign(비동기)/send_message 프리미티브 ③ provider 추상(`base.py` 인터페이스) ④ `.done` 파일 또는 SQLite 기반 완료신호/상태(rohanverma 식 메시지버스).
-
-## 5. MVP 척추 (가장 얇은 end-to-end)
-
+### MVP-0 (척추 증명 — 로컬 모델 없이)
 ```
-사용자(대표) 작업 입력
+대표 작업 입력
    │
+[사장: 결정적 배관 + 판단지점 LLM(MVP-0은 claude로 대체 가능)] 계획·워커 선택
+   │  headless subprocess (claude -p --output-format json)
    ▼
-[로컬 사장 LLM] 계획 수립 → 워커 선택(가용성·비용 정책)
-   │  tmux: 텍스트 send → sleep → C-m  (워커 CLI 구동)
+[워커 CLI] ← §6 격리 작업디렉터리에서 실행
+   │  exit code + json = 완료/출력/비용
    ▼
-[워커 CLI] (우선 claude, fallback 가능) 작업 수행
-   │  .done / SQLite 로 완료 신호 + 출력 회수
+[사장] 결과 검토 (무비판 수용 금지 — §6)
    ▼
-[사장] 결과 검토
-   │
-   ▼
-[대표] 보고 받고 승인/반려  ← 사람 결정 게이트
+[대표] 보고·승인/반려  ← 사람 결정 게이트
 ```
+- 증명: ① 결정적 배관 ② headless 워커 분배 ③ provider 교체(인터페이스, 실 fallback은 후속) ④ 사람 게이트 ⑤ **워커 격리(§6)**.
+- **사장 호출도 추상(A-7/C-4)**: 사장 LLM 호출 = provider 추상 대상(Ollama OpenAI-호환 endpoint). 사장도 교체 가능해야 헌법 5조 일관. MVP-0은 claude로 대체 → MVP-1에서 로컬로 교체.
+- **범위 밖**: 로컬 사장 모델 / 실 fallback / SQLite(과설계) / 다중턴 의논 / 다중워커 병렬 / 자가진화 발효 / 넓은 비서.
 
-증명 항목 4: ① 로컬 사장 추론 ② tmux 워커 분배 ③ provider 교체 ④ 사람 결정 게이트.
-**MVP 범위 밖(후속 층)**: 사장↔워커 다중턴 의논 / 다중 워커 병렬 / 자가진화 루프 발효 / 넓은 비서 기능.
+### MVP-1 (비전 시연 — 로컬 사장 교체)
+- 사장 LLM을 **로컬(Ollama+MoE 모델)**으로 교체 (V-1 통과 후). "인터넷 비종속" 핵심 비전 시연.
 
-## 6. 3+1 합의용 결정 항목 (본 brief 가 *결정하지 않음* — 합의/사용자 몫)
+## 6. 안전 모델 — 워커 격리 (🔴 BLOCKING 해소, B-2/B-6/A-7)
 
-| # | 결정 항목 | 후보 | 비고 |
-|---|----------|------|------|
-| Q-1 | **로컬 사장 모델** | Qwen2.5-Coder / Llama / GLM-local / 기타 | GB10 VRAM·코딩 성능·라이선스 형량. **하드코딩 금지**(config 교체, 헌법 5조) |
-| Q-2 | **추론 런타임** | Ollama / llama.cpp / vLLM | ARM64+Blackwell 호환성 = **별도 PoC 검증 필요** |
-| Q-3 | **사장↔워커 통신** | tmux send-keys + `.done` 파일 / SQLite inbox / MCP | MVP 는 최소(파일/SQLite), MCP 는 후속 |
-| Q-4 | **워커 provider 추상 형태** | `Worker` 인터페이스(spawn/send/capture/done) | CAO `base.py` 차용, provider liquidity 1급 |
-| Q-5 | **provider 라우팅 정책** | claude 우선 → 토큰/구독 끊기면 GLM fallback | 가용성·비용 신호 감지 방법(MVP=수동/설정, 후속=자동) |
-| Q-6 | **대표 결정 게이트 위치** | 작업 착수 전 / 결과 반영 전 / 양쪽 | 개입 최소화([[project_minimize_user_intervention]])와 형량 |
-| Q-7 | **자가진화 첫 적용 지점** | 워커 프롬프트/profile 갱신(중간) → 코어 자기수정(깊음) | git+테스트+승인 게이트 필수(D-4) |
-| Q-8 | **언어/패키징** | Python(CAO 정합·uv) vs 기타 | Python 권고(CAO 패턴 차용·python3.12 보유) |
+> **워커 실행경계는 "후속 층"이 아니라 MVP 첫 실행 전제.** MVP 자체가 워커에 실행 권한을 부여하므로(증명 ②), 격리 없는 MVP = thin=unsafe 함정.
 
-## 7. 별도 선결 검증 (아키텍처 결정과 직교)
+- **격리 수단 = Landlock 중심 + bubblewrap 보완** (OpenShell=참조only, k3s 회피 — PoC findings, 비례성). 워커 본인 제작사도 경량 격리: Claude Code=bubblewrap, Codex=Landlock+seccomp.
+  - **Landlock**(커널6.17 활성, userns·root 불요 → Ubuntu24.04 userns 제한 우회): 워커당 **작업디렉터리만 read/write**, 그 외 fs 차단. net 포트 제한(ABI4).
+  - **bubblewrap**(설치됨): mount/pid 네임스페이스 보완(필요 시).
+- **무비판 수용 금지**: 사장은 워커 출력을 결정적 가드로 검토(파괴적 명령 패턴·diff 검토) 후 대표에 보고. prompt injection 체인 차단.
+- **OpenShell 참조 개념**: deny-by-default 정책 모델 / Privacy Router(로컬 vs 프론티어 라우팅) / skill 검증 + 정책변경=승인. 통째 채택(k3s)은 비례 초과로 미채택.
 
-- **V-1 ⚠️ GB10(ARM64+Blackwell)에서 로컬 추론 런타임 실동작** — (가)/(나) 무관하게 풀어야 함. Ollama/llama.cpp/vLLM 중 sm_12x CUDA 빌드 가용성 PoC. 사장 모델 구동 = MVP 전제.
-- **V-2** CAO 가 ARM64 에서 설치/동작(순수 Python 이라 거의 확실, 단 참조용으로만 쓰면 무관).
+## 7. 별도 선결 검증 (아키텍처와 직교)
 
-## 8. 자가진화 안전 모델 (D-4 구체화)
+- **V-1**: 로컬 추론 런타임 PoC. **vLLM 제외**(GB10 sm_121 aarch64 미동작, vllm #36821). 후보 = **Ollama**(NVIDIA 파트너십, out-of-box) / llama.cpp(sm_121 빌드). **CUDA13 toolkit 보유로 부분 de-risk** — 잔여 = 런타임 구동 + 모델 tok/s 실측.
+- **V-2**: Landlock 워커 격리 실증(landrun 또는 직접 Landlock+seccomp) + bubblewrap unprivileged 클린 테스트(사용자 셸).
 
-- self-change(워커 프롬프트·skill·코어 코드 수정) = **항상 git commit 형태** → 기존 피드백 루프(Layer 1 lint / Layer 2 테스트 / Layer 6 사람 리뷰) 통과해야 반영.
-- **대표 승인 게이트** = 자가진화 반영의 최종 차단. 자동 재배포 0건(MVP).
-- 비례성: 하드웨어 서명·touch-per-commit 등 과잉 인프라 불요([[feedback_proportionate_security_personal_tool]]). git+테스트+리뷰로 충분.
+## 8. 자가진화 안전 모델 (🔴 immutable zone, B-1)
 
-## 9. 다음 단계 (사용자 결정 — 자동 진입 0건)
+- 3단 점진(C-5): **Layer 0 메모리 누적(read-only 학습 — 코드/프롬프트 변경 0, 게이트 불요, 최안전, ADR-011 T1 정합) → Layer 1 워커 프롬프트/skill 갱신(중간) → Layer 2 코어 자기수정(깊음)**. MVP = Layer 0만.
+- self-change(Layer 1/2) = **git commit → Layer1 lint / Layer2 테스트 / Layer6 사람리뷰 → 대표 승인** 통과해야 반영.
+- **🔴 immutable zone**: `tests/ · 게이트 로직 · git hooks · CI config · 본 §8 안전모델 문서`는 self-change 범위 **제외**. 피검증자가 검증자를 수정하면 green washing(거짓 안전감) → 차단. MVP에서 루프 미발효라도 게이트 *정의*는 명문화.
+- 비례성: 하드웨어 서명 등 과잉 인프라 불요(`feedback_proportionate_security_personal_tool`).
+
+## 9. 결정 항목 (3+1/사용자 몫 — 본 brief 결정 안 함)
+
+| # | 항목 | 후보 | 비고 |
+|---|------|------|------|
+| Q-1 | **로컬 사장 모델** | **Qwen3.x-A3B/A10B(MoE)** 또는 30B이하+양자화. 조사: Qwen3.6-35B-A3B(SWE-bench 73.4%) | **대역폭 적합형 + tok/s 실측 기준**(A-3). 하드코딩 금지(config 교체) |
+| Q-2 | **추론 런타임** | **Ollama**(유력) / llama.cpp | vLLM 제외 |
+| Q-3 | **통신** | **headless subprocess(1급)** / watchdog(fallback) / tmux(관전) | §3 |
+| Q-4 | **Worker 추상** | `Worker`(spawn/send/capture/done) — **CLI 백엔드 + OpenAI-endpoint 백엔드 둘 다 수용** | CLI=실행에이전트, endpoint=순수추론(역할 차이) |
+| Q-5 | **provider 라우팅** | claude 우선 → fallback. **MVP=수동/설정**, 자동감지=후속 | 표준 신호 없어 fragile |
+| Q-6 | **대표 게이트 위치** | 착수 전 / 반영 전 / 양쪽 | 개입 최소화 형량 |
+| Q-7 | **자가진화 첫 지점** | **Layer 0 메모리 누적** → 프롬프트 → 코어 | §8 |
+| Q-8 | ~~언어/패키징~~ | **확정 = Python** (D-5 CAO 차용으로 사실상 결정) | 강등(CON-4) |
+| **Q-9** | **워커 격리 구현** | Landlock(landrun/직접) + bubblewrap / 작업디렉터리·net 정책 | 신규(§6 BLOCKING) |
+
+## 10. 다음 단계 (사용자 결정 — 자동 진입 0건)
 
 | 옵션 | 내용 |
 |------|------|
-| (A) | 본 brief **3+1 합의 진입** (아키텍처 큰 결정 = 필수, Q-1~Q-8 다관점 검증 — **권장**) |
-| (B) | V-1 추론 런타임 PoC 먼저 (로컬 사장 구동 가능성 = MVP 전제 확인) |
-| (C) | brief 보강 (특정 § 더 깊이) |
-| (D) | commit 체크포인트 |
+| (A) | 본 v2 **재합의**(BLOCKING 해소 확인 — 단축 Reviewer-only 가능) 또는 **구현 진입 승인** |
+| (B) | V-1/V-2 **PoC**(Ollama+MoE 모델 tok/s 실측 / Landlock 격리 실증) 먼저 |
+| (C) | commit / push / 세션 정리 |
 
-- ⚠️ **TDD 코드 구현 = 3+1 합의 후**. 본 brief 승인 ≠ 구현 착수.
+- ⚠️ TDD 코드 구현 = 본 v2 승인 + (재합의 통과) 후. BLOCKING 5(§2·Q-2·Q-1·§6·§8) 반영 완료 = 구현 진입 게이트 충족.
 
 ---
 
-## 부록 — 답습 출처 + 금지
+## 부록 — 답습 + 금지
 
-**출처**: 본 세션 대화(D-1~D-5 사용자 명시) / 웹 조사(CAO·rohanverma tmux swarm·orchestrator-worker 패턴) / 환경 실측(GB10/121GB) / 헌법 5조 Provider Liquidity / [[project_jarvis_local_boss_direction]].
+**출처**: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] (12 修正) / [[jarvis-safety-layer-poc-findings]] / 웹 조사(Devin·Codex·Claude Code·OpenShell·경량 sandbox) / 환경 실측 / 헌법 5조.
 
-**금지 (영구 답습, 본 brief 0건)**: 코드 작성(orchestrator·provider·라우팅) / CAO 설치·fork / 로컬 모델 다운로드 / 추론 런타임(ollama/llama.cpp/vllm) 설치 / tmux 세션 생성·send-keys 실행 / git hook·CI·skill 실 구성 / 사장 모델 결정 고정(Q-1) / 런타임 결정 고정(Q-2) / 자가진화 자동 발효 / 워커 자동 설치 / commit / push / 5 영구 핵심 제약·Provider Liquidity 약화 / 보안 거버넌스(credential/4축/BI-*) 자동 재개([[feedback_proportionate_security_personal_tool]]).
+**금지 (영구 답습, 본 brief 0건)**: 코드 작성(orchestrator·provider·라우팅·격리) / 런타임(ollama/llama.cpp) 설치 / 로컬 모델 다운로드 / Landlock·bubblewrap 워커 격리 실 구현 / OpenShell k3s 게이트웨이 배포 / git hook·CI·skill 실 구성 / 사장 모델 결정 고정(Q-1) / 런타임 결정 고정(Q-2) / 자가진화 자동 발효 / commit·push / 5 영구 핵심 제약·Provider Liquidity 약화 / 보안 거버넌스(credential/4축/BI-*) 자동 재개.

@@ -5,7 +5,7 @@
 ---
 
 **작성일**: 2026-05-22
-**Status**: **DRAFT v4 — V-2 Landlock 격리 실증(트랙 B de-risk) 반영, 재합의 또는 구현 진입 대기**
+**Status**: **DRAFT v4 — V-2 Landlock 격리 실증(트랙 B de-risk) 반영. ✅ 트랙 A 구현(`9621600`) + 트랙 B 구현(`ece32bc`, LandlockIsolation 통합·증명 ⑤ 완성) 완료 — MVP-0 핵심 골격 완료**
 **진입 단위**: 자비스 본연 기능 — 오케스트레이터 MVP (보안 거버넌스 트랙과 독립)
 **근거**: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] (REVISE, 12 修正) · [[jarvis-safety-layer-poc-findings]] (OpenShell→경량 격리) · `project_jarvis_local_boss_direction` · `feedback_provider_liquidity` (헌법 5조) · `feedback_proportionate_security_personal_tool` (비례성) · `project_minimize_user_intervention`
 
@@ -119,7 +119,7 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 - **사장 호출도 추상(A-7/C-4)**: 사장 LLM 호출 = provider 추상 대상(Ollama OpenAI-호환 endpoint). 사장도 교체 가능해야 헌법 5조 일관. MVP-0은 claude로 대체 → MVP-1에서 로컬로 교체.
 - **⚠️ MVP-0 내부 의존 순서 (v3-1, 검토 지점 1)**: 증명 ⑤(워커 격리)는 **V-2(§7) 통과에 의존** — V-2 미실증 상태로 MVP-0 전체를 짜면 격리 부분만 미검증 stub. 따라서 MVP-0 = **2-트랙 시퀀싱**:
   - **트랙 A (격리-직교 골격)**: 결정적 배관 + headless subprocess 분배(증명 ①②③) + 사람 게이트(④) + 무비판수용 금지 가드(결정적 패턴 검토). **V-2 없이 TDD 선행 가능** — 워커는 잠정적으로 비격리 작업디렉터리(`git worktree` 분리)에서만 실행.
-  - **트랙 B (격리 발효) — ✅ V-2 de-risk 완료(v4-4)**: V-2 통과(Landlock 단독 충분 실증) → 트랙 A의 작업디렉터리 실행을 격리 실행으로 *교체*(증명 ⑤ 완성). 트랙 A 인터페이스가 격리 backend를 주입받도록 설계(격리 = 교체 가능 의존성). 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴.
+  - **트랙 B (격리 발효) — ✅ 구현 완료(`ece32bc`, feature/jarvis-mvp0)**: V-2 통과(Landlock 단독 충분 실증) → 트랙 A의 작업디렉터리 실행을 격리 실행으로 *교체*(증명 ⑤ 완성). 트랙 A 인터페이스가 격리 backend를 주입받도록 설계(격리 = 교체 가능 의존성). 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴. **구현**: `src/jarvis/isolation.py` `LandlockIsolation`(wrap=`[ll_sandbox, workdir(RW), *ro, "--", *cmd]`, **fail-closed**=sandboxer 없으면 거부·비격리 fallback 금지) + `src/jarvis/sandbox/ll_sandbox.c`(V-2 검증본 재사용) + Makefile. 실제 격리 동작 통합 테스트(밖 쓰기 차단=커널 강제). 50 tests / 커버리지 100% / import-linter KEPT.
   - 두 트랙 순서는 자유(A 먼저/B 먼저/병렬)이나 **MVP-0 *완료* 선언 = 트랙 B 통합까지** — "골격만 = MVP-0 부분 완료".
 - **범위 밖**: 로컬 사장 모델 / 실 fallback / SQLite(과설계) / 다중턴 의논 / 다중워커 병렬 / 자가진화 발효 / 넓은 비서.
 
@@ -163,7 +163,7 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 | Q-6 | **대표 게이트 위치** | **잠정 결정 = "반영 전"**(v3-2). 착수-전 = 매 작업 승인=개입 과다 *기각* / 양쪽 = 후속 옵션 | §8 동형·개입 최소화. 확정은 재합의/구현 단계 |
 | Q-7 | **자가진화 첫 지점** | **Layer 0 메모리 누적** → 프롬프트 → 코어 | §8 |
 | Q-8 | ~~언어/패키징~~ | **확정 = Python** (D-5 CAO 차용으로 사실상 결정) | 강등(CON-4) |
-| **Q-9** | **워커 격리 구현** | **✅ V-2 실증 = 직접 Landlock C(landrun 불요), 작업디렉터리 격리 동작**. bwrap=조건부. net 정책=후속(ABI4) | 신규(§6 BLOCKING) / V-2 완료 |
+| **Q-9** | **워커 격리 구현** | **✅ 구현 완료(`ece32bc`)** = `LandlockIsolation`(검증된 `ll_sandbox` 재사용, fail-closed). V-2 실증 = 직접 Landlock C(landrun 불요), 작업디렉터리 격리 동작. bwrap=조건부. net 정책=후속(ABI4) | 신규(§6 BLOCKING) / 구현 완료 |
 
 ## 10. 다음 단계 (사용자 결정 — 자동 진입 0건)
 

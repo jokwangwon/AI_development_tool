@@ -81,6 +81,7 @@ bubblewrap은 unprivileged userns 의존 → 24.04 AppArmor 제한 영향(에이
 - **§6**: "Landlock 중심 + bubblewrap 보완" → "**Landlock 단독 충분(무권한 환경)**, bwrap=권한 작업 전제 조건부". v3-3 이중격리 순이득 = **측정 완료, 순이득 확인**.
 - **Q-9**: 워커 격리 구현 = **직접 Landlock C(landrun 불요) 실증됨**.
 - **V-2 = MVP-0 트랙 B de-risk 완료** → 트랙 B 격리 backend 설계 위험 해소. (V-1=MVP-1 선결은 미착수 — Ollama tok/s 별개)
+- **✅ 트랙 B 구현 완료(2026-05-22 세션 4, `ece32bc`)**: 본 §6 검증본 `ll_sandbox.c`를 `src/jarvis/sandbox/`로 그대로 재사용(본문 diff 0) + `LandlockIsolation`(`src/jarvis/isolation.py`, fail-closed=비격리 fallback 금지) 통합. 실제 빌드 바이너리로 workdir 밖 쓰기 차단 통합 테스트 재현(V2-3 동형). 50 tests / 커버리지 100% / import-linter KEPT. 증명 ⑤ 완성.
 
 ---
 **출처**: 본 세션 PoC(2026-05-22 세션 1·3) / OpenShell GitHub README(NVIDIA/OpenShell) / DGX Spark 플레이북 README / PyPI openshell 버전 이력 / 웹 검색(경량 sandbox 2026: Claude Code bubblewrap, Codex Landlock+seccomp, firejail Gorgon) / 머신 실측 + V-2 Landlock 직접 실증. 답습: [[3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp]] / [[jarvis-orchestrator-mvp-design-brief]](v3) / `project_jarvis_local_boss_direction` / `feedback_proportionate_security_personal_tool`.

@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import json
 
-from src.jarvis.isolation import PassthroughIsolation
+from pathlib import Path
+
+from src.jarvis.isolation import LandlockIsolation, PassthroughIsolation
 from src.jarvis.worker import CliWorker
 
 
@@ -64,6 +66,26 @@ def test_run_applies_isolation_wrap() -> None:
     w.run(prompt="hi", workdir="/tmp/ws")
     assert spy.called_with == (["claude", "-p", "hi"], "/tmp/ws")
     assert rec["cmd"] == ["SBX", "claude", "-p", "hi"]  # 격리 wrap 결과가 실행됨
+
+
+def test_run_with_landlock_isolation_wraps_via_sandbox(tmp_path: Path) -> None:
+    # 증명 ⑤: 트랙 B = Passthrough 를 LandlockIsolation 으로 *교체*하면
+    # 워커 명령이 ll_sandbox(작업디렉터리 RW) 로 감싸진 채 실행된다(코드 변경 = 주입뿐).
+    sb = tmp_path / "ll_sandbox"
+    sb.write_text("#!/bin/sh\nexit 0\n")
+    sb.chmod(0o755)
+    rec: dict[str, object] = {}
+    w = CliWorker(
+        alias="claude",
+        argv=["claude", "-p"],
+        isolation=LandlockIsolation(sandbox_bin=str(sb), ro_paths=["/usr"]),
+        runner=_runner(rec),
+    )
+    w.run(prompt="hi", workdir=str(tmp_path))
+    cmd = rec["cmd"]
+    assert cmd[0] == str(sb)  # sandboxer 로 감싸짐
+    assert cmd[1] == str(tmp_path)  # 첫 디렉터리 = RW = workdir
+    assert cmd[-3:] == ["claude", "-p", "hi"]  # 워커 명령은 separator 뒤
 
 
 def test_run_parses_success_result() -> None:

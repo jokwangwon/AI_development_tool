@@ -73,3 +73,6 @@ group-c-followup-logs/
 
 # Group C 후속 후속 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
 group-cff-logs/
+
+# Jarvis 트랙 B — Landlock sandboxer 빌드 산출물(머신 의존, make 재빌드)
+src/jarvis/sandbox/ll_sandbox

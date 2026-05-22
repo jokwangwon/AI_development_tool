@@ -68,9 +68,10 @@ bubblewrap은 unprivileged userns 의존 → 24.04 AppArmor 제한 영향(에이
 ### 핵심 발견 (V-2)
 
 - **V-F1 — Landlock = 이 머신에서 *유일하게* 추가 권한 0으로 작동하는 워커 격리.** bwrap(우리·claude 공통)은 24.04 기본 보안 정책(`apparmor_restrict_unprivileged_userns=1`)에 막힘. Codex가 Landlock+seccomp를 채택한 이유가 머신에서 재현됨.
-- **V-F2 — 이중격리 순이득 명백(검토 지점 3 / v3-3 측정 완료).** claude 자체 sandbox가 bwrap 의존 → 이 머신에서 비활성/제한 가능 → **우리 외부 Landlock이 사실상 유일한 실효 격리.** 게다가 외부 강제(커널)라 워커 침해·prompt injection으로 워커가 자기 sandbox를 끄거나 우회해도 유효. **중복 아님 → §6 강등 불요, Landlock 채택 유지 확정.**
+- **V-F2 — 이중격리 순이득 명백(검토 지점 3 / v3-3 측정 완료).** claude 자체 sandbox가 bwrap 의존(strings 정황) → 이 머신에서 비활성/제한 *가능* → 외부 Landlock이 사실상 유일한 실효 격리일 *수* 있음. **단 이 결론의 결정적 근거는 정황(V2-6 ⚠️)이 아니라**: 우리 외부 Landlock = **커널 강제**라 워커 침해·prompt injection으로 워커가 자기 sandbox를 끄거나 우회해도 유효(워커 신뢰 불요·정황과 독립). **중복 아님 → §6 강등 불요, Landlock 채택 유지 확정.**
 - **V-F3 — §6 "bubblewrap 보완"은 이 머신에서 *조건부*(권한 작업 전제)로 정정 권고.** 무권한 환경에서 bwrap은 사실상 제외 → "Landlock 단독으로 워커당 작업디렉터리 격리 충족(이 머신)" + bwrap은 mount/pid ns가 꼭 필요하고 권한 작업이 허용될 때만.
-- **비용 = ~110줄 C wrapper + execvp.** 매우 경량 → 비례 적합(`feedback_proportionate_security_personal_tool`). MVP-0 트랙 B 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴 재사용.
+- **V-F4 — 검증된 격리 = fs 한정.** `ll_sandbox`는 net ruleset 미포함(fs-only) → 워커 net egress(클라우드 CLI가 임의 호스트로 코드 전송) 미차단. net 포트 제한(ABI4)은 후속, egress 정책은 MVP-1+. MVP-0 워커가 클라우드 CLI이므로 egress 잔여 위험 존재 — brief §0/B-3가 명시한 인정 범위(BLOCKING 아님).
+- **비용 = ~90줄 C wrapper(코드 75줄) + execvp.** 매우 경량 → 비례 적합(`feedback_proportionate_security_personal_tool`). MVP-0 트랙 B 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴 재사용.
 
 ### V-2 머신 상태 / 롤백
 - 추가물: `/tmp/jarvis-v2-poc/`(C 소스 + 바이너리 + workspace) — **`rm -rf /tmp/jarvis-v2-poc`로 완전 복구**. /tmp라 재부팅 시 자동 소멸.

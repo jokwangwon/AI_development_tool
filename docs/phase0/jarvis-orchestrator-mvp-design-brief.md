@@ -41,7 +41,7 @@
 |---|---------|------|
 | v4-1 | §6·Q-9 **Landlock 단독 충분(무권한 환경) 확정** — 직접 Landlock C(ABI 7) 작업디렉터리 격리 실증(소스/SSH키 차단·밖 쓰기 차단). landrun/go 불요 | V-2: V2-3/V2-4 |
 | v4-2 | §6 **bubblewrap = 조건부(권한 작업 전제)로 강등** — 24.04 `apparmor_restrict_unprivileged_userns=1`로 무권한 bwrap 불가(uid map denied) | V-2: V2-5, V-F3 |
-| v4-3 | §6 **이중격리 순이득 확정(v3-3 측정 완료)** — claude.exe=`apt install bubblewrap` 의존 → 워커 자체 sandbox도 이 머신에서 막힘 → 외부 Landlock이 유일 실효 격리·커널 강제(워커 침해 무관). 강등 불요 | V-2: V2-6, V-F2 |
+| v4-3 | §6 **이중격리 순이득 확정(v3-3 측정 완료)** — claude.exe=`apt install bubblewrap` 의존(strings 정황) → 워커 자체 sandbox도 이 머신에서 막힐 가능성 → 외부 Landlock이 유일 실효 격리·**커널 강제(워커 침해 무관 — 정황과 독립적으로 성립)**. 강등 불요 | V-2: V2-6, V-F2 |
 | v4-4 | §5 트랙 B **de-risk 완료** — 격리 backend = 검증된 `ll_sandbox` path_beneath 패턴 재사용 | V-2 종합 |
 
 ---
@@ -133,7 +133,7 @@ CAO(awslabs/cli-agent-orchestrator, Apache-2.0, Python): **provider 추상(`base
 - **격리 수단 = Landlock 단독 충분(무권한 환경) + bubblewrap 조건부** (OpenShell=참조only, k3s 회피 — PoC findings, 비례성). 워커 본인 제작사도 경량 격리: Claude Code=bubblewrap, Codex=Landlock+seccomp. **✅ V-2 실증 완료(v4)**.
   - **Landlock**(커널6.17 ABI 7, userns·root 불요): 워커당 **작업디렉터리만 read/write**, 그 외 fs 차단. **V-2 실증**: 직접 Landlock C(`ll_sandbox`, path_beneath)로 workspace RW / 프로젝트 소스·`~/.ssh` 읽기 차단 / 밖 쓰기 차단 = deny-by-default 동작 확인. **추가 권한 0**(24.04 AppArmor userns 제한과 무관). landrun/go 불요. (net 포트 제한 ABI4는 후속)
   - **bubblewrap = 조건부(v4-2)**: 이 머신 24.04 `apparmor_restrict_unprivileged_userns=1` + bwrap 비-setuid → **무권한 동작 불가**(V-2: `uid map: Permission denied`). mount/pid ns가 *꼭* 필요하고 권한 작업(sudo/AppArmor 프로파일)이 허용될 때만 보완. **무권한 환경 기본 = Landlock 단독.**
-  - **✅ 이중격리 순이득 확정(v4-3, v3-3 측정 완료)**: claude.exe strings = `apt install bubblewrap` → **워커(claude) 자체 sandbox도 bwrap 의존 → 이 머신에서 동일하게 막힘**. 따라서 우리 외부 Landlock = 사실상 **유일한 실효 워커 격리** + 커널 강제(워커 침해·prompt injection으로 워커가 자기 sandbox를 꺼도 유효). **중복 아님 → 강등 불요, Landlock 채택 확정.** 비용 ~110줄 C wrapper = 비례 적합.
+  - **✅ 이중격리 순이득 확정(v4-3, v3-3 측정 완료)**: claude.exe strings = `apt install bubblewrap`(정황 증거) → **워커(claude) 자체 sandbox도 bwrap 의존 → 이 머신에서 동일하게 막힐 가능성**. 더 강한 근거: 우리 외부 Landlock = **커널 강제**라 워커 침해·prompt injection으로 워커가 자기 sandbox를 꺼도 유효(정황과 독립적으로 성립) → 사실상 **유일한 실효 워커 격리**. **중복 아님 → 강등 불요, Landlock 채택 확정.** 비용 ~90줄 C wrapper(코드 75줄) = 비례 적합.
 - **무비판 수용 금지**: 사장은 워커 출력을 결정적 가드로 검토(파괴적 명령 패턴·diff 검토) 후 대표에 보고. prompt injection 체인 차단.
 - **OpenShell 참조 개념**: deny-by-default 정책 모델 / Privacy Router(로컬 vs 프론티어 라우팅) / skill 검증 + 정책변경=승인. 통째 채택(k3s)은 비례 초과로 미채택.
 

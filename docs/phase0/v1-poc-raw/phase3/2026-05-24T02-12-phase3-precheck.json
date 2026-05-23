@@ -1,0 +1,109 @@
+{
+  "phase": "V-1 PoC Phase 3 (C-e 정공법)",
+  "section": "§2.1 사전 점검",
+  "anchor_timestamp": "2026-05-24T02:12:22+09:00",
+  "baseline_pre_timestamp": "2026-05-24T03:03:59+09:00",
+  "host": "promaxgb10-f3c4",
+  "user_session_pid": 1530918,
+  "step1_r1_anchor": {
+    "command": "sudo sha256sum /proc/3375/exe",
+    "hash": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "expected_phase1_2_hash": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "match": true,
+    "interpretation": "silent 교체 미발생, Phase 1·2 와 일치 (회차 6 누계 — Phase 1 5회 + Phase 3 시작 1회)"
+  },
+  "step2_egress_baseline_pre": {
+    "command": "sudo ss -tan state established",
+    "github_com_count": 0,
+    "ollama_external_count": 0,
+    "external_443_entries": [
+      "160.79.104.10:443 (Anthropic API 추정)",
+      "34.226.174.174:443 (AWS, claude likely)",
+      "199.165.136.100:443 (unknown, GCP 가능)",
+      "34.149.66.137:443 (Google)",
+      "172.238.6.34:443 (unknown)",
+      "192.200.0.112:443 (unknown)"
+    ],
+    "sshd_inbound": ["192.168.45.21:54612", "192.168.45.21:56907"],
+    "localhost_ipc": ["127.0.0.1:44733<->127.0.0.1:56496", "127.0.0.1:44733<->127.0.0.1:56500"],
+    "github_pre_check": "github.com 도메인 0건 확인 — cycle-前 baseline 충족"
+  },
+  "step3_r23_freeze": {
+    "initial_state": {
+      "claude_processes": [1225200, 1389678, 1530918],
+      "ollama_daemon_pid": 3375,
+      "ollama_runners": [
+        {"pid": 912310, "model": "qwen2.5-coder", "port": 34891, "blob": "sha256-ac3d1ba8aa77755dab3806d9024e9c385ea0d5b412d6bdf9157f8a4a7e9fc0d9"},
+        {"pid": 4158963, "model": "qwen3-coder-next", "port": 34131, "blob": "sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb", "engine": "--ollama-engine"}
+      ],
+      "r23_violation": "claude × 3 (SESSION_05-23 V-1 Stage 4 답습)"
+    },
+    "cleanup_action": {
+      "command": "kill 1225200 1389678",
+      "user_explicit": true,
+      "result": "success (출력 없음, 종료 추정)"
+    },
+    "post_cleanup_state": {
+      "claude_processes": [1530918],
+      "ollama_daemon_pid": 3375,
+      "ollama_runners_count": 2,
+      "r23_satisfaction": true
+    },
+    "gb10_baseline": {
+      "driver_version": "580.159.03",
+      "cuda_version": "13.0",
+      "gpu_name": "NVIDIA GB10",
+      "compute_cap": "12.1",
+      "temp_C": 38,
+      "perf_state": "P8",
+      "power_W": 4,
+      "gpu_util_pct": 0,
+      "memory_usage": "Not Supported (unified memory)",
+      "host_processes_on_gpu": ["Xorg pid 2551 18MiB", "gnome-shell pid 2915 6MiB"]
+    }
+  },
+  "step4_toolchain": {
+    "gcc": "13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04.1)",
+    "gpp": "13.3.0",
+    "cmake": "3.28.3",
+    "nvcc": "13.0.88 (release 13.0.r13.0, Built Wed_Aug_20_01:57:39_PM_PDT_2025)",
+    "compute_cap_measured": "12.1",
+    "compute_cap_verbatim_source": "nvidia-smi --query-gpu=compute_cap --format=csv",
+    "ccache_pre": "미설치",
+    "ccache_post": "4.9.1 (apt install -y ccache, 사용자 명시)",
+    "thresholds": {
+      "gcc_req": "≥ 11 (충족, 13.3 > 11)",
+      "cmake_req": "≥ 3.18 (충족, 3.28.3 > 3.18, FetchContent disconnect 3.24+ 지원)",
+      "nvcc_req": "≥ 12.4 (충족, 13.0 > 12.4)"
+    }
+  },
+  "step5_disk": {
+    "home_total_GiB": 1900,
+    "home_used_GiB": 1500,
+    "home_available_GiB": 333,
+    "use_pct": 82,
+    "tmp_partition": "same as /home (nvme0n1p2)",
+    "threshold": "≥ 30 GiB (충족, 333 GiB)",
+    "warning": "82% 사용 — 빌드 중 모니터링 권고"
+  },
+  "step6_ollama_meta": {
+    "blob_path": "/root/.ollama/models/blobs/sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb",
+    "match_phase2": true,
+    "source": "Phase 2 §9.1 답습"
+  },
+  "apt_snapshot": {
+    "pre_ccache": {"dpkg_count": 2751, "upgradable_count": 26, "ccache_installed": false, "timestamp_approx": "2026-05-24T02:12"},
+    "post_ccache": {"dpkg_count": 2753, "upgradable_count": 26, "ccache_installed": true, "libhiredis_installed": true, "delta_dpkg": 2, "egress_KB": 582, "timestamp_approx": "2026-05-24T03:04"},
+    "R7_governance_note": "ccache + libhiredis 설치는 사용자 사전 명시. cycle 진입 전 단계 — §2.2 빌드 중 의도-외 apt egress 와 격리 보고."
+  },
+  "section_2_1_summary": {
+    "all_steps_pass": true,
+    "blocking_findings": 0,
+    "advisory_findings": [
+      "디스크 82% 사용률 모니터링 권고",
+      "ccache 신규 설치 — 첫 빌드 = cache miss 상태 (예상 ~30분 단축 효과는 재빌드 시점부터)",
+      "Ollama runner 2개 활성 — §2.3 Step 1·2 측정 직전 idle 재확인 의무"
+    ],
+    "ready_for_2_2": true
+  }
+}

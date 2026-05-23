@@ -1,0 +1,27 @@
+# Phase 3 §8 baseline pre (egress snapshot, cycle 진입 직전)
+# Source: sudo ss -tan state established
+# Timestamp: 2026-05-24T03:03:59+09:00
+# Anchor session: pid 1530918 (delangi pts/3)
+
+State   Recv-Q Send-Q   Local Address:Port   Peer Address:Port
+ESTAB    0      0       127.0.0.1:56496      127.0.0.1:44733
+ESTAB    0      0       127.0.0.1:56500      127.0.0.1:44733
+ESTAB    0      0       192.168.45.100:57528 160.79.104.10:443
+ESTAB    0      0       192.168.45.100:51604 34.226.174.174:443
+ESTAB    0      0       127.0.0.1:44733      127.0.0.1:56496
+ESTAB    0      0       192.168.45.100:51104 199.165.136.100:443
+ESTAB    0      0       192.168.45.100:22    192.168.45.21:54612
+ESTAB    0      0       192.168.45.100:22    192.168.45.21:56907
+ESTAB    0      0       192.168.45.100:59004 34.149.66.137:443
+ESTAB    0      0       192.168.45.100:46386 172.238.6.34:443
+ESTAB    0      0       192.168.45.100:33450 192.200.0.112:443
+ESTAB    0      0       127.0.0.1:44733      127.0.0.1:56500
+
+# 분류
+# - localhost 44733 ×4: IPC (likely VSCode/extension 또는 systemd)
+# - 192.168.45.21:22 ×2: SSH inbound (사용자)
+# - 외부 443 ×6: claude session 외부 호출 (Anthropic API + AWS + Google + 기타)
+# - github.com 도메인: 0건 ✓
+# - Ollama (11434/34891/34131) external: 0건 ✓
+
+# 결론: cycle 진입 *전* baseline 충족 — github.com clone 후 격차 분석 기준선

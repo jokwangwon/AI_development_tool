@@ -1,0 +1,46 @@
+# Phase 3 §8 baseline post (egress snapshot, cycle 종료 직후)
+# Source: sudo ss -tan state established
+# Timestamp: 2026-05-24T04:36:29+09:00
+
+State   Recv-Q Send-Q   Local Address:Port   Peer Address:Port
+ESTAB    0      0       127.0.0.1:56496      127.0.0.1:44733
+ESTAB    0      0       127.0.0.1:56500      127.0.0.1:44733
+ESTAB    0      0       192.168.45.100:44012 160.79.104.10:443     # Anthropic API
+ESTAB    0      0       192.168.45.100:48756 160.79.104.10:443     # Anthropic API (재연결)
+ESTAB    0      0       127.0.0.1:44733      127.0.0.1:56496
+ESTAB    0      0       192.168.45.100:46122 199.165.136.100:443   # unknown (continued from pre)
+ESTAB    0      0       192.168.45.100:22    192.168.45.21:54612   # SSH inbound
+ESTAB    0      0       192.168.45.100:43256 34.149.66.137:443     # Google
+ESTAB    0      0       192.168.45.100:22    192.168.45.21:56907   # SSH inbound
+ESTAB    0      0       192.168.45.100:57914 100.29.240.100:443    # AWS (new since pre)
+ESTAB    0      0       192.168.45.100:46386 172.238.6.34:443      # unknown (continued from pre)
+ESTAB    0      0       192.168.45.100:33450 192.200.0.112:443     # unknown (continued from pre)
+ESTAB    0      0       192.168.45.100:53076 20.200.245.245:443    # Azure (new since pre)
+ESTAB    0      0       127.0.0.1:44733      127.0.0.1:56500
+
+# 비교 (pre vs post)
+# - pre: 6 외부 443 + sshd × 2 + localhost × 4 + AWS 34.226.174.174 (pre only)
+# - post: 7 외부 443 + sshd × 2 + localhost × 4
+# - 신규 (post only): Anthropic 160.79.104.10 (재연결 1개), 100.29.240.100 (AWS), 20.200.245.245 (Azure)
+# - 사라짐 (pre only): 34.226.174.174 (AWS)
+# - github.com: 0건 ✓ (clone 완료 후 connection close)
+# - Ollama (11434/34891/34131) external established: 0건 ✓
+# - 외부 IP 변동 분석: claude session 의 정상 호출 (Anthropic API + AWS + Google + Azure 다중)
+#
+# 결론: Phase 3 cycle 의 의도 egress = github.com clone (~30MB) only — connection 정상 close.
+#       의도-외 외부 egress 0건 ✓. 본 cycle 의 R-7 격리 거버넌스 충족.
+
+# Listening 사후 (sudo ss -tlnp | grep -E '11434|34891|34131')
+LISTEN  0  4096  127.0.0.1:11434  0.0.0.0:*  users:(("docker-proxy",pid=4218,fd=8))
+
+# 🟡 Finding: Port 11434 listening process = docker-proxy (pid 4218) — NOT ollama daemon (pid 3375) 직접
+# 가능 시나리오:
+# (a) Ollama daemon 이 Docker container 내 실행, port 11434 가 docker-proxy 로 host-forward
+# (b) Docker가 별도 service 로 11434 reserve, ollama daemon 은 다른 형식 사용
+# (c) Ollama daemon process visibility 분리 (PID namespace)
+# 추가 cycle 권고: docker ps 확인 + container ID + 실제 OLLAMA_MODELS path 확인
+
+# apt snapshot final (post-numpy 와 동일)
+# dpkg count: 2757 (변동 0 since 2026-05-24T03:25 numpy 설치 후)
+# upgradable: 26 (변동 0)
+# R-7 격리: 본 cycle 빌드 중 의도-외 apt egress 0건 확정

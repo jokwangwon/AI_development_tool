@@ -1,0 +1,32 @@
+# Phase 3 §2.3 Step 3 측정 시도 — §2.5 분기 발동
+# Timestamp: 2026-05-24T04:32:39+09:00
+# Command: llama-cli -m <BLOB> -f phase1-prompt-prefill-2k.txt -n 256 --no-display-prompt -ngl 48 -c 8192 --no-warmup --seed 42
+# Duration: ~1초 (모델 로딩 실패로 즉시 abort)
+# Exit: Failed to load model
+
+2026-05-24T04:32:39+09:00
+
+Loading model... |-\0.00.526.804 E llama_model_load: error loading model: missing tensor 'blk.0.ssm_dt.bias'
+0.00.526.922 E llama_model_load_from_file_impl: failed to load model
+0.00.527.926 E common_fit_params: encountered an error while trying to fit params to free device memory: failed to load model
+|/0.00.725.806 E llama_model_load: error loading model: missing tensor 'blk.0.ssm_dt.bias'
+0.00.725.812 E llama_model_load_from_file_impl: failed to load model
+0.00.725.817 E common_init_from_params: failed to load model '/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb'
+0.00.725.824 E srv    load_model: failed to load model, '/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb'
+
+Failed to load the model
+
+# --- 진단 ---
+# GGUF dump: blk.X.ssm_dt (size=128) — 모든 SSM layer 존재, 단 .bias 별도 미저장
+# llama.cpp qwen3next.cpp:87:
+#   layer.ssm_dt = create_tensor(tn(LLM_TENSOR_SSM_DT, "bias", i), { hparams.ssm_dt_rank }, 0);
+#   - LLM_TENSOR_SSM_DT + suffix "bias" → full name = blk.X.ssm_dt.bias
+#   - flag=0 = required (optional 아님)
+# conversion/qwen.py:299-300:
+#   elif name.endswith(".dt_bias"):
+#       name = name.rpartition(".dt_bias")[0] + ".dt_proj.bias"
+#   - 새 conversion 은 .dt_bias → .dt_proj.bias 로 rename
+#
+# 결론: Ollama 가 다운로드한 GGUF = 더 오래된 conversion 으로 생성 (ssm_dt.bias 미저장)
+#       llama.cpp c0c7e147 (master) = 최근 코드에서 .bias 강제 required 변경
+#       Phase 3 (iii) 직접 측정 = GGUF format 호환성 차이로 차단

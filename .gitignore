@@ -76,3 +76,6 @@ group-cff-logs/
 
 # Jarvis 트랙 B — Landlock sandboxer 빌드 산출물(머신 의존, make 재빌드)
 src/jarvis/sandbox/ll_sandbox
+
+# V-1 PoC raw 로그 예외 — Phase 빌드/측정 기록 (cycle 영구 보존 가치, line 36 *.log 매칭 회피)
+!docs/phase0/v1-poc-raw/**/*.log

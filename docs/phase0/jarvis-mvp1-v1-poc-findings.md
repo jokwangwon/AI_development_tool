@@ -1,13 +1,14 @@
-# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2: read-only)
+# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2+3: read-only)
 
-> **본 findings = V-1 PoC의 *1+2차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b) read-only 결과 한정.** tok/s 측정·gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건** (별도 명시 승인 단계). `ollama search` egress = **0건** (R-11 답습).
+> **본 findings = V-1 PoC의 *1+2+3차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b + §8 egress baseline) read-only 결과 한정.** tok/s 측정·gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건** (별도 명시 승인 단계). `ollama search` egress = **0건** (R-11 답습).
 
 **작성일**: 2026-05-23
-**Status**: DRAFT — Stage 1+2/N (read-only 위생 점검 + manifest 검증 + 후보 식별/로컬 부재 확인)
+**Status**: DRAFT — Stage 1+2+3/N (read-only 위생 점검 + manifest 검증 + 후보 식별/로컬 부재 + egress baseline)
 **선행 답습**: `jarvis-mvp1-v1-poc-entry-brief.md`(v1.1, HEAD `9e68fbb`, BLOCKING 6 반영) / `3plus1-consensus-2026-05-23-jarvis-mvp1-v1-poc-entry.md` / brief v2 §6
 **raw**:
 - Stage 1: `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` + `2026-05-23T11-53-qwen3-coder-next-manifest.json`
 - Stage 2: `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json`
+- Stage 3: `docs/phase0/v1-poc-raw/2026-05-23T13-00-v1-egress-baseline-readonly.json`
 
 ---
 
@@ -20,8 +21,9 @@
 3. §3 V1-2 Step 1 `qwen3-coder-next` manifest 해석 (§3)
 4. §3 V1-2 Step 2a 후보 풀 식별표 (§3a)
 5. §3 V1-2 Step 2b 로컬 후보 부재 확인 + 기존 4 모델 dense 검증 (§3b)
-6. 정직성 한계 명시 (§4)
-7. 다음 단계 권고 (§5)
+6. §8 egress baseline (Ollama 외부 ESTABLISHED 0 + 텔레메트리 변수 식별 + R-23 활성 process 점검) (§3c)
+7. 정직성 한계 명시 (§4)
+8. 다음 단계 권고 (§5)
 
 ### 하지 않는 것 (entry brief §0.2 영구 답습)
 
@@ -204,6 +206,67 @@
 
 ---
 
+## 3c. §8 — egress baseline (측정 *전* snapshot, R-3 시간 한정)
+
+### 3c.1 방법
+
+| 점검 | 명령 | 권한 |
+|---|---|---|
+| 전체 ESTABLISHED + process info | `sudo ss -tnp state established` (사용자 명시 prompt 입력, 1회, read-only) | sudo 1회 |
+| 일반 ESTABLISHED + 외부만 filter | `ss -tn state established '! ( src 127.0.0.0/8 or dst 127.0.0.0/8 )'` | delangi |
+| LISTEN 재확인 | `ss -tlnp \| grep 11434` | delangi |
+| `sport :11434` ESTABLISHED | `ss -tnp sport :11434` | delangi |
+
+### 3c.2 ⭐ Ollama PID 3375 egress 검증
+
+| 항목 | 결과 |
+|---|---|
+| Ollama ESTABLISHED 외부 연결 | **0건** |
+| Ollama ESTABLISHED 로컬 연결 | 0건 |
+| Ollama LISTEN | `127.0.0.1:11434` only |
+| Ollama sport :11434 발신 | 0건 |
+
+> **✅ §8.1 기준 충족** (*Ollama 한정* — baseline snapshot 시점).
+
+### 3c.3 외부 ESTABLISHED 9개 분류 (Ollama 비관련)
+
+| Peer | Process | 정체 |
+|---|---|---|
+| `160.79.104.10:443` ×2 | `claude` (pid 3999024) | **Claude Code 본 세션** Anthropic API |
+| `34.149.66.137:443` | `claude` (pid 3999024) | Claude Code misc (GCP likely) |
+| `192.168.45.21:54612` / `:56907` ← `:22` | `sshd` ×2 | 사용자 inbound SSH 2 세션 |
+| `172.238.6.34:443` / `199.165.136.101:443` / `192.200.0.112:443` | `tailscaled` (pid 2122) ×3 | Tailscale VPN |
+| `52.204.199.125:443` | `node` (pid 3911129) | Claude Code Node 컴포넌트 (AWS likely) |
+
+→ **모든 9개 = Ollama 무관**. brief §8.1 "측정 중 외부 egress 0" 검증 = Ollama 한정 충족.
+
+### 3c.4 🔴 R-23 finding (측정 환경 동결, actionable)
+
+본 baseline 시점 활성 Claude Code 인스턴스 ≥ **3개**(pid 3999024 본 세션·3912298·2803969). brief §4.6 R-23 = **"백그라운드 Claude Code 세션 0"** → **§4 측정 진입 *전* 다른 Claude Code 세션 종료 의무**(사용자 책임). tailscaled = GPU/CPU 영향 ↓ 가능, 동결 불필요 판단. sshd inbound = 동결 불필요.
+
+### 3c.5 텔레메트리 환경변수 (식별 한정, export 0)
+
+brief §8.1 명시: Ollama 0.20.4 가 `OLLAMA_NOHISTORY` / `OLLAMA_NO_ANALYTICS` 실제 인식 여부 **미확정** (Agent A 정직성).
+
+| 변수 | 목적(외부 문서) | v0.20.4 인식 |
+|---|---|---|
+| `OLLAMA_NOHISTORY` | history 비활성 | 미확정 |
+| `OLLAMA_NO_ANALYTICS` | analytics 비활성 | 미확정 |
+| `OLLAMA_NOPRUNE` | blob prune 비활성 | 확정 (egress 직접 X) |
+| `OLLAMA_HOST` | 바인딩 주소 | 확정 (egress X·M6 관련) |
+| `OLLAMA_ORIGINS` | CORS origin | 확정 (egress X) |
+
+**현재 export 0** (delangi shell `OLLAMA_*` unset, Stage 1 §2 Step 5). **데몬 자체 환경** (`/proc/3375/environ`) = root 권한 미점검. **측정 진입 권고**: fresh subshell(R-34) 에서 `OLLAMA_NOHISTORY=1` + `OLLAMA_NO_ANALYTICS=1` export 시도 → 데몬 로그·동작 변경 관찰로 인식 검증. **영구 설정 ❌**(`.bashrc`·`.profile` 변경 0건).
+
+### 3c.6 한계 (R-3·R-11b 답습)
+
+- 본 baseline = **단일 snapshot**. 측정 *중* polling(30s)·측정 *직후*·5분 후 lazy upload 재점검 = 미적용 (별도 cycle R-11b).
+- Ollama 자체 update check / 텔레메트리 lazy upload = 본 snapshot 미커버.
+- 출처 미상 Ollama(R-1) → 표준 빌드와 동일한 egress 정책 적용 미확정. silent 교체는 측정 *후* sha256sum 재기록으로만 감지.
+- 외부 IP 9개 reverse DNS = DNS query egress 발생 → **본 진입 R-11 답습 0건**. IP 정체 = process 식별로 추정.
+
+---
+
 ## 4. 정직성 한계 (entry brief §0.2 + Reviewer 권한 한계 답습)
 
 1. **측정 0건** — tok/s/decode/prefill/메모리 점유/SM 활용 결과 = 전부 *부재*. 본 findings 어떤 행도 "성능 PASS" 결론 도출 자격 X.
@@ -215,6 +278,9 @@
 7. **Capabilities `tools` 보고는 *능력* 선언일 뿐** — 실제 endpoint 거부/수용 동작 = §5 Step 4 측정에서 확인.
 8. **Ollama Hub 실재성 미검증** (Stage 2) — `ollama search` egress = 별도 cycle. 11종 404 = *시도한 해당 tag* 부재일 뿐, 다른 tag 형식의 Hub 실재 가능성 잔존.
 9. **Step 2a 활성 파라미터 추정은 외부 의존** — 본 환경 검증 0, Reviewer 정직성 노트 §6 답습.
+10. **egress baseline = 단일 snapshot** (Stage 3) — 측정 중·후 polling / lazy upload 재점검 = 별도 cycle. 본 baseline 의 "Ollama egress 0" 결론 = *해당 snapshot 시점 한정*.
+11. **텔레메트리 변수 인식 미확정** (Stage 3) — 5종 식별만, export·검증 0. 측정 진입 시 효과 비교로 확정 가능.
+12. **데몬 자체 환경 미점검** (Stage 1·3 공통) — `/proc/3375/environ` root 권한 미접근. 데몬 *내부* OLLAMA_* 설정 = delangi shell env 와 다를 가능성 잔존.
 
 ---
 
@@ -223,8 +289,8 @@
 | 옵션 | 내용 | 발생 |
 |---|---|---|
 | ~~(A)~~ | ~~§3 Step 2a/2b 진행~~ — **Stage 2 완료**(본 진입) | — |
-| **(B)** | **§8 egress baseline** 점검 (read-only) — 측정 진입 *전* baseline 확보 | 추가 변경 0, raw 보존 |
-| **(C)** | **§4 측정 진입** (qwen3-coder-next 단일) — decode 5회 + prefill 2k 5회 + prefill 8k 5회. R-1 hash 재기록 + §4.6 환경 동결 의무. **dense baseline 측정** = `qwen2.5-coder:32b` (Stage 2 §3b.4 권고) | **LLM 호출 발생, GPU 사용, ~분 단위 시간, sudo 0 가능, 별도 명시 승인 필수** |
+| ~~(B)~~ | ~~§8 egress baseline~~ — **Stage 3 완료**(본 진입) | — |
+| **(C)** | **§4 측정 진입** (qwen3-coder-next + qwen2.5-coder:32b baseline) — decode 5회 + prefill 2k 5회 + prefill 8k 5회. **R-1 hash 재기록 의무**·**§4.6 환경 동결 의무**(R-23: 다른 Claude Code 세션 종료 ≥3개) | **LLM 호출 발생, GPU 사용, ~분 단위 시간, sudo 0 가능, 별도 명시 승인 필수** |
 | **(D)** | **본 findings 확정 commit + push** → 다음 세션 §4 진입 | 머신 변경 0 |
 | **(E)** | §12 옵션 E — 출처 미상 Ollama 위생 정정 trigger 검토 (별도 cycle, R-1 한계 정정) | 보안 거버넌스 재개 = 비례성 평가 필요 |
 | **(F)** | **gap-pull entry brief** — DeepSeek-V3.1-Lite·Qwen3.5-A3B 등 Hub 실재 확인 + pull 권고 cycle (별도 brief + 합의 + 사용자 명시 승인) | 디스크 사용↑ (≤50GB 누적 권고), egress 발생 |
@@ -244,6 +310,7 @@
 | Stage 1: 환경 ID + V1-1 5 steps + R-1 + V1-2 Step 1 핵심 | `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` |
 | Stage 1: qwen3-coder-next full manifest | `docs/phase0/v1-poc-raw/2026-05-23T11-53-qwen3-coder-next-manifest.json` (82645 bytes) |
 | Stage 2: 인벤토리 재확인 + dense 4 검증 + Step 2b 11종 404 + Step 2a 후보표 | `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json` |
+| Stage 3: §8 egress baseline (ESTABLISHED 외부 9 + Ollama 0 + R-23 활성 process + 텔레메트리 변수 식별) | `docs/phase0/v1-poc-raw/2026-05-23T13-00-v1-egress-baseline-readonly.json` |
 
 raw 미보존 측정 = findings 입력 자격 X (entry brief §4.5 정직성 SOP, B-F13 답습).
 

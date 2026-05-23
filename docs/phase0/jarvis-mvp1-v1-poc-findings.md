@@ -1,11 +1,13 @@
-# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1: read-only)
+# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2: read-only)
 
-> **본 findings = V-1 PoC의 *1차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1) read-only 결과 한정.** tok/s 측정·gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건** (별도 명시 승인 단계).
+> **본 findings = V-1 PoC의 *1+2차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b) read-only 결과 한정.** tok/s 측정·gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건** (별도 명시 승인 단계). `ollama search` egress = **0건** (R-11 답습).
 
 **작성일**: 2026-05-23
-**Status**: DRAFT — Stage 1/N (read-only 위생 점검 + manifest 검증)
+**Status**: DRAFT — Stage 1+2/N (read-only 위생 점검 + manifest 검증 + 후보 식별/로컬 부재 확인)
 **선행 답습**: `jarvis-mvp1-v1-poc-entry-brief.md`(v1.1, HEAD `9e68fbb`, BLOCKING 6 반영) / `3plus1-consensus-2026-05-23-jarvis-mvp1-v1-poc-entry.md` / brief v2 §6
-**raw**: `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` + `2026-05-23T11-53-qwen3-coder-next-manifest.json`
+**raw**:
+- Stage 1: `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` + `2026-05-23T11-53-qwen3-coder-next-manifest.json`
+- Stage 2: `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json`
 
 ---
 
@@ -16,16 +18,19 @@
 1. R-1 anchor 식별값 기록 (측정 *전* baseline, §1)
 2. §2 V1-1 5 steps read-only 결과 정리 (§2)
 3. §3 V1-2 Step 1 `qwen3-coder-next` manifest 해석 (§3)
-4. 정직성 한계 명시 (§4)
-5. 다음 단계 권고 (§5)
+4. §3 V1-2 Step 2a 후보 풀 식별표 (§3a)
+5. §3 V1-2 Step 2b 로컬 후보 부재 확인 + 기존 4 모델 dense 검증 (§3b)
+6. 정직성 한계 명시 (§4)
+7. 다음 단계 권고 (§5)
 
 ### 하지 않는 것 (entry brief §0.2 영구 답습)
 
 - ❌ tok/s 측정 (decode·prefill 0건)
-- ❌ 모델 pull / 빌드 / install
+- ❌ 모델 pull / 빌드 / install (gap-pull 0건)
 - ❌ M3 / M4 결정 *고정* — 본 findings 는 raw 보고만, 결정 입력 자격 X (entry brief §4.4 답습)
 - ❌ Ollama 데몬 재시작 / kill / signal / 설정 변경
-- ❌ §3 Step 2a/2b (후보 5~7종 식별·실재 검증) — 본 findings 단계 0건
+- ❌ `ollama search` (ollama.com egress 발생 — R-11 답습, 별도 cycle)
+- ❌ 후보 *Ollama Hub 실재성* 검증 (egress 필요 → 별도 cycle)
 - ❌ §8 egress baseline — 본 findings 단계 0건
 - ❌ commit·push (별도 명시 승인)
 
@@ -142,15 +147,74 @@
 
 ---
 
+## 3a. §3 V1-2 Step 2a — 후보 풀 식별 (brief §3.2 답습)
+
+### 3a.1 후보 8종 식별표
+
+| # | 후보 | family | 활성 추정 (외부) | 목적 | 로컬 |
+|---|---|---|---|---|---|
+| 1 | Qwen3.5-A3B-Instruct | qwen3.5 | ~3B | 1차 후보 (활성 ≤10B 우선) | ❌ |
+| 2 | Qwen3.5-Coder-A10B | qwen3.5 | ~10B | 코딩 특화 MoE | ❌ |
+| 3 | **qwen3-coder-next** | qwen3next | top-10/512 (별도) | **본 환경 1차 후보** (Step 1 MoE 확인) | ✅ |
+| 4 | DeepSeek-V3.1-Lite | deepseek-v3 | ~3B | 후보 확장 (R-5) | ❌ |
+| 5 | GLM-4-MoE | glm4 | 외부 미확정 | 후보 확장 (R-5) | ❌ |
+| 6 | Granite-3.5-MoE | granite | 외부 미확정 | 후보 확장 (R-5) | ❌ |
+| 7 | OLMoE | olmo | 외부 미확정 | 후보 확장 (R-5) | ❌ |
+| 8 | mixtral:8x7b | mixtral | ~13B | **R-14**: MoE 동작 검증 한정 (A3B 4배 → tok/s 직접 비교 X) | ❌ |
+
+### 3a.2 선정 논리
+
+- 활성 ≤ 10B + Q4 ≤ 20GB **우선**.
+- 그 외 = NOTE (R-5).
+- 활성 파라미터 추정 = **외부 모델 카드 의존** (본 진입 검증 0).
+
+---
+
+## 3b. §3 V1-2 Step 2b — 로컬 후보 부재 확인 + 기존 4 dense 검증
+
+### 3b.1 인벤토리 재확인
+
+`curl -s /api/tags` (localhost·read-only) — brief §1.3 5종과 **일치**, 추가 모델 0. 총 ~156GB(API 보고, GiB 환산 기준).
+
+### 3b.2 후보 11종 로컬 부재 확인
+
+`curl -s /api/show -d '{"name":"<candidate>"}'` (localhost, **egress 0**):
+
+| 시도 tag | HTTP | 결과 |
+|---|---|---|
+| `qwen3:30b-a3b` / `qwen3:30b` / `qwen3-coder:30b-a3b` / `qwen3.5:a3b` / `qwen3-coder:a10b` / `mixtral:8x7b` / `deepseek-v3.1-lite:latest` / `deepseek-v3:lite` / `granite-3.5-moe:latest` / `olmoe:latest` / `glm-4-moe:latest` | **404 모두** | `model '...' not found` (로컬 부재) |
+
+**결론**: 로컬 MoE = `qwen3-coder-next:latest` **단 1종**. 다른 후보 0종 로컬. Hub 실재성 = `ollama search` egress = 별도 cycle.
+
+### 3b.3 ⚠️ tag format 한계
+
+404 = *시도한 해당 tag* 부재일 뿐. 동일 모델의 다른 tag(예: `qwen3:30b-a3b-instruct-q4_K_M`·family-specific 형식) 가 Hub 에 실재할 가능성 잔존. 외부 cycle 답습 필요.
+
+### 3b.4 기존 4 dense 모델 manifest 검증
+
+| 모델 | arch | param | block | context | quant | capabilities | dense | baseline 자격 |
+|---|---|---|---|---|---|---|---|---|
+| `qwen2.5-coder:32b` | qwen2 | 32.8B | 64 | 32k | Q4_K_M | completion·tools·insert | ✅ | **✅ §4.3 dense baseline 권고** (qwen 계열·Q4_K_M·tools, MoE 직접 비교군 자격) |
+| `llama3.3:70b` | llama | 70.6B | 80 | 128k | Q4_K_M | completion·tools | ✅ | △ 273GB/s 한계 측정용(*bandwidth ceiling*) — MoE 비교 baseline 아님 |
+| `exaone3.5:32b` | exaone | 32.0B | 64 | 32k | Q4_K_M | completion | ✅ | ❌ tools 미지원 → BossAdvice 호환 ↓ |
+| `exaone4:32b` | exaone4 | 32.0B | 64 | 128k | **Q8_0** | completion | ✅ | ❌ 다른 양자화 + tools 미지원 |
+
+- **4/4 dense 확인** (`moe_fields = {}` 전부 empty). brief §1.3 dense 가정 정합.
+- **§4.3 baseline 권고**: `qwen2.5-coder:32b` **단일** (qwen3-coder-next 와 family 가깝고 Q4_K_M·tools 동일).
+
+---
+
 ## 4. 정직성 한계 (entry brief §0.2 + Reviewer 권한 한계 답습)
 
 1. **측정 0건** — tok/s/decode/prefill/메모리 점유/SM 활용 결과 = 전부 *부재*. 본 findings 어떤 행도 "성능 PASS" 결론 도출 자격 X.
 2. **활성 파라미터 정량 미확인** — manifest 필드만으로 *활성* 파라미터 정확 계산 불가. 모델 카드 또는 측정 후 `prompt_eval_count`·`eval_count` 역추론 필요.
 3. **출처 미상 Ollama anchor** — §1.2 한계 동일. 본 hash = 현 시점 식별값, 표준 빌드 재현성 검증 0.
 4. **데몬 환경 미확인** — root `/proc/3375/environ` 미점검. 데몬 *내부* 설정(예: `OLLAMA_HOST`·`OLLAMA_MODELS`)이 delangi shell env 와 다를 가능성 잔존.
-5. **다른 4 모델 manifest 미검증** — `qwen2.5-coder:32b` / `llama3.3:70b` / `exaone3.5:32b` / `exaone4:32b` = dense 가정 유지 (entry brief §1.3). 정밀 확인은 V1-2 Step 2a/2b 단계.
+5. **다른 4 모델 dense 검증 = manifest 한정** (Stage 2 완료). `moe_fields = {}` empty 확인. 실 dense 실행은 측정 후 검증.
 6. **hybrid SSM 발견은 *manifest 해석* 수준** — Ollama 0.20.4 가 실제로 SSM 레이어를 정상 실행하는지 (혹은 placeholder 인지) = 측정 후 검증.
 7. **Capabilities `tools` 보고는 *능력* 선언일 뿐** — 실제 endpoint 거부/수용 동작 = §5 Step 4 측정에서 확인.
+8. **Ollama Hub 실재성 미검증** (Stage 2) — `ollama search` egress = 별도 cycle. 11종 404 = *시도한 해당 tag* 부재일 뿐, 다른 tag 형식의 Hub 실재 가능성 잔존.
+9. **Step 2a 활성 파라미터 추정은 외부 의존** — 본 환경 검증 0, Reviewer 정직성 노트 §6 답습.
 
 ---
 
@@ -158,11 +222,12 @@
 
 | 옵션 | 내용 | 발생 |
 |---|---|---|
-| **(A)** | **§3 Step 2a/2b** 진행 — 후보 5~7종 식별 + 기존 4 모델 `/api/show` 검증 (localhost·read-only). `ollama search` 제외 (egress) | 추가 변경 0, raw 보존 |
+| ~~(A)~~ | ~~§3 Step 2a/2b 진행~~ — **Stage 2 완료**(본 진입) | — |
 | **(B)** | **§8 egress baseline** 점검 (read-only) — 측정 진입 *전* baseline 확보 | 추가 변경 0, raw 보존 |
-| **(C)** | **§4 측정 진입** (qwen3-coder-next 단일) — decode 5회 + prefill 2k 5회 + prefill 8k 5회. R-1 hash 재기록 + §4.6 환경 동결 의무 | **LLM 호출 발생, GPU 사용, ~분 단위 시간, sudo 0 가능, 별도 명시 승인 필수** |
+| **(C)** | **§4 측정 진입** (qwen3-coder-next 단일) — decode 5회 + prefill 2k 5회 + prefill 8k 5회. R-1 hash 재기록 + §4.6 환경 동결 의무. **dense baseline 측정** = `qwen2.5-coder:32b` (Stage 2 §3b.4 권고) | **LLM 호출 발생, GPU 사용, ~분 단위 시간, sudo 0 가능, 별도 명시 승인 필수** |
 | **(D)** | **본 findings 확정 commit + push** → 다음 세션 §4 진입 | 머신 변경 0 |
 | **(E)** | §12 옵션 E — 출처 미상 Ollama 위생 정정 trigger 검토 (별도 cycle, R-1 한계 정정) | 보안 거버넌스 재개 = 비례성 평가 필요 |
+| **(F)** | **gap-pull entry brief** — DeepSeek-V3.1-Lite·Qwen3.5-A3B 등 Hub 실재 확인 + pull 권고 cycle (별도 brief + 합의 + 사용자 명시 승인) | 디스크 사용↑ (≤50GB 누적 권고), egress 발생 |
 
 ### 5.1 Reviewer 권한 한계 (entry brief §6 답습)
 
@@ -176,8 +241,9 @@
 
 | 항목 | 경로 |
 |---|---|
-| 환경 ID + V1-1 5 steps + R-1 + V1-2 Step 1 핵심 | `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` |
-| qwen3-coder-next full manifest | `docs/phase0/v1-poc-raw/2026-05-23T11-53-qwen3-coder-next-manifest.json` (82645 bytes) |
+| Stage 1: 환경 ID + V1-1 5 steps + R-1 + V1-2 Step 1 핵심 | `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` |
+| Stage 1: qwen3-coder-next full manifest | `docs/phase0/v1-poc-raw/2026-05-23T11-53-qwen3-coder-next-manifest.json` (82645 bytes) |
+| Stage 2: 인벤토리 재확인 + dense 4 검증 + Step 2b 11종 404 + Step 2a 후보표 | `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json` |
 
 raw 미보존 측정 = findings 입력 자격 X (entry brief §4.5 정직성 SOP, B-F13 답습).
 

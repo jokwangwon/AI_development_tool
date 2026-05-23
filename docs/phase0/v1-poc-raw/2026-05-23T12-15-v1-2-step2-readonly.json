@@ -1,0 +1,130 @@
+{
+  "session_iso": "2026-05-23T12:15:00+09:00",
+  "scope": "V-1 PoC §3 V1-2 Step 2a/2b read-only (로컬 한정, ollama search egress 0)",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-entry-brief.md (DRAFT v1.1, HEAD 9e68fbb) §3.2 Step 2a + 2b",
+  "measurement_executed": false,
+  "egress_executed": false,
+  "notes": "본 raw = 로컬 read-only manifest 검증 + 후보 tag 부재 확인 한정. Ollama Hub 실재성 검증 0 (ollama search = egress, 별도 승인 필요).",
+
+  "inventory_recheck": {
+    "method": "curl -s http://127.0.0.1:11434/api/tags",
+    "count": 5,
+    "brief_sec_1_3_consistency": "일치 (brief §1.3 5종과 동일)",
+    "extra_models": 0,
+    "models": [
+      {"name": "llama3.3:70b",          "size_gb": 39.6, "family": "llama",     "param": "70.6B", "quant": "Q4_K_M", "digest_prefix": "a6eb4748fd2990ad"},
+      {"name": "qwen2.5-coder:32b",     "size_gb": 18.5, "family": "qwen2",     "param": "32.8B", "quant": "Q4_K_M", "digest_prefix": "b92d6a0bd47ee791"},
+      {"name": "qwen3-coder-next:latest","size_gb": 48.2,"family": "qwen3next", "param": "79.7B", "quant": "Q4_K_M", "digest_prefix": "ca06e9e4087c714d"},
+      {"name": "exaone3.5:32b",         "size_gb": 18.0, "family": "exaone",    "param": "32.0B", "quant": "Q4_K_M", "digest_prefix": "f2f69abac3dadd89"},
+      {"name": "exaone4:32b",           "size_gb": 31.7, "family": "exaone4",   "param": "32.0B", "quant": "Q8_0",   "digest_prefix": "ccdbebcf77338e6d"}
+    ],
+    "total_size_gb_approx": 156
+  },
+
+  "dense_4_verification": {
+    "method": "curl -s /api/show -d '{\"name\":\"<m>\"}' | jq for each (localhost, read-only)",
+    "purpose": "brief §1.3 dense 가정 정량 검증. baseline 자격 평가.",
+    "results": [
+      {
+        "model": "qwen2.5-coder:32b",
+        "arch": "qwen2",
+        "param_count": 32763876352,
+        "block_count": 64,
+        "context_length": 32768,
+        "moe_fields": "{} (empty)",
+        "capabilities": ["completion", "tools", "insert"],
+        "dense_confirmed": true,
+        "baseline_eligible": "✅ §4.3 dense baseline 권고 (qwen 계열, Q4_K_M, tools 지원). MoE vs dense 직접 비교군 자격 충족"
+      },
+      {
+        "model": "llama3.3:70b",
+        "arch": "llama",
+        "param_count": 70553706560,
+        "block_count": 80,
+        "context_length": 131072,
+        "moe_fields": "{} (empty)",
+        "capabilities": ["completion", "tools"],
+        "dense_confirmed": true,
+        "baseline_eligible": "△ 70B dense — 273GB/s 한계 측정(한자릿수 tok/s 예상). MoE 비교 baseline 아닌 *bandwidth ceiling* 측정 후보"
+      },
+      {
+        "model": "exaone3.5:32b",
+        "arch": "exaone",
+        "param_count": 32003200064,
+        "block_count": 64,
+        "context_length": 32768,
+        "moe_fields": "{} (empty)",
+        "capabilities": ["completion"],
+        "dense_confirmed": true,
+        "baseline_eligible": "❌ tools 미지원 (brief v2 §3 R2 BossAdvice 호환 ↓). baseline 부적합"
+      },
+      {
+        "model": "exaone4:32b",
+        "arch": "exaone4",
+        "param_count": 32003216448,
+        "block_count": 64,
+        "context_length": 131072,
+        "moe_fields": "{} (empty)",
+        "capabilities": ["completion"],
+        "dense_confirmed": true,
+        "baseline_eligible": "❌ Q8_0 양자화 (다른 quant — 메모리 대역폭 비교 불가) + tools 미지원. baseline 부적합"
+      }
+    ],
+    "summary": "4 dense 모두 확인. §4.3 dense baseline 권고 = qwen2.5-coder:32b 단일 (다른 3종 부적합 사유 명시)."
+  },
+
+  "step_2b_local_probe": {
+    "method": "curl -s /api/show -d '{\"name\":\"<candidate>\"}' (localhost, egress 0)",
+    "candidates_tested": 11,
+    "found_local": 0,
+    "rationale": "로컬 already-pulled MoE 후보 유무 확인 한정. 404 = 로컬 부재 (Hub 실재성과 무관).",
+    "results": [
+      {"tag": "qwen3:30b-a3b",            "http": 404, "error": "model 'qwen3:30b-a3b' not found"},
+      {"tag": "qwen3:30b",                "http": 404, "error": "model 'qwen3:30b' not found"},
+      {"tag": "qwen3-coder:30b-a3b",      "http": 404, "error": "model 'qwen3-coder:30b-a3b' not found"},
+      {"tag": "qwen3.5:a3b",              "http": 404, "error": "model 'qwen3.5:a3b' not found"},
+      {"tag": "qwen3-coder:a10b",         "http": 404, "error": "model 'qwen3-coder:a10b' not found"},
+      {"tag": "mixtral:8x7b",             "http": 404, "error": "model 'mixtral:8x7b' not found"},
+      {"tag": "deepseek-v3.1-lite:latest","http": 404, "error": "model 'deepseek-v3.1-lite:latest' not found"},
+      {"tag": "deepseek-v3:lite",         "http": 404, "error": "model 'deepseek-v3:lite' not found"},
+      {"tag": "granite-3.5-moe:latest",   "http": 404, "error": "model 'granite-3.5-moe:latest' not found"},
+      {"tag": "olmoe:latest",             "http": 404, "error": "model 'olmoe:latest' not found"},
+      {"tag": "glm-4-moe:latest",         "http": 404, "error": "model 'glm-4-moe:latest' not found"}
+    ],
+    "conclusion": "로컬 MoE = qwen3-coder-next:latest 1종 (이미 §3 Step 1 확인). 다른 후보 0종 로컬. Hub 실재성은 별도 cycle (`ollama search`, egress).",
+    "tag_format_caveat": "404 = 시도한 *해당 tag* 부재일 뿐. 동일 모델의 다른 tag 형식이 Hub 에 실재할 가능성 잔존 (예: qwen3-coder-next 자체도 latest tag 만 pull, 다른 quant tag 미보유)."
+  },
+
+  "step_2a_candidate_pool_identification": {
+    "source": "brief §3.2 Step 2a (R-5, C-F3 통합) 답습 한정 — 후보 식별만, 본 환경 외부 실재성 검증 0",
+    "ollama_hub_realness_status": "**미검증** (ollama search = ollama.com egress, 본 진입 0건). 별도 cycle (entry brief §3.2 Step 2b 의 ollama search 라인)",
+    "active_parameter_estimates_caveat": "활성 파라미터 추정 = 외부 모델 카드/문헌 의존. 본 진입 0 (Reviewer 정직성 노트 §6 답습: 'agent 출력의 사실 인용 재검증 0').",
+    "candidates": [
+      {"name": "Qwen3.5-A3B-Instruct",      "family": "qwen3.5",       "estimated_active_b": "~3B(외부)",      "purpose": "1차 후보 (활성 ≤10B 우선)",          "local": false},
+      {"name": "Qwen3.5-Coder-A10B",        "family": "qwen3.5",       "estimated_active_b": "~10B(외부)",     "purpose": "코딩 특화 MoE 후보",                 "local": false},
+      {"name": "Qwen3-Next family (qwen3-coder-next)", "family": "qwen3next", "estimated_active_b": "별도 계산(top-10/512)", "purpose": "**본 환경 1차 후보** (Step 1 manifest MoE 확인)", "local": true},
+      {"name": "DeepSeek-V3.1-Lite",        "family": "deepseek-v3",   "estimated_active_b": "~3B(외부)",      "purpose": "후보 확장 (R-5)",                    "local": false},
+      {"name": "GLM-4-MoE",                 "family": "glm4",          "estimated_active_b": "외부 미확정",     "purpose": "후보 확장 (R-5)",                    "local": false},
+      {"name": "Granite-3.5-MoE",           "family": "granite",       "estimated_active_b": "외부 미확정",     "purpose": "후보 확장 (R-5)",                    "local": false},
+      {"name": "OLMoE",                     "family": "olmo",          "estimated_active_b": "외부 미확정",     "purpose": "후보 확장 (R-5)",                    "local": false},
+      {"name": "mixtral:8x7b",              "family": "mixtral",       "estimated_active_b": "~13B(외부)",     "purpose": "**R-14**: MoE 동작 검증 한정 (A3B 4배 → tok/s 직접 비교 X)", "local": false}
+    ],
+    "selection_logic": "활성 ≤10B + Q4 ≤20GB 우선. 그 외 후보는 NOTE (R-5)."
+  },
+
+  "summary": {
+    "step_2a_status": "후보 풀 식별 완료 (brief §3.2 답습 한정). 활성 파라미터·실재 검증 = 외부 cycle 답습 필요",
+    "step_2b_status": "로컬 11 후보 0/11 found (egress 0). 본 환경 MoE = qwen3-coder-next:latest 단일",
+    "dense_4_status": "4/4 dense 확인. §4.3 baseline = qwen2.5-coder:32b 권고 (다른 3종 부적합 사유 명시)",
+    "gap_pull_decision": "본 진입 0건. §4 측정 진입 시 qwen3-coder-next 단일로 가능 — gap-pull 필요 시 별도 사용자 명시 승인 (R-11 답습)",
+    "fail_closed_branches_triggered": 0
+  },
+
+  "honest_limitations": [
+    "Ollama Hub 실재성 미검증 — ollama search 는 ollama.com egress. 본 진입에서 0 (R-11/R-3 답습)",
+    "활성 파라미터 정량 = 외부 모델 카드 의존. 본 환경 검증 0",
+    "tag format 검증 한계 — 11종 404 = 시도한 *해당 tag* 부재일 뿐, 동일 모델의 다른 tag(예: `qwen3:30b-a3b-instruct-q4_K_M`)는 별도",
+    "Hub 부재 가능성 0 검증 0 — 일부 후보 (DeepSeek-V3.1-Lite/GLM-4-MoE/OLMoE 등)는 GGUF 변환·Ollama Hub 미게시 가능성 존재. 외부 cycle 답습 필요",
+    "qwen3-coder-next 의 활성 파라미터 (~3B vs ~10B vs 다른 값) = 측정값 해석 분기 직접. 본 raw 0건"
+  ]
+}

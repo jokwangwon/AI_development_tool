@@ -1,0 +1,137 @@
+{
+  "session_iso": "2026-05-23T11:53:51+09:00",
+  "scope": "V-1 PoC §2 V1-1 read-only + §3 V1-2 Step 1 + R-1",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-entry-brief.md (DRAFT v1.1, HEAD 9e68fbb)",
+  "measurement_executed": false,
+  "decode_prefill_tok_s": null,
+  "notes": "본 raw = read-only 위생 점검 + manifest 검증. tok/s 측정 0건 (별도 명시 승인).",
+
+  "env_id": {
+    "host": "promaxgb10-f3c4",
+    "kernel": "Linux 6.17.0-1018-nvidia #18-Ubuntu SMP PREEMPT_DYNAMIC Tue May  5 21:28:33 UTC 2026 aarch64",
+    "arch": "aarch64",
+    "gpu_driver": "580.159.03",
+    "cuda_toolkit": "13.0 (V13.0.88, build cuda_13.0.r13.0)",
+    "ollama_env": {
+      "OLLAMA_NUM_PARALLEL": "(unset, 기본값)",
+      "OLLAMA_MAX_LOADED_MODELS": "(unset, 기본값)",
+      "OLLAMA_*": "(no OLLAMA_* env set in delangi shell)"
+    }
+  },
+
+  "r1_binary_identity": {
+    "pid": 3375,
+    "exe_owner": "root",
+    "exe_path_link": "/proc/3375/exe (lrwxrwxrwx root:root, target stat 권한 거부)",
+    "exe_filesystem_status": "/bin/ollama = stat 실패 (실행 중 inode 잔존, fs 삭제됨, §1.2 발견 재확인)",
+    "sudo_sha256sum": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "sudo_method": "사용자 직접 prompt 입력 (! sudo sha256sum /proc/3375/exe, 1회, read-only, 데몬 변경 0)",
+    "anchor_purpose": "측정 *전* anchor — 측정 *후* 재기록 (silent 교체 감지). 본 진입은 측정 0건 → 본 hash 는 read-only 단계 anchor 만"
+  },
+
+  "v1_1_steps": [
+    {
+      "step": 1,
+      "name": "/api/version",
+      "method": "curl -s http://127.0.0.1:11434/api/version",
+      "http_code": 200,
+      "response": {"version": "0.20.4"},
+      "json_schema_valid": true,
+      "version_ge_04": true,
+      "verdict": "PASS (≥0.4, MoE 지원 버전)"
+    },
+    {
+      "step": 2,
+      "name": "/api/ps",
+      "method": "curl -s http://127.0.0.1:11434/api/ps",
+      "response": {"models": []},
+      "loaded_models": 0,
+      "size_vram": null,
+      "verdict": "idle (모델 미로드, 정상 baseline)"
+    },
+    {
+      "step": 3,
+      "name": "nvidia-smi pmon -c 1",
+      "method": "nvidia-smi pmon -c 1",
+      "processes": [
+        {"gpu": 0, "pid": 2551, "type": "G", "command": "Xorg"},
+        {"gpu": 0, "pid": 2915, "type": "G", "command": "gnome-shell"}
+      ],
+      "ollama_gpu_use": false,
+      "verdict": "ollama GPU 미사용 (idle 정상 — Step 2 모델 미로드와 일치). R-10 fallback 미적용 (idle)"
+    },
+    {
+      "step": 4,
+      "name": "ss bind 재확인",
+      "method": "ss -tln | grep 11434",
+      "listen_addr": "127.0.0.1:11434",
+      "external_bind_0_0_0_0": false,
+      "verdict": "PASS (M6 localhost 충족, R11 추론시점 egress 입력 충족)"
+    },
+    {
+      "step": 5,
+      "name": "OLLAMA_* env + 동시 로드 baseline",
+      "method": "env | grep '^OLLAMA_' + /api/ps",
+      "ollama_env_vars": "(no OLLAMA_* env set in delangi shell)",
+      "concurrent_load": 0,
+      "verdict": "기본값 (NUM_PARALLEL / MAX_LOADED_MODELS 명시 설정 0). 측정 단계 시 ollama 데몬 환경(root /proc/3375/environ) 별도 확인 권고"
+    }
+  ],
+
+  "v1_2_step1": {
+    "model": "qwen3-coder-next:latest",
+    "method": "curl -s /api/show -d '{\"name\":\"qwen3-coder-next:latest\"}'",
+    "details": {
+      "family": "qwen3next",
+      "parameter_size": "79.7B",
+      "quantization_level": "Q4_K_M",
+      "format": "gguf"
+    },
+    "model_info_core": {
+      "general.architecture": "qwen3next",
+      "general.parameter_count": 79674391296,
+      "qwen3next.block_count": 48,
+      "qwen3next.context_length": 262144,
+      "qwen3next.embedding_length": 2048,
+      "qwen3next.expert_count": 512,
+      "qwen3next.expert_used_count": 10,
+      "qwen3next.expert_feed_forward_length": 512,
+      "qwen3next.expert_shared_feed_forward_length": 512,
+      "qwen3next.feed_forward_length": 5120,
+      "qwen3next.full_attention_interval": 4,
+      "qwen3next.attention.head_count": 16,
+      "qwen3next.attention.head_count_kv": null,
+      "qwen3next.ssm.conv_kernel": 4,
+      "qwen3next.ssm.group_count": 16,
+      "qwen3next.ssm.inner_size": 4096,
+      "qwen3next.ssm.state_size": 128,
+      "qwen3next.ssm.time_step_rank": 32
+    },
+    "capabilities": ["completion", "tools"],
+    "moe_verdict": "✅ MoE 확인 — expert_count 512, expert_used_count 10 (top-10 sparse activation). brief §1.3 '요확인' 정정 = MoE",
+    "hybrid_arch_finding": "Qwen3-Next = hybrid SSM+Attention. full_attention_interval=4 → 48 레이어 중 12개만 full attention, 나머지 36개 SSM/Mamba (ssm.conv_kernel/state_size/inner_size 등 필드 존재). brief v2 §6 미명시 추가 발견 — KV cache 부담 감소 (메모리 우위 부수 효과)",
+    "active_parameter_estimate": "별도 계산 필요 (10/512 expert FFN + dense attention/embedding/SSM). 모델 카드 참조 권고",
+    "raw_manifest_path": "docs/phase0/v1-poc-raw/2026-05-23T11-53-qwen3-coder-next-manifest.json"
+  },
+
+  "summary": {
+    "v1_1_overall": "PASS — localhost 충족, version ≥ 0.4, idle baseline 정상, OLLAMA_* env 기본값, R-1 anchor 기록",
+    "v1_2_step1": "PASS — qwen3-coder-next MoE 확인 + hybrid SSM 발견. gap-pull *없이* §4 측정 1차 후보 자격 충족 (활성 파라미터 정량은 측정 후 해석 단계 입력)",
+    "blocking_failures": 0,
+    "fail_closed_branches_triggered": 0,
+    "honest_caveats": [
+      "R-1: /bin/ollama fs 삭제 + binary owner=root + 본 hash = 출처 미상 ollama 의 *현 시점* 식별값. 표준 빌드 대비 재현성 검증 별도 (§12 옵션 E)",
+      "사용자 명시 prompt 입력으로 sudo 1회 — sudo 사용 0건 원칙 *부분* 위반(읽기 전용 sha256sum 한정, 데몬 변경 0)",
+      "본 raw = 측정 0건 — tok/s/decode/prefill 결과 없음. §4 측정 별도 명시 승인 필수",
+      "기존 다른 모델 manifest(qwen2.5-coder:32b/llama3.3:70b/exaone3.5:32b/exaone4:32b) 미검증 — dense 가정 유지 (Step 2a/2b 별도)"
+    ]
+  },
+
+  "next_step_options_to_user": [
+    "A. §3 Step 2a/2b — 후보 5~7종 식별 + /api/show 실재 검증 (read-only, localhost). ollama search 는 ollama.com egress → 제외",
+    "B. §8 egress baseline 점검 (read-only) — 측정 단계 진입 *전* baseline 확보",
+    "C. §4 측정 진입 — tok/s decode/prefill (별도 명시 승인 필수, R-1 hash 재기록 의무, §4.6 환경 동결)",
+    "D. V-1 findings 문서 초안 작성 — 본 read-only 결과 정리 + §4 측정 진입 entry 보강",
+    "E. 본 진입 종료 + commit + push, 다음 세션 §4 측정"
+  ]
+}

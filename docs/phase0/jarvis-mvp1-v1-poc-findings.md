@@ -1,14 +1,15 @@
-# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2+3: read-only)
+# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2+3+4: read-only + tok/s 측정)
 
-> **본 findings = V-1 PoC의 *1+2+3차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b + §8 egress baseline) read-only 결과 한정.** tok/s 측정·gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건** (별도 명시 승인 단계). `ollama search` egress = **0건** (R-11 답습).
+> **본 findings = V-1 PoC의 *1~4차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b + §8 egress baseline + §4 V1-3 측정) 결과.** Stage 1~3 = read-only, Stage 4 = LLM 호출 발생 (qwen3-coder-next + qwen2.5-coder:32b). gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건**. `ollama search` egress = **0건** (R-11 답습). 데몬 변경 0건.
 
 **작성일**: 2026-05-23
-**Status**: DRAFT — Stage 1+2+3/N (read-only 위생 점검 + manifest 검증 + 후보 식별/로컬 부재 + egress baseline)
+**Status**: DRAFT — Stage 1+2+3+4/N (read-only 위생·식별·baseline + tok/s 측정 raw 보고)
 **선행 답습**: `jarvis-mvp1-v1-poc-entry-brief.md`(v1.1, HEAD `9e68fbb`, BLOCKING 6 반영) / `3plus1-consensus-2026-05-23-jarvis-mvp1-v1-poc-entry.md` / brief v2 §6
 **raw**:
 - Stage 1: `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` + `2026-05-23T11-53-qwen3-coder-next-manifest.json`
 - Stage 2: `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json`
 - Stage 3: `docs/phase0/v1-poc-raw/2026-05-23T13-00-v1-egress-baseline-readonly.json`
+- Stage 4: `docs/phase0/v1-poc-raw/2026-05-23T21-30-v1-3-measurement-summary.json` + 측정 30개 JSON (decode/prefill 2k/prefill 8k × 2 모델 × 5회)
 
 ---
 
@@ -16,25 +17,26 @@
 
 ### 하는 것
 
-1. R-1 anchor 식별값 기록 (측정 *전* baseline, §1)
+1. R-1 anchor 식별값 기록 — 3회 일치 확인 (§1)
 2. §2 V1-1 5 steps read-only 결과 정리 (§2)
 3. §3 V1-2 Step 1 `qwen3-coder-next` manifest 해석 (§3)
 4. §3 V1-2 Step 2a 후보 풀 식별표 (§3a)
 5. §3 V1-2 Step 2b 로컬 후보 부재 확인 + 기존 4 모델 dense 검증 (§3b)
-6. §8 egress baseline (Ollama 외부 ESTABLISHED 0 + 텔레메트리 변수 식별 + R-23 활성 process 점검) (§3c)
-7. 정직성 한계 명시 (§4)
-8. 다음 단계 권고 (§5)
+6. §8 egress baseline (§3c)
+7. **§4 V1-3 tok/s 측정** — qwen3-coder-next + qwen2.5-coder:32b baseline (§3d)
+8. 정직성 한계 명시 (§4)
+9. 다음 단계 권고 (§5)
 
 ### 하지 않는 것 (entry brief §0.2 영구 답습)
 
-- ❌ tok/s 측정 (decode·prefill 0건)
-- ❌ 모델 pull / 빌드 / install (gap-pull 0건)
 - ❌ M3 / M4 결정 *고정* — 본 findings 는 raw 보고만, 결정 입력 자격 X (entry brief §4.4 답습)
-- ❌ Ollama 데몬 재시작 / kill / signal / 설정 변경
+- ❌ Ollama 데몬 재시작 / kill / signal / 설정 변경 (3회 R-1 hash 일치로 검증)
+- ❌ 모델 pull / gap-pull / 빌드 / install
 - ❌ `ollama search` (ollama.com egress 발생 — R-11 답습, 별도 cycle)
-- ❌ 후보 *Ollama Hub 실재성* 검증 (egress 필요 → 별도 cycle)
-- ❌ §8 egress baseline — 본 findings 단계 0건
-- ❌ commit·push (별도 명시 승인)
+- ❌ Ollama Hub 실재성 검증 (egress 필요)
+- ❌ V-1 findings *후* 별도 합의 진행 (M3·M4 결정 입력)
+- ❌ llama.cpp 비교 측정 (별도 명시 승인)
+- ❌ §12 옵션 E 위생 정정 trigger 발효
 
 ---
 
@@ -267,6 +269,81 @@ brief §8.1 명시: Ollama 0.20.4 가 `OLLAMA_NOHISTORY` / `OLLAMA_NO_ANALYTICS`
 
 ---
 
+## 3d. §4 V1-3 — tok/s 측정 (raw 보고 only, R-6 답습)
+
+### 3d.1 측정 조건
+
+- temperature 0.0, stop=[], seed=42, num_predict=512(decode)/16(prefill)
+- decode prompt 입력 토큰 ~161/182 (model tokenizer 차이)
+- prefill 2k = decode prompt × 13 → 2009/2030 토큰 (목표 2048, ±10% 안)
+- prefill 8k = decode prompt × 51 → 7823/7844 토큰 (목표 8192, ±10% 안)
+- R-23 충족: 측정 중 본 세션 단일 Claude (3999024) 외 0
+- R-1 hash: 측정 *직전* + *직후* `ce95c475...878b10` (Stage 1 일치, **silent 교체 미발생**)
+
+### 3d.2 핵심 결과 표 (raw, PASS/FAIL framing X)
+
+| 모델 | scenario | mean tok/s | std | std/mean | p50 | p95 | 비고 |
+|---|---|---:|---:|---:|---:|---:|---|
+| qwen3-coder-next (MoE 79.7B+SSM, Q4) | decode (5회) | **7.83** | 0.36 | 4.6% | 7.99 | 8.02 | run #1 outlier 경계(2σ) |
+| qwen3-coder-next | prefill 2k cold (precheck) | 66.46 | — | — | — | — | KV cache empty |
+| qwen3-coder-next | prefill 2k warm (5회) | 91.58 | 2.91 | 3.2% | 91.84 | 94.15 | 부분 cache(24초 prefill 잔존) |
+| qwen3-coder-next | prefill 8k cold (precheck) | 57.79 | — | — | — | — | 135초 prefill |
+| qwen3-coder-next | prefill 8k warm (5회) | 291.55 | 5.76 | 2.0% | 291.50 | 295.42 | 부분 cache |
+| qwen2.5-coder:32b (dense Q4) | decode (5회) | **4.62** | 0.18 | 4.0% | 4.53 | 4.53 | run #5 outlier 경계 |
+| qwen2.5-coder:32b | prefill 2k cold (precheck) | 13.19 | — | — | — | — | 154초 prefill |
+| qwen2.5-coder:32b | prefill 2k warm (5회) | **~8290** | 996 | 12.0% | 8252 | 8268 | 🔴 **거의 완전 cache hit** |
+| qwen2.5-coder:32b | prefill 8k cold (precheck) | 11.75 | — | — | — | — | 667초 prefill, quadratic |
+| qwen2.5-coder:32b | prefill 8k warm (5회) | **~27465** | 1731 | 6.3% | 26885 | 28504 | 🔴 cache hit lookup only |
+
+### 3d.3 비교 관찰 (raw 보고, R-18 답습)
+
+| 비교 | qwen3-coder-next | qwen2.5-coder:32b | ratio | 해석 (R-6/R-18 답습) |
+|---|---:|---:|---:|---|
+| decode (memory-bound) | 7.83 | 4.62 | MoE/dense = **1.70×** | R-18 ≥2× threshold *미달*, "병목 가설과 *모순 안 함*" 까지만, "MoE 우위 PASS" 표현 X |
+| prefill cold 2k (compute) | 66.46 | 13.19 | MoE/dense = **5.04×** | sparse activation 효과 명백, 단 SSM cold 동작 검증 별도 |
+| prefill cold 8k (compute) | 57.79 | 11.75 | MoE/dense = **4.92×** | 일관, dense attention quadratic 부담 매우 큼 |
+| prefill warm cache hit 2k | 91.58 | 8290.93 | dense/MoE = **90.5×** | 🔴 의외 역전 |
+| prefill warm cache hit 8k | 291.55 | 27465.21 | dense/MoE = **94.2×** | 🔴 의외 역전 |
+
+### 3d.4 🔴 결정적 발견 — prefix cache 영역 dense ≫ MoE+SSM (~90×)
+
+prefill warm 5회 측정에서 dense(qwen2.5-coder:32b)가 MoE+SSM(qwen3-coder-next)보다 ~90×배 빠름. 가설(검증 별도):
+- **SSM state 는 KV cache lookup 만으로 재사용 불가** — 매 호출 partial recomputation 필요 (state space 의 transition 재계산)
+- 또는 **Ollama 0.20.4 의 SSM prefix cache 최적화 미완성**
+- 또는 SSM 의 *전체* prefix 가 *부분적*으로만 cache 가능
+
+⚠️ **production 동일 prefix 반복 query 시**: dense ≫ MoE+SSM (역전). brief v2 §6 "MoE = 코딩 작업 다회 호출 시 우위" 가설 *부분* 도전. **M3 결정 입력 별도 합의** 필수.
+
+단 *cold prefill* (compute-bound 영역) 에서는 MoE 5× 우위 유지 — 모델 첫 로드 후 신규 prompt 처리 시 sparse activation 효과 명백.
+
+### 3d.5 roofline / 외부 실측 비교 (참조 only, 해석 X)
+
+- brief v2 §6 R5 roofline: A3B Q4 ~**90–120** tok/s decode 가정 → 실측 7.83 = **~7-9%**
+- 합의 R4 외부 실측: llama.cpp Qwen3-Coder-30B-A3B ~**31** tok/s → 본 측정 ~**25%**
+- 가설 (검증 별도):
+  - qwen3-coder-next 활성 파라미터가 ~3B 가정 *초과* (top-10/512 + SSM state)
+  - GB10 unified memory 273GB/s 병목 + SSM state recomputation 합쳐 메모리 압박
+  - Ollama 0.20.4 의 hybrid SSM+MoE 구현 효율성 (vs llama.cpp)
+
+### 3d.6 측정 직후 baseline
+
+- `/api/ps`: qwen2.5-coder:32b VRAM 잔존(30.7GB), qwen3-coder-next size_vram=0 swap-out
+- `/api/version`: 0.20.4 정상
+- LISTEN: `127.0.0.1:11434` only (M6 유지)
+- ESTABLISHED 외부: Anthropic API/Tailscale/SSH only — **Ollama 외부 연결 0건 유지**
+- pmon: GPU idle (모델 로드된 상태에서도 호출 0이라 활성 0%)
+- claude 인스턴스: 본 세션 only (R-23 유지)
+
+### 3d.7 R-6/B-F8 정직성 답습
+
+- PASS/FAIL framing 사용 0건
+- "≥15 PASS 후보" 등 anchor 표현 0건
+- raw 모두 보고 (5회 + outlier 경계 명시)
+- M3·M4 결정 입력 자격 = 본 findings 의 어떤 행에도 X
+- 결정 *고정* 은 V-1 findings *후 별도 합의*
+
+---
+
 ## 4. 정직성 한계 (entry brief §0.2 + Reviewer 권한 한계 답습)
 
 1. **측정 0건** — tok/s/decode/prefill/메모리 점유/SM 활용 결과 = 전부 *부재*. 본 findings 어떤 행도 "성능 PASS" 결론 도출 자격 X.
@@ -279,8 +356,13 @@ brief §8.1 명시: Ollama 0.20.4 가 `OLLAMA_NOHISTORY` / `OLLAMA_NO_ANALYTICS`
 8. **Ollama Hub 실재성 미검증** (Stage 2) — `ollama search` egress = 별도 cycle. 11종 404 = *시도한 해당 tag* 부재일 뿐, 다른 tag 형식의 Hub 실재 가능성 잔존.
 9. **Step 2a 활성 파라미터 추정은 외부 의존** — 본 환경 검증 0, Reviewer 정직성 노트 §6 답습.
 10. **egress baseline = 단일 snapshot** (Stage 3) — 측정 중·후 polling / lazy upload 재점검 = 별도 cycle. 본 baseline 의 "Ollama egress 0" 결론 = *해당 snapshot 시점 한정*.
-11. **텔레메트리 변수 인식 미확정** (Stage 3) — 5종 식별만, export·검증 0. 측정 진입 시 효과 비교로 확정 가능.
+11. **텔레메트리 변수 인식 미확정** (Stage 3) — 5종 식별만, export·검증 0. 본 측정에서 export 0건 (R-34 fresh subshell 미사용 — 클라이언트측 export 는 데몬 동작 영향 X).
 12. **데몬 자체 환경 미점검** (Stage 1·3 공통) — `/proc/3375/environ` root 권한 미접근. 데몬 *내부* OLLAMA_* 설정 = delangi shell env 와 다를 가능성 잔존.
+13. **🔴 prefix cache hit 효과 우세** (Stage 4) — prefill warm 5회 = cache lookup 영역. *실 compute prefill* 성능 = precheck (cold) 만 정확. R-9 5회 power 보장은 cache miss 영역에서 의미, cache hit 영역에선 noise 분포 측정.
+14. **활성 파라미터 정량 미확인** (Stage 1·4 공통) — qwen3-coder-next decode 7.83 tok/s 가 roofline ~90-120 가정 7-9% 수준 → 활성 ~3B 가정 위배 신호. 활성 파라미터 정확 산정 = 모델 카드 또는 별도 cycle.
+15. **SSM 실 동작 검증 0** (Stage 4) — qwen3next hybrid SSM 의 실제 SSM 레이어 동작 정상성 = 응답 한국어 출력 가능 정도까지만, golden output·numerical correctness 검증 별도.
+16. **cache 동작 SSM vs dense 차이 = manifest/measurement 해석 수준** (Stage 4 §3d.4) — SSM state 가 KV cache 와 다른 동작 = 가설, Ollama 0.20.4 SSM cache 구현 inspection 별도 필요.
+17. **5회 = 통계 power 한정** — environment noise (다른 process tail latency, IO 부하 등) 완전 제거 불가. brief §4.6 동결 *최선 효과* 적용해도 단일 세션 한계.
 
 ---
 
@@ -288,12 +370,16 @@ brief §8.1 명시: Ollama 0.20.4 가 `OLLAMA_NOHISTORY` / `OLLAMA_NO_ANALYTICS`
 
 | 옵션 | 내용 | 발생 |
 |---|---|---|
-| ~~(A)~~ | ~~§3 Step 2a/2b 진행~~ — **Stage 2 완료**(본 진입) | — |
-| ~~(B)~~ | ~~§8 egress baseline~~ — **Stage 3 완료**(본 진입) | — |
-| **(C)** | **§4 측정 진입** (qwen3-coder-next + qwen2.5-coder:32b baseline) — decode 5회 + prefill 2k 5회 + prefill 8k 5회. **R-1 hash 재기록 의무**·**§4.6 환경 동결 의무**(R-23: 다른 Claude Code 세션 종료 ≥3개) | **LLM 호출 발생, GPU 사용, ~분 단위 시간, sudo 0 가능, 별도 명시 승인 필수** |
-| **(D)** | **본 findings 확정 commit + push** → 다음 세션 §4 진입 | 머신 변경 0 |
-| **(E)** | §12 옵션 E — 출처 미상 Ollama 위생 정정 trigger 검토 (별도 cycle, R-1 한계 정정) | 보안 거버넌스 재개 = 비례성 평가 필요 |
-| **(F)** | **gap-pull entry brief** — DeepSeek-V3.1-Lite·Qwen3.5-A3B 등 Hub 실재 확인 + pull 권고 cycle (별도 brief + 합의 + 사용자 명시 승인) | 디스크 사용↑ (≤50GB 누적 권고), egress 발생 |
+| ~~(A)~~ | ~~§3 Step 2a/2b~~ — **Stage 2 완료** | — |
+| ~~(B)~~ | ~~§8 egress baseline~~ — **Stage 3 완료** | — |
+| ~~(C)~~ | ~~§4 측정 진입~~ — **Stage 4 완료** (qwen3-coder-next + qwen2.5-coder:32b 각 decode + prefill 2k/8k 5회) | — |
+| **(D)** | **M3·M4 결정 합의** (별도 cycle) — raw 입력하여 풀 3+1 또는 단축 합의. ⭐ 본 findings cache hit 발견 등 *해석* 단계 | 비측정, 합의 작성 |
+| **(E)** | cache miss 영역 분리 측정 (별도 cycle) — unique prompt seed 또는 prefix 변형으로 cache 영향 분리 | LLM 호출 발생, 별도 승인 |
+| **(F)** | SSM golden output 검증 (별도 cycle) — 응답 정확성 검증 | LLM 호출 + 외부 reference 필요 |
+| **(G)** | gap-pull entry brief — Qwen3.5-A3B-Instruct (활성 ~3B) 비교 측정 후보 | 디스크 ↑, egress, 별도 명시 승인 |
+| **(H)** | llama.cpp 비교 측정 — brief §7-B/C | 빌드 발생, 별도 명시 승인 |
+| **(I)** | §12 옵션 E 출처 미상 Ollama 위생 정정 | 보안 거버넌스 재개=비례성 평가 |
+| **(J)** | **본 findings 확정 commit + push** → 세션 종료 | 머신 변경 0 |
 
 ### 5.1 Reviewer 권한 한계 (entry brief §6 답습)
 
@@ -311,6 +397,7 @@ brief §8.1 명시: Ollama 0.20.4 가 `OLLAMA_NOHISTORY` / `OLLAMA_NO_ANALYTICS`
 | Stage 1: qwen3-coder-next full manifest | `docs/phase0/v1-poc-raw/2026-05-23T11-53-qwen3-coder-next-manifest.json` (82645 bytes) |
 | Stage 2: 인벤토리 재확인 + dense 4 검증 + Step 2b 11종 404 + Step 2a 후보표 | `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json` |
 | Stage 3: §8 egress baseline (ESTABLISHED 외부 9 + Ollama 0 + R-23 활성 process + 텔레메트리 변수 식별) | `docs/phase0/v1-poc-raw/2026-05-23T13-00-v1-egress-baseline-readonly.json` |
+| Stage 4: §4 V1-3 측정 종합 (R-1 anchor 3회·R-23 freeze·decode·prefill 2k/8k cold·warm 각 5회 × 2모델 + 비교 + caveat) | `docs/phase0/v1-poc-raw/2026-05-23T21-30-v1-3-measurement-summary.json` + 측정 raw 30 JSON (`2026-05-23T13-{1..5}-qwen3cnext-decode.json` + `2026-05-23T21-{1..5}-qwen{3cnext,25coder}-{decode,prefill2k,prefill8k}.json`) |
 
 raw 미보존 측정 = findings 입력 자격 X (entry brief §4.5 정직성 SOP, B-F13 답습).
 

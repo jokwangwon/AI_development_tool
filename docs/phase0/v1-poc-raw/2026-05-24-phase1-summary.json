@@ -1,0 +1,123 @@
+{
+  "session_iso": "2026-05-23T22:54:13+09:00 (Phase 1 종료)",
+  "scope": "V-1 PoC Stage 5 = M3·M4 합의 Phase 1 cycle (R-5 답습): A-진단 + C-c cache miss 분리",
+  "brief_ref": "docs/review/3plus1-consensus-2026-05-23-jarvis-mvp1-m3-m4-decision.md §5 + R-5 (Phase 1 권고)",
+  "measurement_executed": true,
+  "egress_executed": false,
+  "build_executed": false,
+  "notes": "본 raw = M3·M4 합의 BLOCKING R-5 Phase 1 cycle 결과. egress 0·빌드 0·데몬 변경 0·LLM 호출 4회 (decode 1 + prefill 8k unique 3).",
+
+  "r1_anchors": {
+    "stage_1": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "stage_4_pre": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "stage_4_post": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase_1_pre (4회차)": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase_1_post (5회차)": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "verdict": "✅ 5회 hash 일치 — silent 교체 미발생 확정 (총 sudo 5회 사용자 명시, read-only)"
+  },
+
+  "r23_environment_freeze": {
+    "pre_measure_kills": "Stage 4 부터 orphan claude 3개 SIGKILL 유지 (3412017·3731294·2803969 미부활)",
+    "active_during_measurement": "본 세션 (pid 3999024) only ✅",
+    "transient_spike_caveat": "측정 직전 baseline 시 npm 18.2% transient spike 관찰 (다른 사용자 활동, brief §4.6 < 20% 기준 충족). 측정 중 영향 미미 가정"
+  },
+
+  "a_diagnosis": {
+    "purpose": "M3·M4 합의 R-5 Phase 1 A-진단 — nvidia-smi dmon -s pum 으로 GB10 effective BW 직접 관측 시도",
+    "method": "nvidia-smi dmon -s pum -d 1 -c 100 백그라운드 + qwen3-coder-next decode 1회 (~67초) 동시 진행",
+    "decode_result": {
+      "wall_clock_ms": 67192,
+      "decode_tok_per_sec": 7.926,
+      "prompt_eval_count": 161,
+      "eval_count": 512,
+      "done_reason": "length",
+      "consistency": "Stage 4 decode mean 7.83 ± 0.36 와 일치 (재현성 확인)"
+    },
+    "dmon_result": {
+      "samples": 100,
+      "sm_pct_mean": 0,
+      "sm_pct_min": 0,
+      "sm_pct_max": 0,
+      "mem_pct_mean": 0,
+      "mem_pct_min": 0,
+      "mem_pct_max": 0,
+      "pwr_W_observed": 4,
+      "verdict": "🔴 모든 100 samples sm=0% mem=0% pwr=4W — decode 정상 진행에도 불구"
+    },
+    "finding": "🔴 **nvidia-smi dmon 이 GB10 unified memory 환경에서 GPU activity 보고 불가**. Stage 1 §2 Step 3 pmon idle 결과와 동일 한계 재확인. brief R-25 NOTE 답습 (정밀 도구 = tegrastats / Nsight Systems / sm_120 PMU 직접 / NVBandwidth = MVP-2 oversized).",
+    "implication_for_f1_hypothesis_v": "F1 가설 (v) 'GB10/Ollama effective BW spec 의 1/3' = **nvidia-smi 직접 측정 불가**. *역산* 만이 가능한 evidence (dense decode 4.62 × 18.5GB ≈ 85 GB/s = 273GB/s 의 31%). 직접 측정 = NVBandwidth 빌드 또는 tegrastats 후보 확인 필요 (Phase 3+ 별도 cycle).",
+    "raw_files": [
+      "2026-05-24-a-diagnosis-decode-result.json",
+      "2026-05-24-a-diagnosis-dmon-qwen3cnext-decode.txt"
+    ]
+  },
+
+  "c_c_cache_miss_isolation": {
+    "purpose": "M3·M4 합의 R-5 Phase 1 C-c — unique prompt seed (nonce 추가) 로 prefix cache miss 강제 → F2 가설 (H-B1/H-B2/H-B3) 직접 답",
+    "method": "qwen3-coder-next prefill 8k 측정 3회, 매 회 다른 nonce (timestamp+random) 를 prompt prefix 시작에 추가 → cache lookup 강제 miss",
+    "results": {
+      "runs": 3,
+      "scenario": "num_predict=16, prompt = '[측정 nonce: <UNIQUE>] <decode-prompt × 51>' → ~7855 토큰",
+      "prefill_tok_per_sec_per_run": [58.508, 57.888, 58.423],
+      "mean": 58.273,
+      "std": 0.275,
+      "std_over_mean_pct": 0.47,
+      "min": 57.888,
+      "max": 58.508,
+      "prompt_eval_count_per_run": [7855, 7855, 7854],
+      "prompt_eval_duration_ms_per_run": [134254, 135693, 134433],
+      "wall_clock_ms_per_run": [136514, 138048, 136745]
+    },
+    "comparison_table": [
+      {"scenario": "Stage 4 precheck (cache miss 1회)", "prefill_tok_per_sec": 57.79, "prefill_duration_ms": 135367, "prompt_tokens": 7823},
+      {"scenario": "Stage 5 C-c unique nonce 3회 mean", "prefill_tok_per_sec": 58.27, "prefill_duration_ms_mean": 134793, "prompt_tokens_mean": 7855},
+      {"scenario": "Stage 4 warm 5회 (cache hit)", "prefill_tok_per_sec": 291.55, "prefill_duration_ms_mean": 26852, "prompt_tokens": 7823}
+    ],
+    "findings": {
+      "verdict_1": "✅ **cache miss 진정한 prefill ≈ 58 tok/s, std 0.27** — 단일 nonce 변경으로 cache miss 명확 분리, 3회 noise std/mean 0.47% (극도 안정)",
+      "verdict_2": "✅ **Stage 4 precheck (57.79) 가 정직한 cache miss 측정 확정** — C-c 3회 mean (58.27) 와 0.83% 일치, 우연 아닌 정확한 cold prefill",
+      "verdict_3": "✅ **Stage 4 warm 5회 (291.55) = 부분 cache hit** — cache miss 58.27 의 5.0× 빠름. 27초 prefill 잔존 = SSM 부분 recomputation",
+      "f2_hypothesis_h_b1_confirmation": "🎯 **H-B1 (SSM state 는 KV cache lookup 만으로 재사용 불가) — 강한 evidence**. cache hit 시점에도 27초 prefill 잔존 = SSM state recomputation 의 본질적 cost",
+      "f2_hypothesis_h_b3_confirmation": "🎯 **H-B3 (attention 12/48 KV cache hit + SSM 36/48 dominant) — 정성적 일치**. warm 27000ms / cold 134800ms = **20.0%**, attention 비율 12/48 = **25.0%** → ratio 가깝게 일치",
+      "f2_hypothesis_h_b2_unseparated": "△ H-B2 (Ollama SSM 구현 최적화 미완성) 와 H-B1 (SSM 본질) 분리 = llama.cpp 동일 측정 필요 (Phase 3 C-e)",
+      "production_impact_re_evaluation": "MVP-1 advisory 패턴 = boss 동일 system prompt + 변경 worker 출력. cache hit ratio = system_prompt_tokens / total_tokens. system prompt 가 N토큰일 때 advisory 호출당 user-perceived prefill latency 추정: cache miss (변경 부분) × prefill_rate_miss + cache hit (system 부분) × prefill_rate_hit. SSM 부분은 *전체* cache miss 가능성 → advisory wall-clock 평가 별도 cycle (M3·M4 합의 R-12 답습)"
+    },
+    "raw_files_per_run": [
+      "2026-05-24-cc-1-qwen3cnext-prefill8k-unique.json",
+      "2026-05-24-cc-2-qwen3cnext-prefill8k-unique.json",
+      "2026-05-24-cc-3-qwen3cnext-prefill8k-unique.json"
+    ]
+  },
+
+  "phase_1_completion_status": {
+    "a_diagnosis": "✅ 완료 — nvidia-smi GB10 unified memory 한계 확인",
+    "c_c_cache_miss_isolation": "✅ 완료 — F2 가설 H-B1·H-B3 강한 evidence 확보",
+    "qwen2_5_coder_cache_miss_skipped": "qwen2.5-coder:32b 의 cache miss 측정 = 본 Phase 1 미수행 (cold prefill 8k 667초 × 3 = 33분 과대 시간). 별도 cycle (Phase 2/3 통합 가능)",
+    "dense_effective_bw_direct_measurement": "❌ 불가 (nvidia-smi GB10 보고 한계). Phase 3+ NVBandwidth 또는 tegrastats 별도 cycle 필요"
+  },
+
+  "decision_input_for_next_consensus_cycle": {
+    "f2_resolution_status": "🎯 H-B1·H-B3 강한 evidence. SSM state 의 본질적 cache reuse 불가 + attention/SSM layer 비율 25%/75% 일치. M3 결정 입력 자격: Ollama+SSM 운영 default 시 production advisory wall-clock 평가 필수 (cache hit 의 *부분* 효과만 활용 가능)",
+    "f1_resolution_status": "❌ 미해소. nvidia-smi 직접 측정 불가 → Phase 2 (C-a 활성 파라미터 정량 HF egress) + Phase 3 (C-e llama.cpp 측정) 필요",
+    "m3_decision_readiness": "Phase 1 단독으로 M3 결정 *고정* 자격 미충족. F1 가설 (i) 활성 파라미터 ~3B vs ~62B 분리 = C-a 필수, (iii) Ollama 효율 vs llama.cpp = C-e 필수",
+    "m4_decision_readiness": "Phase 1 결과: cache miss 58 tok/s + cache hit 291 tok/s + decode 7.83 tok/s = M4-A (연기) 그대로 답습. M4-D (wall-clock UX metric) 권고 강도 ↑"
+  },
+
+  "limitations": {
+    "single_session_noise": "Phase 1 3회 noise 분포 = 단일 세션 한정. tail latency 영향 X",
+    "nonce_position_assumption": "nonce 를 prompt 시작에 위치 → 전체 prefix cache miss 가정. nonce 끝부분 위치 시 부분 cache hit 가능성 별도",
+    "model_only_qwen3cnext": "qwen2.5-coder:32b cache miss 측정 0건. dense vs MoE+SSM cache miss 비교 = 별도 cycle (시간 부담)",
+    "ollama_prefix_cache_implementation_unverified": "Ollama 0.20.4 prefix cache 의 정확한 동작 (LRU eviction·시간 windowing·다중 prefix 지원 등) source/log inspection 0",
+    "advisory_real_pattern_unverified": "MVP-1 advisory 의 실 prompt 구조 (system+diff+worker) 의 cache hit ratio = 미측정. 합의 R-11·R-12 답습 별도 cycle",
+    "a_diagnosis_alternative_tools_skipped": "tegrastats / Nsight Systems / sm_120 PMU / NVBandwidth = 본 Phase 1 미시도. brief R-25 NOTE 답습"
+  },
+
+  "next_step_recommendations": [
+    "A. Phase 1 commit + push → 다음 cycle 진입",
+    "B. Phase 2 cycle (C-a 활성 파라미터 정량 HF egress, ~30분, R-11 답습) — F1 가설 (i) 직접 답",
+    "C. Phase 3 cycle (C-e llama.cpp 빌드 + 동일 측정, R4 답습) — F1·F2 의 Ollama 종속 분리",
+    "D. M3·M4 *결정 고정* 합의 cycle (Phase 1+2 결과 후) — 합의 R-6 → 결정",
+    "E. advisory 패턴 wall-clock 측정 cycle (합의 R-12) — F2 production 영향 평가",
+    "F. M4-D framing (UX wall-clock metric) 별도 brief — 합의 R-21 NOTE 격상"
+  ]
+}

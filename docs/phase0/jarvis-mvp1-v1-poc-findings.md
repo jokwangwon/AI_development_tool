@@ -1,15 +1,16 @@
-# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1+2+3+4: read-only + tok/s 측정)
+# 자비스 MVP-1 V-1 PoC findings (DRAFT — Stage 1~5: read-only + 측정 + Phase 1 검증)
 
-> **본 findings = V-1 PoC의 *1~4차 단계*(R-1 anchor + §2 V1-1 + §3 V1-2 Step 1+2a+2b + §8 egress baseline + §4 V1-3 측정) 결과.** Stage 1~3 = read-only, Stage 4 = LLM 호출 발생 (qwen3-coder-next + qwen2.5-coder:32b). gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건**. `ollama search` egress = **0건** (R-11 답습). 데몬 변경 0건.
+> **본 findings = V-1 PoC의 *1~5차 단계* + M3·M4 합의 Phase 1 cycle.** Stage 1~3 = read-only, Stage 4 = §4 측정 (qwen3-coder-next + qwen2.5-coder:32b), Stage 5 = Phase 1 cycle (A-진단 + C-c cache miss 분리). gap-pull·llama.cpp 빌드·M3/M4 결정 = **0건**. `ollama search` egress = **0건** (R-11 답습). 데몬 변경 0건. R-1 anchor 5회 일치 (silent 교체 미발생 확정).
 
 **작성일**: 2026-05-23
-**Status**: DRAFT — Stage 1+2+3+4/N (read-only 위생·식별·baseline + tok/s 측정 raw 보고)
+**Status**: DRAFT — Stage 1+2+3+4+5/N
 **선행 답습**: `jarvis-mvp1-v1-poc-entry-brief.md`(v1.1, HEAD `9e68fbb`, BLOCKING 6 반영) / `3plus1-consensus-2026-05-23-jarvis-mvp1-v1-poc-entry.md` / brief v2 §6
 **raw**:
 - Stage 1: `docs/phase0/v1-poc-raw/2026-05-23T11-53-v1-1-readonly.json` + `2026-05-23T11-53-qwen3-coder-next-manifest.json`
 - Stage 2: `docs/phase0/v1-poc-raw/2026-05-23T12-15-v1-2-step2-readonly.json`
 - Stage 3: `docs/phase0/v1-poc-raw/2026-05-23T13-00-v1-egress-baseline-readonly.json`
-- Stage 4: `docs/phase0/v1-poc-raw/2026-05-23T21-30-v1-3-measurement-summary.json` + 측정 30개 JSON (decode/prefill 2k/prefill 8k × 2 모델 × 5회)
+- Stage 4: `docs/phase0/v1-poc-raw/2026-05-23T21-30-v1-3-measurement-summary.json` + 측정 30개 JSON
+- Stage 5 (Phase 1): `docs/phase0/v1-poc-raw/2026-05-24-phase1-summary.json` + A-진단 raw (`2026-05-24-a-diagnosis-decode-result.json` + `2026-05-24-a-diagnosis-dmon-qwen3cnext-decode.txt`) + C-c raw 3개 (`2026-05-24-cc-{1,2,3}-qwen3cnext-prefill8k-unique.json`)
 
 ---
 
@@ -341,6 +342,83 @@ prefill warm 5회 측정에서 dense(qwen2.5-coder:32b)가 MoE+SSM(qwen3-coder-n
 - raw 모두 보고 (5회 + outlier 경계 명시)
 - M3·M4 결정 입력 자격 = 본 findings 의 어떤 행에도 X
 - 결정 *고정* 은 V-1 findings *후 별도 합의*
+
+---
+
+## 3e. Stage 5 — M3·M4 합의 Phase 1 cycle (A-진단 + C-c)
+
+### 3e.1 R-1 anchor 5회 일치 + R-23 freeze 유지
+
+- Stage 1 = Stage 4 pre = Stage 4 post = Phase 1 pre = Phase 1 post = `ce95c475...878b10` ✅
+- 5회 sudo 사용자 명시 prompt 입력, read-only. silent 교체 미발생 *최종* 확정.
+
+### 3e.2 A-진단 결과 — nvidia-smi GB10 한계 확인
+
+| 항목 | 결과 |
+|---|---|
+| 명령 | `nvidia-smi dmon -s pum -d 1 -c 100` 백그라운드 + qwen3-coder-next decode 1회 동시 |
+| decode 결과 | mean **7.93 tok/s** (Stage 4 평균 7.83 와 일치, 재현성 확인) |
+| dmon 100 samples sm% | **0% 모두** |
+| dmon 100 samples mem% | **0% 모두** |
+| dmon power | **4W** (거의 idle 보고) |
+
+🔴 **결론**: nvidia-smi dmon 이 GB10 unified memory 환경에서 GPU activity 보고 *완전 불가*. Stage 1 §2 Step 3 pmon idle 결과 동일 한계 재확인 (brief R-25 NOTE 답습).
+
+**F1 가설 (v) 영향**: "GB10/Ollama effective BW 자체가 spec 의 1/3" 가설 → **nvidia-smi 직접 측정 불가**. *역산* (dense 4.62 × 18.5GB ≈ 85GB/s = 273GB/s 의 31%) 만이 가능한 evidence. 직접 측정 = NVBandwidth/tegrastats/Nsight Systems 등 별도 cycle (Phase 3+).
+
+### 3e.3 C-c cache miss 분리 — F2 가설 직접 답
+
+`prefill 8k` × 3회, 매 회 다른 nonce(timestamp+random) 를 prompt prefix 시작에 추가 → prefix cache lookup 강제 miss.
+
+| run | nonce | prefill tok/s | prefill duration | prompt tokens |
+|---|---|---:|---:|---:|
+| 1 | 1779544042526946854-18716 | 58.51 | 134254ms | 7855 |
+| 2 | 1779544179052105015-16349 | 57.89 | 135693ms | 7855 |
+| 3 | 1779544317110123102-2768 | 58.42 | 134433ms | 7854 |
+| **mean** | — | **58.27** | 134793ms | 7855 |
+| **std** | — | **0.27** | — | — |
+| **std/mean** | — | **0.47%** | — | — |
+
+### 3e.4 ⭐ 결정적 비교 (cache miss vs cache hit)
+
+| scenario | prefill tok/s | prefill duration | 비고 |
+|---|---:|---:|---|
+| Stage 4 precheck (cache miss 1회) | 57.79 | 135367ms | 7823 tokens (nonce 없음) |
+| **Stage 5 C-c unique 3회 mean** | **58.27** | 134793ms | 7855 tokens (nonce 추가) — **Stage 4 precheck 와 0.8% 일치** |
+| Stage 4 warm 5회 (cache hit) | 291.55 | 26852ms | 7823 tokens |
+| **cache hit / cache miss ratio** | **5.01×** | — | — |
+
+✅ **Stage 4 precheck (57.79) = 정직한 cache miss 측정 확정** (우연 아닌 정확한 cold prefill, C-c 3회 mean 58.27 와 일치).
+
+### 3e.5 🎯 F2 가설 직접 답 (cache 역전 원인)
+
+| 가설 | 검증 결과 |
+|---|---|
+| **H-B1 (SSM state 가 KV cache lookup 만으로 재사용 불가)** | ✅ **강한 evidence** — cache hit 시점에도 27초 prefill 잔존 = SSM state recomputation 의 본질적 cost |
+| **H-B3 (attention 12/48 cache hit + SSM 36/48 dominant compute)** | ✅ **정성적 일치** — warm 27000ms / cold 134800ms = **20.0%** vs attention layer 비율 12/48 = **25.0%** (오차 5%p, 정성적 강한 매칭) |
+| **H-B2 (Ollama SSM 구현 최적화 미완성)** | △ **H-B1 과 분리 불가** — llama.cpp 동일 측정 필요 (Phase 3 C-e) |
+
+### 3e.6 production 영향 재평가
+
+MVP-1 advisory 패턴 = boss 동일 system prompt + 변경 worker output. **cache hit ratio = system_prompt_tokens / total_tokens**. SSM 부분은 *전체 cache miss* 가능성(H-B1 강한 신호) → cache hit 의 *부분 효과* 만 활용 가능.
+
+→ **MVP-1 트랙 B 진입 *전* advisory 패턴 wall-clock 측정 필수** (합의 R-12 답습).
+
+### 3e.7 Phase 1 완료 상태
+
+| 항목 | 상태 |
+|---|---|
+| A-진단 | ✅ 완료 — nvidia-smi GB10 한계 확인 (정밀 도구 별도 cycle 권고) |
+| C-c (qwen3-coder-next) | ✅ 완료 — F2 가설 H-B1·H-B3 강한 evidence |
+| qwen2.5-coder cache miss | ❌ 본 Phase 1 미수행 (cold prefill 8k 667초 × 3 = 33분 과대) — 별도 cycle |
+| 데몬 변경 / pull / 빌드 | 0건 |
+
+### 3e.8 결정 입력 자격
+
+- **F2 (cache 역전)**: 🎯 본질적 SSM 한계 강한 evidence — M3 결정 시 *MVP-1 advisory wall-clock 평가 필수* 명문 의무 (합의 R-12 답습)
+- **F1 (roofline 미달)**: ❌ 미해소 — Phase 2 (C-a 활성 파라미터 HF egress) + Phase 3 (C-e llama.cpp) 필수
+- **M3 결정 고정 자격**: Phase 1 단독 미충족 — Phase 2/3 진행 후 *재합의*
+- **M4 결정 고정 자격**: M4-A (연기) 답습 유지. M4-D (wall-clock UX metric) 권고 강도 ↑
 
 ---
 

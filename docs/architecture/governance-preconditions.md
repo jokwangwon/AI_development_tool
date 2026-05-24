@@ -1,6 +1,6 @@
 # 6 Governance Preconditions (G2) — Design/Governance Gate PASS (Bundled, 2026-05-09)
 
-> **상태: Design/Governance Gate PASS (Bundled, 2026-05-09)**. Hermes PMO 격상 4 게이트 중 G2 — "헌법 8조·5조(Provider Liquidity) 위반 경로 P1~P8 강제 메커니즘 매핑 + 6 거버넌스 사전조건 GP-1~GP-6 정의 + 각 사전조건의 entry/exit 기준" 정의. **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접 컨텍스트) APPROVE WITH CONDITIONS** (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`).
+> **상태: Design/Governance Gate PASS (Bundled, 2026-05-09)**. Hermes PMO 격상 4 게이트 중 G2 — "헌법 8조·5조-2(Provider Liquidity, 비협상) 위반 경로 P1~P8 강제 메커니즘 매핑 + 6 거버넌스 사전조건 GP-1~GP-6 정의 + 각 사전조건의 entry/exit 기준" 정의. **G2 + G3 + G4 통합 풀 3+1 합의 + 외부 LLM 2건 (GPT cross-vendor + Claude 인접 컨텍스트) APPROVE WITH CONDITIONS** (`docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md`).
 >
 > **PASS 범위 한정 (P0 조건 C-A, 5/5 입력 일치)**: 본 PASS 는 *Design/Governance Gate PASS* 한정 — 문서 구조 / 권위 위계 / 6 GP 정의 / 강제 메커니즘 분류 매트릭스 / Entry·Exit 기준 정의의 *설계 승인* 에 한정한다. **Implementation/Runtime PASS 는 본 PASS 에 포함되지 않는다** — GP-2~GP-6 의 PoC 실증 / CI 강제 / runtime hook 구현 / Evidence Ledger 검증은 *별도 합의* 로만 발생.
 >
@@ -23,7 +23,7 @@
 **정식 PASS 일자**: 2026-05-09 (Design/Governance Gate PASS, Bundled with G3 + G4 — 2026-05-07 통합 합의의 후속 reaffirmation)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **P10 정식 등록 합의**: `docs/review/3plus1-consensus-2026-05-09-g2-p10-evidence-forgery.md` (2026-05-09 후속 5 단축 합의 APPROVE Reviewer-only)
-**상위 권위**: 헌법 제8조 (보안), 프로젝트 내 관용 "헌법 제5조 (Provider Liquidity)" — 본 §1.1 명명 정정 참조
+**상위 권위**: 헌법 제8조 (보안), 헌법 제5조-2 (Provider Liquidity, 비협상, `148fbbe` 신설) — 본 §1.1 명명 정정 *역할 종료* (cross-ref block 답습)
 **상위 결정**: ADR-008 (Hermes 도입 Option B) 6 차단조건, ADR-011 (수단/목적 분리, §2.3 권위 위계, §2.4 T1/T2/T3), **ADR-009 C-N (P1 facade MVP 진입조건 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 모법 ADR Layer 1, 2026-05-09 후속 4 갱신)**, **ADR-012 (Evidence Ledger Protection, 2026-05-09 후속 3 PR-2 신규 발행)**
 **관련 설계**: **`hermes-adoption-design-v3.md` §4 (G2 정의 — P2 v3 Adopted Design Adoption only, 2026-05-09 후속 6)**, `hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7**), `system-identity-prequel.md` §3.3 / §4.2 (**Archived 2026-05-09 후속 8**, 본 ADR-011 §2.3 영구 권위 승격 답습으로 권위 보존), `redaction-pattern-equivalence.md` (R-4), `canary-recheck-design.md` (R-5), `llm-providers-design.md` (P1 v2 — Option β LiteLLM facade)
 **근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Agent B 6 거버넌스 사전조건 + 8 위반 경로 P1~P8 식별), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G2 정식 PASS 합의), `docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (P2 v3 정식 채택 풀 3+1 + 외부 LLM 2건 — 본 G2 = P2 v3 §4 답습 권위)
@@ -75,7 +75,7 @@
 
 ### 1.1 "헌법 5조 (Provider Liquidity)" 명명 정정 (선행, 1회 명시)
 
-**관용 표현**: ADR-008 / ADR-011 / system-identity-prequel / 본 v3 모두 "헌법 제5조 (Provider Liquidity)" 표현 사용.
+**관용 표현**: ADR-008 / ADR-011 / system-identity-prequel / 본 v3 모두 "헌법 제5조-2 (Provider Liquidity, 비협상)" 표현 사용 ((g1-N-1) commit `148fbbe` 후 헌법 본문 직접 등재 완료).
 
 **실제 헌법 본문**:
 - `docs/constitution/PROJECT_CONSTITUTION.md` 제5조 본문: **"코드 품질 원칙"** (5개 항목, 단일 책임 / 가독성 / 중복 제거 / 외부 입력 검증 / 린터)
@@ -90,6 +90,8 @@
 - 본 초안은 **프로젝트 관용 답습** — 본문 내 "헌법 5조 (Provider Liquidity)" 표현 그대로 사용
 - 단, 본 §1.1 1회 명시로 명명 불일치 인지 + 향후 *헌법 본문 갱신* 또는 *ADR-012 (가칭) Provider Liquidity 정관 흡수* 등 정정 후보 제시 (본 초안 범위 외)
 - 후속 작업: 헌법 본문 갱신 또는 ADR Amendment 결정은 풀 3+1 합의 영역 (T3 변경 — ADR-011 §2.4)
+
+**[Cross-reference Block — (g1-N-3-gov) (ii-c) verbatim 부분 정정 + R-4 답습]**: 본 §1.1 = (g1-N-1) commit `148fbbe` 후 **역할 종료**. 헌법 본문 line 75~80 "제5조-2: Provider Liquidity 원칙 (비협상)" 신설 완료 — 본 §1.1 line 91 "정정 후보 제시 (본 초안 범위 외)" 부분 obsolete. 단 본 §1.1 의 *역사적 의의* (관용 명명 불일치 *최초 명문 식별* + (g1-N) cycle chain 의 *직접 동기 출처*) 영구 보존. 후속 인용 chain (line 26 + line 38 + line 835) 모두 본 §1.1 cross-ref 답습 자격. (ii-a) 전체 삭제 / (ii-b) 본문 수정 / (ii-d) archive 표시 = 사전 기각 (합의 기각-3, A-B2 cascading failure risk + (10-f) sub-boundary).
 
 ### 1.2 위반 경로 P1~P8 정의
 

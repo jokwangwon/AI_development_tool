@@ -10,7 +10,7 @@
 **작성일**: 2026-05-07 (DRAFT) → **2026-05-09 (정식 채택, 후속 6)**
 **정식 채택 일자**: 2026-05-09 후속 6
 **상위 결정**: ADR-008 (Option B), ADR-011 (수단/목적 분리 — R-3 모법)
-**상위 권위**: 헌법 제5조 (Provider Liquidity), 헌법 제8조 (보안), `docs/architecture/system-identity-prequel.md` (R-7 후 본 v3로 흡수, archived 예정)
+**상위 권위**: 헌법 제5조-2 (Provider Liquidity, 비협상), 헌법 제8조 (보안), `docs/architecture/system-identity-prequel.md` (R-7 후 본 v3로 흡수, archived 예정)
 **관련 ADR**: ADR-009 (자체 Adapter v2.0 진입조건), ADR-010 (SQLCipher Vault HSM 키 관리), ADR-011 (수단/목적 분리)
 **대체 대상**: `docs/architecture/hermes-adoption-design.md` (P2 v2, 본 v3 정식화 시 archived)
 **관련 설계**: `llm-providers-design.md` (P1 v2), `multi-agent-system-design.md`, `harness-engineering-design.md`, `redaction-pattern-equivalence.md` (R-4), `canary-recheck-design.md` (R-5)
@@ -374,7 +374,7 @@ Hermes PMO 격상 선언 = 미선언 (본 v3 정식 채택 = Design Adoption onl
 
 ### 4.1 정의
 
-**G2**: 헌법 제8조(보안) / 제5조(Provider Liquidity) 위반 경로 P1~P8 각각에 대한 강제 메커니즘이 매핑되어, 위반 발생 시 자동 차단되는 상태.
+**G2**: 헌법 제8조(보안) / 제5조-2(Provider Liquidity, 비협상) 위반 경로 P1~P8 각각에 대한 강제 메커니즘이 매핑되어, 위반 발생 시 자동 차단되는 상태.
 
 **근거**: system-identity-prequel §4.2 G2 + GPT 외부 검토 결과(2026-05-05 풀 합의).
 
@@ -706,7 +706,7 @@ Hermes PMO 격상 선언 = 미선언 (본 v3 정식 채택 = Design Adoption onl
 
 | # | 제약 | 권위 근거 | Multi-layer 보호 (5/5) |
 |---|------|---------|------|
-| 1 | **Provider Liquidity** | 헌법 제5조 관용 (비협상), `feedback_provider_liquidity.md`, ADR-008 차단조건 #2, **ADR-009 §5 (5-way Multi-layer Defense Layer 1 모법 ADR, 2026-05-09 후속 4 C-N)**, **ADR-012 §원칙 5 / 6 (Layer 5 — Evidence 형식 차원, 2026-05-09 후속 3 PR-2)** | Layer 1 (코드 lock-in 차단, ADR-009 §2.2) + Layer 2 (Hermes-originated lock-in 차단, G3 §6.4 + ADR-009 §2.3) + Layer 3 (Skill 메타데이터, G4 §3.5) + Layer 4 (Export format, G4 §4.3) + Layer 5 (Evidence 형식, ADR-012 §원칙 6 + G4 §4.2) |
+| 1 | **Provider Liquidity** | 헌법 제5조-2 관용 (Provider Liquidity, 비협상), `feedback_provider_liquidity.md`, ADR-008 차단조건 #2, **ADR-009 §5 (5-way Multi-layer Defense Layer 1 모법 ADR, 2026-05-09 후속 4 C-N)**, **ADR-012 §원칙 5 / 6 (Layer 5 — Evidence 형식 차원, 2026-05-09 후속 3 PR-2)** | Layer 1 (코드 lock-in 차단, ADR-009 §2.2) + Layer 2 (Hermes-originated lock-in 차단, G3 §6.4 + ADR-009 §2.3) + Layer 3 (Skill 메타데이터, G4 §3.5) + Layer 4 (Export format, G4 §4.3) + Layer 5 (Evidence 형식, ADR-012 §원칙 6 + G4 §4.2) |
 | 2 | **Hermes ≠ root of trust** | ADR-011 §2.3 (영구 권위), system-identity-prequel §3 → ADR 승격, **ADR-012 §2.12 (Hermes 변조 차단 매트릭스 4항목, 2026-05-09 후속 3 PR-2)**, **ADR-009 §2.3 (Hermes PMO ↔ provider 분리, 2026-05-09 후속 4 C-N)**, G3 §1.3 + §5 (Evidence decision principle), G3 §2.5 #11 / §4.5 / §2.2 #20 (Hermes-originated commit auto-reject) | 5 layer (ADR-011 권위 + ADR-012 변조 매트릭스 + ADR-009 PMO-provider 분리 + G3 evidence + G3 hook) |
 | 3 | **메타포 강제 금지** | system-identity-prequel §7 (본 v3 §2.5로 흡수 — 격상 후도 메타포 정합성 위해 구조 늘림 금지), ADR-012 §1.5 (메타포 회피 — *형식적 무결성* 까지, *진리 보장* 아님) | system-identity-prequel §7 + 본 §10.2 archive 약화 방지 + ADR-012 §1.5 |
 | 4 | **자동 정책 변경 금지 (T3)** | ADR-011 §2.4 (T1/T2/T3 분류), 본 v3 §0.2 #6 + §11 변경 절차, **ADR-012 §원칙 9 (prev_hash 검증 실패 = 즉시 BLOCK, 자동 복구 / 자동 revert 금지)**, ADR-009 §2.3 (Hermes provider 소유 = T3 영역) | T1 (자동 학습 OK) / T2 (사용자 승인 필수) / T3 (자동 변경 절대 금지) 3 tier |

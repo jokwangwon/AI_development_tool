@@ -3,7 +3,7 @@
 **상태**: 승인 (단축 합의 — Reviewer-only, 2026-05-06)
 **날짜**: 2026-05-06
 **의사결정자**: 사용자 + Reviewer 합의 — `docs/review/3plus1-consensus-2026-05-06-adr-011-means-vs-ends.md`
-**상위 권위**: 헌법 제8조 (보안), 헌법 제5조 (Provider Liquidity), `docs/architecture/system-identity-prequel.md` §3
+**상위 권위**: 헌법 제8조 (보안), 헌법 제5조-2 (Provider Liquidity, 비협상), `docs/architecture/system-identity-prequel.md` §3
 **갱신 대상**: ADR-008 부록 B Amendment (동시 발행)
 **모법 역할**: R-4 / R-5 / R-6 / R-7 작업의 권위 근거
 
@@ -242,7 +242,7 @@ R-1 FAIL과 R-2 PASS는 Phase 0 evidence 보고서에 기록되어 있으나, �
 ## 8. 관련 문서 (2026-05-09 후속 9 cross-reference 갱신, 결정 내용 변경 0건 — 단축 합의 APPROVE Reviewer-only)
 
 ### 8.1 상위 권위
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 관용 (Provider Liquidity, 비협상)
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조-2 관용 (Provider Liquidity, 비협상)
 - `docs/architecture/system-identity-prequel.md` §3 (권위 위계 prequel — 본 ADR §2.3으로 영구 권위 승격, prequel §6의 3-tier 선언 → 본 ADR §2.4 영구 권위 승격) — **Archived 2026-05-09 후속 8**, 본 ADR §2.3 / §2.4 영구 권위 승격 직접 명시 답습으로 archive 후에도 권위 보존. archive 합의: `docs/review/3plus1-consensus-2026-05-09-system-identity-prequel-archive-decision.md`
 
 ### 8.2 갱신 대상 / 후속 권위

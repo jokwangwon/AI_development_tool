@@ -24,7 +24,7 @@
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C 내부 + GPT cross-vendor + Claude 인접 컨텍스트)
 **§4 hash chain 보강 합의**: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (PR-2 풀 3+1 + 외부 LLM 2건 — ADR-012 발행 + G4 §4.2/§4.4/§4.6 보강, 2026-05-09 후속 3 PR-2)
 **산출 방식**: 옵션 B (Memory + Skill 통합 단일 문서) — 사용자 명시 결정 답습. 사유: G4 핵심은 *Memory/Skill 공통 형식 — provider-agnostic schema*. 분리 작성 시 lock-in 방지 *공통 보장*이 약화될 위험.
-**상위 권위**: 헌법 제5조 관용 (Provider Liquidity), 헌법 제8조 (보안), ADR-008 차단조건 #2 (JSONL export 표준), **ADR-009 C-N §5 (Provider Liquidity 5-way Multi-layer Defense 모법 ADR Layer 1, 2026-05-09 후속 4 갱신)**, **ADR-012 §원칙 5 + §원칙 6 (Provider Liquidity 5-way Layer 5 — Evidence 형식 차원 provider-neutral 강제)**
+**상위 권위**: 헌법 제5조-2 관용 (Provider Liquidity, 비협상), 헌법 제8조 (보안), ADR-008 차단조건 #2 (JSONL export 표준), **ADR-009 C-N §5 (Provider Liquidity 5-way Multi-layer Defense 모법 ADR Layer 1, 2026-05-09 후속 4 갱신)**, **ADR-012 §원칙 5 + §원칙 6 (Provider Liquidity 5-way Layer 5 — Evidence 형식 차원 provider-neutral 강제)**
 **상위 결정**: ADR-008 (Hermes 도입 Option B), ADR-011 §2.4 (T1/T2/T3 자동 학습 vs 정책 변경 분리), **ADR-012 (Evidence Ledger Protection — 본 G4 §4 권위 출처)**
 **관련 설계**: **`hermes-adoption-design-v3.md` §6 (G4 정의 — P2 v3 Adopted Design Adoption only, 2026-05-09 후속 6)**, `governance-preconditions.md` §8 (GP-6 Memory/Skill Migration) + §1.2.6 P10 Evidence Forgery 정식 등록, `hermes-not-root-of-trust-runtime.md` §6.5 / §7 (GP-6 ↔ G3 ↔ G4 3-way 인터페이스), `hermes-adoption-design.md` (P2 v2, **Archived 2026-05-09 후속 7**), `system-identity-prequel.md` §6.3 (Evidence Ledger schema 후보) + §8.4 (Memory 2단계 boundary) (**Archived 2026-05-09 후속 8** — 본 G4 답습 권위 발행으로 권위 보존), `llm-providers-design.md` (P1 v2 — Option β LiteLLM facade)
 **근거 합의**: `docs/review/3plus1-consensus-2026-05-05-system-identity-redefinition.md` (Memory 2단계 채택 + Skill 자동 추출 T1 한정 + GPT 4단계 미채택 사유), `docs/review/3plus1-consensus-2026-05-07-g3-root-of-trust-runtime-draft.md` (G3 §7 G4 경계 인용), `docs/review/3plus1-consensus-2026-05-09-g2g3g4-formal-promotion.md` (G4 정식 PASS 합의), **`docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (G4 §4 hash chain 보강 — ADR-012 동일 PR commit)**, **`docs/review/3plus1-consensus-2026-05-09-p2v3-formal-adoption.md` (P2 v3 정식 채택 — 본 G4 = P2 v3 §6 답습 권위)**
@@ -1298,6 +1298,8 @@ G3 §6.5 답습:
 **4 layer 모두 충족** 시 Provider Liquidity 의 *완결성* 확보. 1 layer 만 깨져도 lock-in 위험 잔존 (예: schema OK + JSONL OK 이지만 P1 facade 우회 코드 작성 = lock-in 가능).
 
 본 §6.4 / §3.5 / §4.3 본문 자체는 *용어* 갱신 외 변경 0건 (본 §11.4.2 가 **명명 정정 명시 기록** 한정).
+
+**[Cross-reference Block — (g1-N-3-pamsd) HIGH carry-over, R-7 (vi-γ) 답습]**: 본 §11.4.2 "Provider Liquidity 4-way Multi-layer Defense" 명명 = 헌법-동급 권위 (R-S4 (g1-N-3) 답습). (g1-N-1) commit `148fbbe` 후 **헌법 제5조-2 (Provider Liquidity, 비협상) line 75~80** 직접 모법 발효 — Layer 1~4 모두 헌법 제5조-2 line 80 "본 원칙은 비협상 — ADR-011 line 6 상위 권위 매핑 답습" 답습 형식 직접 활용 자격. 본문 verbatim 변경 0건 (R-7 (vi-α) 사전 기각 + (vi-β) DEFER 양립, (vi-γ) cross-reference 추가만 채택).
 
 #### 11.4.3 G3 4 후속 권고 잔여 (G3 검토 §3.1 P-1~P-4) 흡수 진행 상태
 

@@ -9,6 +9,8 @@
 **P10 트리거**: 본 ADR-012 발행 시점 = G2 §1.2.5 P10 (Evidence Forgery) 정식 등록 *트리거* (정식 row 추가는 별도 G2 update PR — 본 ADR 범위 외)
 **합의 권위**: `docs/review/3plus1-consensus-2026-05-09-pr2-evidence-ledger.md` (5/5 입력 APPROVE WITH CONDITIONS — Agent A/B/C + cross-vendor 외부 LLM + Claude 인접 컨텍스트)
 
+**[Cross-reference Block — (g1-N-3-adr-008+sip+adr-012') R-7 (f) cross-ref block 만 채택 + R-S4 답습 + R-1 (P4) 신설 *기각* 답습]**: 본 ADR-012 line 6 (상위 권위) + line 61 (§1.4 cross-ref 표 cell) + line 579 (영구 핵심 제약 표) + line 665 (관련 문서) 표기 "헌법 제5조 (Provider Liquidity, 관용)" / "헌법 제5조 관용" / "헌법 5조 (관용)" = (g1-N-1) commit `148fbbe` 후 **헌법 제5조-2: Provider Liquidity 원칙 (비협상) (line 75~80)** 직접 모법 발효 — (g1-N-1) 이전 관용 표현 답습. **line 61 = (P2) cross-ref 표 cell 처리** ((P4) 신규 verbatim 유형 신설 *기각* — R-1 + 기각-2 답습, Reviewer 권한 한계 (11) sub-boundary 신설 *기각*). 본 cycle = gov §1.1 line 78 verbatim 명문 4 source *외* 추가 동형 source 자격 식별 (R-S4 HIGH, ADR-012 = 명문 4 source 외 추가 동형 매핑 자격 강함). (g1-N-3-pamsd) `ab96e30` 동형 패턴 답습, **본문 verbatim 변경 0건** ((f) cross-ref block 만 채택). 정정 후 형식 = ADR-011 line 245 모법 "제5조-2 관용 (Provider Liquidity, 비협상)" (R-rec-3 답습 + 사용자 명시 직접 확인). 추가 위치 line 62/455/513/552/555/561/583/597 (P2 ADR-011 cross-ref + P3 "Provider Liquidity 4-way → 5-way" 본문 다수) = (P3) 본문 답습 본질 동형, 정정 자격 약함 ((P3) 약식 통일 cycle DEFER carry-over). 본 cycle 합의 = `209f04d`.
+
 ---
 
 ## 1. 맥락 (Context)

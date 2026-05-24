@@ -92,6 +92,8 @@ Phase 0 Day 1~2에서 발견된 P2 v2 가정 오류(`add_pre_record_hook` 공식
 
 → 헌법 5조 (Provider Liquidity) 의 메타포적 표현. Claude/GPT/Gemini/Local LLM은 언제든 교체 가능, Constitution/ADR/SDD/검증 게이트/역할 계약/프로젝트 기억은 유지.
 
+**[Cross-reference Block — (g1-N-3-adr-008+sip+adr-012') R-7 (f) cross-ref block 만 채택 + R-S2 답습]**: 본 §2.3 line 93 표기 "헌법 5조 (Provider Liquidity)" + §4.2 line 152/154 "헌법 8조·5조" / "헌법 5조" + §5.2 line 175 "Provider Liquidity 일부 면제" = (g1-N-1) commit `148fbbe` 후 **헌법 제5조-2: Provider Liquidity 원칙 (비협상) (line 75~80)** 직접 모법 발효 — (g1-N-1) 이전 관용 표현 답습. 본 cycle = gov §1.1 line 78 verbatim 명문 4 source ("ADR-008 / ADR-011 / system-identity-prequel / 본 v3") 中 system-identity-prequel 정정 자격 직접 발효 (R-S2 CRITICAL). (g1-N-3-pamsd) `ab96e30` 동형 패턴 답습, **본문 verbatim 변경 0건** ((f) cross-ref block 만 채택). 정정 후 형식 = ADR-011 line 245 모법 "제5조-2 관용 (Provider Liquidity, 비협상)" (R-rec-3 답습 + 사용자 명시 직접 확인), (P3) 약식 통일 cycle DEFER carry-over. (P4) 신규 verbatim 유형 신설 *기각* + Reviewer 권한 한계 (11) sub-boundary 신설 *기각* + (g1-N-3) chain 영구 종결 명문 의무 답습 영구. 본 cycle 합의 = `209f04d`. **본 §1.1 line 94 (`note: prequel = Archived 2026-05-09 후속 8` 답습 vs ADR-011 §2.3 영구 권위 승격 답습)** = archive 후에도 권위 보존 명문 답습 ((ii-b) 헌법-직접-매핑 강도 보존).
+
 ---
 
 ## 3. 권위 위계 (Authority Hierarchy)

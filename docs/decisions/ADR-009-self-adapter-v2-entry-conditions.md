@@ -3,7 +3,7 @@
 **상태**: 승인 (3+1 합의 결과 반영, Bβ-4) + **C-N 갱신 (단축 합의, 2026-05-09 후속 4)**
 **날짜**: 2026-05-04 (초기 승인) / **2026-05-09 (C-N 갱신 — P1 facade MVP 진입조건 명시 + Hermes PMO ↔ provider 분리 + Provider Liquidity 5-way 답습 + P2 v3 cross-reference)**
 **의사결정자**: 사용자 + 3+1 에이전트 합의 (초기) + **사용자 + Reviewer 단축 합의 (C-N 갱신, 2026-05-09)**
-**상위 권위**: 헌법 제5조 관용 (Provider Liquidity), ADR-004 (외부 SDK 우선), ADR-008 (Hermes 도입 Option B), **ADR-011 §2.3 (Hermes ≠ root of trust)**, **ADR-012 §원칙 5 (Provider Liquidity 5-way Multi-layer Defense)**
+**상위 권위**: 헌법 제5조-2 관용 (Provider Liquidity, 비협상), ADR-004 (외부 SDK 우선), ADR-008 (Hermes 도입 Option B), **ADR-011 §2.3 (Hermes ≠ root of trust)**, **ADR-012 §원칙 5 (Provider Liquidity 5-way Multi-layer Defense)**
 **관련 합의**: `docs/review/3plus1-consensus-2026-05-04-p1-llm-providers.md` (Bβ-4 출처), **`docs/review/3plus1-consensus-2026-05-09-c-n-adr-009-update.md` (C-N 갱신 단축 합의)**
 
 ---
@@ -267,7 +267,7 @@ P1 (Option β) 합의의 일부로 다뤄짐. 별도 ADR 작성 의무는 Bβ-4 
 
 ### 9.1 상위 권위
 
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제5조 관용 (Provider Liquidity)
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제5조-2 관용 (Provider Liquidity, 비협상)
 - `docs/decisions/ADR-004-generative-ai-extensibility.md` (외부 SDK 우선 원칙)
 - `docs/decisions/ADR-008-hermes-adoption-decision.md` (Hermes 도입 Option B + 차단조건 #4 P1 Facade 위임)
 - `docs/decisions/ADR-011-means-vs-ends-redaction.md` §2.3 (Hermes ≠ root of trust 영구 권위)

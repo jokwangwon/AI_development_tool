@@ -178,7 +178,7 @@ P2 합의 D-4 결정 사항. 별도 ADR 작성 의무는 Reviewer 권고.
 ### 합의 / 헌법
 
 - `docs/review/3plus1-consensus-2026-05-04-p2-hermes-adoption.md` (B-N2 발견 출처)
-- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조 관용 (Provider Liquidity)
+- `docs/constitution/PROJECT_CONSTITUTION.md` 제8조 (보안), 제5조-2 관용 (Provider Liquidity, 비협상)
 
 ### 4 게이트 정식 산출 (2026-05-09 Design/Governance Gate PASS Bundled)
 

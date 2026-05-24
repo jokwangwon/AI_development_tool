@@ -2,16 +2,18 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: **2026-05-24 세션 — V-1 PoC Phase 2 EXECUTED(`c66756b`) + M3·M4 *결정 고정* 자격 단독 미충족 합의(풀 3+1, BLOCKING 5, `d2d7bf9`) + Phase 3 정공법 entry brief v1(`cc145fd`) + 풀 3+1 합의(APPROVE w/ COND, BLOCKING 7 + 권고 25 + NOTE 11, `e76acc8`) + brief v1.1(`25eb008`) + 세션 1차 정리(`3729997`) + ⭐ Phase 3 실 빌드 cycle (정공법, GGUF 호환성 차단) EXECUTED**. HEAD = `3729997` (1차 정리, Phase 3 cycle commit 별도 사용자 명시 의무).
+**최종 업데이트**: **2026-05-24 세션 — Phase 2 EXECUTED(`c66756b`) + M3·M4 단독 미충족 합의(`d2d7bf9`) + Phase 3 entry brief v1(`cc145fd`)/v1.1(`25eb008`) + 풀 3+1 합의(`e76acc8`) + 1차 정리(`3729997`) + ⭐ Phase 3 실 빌드 cycle EXECUTED(`7209743`) + ⭐ Provider Liquidity deep-dive 합의 cycle 진입(사용자 "(d)") → entry brief v1(`9ed376a`, 407줄) → 풀 3+1 합의(`a9e1e88`, APPROVE w/ COND, BLOCKING 13 + 권고 17 + NOTE 12, 기각 0) → brief v1.1 보강(`8ae1ab6`, 407→518줄)**. HEAD = 본 3차 정리 commit (commit 별도 사용자 명시 의무, 다음 세션 (f) 진입 예정).
 
-**본 세션 신규 등록 문서 5건 + raw 7건(Phase 2) + raw 17건(Phase 3 cycle)**:
+**본 세션 신규 등록 문서 7건 + raw 7건(Phase 2) + raw 17건(Phase 3 cycle)**:
 - `docs/phase0/jarvis-mvp1-v1-poc-phase2-entry-brief.md` (v1 → v2 EXECUTED, `c66756b`, carry-over)
 - `docs/phase0/jarvis-mvp1-m3-m4-decision-fixation-eligibility-consensus-entry-brief.md` (DRAFT v1, `d2d7bf9`, carry-over)
 - `docs/review/3plus1-consensus-2026-05-24-jarvis-mvp1-m3-m4-fixation-eligibility.md` (풀 3+1 BLOCKING 5, `d2d7bf9`, carry-over)
 - `docs/phase0/jarvis-mvp1-v1-poc-phase3-entry-brief.md` (DRAFT v1 `cc145fd` → v1.1 `25eb008`, carry-over + 본 세션)
 - `docs/review/3plus1-consensus-2026-05-24-jarvis-mvp1-v1-poc-phase3-entry.md` (풀 3+1 BLOCKING 7, `e76acc8`, **본 세션**)
+- ⭐ **`docs/phase0/jarvis-mvp1-provider-liquidity-deepdive-consensus-entry-brief.md`** (v1 `9ed376a`, 407줄 → v1.1 `8ae1ab6`, 518줄 +243/-132, **본 세션 3차**) — Provider Liquidity finding deep-dive 합의 cycle entry brief
+- ⭐ **`docs/review/3plus1-consensus-2026-05-24-jarvis-mvp1-provider-liquidity-deepdive.md`** (풀 3+1 BLOCKING 13 + 권고 17 + NOTE 12, 기각 0, `a9e1e88`, 301줄, **본 세션 3차**) — APPROVE w/ COND, R-13 ⭐ Reviewer 단독 (ADR-011 line 6/245 verbatim "헌법 제5조 (Provider Liquidity)" / "제5조 관용 (Provider Liquidity, 비협상)" 직접 권위 매핑 발견) + R-3 ⭐ 3 에이전트 일치 (4 수준 framing self-citation anchor + 시간축 missing dimension + 비교 자격 1/4)
 - (Phase 2 raw) `docs/phase0/v1-poc-raw/2026-05-23T*-phase2-*.{json,txt}` (HF egress, 활성 ~3B 검증, `c66756b`, carry-over)
-- ⭐ **(Phase 3 cycle raw) `docs/phase0/v1-poc-raw/phase3/*.{json,txt,log}` 17 파일** (precheck / clone-anchor / cmake-configure / make-build / gguf-dump / build-verify / measure-attempt-blocked / baseline-pre·post / apt-snapshot-pre / summary + phase1-prompt-{decode-161tok,prefill-2k,prefill-8k,cc-prefill-8k-nonce}.txt + phase1-prompts-detokenized.json, **본 세션 2차**, commit 별도 사용자 명시 의무)
+- ⭐ **(Phase 3 cycle raw) `docs/phase0/v1-poc-raw/phase3/*.{json,txt,log}` 17 파일** (`7209743`, **본 세션 2차**)
 
 **⭐ Phase 3 실 빌드 cycle 핵심 발견 (intrinsic value)**:
 - 🎯 **Provider Liquidity 강화** — Ollama 보유 GGUF (오래된 conversion, `.ssm_dt` only) ≠ llama.cpp `c0c7e147` master 요구 (`.ssm_dt.bias` flag=0 required, qwen3next.cpp:87). 모델 교체 = GGUF 변환 호환성 비협상 의무 (헌법 5조 함의). (iii)(iv) 직접 측정 차단 자체가 강한 evidence

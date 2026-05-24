@@ -1,0 +1,46 @@
+HTTP/2 302 
+content-type: text/plain; charset=utf-8
+content-length: 1164
+location: https://cdn-lfs-us-1.hf.co/repos/84/cd/84cdd5f6674d33337c9702a52fb4381d45822d89aee566b20cfbeb5ccb949918/0823a763fca050fce52e7b9180449bf1c2cc25778eabc501dd3fcf4a799f83d2?response-content-disposition=inline%3B+filename*%3DUTF-8%27%27Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf%3B+filename%3D%22Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf%22%3B&Expires=1779655836&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc3OTY1NTgzNn19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2RuLWxmcy11cy0xLmhmLmNvL3JlcG9zLzg0L2NkLzg0Y2RkNWY2Njc0ZDMzMzM3Yzk3MDJhNTJmYjQzODFkNDU4MjJkODlhZWU1NjZiMjBjZmJlYjVjY2I5NDk5MTgvMDgyM2E3NjNmY2EwNTBmY2U1MmU3YjkxODA0NDliZjFjMmNjMjU3NzhlYWJjNTAxZGQzZmNmNGE3OTlmODNkMj9yZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPSoifV19&Signature=fdHZ4srvDvHh9HjhbTMxNFWc8YmqDu20eIgGpyOpAZ8X0umCc18l3yqW8rAZZ5TtX25bv3C0mncQzwYN1T6%7ErdTDebKjFaTzwcSnTrfcy3X3hxLJdXj%7ENR3TtywQGwjlPyfY1CiCddUbGWvOS12Khk-Xw0IiykoV5jG227XETeCP3-HCOrvYJjRSL4uKwqqFNZq3Yi1zMJJ%7E95wwy561yFQnxuIYSgjLKDIP4et1lInMtVT1UaQZnJYRv8enqpHSUbaRN4YVnKbr8Af20EC0xZEHwFSxNJ7Xa8lWi73RdQpzBz1x6gIPAvmz8uwmRceDLzotGocz2qjU12j0GZEGSg__&Key-Pair-Id=K24J24Z295AEI9
+date: Sun, 24 May 2026 19:50:36 GMT
+x-powered-by: huggingface-moon
+x-request-id: Root=1-6a13568c-27a3010d247d7da52c672c14
+ratelimit: "resolvers";r=2999;t=152
+ratelimit-policy: "fixed window";"resolvers";q=3000;w=300
+cross-origin-opener-policy: same-origin
+referrer-policy: strict-origin-when-cross-origin
+access-control-max-age: 86400
+access-control-allow-origin: https://huggingface.co
+vary: Origin, Accept
+access-control-expose-headers: X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
+x-repo-commit: c07b9268d97d8ba09d0529980627f3bd70f5f90a
+accept-ranges: bytes
+x-hf-warning: unauthenticated; Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+x-hub-cache: MISS
+x-linked-size: 48727677408
+x-linked-etag: "0823a763fca050fce52e7b9180449bf1c2cc25778eabc501dd3fcf4a799f83d2"
+x-cache: Miss from cloudfront
+via: 1.1 9c765cb0d38ab5a30d960bd9d4f3e250.cloudfront.net (CloudFront)
+x-amz-cf-pop: ICN53-P1
+x-amz-cf-id: prfwTje-VsdpIx-BGQqg19zEbS6x1D7A1WJwcOs0phA0G41b2jTFLg==
+
+HTTP/2 200 
+content-type: binary/octet-stream
+content-length: 48727677408
+date: Thu, 14 May 2026 02:36:09 GMT
+last-modified: Sun, 01 Mar 2026 03:54:30 GMT
+etag: "15bb258d3d0a288fba5ac1e7bd3a38c0-1000"
+x-amz-storage-class: INTELLIGENT_TIERING
+x-amz-server-side-encryption: AES256
+x-amz-version-id: 0G2FanKakj6R16HQ24w.U5J9AyJO7wPr
+content-disposition: inline; filename*=UTF-8''Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf; filename="Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf";
+accept-ranges: bytes
+server: AmazonS3
+x-cache: Hit from cloudfront
+via: 1.1 c6882e0acaa56682be4bf45c4b8fd99a.cloudfront.net (CloudFront)
+x-amz-cf-pop: ICN57-P2
+x-amz-cf-id: 8TIoolU80T_XkO56bS_DfUkzWSy7gRd8DP6x54v7Eysvej4ZjqFB4g==
+age: 926069
+content-security-policy: default-src 'none'; media-src 'self'; sandbox allow-same-origin
+vary: Origin
+

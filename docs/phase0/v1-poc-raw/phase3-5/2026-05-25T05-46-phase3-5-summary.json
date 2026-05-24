@@ -1,0 +1,268 @@
+{
+  "phase": "V-1 PoC Phase 3.5 (g) — bartowski/Qwen_Qwen3-Next-80B-A3B-Instruct-GGUF Q4_K_M new GGUF cycle",
+  "session_iso": "2026-05-25T04:46 ~ 05:50 (~1.07 hours, HF verify ~5분 + 다운로드 29m22s + verify ~10분 + 측정 시도 ~20분 + cleanup ~5분)",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-phase3-5-new-gguf-entry-brief.md v1.1 (c4457fa) + Phase 3.5 합의 (2dad32a) BLOCKING 11 + R-S1~R-S4",
+  "outcome": "⭐⭐⭐ 측정 *진입 + 성공* — bartowski Q4_K_M GGUF가 llama.cpp c0c7e147 HEAD와 부분 호환에도 불구 model load + 생성 성공. tok/s 실측 획득 (prefill 177.9~971.9 / decode 31.5~32.3). Ollama Phase 1 대비 decode ~4.1× 빠름 (F2 가설 역방향 강한 input).",
+
+  "section_2_2_source_verify_pass": true,
+  "section_3_1_preconditions_pass": true,
+  "section_3_2_download_pass": true,
+  "section_3_3_verify_partial": "tensor name 부분 호환 (ssm_dt.bias ✓ + ssm_beta_alpha.weight ❌ + ssm_conv1d.weight ❌)",
+  "section_4_measurement_pass": true,
+  "section_5_branch": "G (성공) — 부분 호환에도 불구 model load + 생성 성공 raw evidence",
+
+  "user_explicit_inputs": {
+    "model_source_repo": "bartowski/Qwen_Qwen3-Next-80B-A3B-Instruct-GGUF",
+    "model_quant": "Q4_K_M",
+    "consensus_form": "풀 3+1 합의",
+    "sudo_authorization": "임시 비밀번호 사용자 명시 (본 세션 한정)"
+  },
+
+  "section_2_2_source_verify_findings": {
+    "repo_id_correction": {
+      "brief_v1_1_assumption": "bartowski/Qwen3-Next-80B-A3B-Instruct-GGUF",
+      "actual": "bartowski/Qwen_Qwen3-Next-80B-A3B-Instruct-GGUF",
+      "diff": "Qwen_ prefix 추가",
+      "impact": "brief §3.2 REPO placeholder 정정 자격 carry-over"
+    },
+    "file_size_GiB": 45.38,
+    "file_size_bytes": 48727677408,
+    "content_length_header": 48727677408,
+    "etag": "15bb258d3d0a288fba5ac1e7bd3a38c0-1000",
+    "etag_format": "multipart (1000-part upload)",
+    "x_repo_commit": "c07b9268d97d8ba09d0529980627f3bd70f5f90a",
+    "lfs_sha256_from_api": null,
+    "lfs_sha256_handling": "HF API lfs.sha256 = None (multipart upload). 대체 verify 사용: Content-Length + ETag + GGUF metadata. brief §3.3 Step 2 sha256 verify 자격 부분 미충족 정직성 명문",
+    "imatrix_variant": true,
+    "imatrix_data_file_size_GiB": 0.43,
+    "available_quants": [
+      "IQ1_M (16.11 GiB)", "IQ1_S (15.44 GiB)", "IQ2_M (24.31 GiB)", "IQ2_S (21.76 GiB)", "IQ2_XS (20.69 GiB)", "IQ2_XXS (17.97 GiB)",
+      "IQ3_M (34.13 GiB)", "IQ3_XS (30.76 GiB)", "IQ3_XXS (29.55 GiB)",
+      "IQ4_NL (42.20 GiB)", "IQ4_XS (39.91 GiB)",
+      "Q2_K (26.23 GiB)", "Q2_K_L (26.52 GiB)",
+      "Q3_K_L (35.60 GiB)", "Q3_K_M (34.14 GiB)", "Q3_K_S (32.47 GiB)", "Q3_K_XL (35.86 GiB)",
+      "Q4_0 (42.93 GiB)", "Q4_K_L (45.60 GiB)", "Q4_K_M (45.38 GiB, 본 cycle 선택)", "Q4_K_S (43.71 GiB)"
+    ]
+  },
+
+  "r1_anchors_cumulative": {
+    "phase1_5x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_start_6x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_mid_7x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_end_8x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_5_pre_9x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_5_mid_10x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_5_pre_measurement_11x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_5_post_measurement_12x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "verdict": "12회 hash 일치 확정 — Phase 1 5회 + Phase 3 3회 + Phase 3.5 4회 (R-1 BLOCKING 답습 정확). Ollama daemon (pid 3375) silent 교체 0건 영구"
+  },
+
+  "download_summary": {
+    "url": "https://huggingface.co/bartowski/Qwen_Qwen3-Next-80B-A3B-Instruct-GGUF/resolve/main/Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "local_path": "/home/delangi/models/phase3-5/Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "wall_clock_min": 29.37,
+    "avg_speed_MB_per_s": 26.4,
+    "tool": "wget -c (옵션 (b) direct, R-7 답습)",
+    "file_size_verify": "48,727,677,408 bytes (HF Content-Length 정확 일치)",
+    "exit_code": 0,
+    "egress_huggingface": "~45 GiB (Content-Length 답습)",
+    "egress_huggingface_other": "~수KB (HF API + curl HEAD ~5건)",
+    "egress_other_domain": 0
+  },
+
+  "gguf_metadata_verify": {
+    "tool": "/home/delangi/src/llama.cpp/build/bin/llama-gguf <FILE> r (R-3 답습)",
+    "total_tensors": 843,
+    "block_count_key_present": true,
+    "ssm_tensor_naming": {
+      "ssm_a": "suffix 0 (llama.cpp 기대 일치 ✓)",
+      "ssm_dt.bias": "72 적중 (llama.cpp 기대 일치 ✓, Phase 3 차단 사유 해소)",
+      "ssm_beta_alpha.weight": "0 적중 (llama.cpp 기대 미충족 ❌)",
+      "ssm_ba.weight": "72 적중 (First draft 344331c2b 시기 명명 ⚠️)",
+      "ssm_conv1d.weight": "0 적중 (llama.cpp 기대 미충족 ❌)",
+      "ssm_conv": "(suffix 0, First draft 시기 또는 다른 fork 명명 ⚠️)",
+      "ssm_norm.weight": "(llama.cpp 기대 일치 ✓)",
+      "ssm_out.weight": "(llama.cpp 기대 일치 ✓)"
+    },
+    "compatibility_assessment": "부분 호환 — 6 SSM tensor name 중 4 일치 + 2 mismatch. bartowski conversion = First draft 시기 (Sep~Nov 2025) convert_hf_to_gguf.py 일부 또는 자체 modified conversion 답습 강한 시사",
+    "llamacpp_load_behavior": "⭐⭐⭐ 핵심 발견 — tensor name mismatch 2건 (ssm_beta_alpha vs ssm_ba, ssm_conv1d vs ssm_conv) 존재에도 불구 model load + 생성 *성공*. llama.cpp 의 fallback 또는 graceful tensor name resolution 가능성 시사 (가설, 직접 source verify 별도 cycle)"
+  },
+
+  "measurement_results": {
+    "decode_161tok": {
+      "prompt_file_abs": "/home/delangi/문서/project/category/AI_development_tool/docs/phase0/v1-poc-raw/phase3/phase1-prompt-decode-161tok.txt",
+      "prompt_tokens_llamacpp": 153,
+      "prompt_tokens_ollama": 161,
+      "n_generated": 256,
+      "ngl": 48,
+      "context_size": 8192,
+      "seed": 42,
+      "warmup": "--no-warmup",
+      "prompt_throughput_tok_per_s": 177.9,
+      "generation_throughput_tok_per_s": 32.3,
+      "interactive_mode_hang_note": "llama-cli default 가 interactive mode → 1차 generation 완료 후 prompt > 대기 → timeout 600s 으로 종료 (측정값은 stdout perf line `[ Prompt: ... | Generation: ... ]` 에서 추출)"
+    },
+    "prefill_2k": {
+      "prompt_file_abs": "/home/delangi/문서/project/category/AI_development_tool/docs/phase0/v1-poc-raw/phase3/phase1-prompt-prefill-2k.txt",
+      "prompt_tokens_ollama": 2001,
+      "n_generated": 256,
+      "ngl": 48,
+      "context_size": 8192,
+      "seed": 42,
+      "warmup": "--no-warmup",
+      "flag": "-no-cnv (의도: interactive 차단, 그러나 본 실측 = 여전히 interactive mode 진입)",
+      "prompt_throughput_tok_per_s": 971.9,
+      "generation_throughput_tok_per_s": 31.5,
+      "interactive_mode_hang_note": "동상 — log 6.9GB 초과 (interactive `>` prompt 출력 누적), perf 값 추출 후 정리"
+    }
+  },
+
+  "ollama_vs_llamacpp_comparison": {
+    "decode_tok_per_s": {
+      "ollama_phase1_mean": 7.83,
+      "ollama_phase1_std": 0.36,
+      "llamacpp_phase3_5_decode_161tok": 32.3,
+      "llamacpp_phase3_5_prefill_2k": 31.5,
+      "llamacpp_mean_approx": 31.9,
+      "ratio_llamacpp_to_ollama": "~4.07× (llamacpp 빠름)",
+      "interpretation": "⭐⭐⭐ F2 가설 ('Ollama 효율성 = format-internal 차이' 가정 = Ollama 가 더 빠르다고 추정) *역방향 강한 input*. 실측 = llama.cpp 가 4배 빠름. Ollama 가 Qwen3-Next 효율 *미달*. 단, format 차이 + conversion 차이 + quant scheme 차이 변수 미분리 (C-H2 답습)"
+    },
+    "prefill_cache_miss_tok_per_s": {
+      "ollama_phase1_mean": 58,
+      "ollama_phase1_std": 0.27,
+      "llamacpp_phase3_5_decode_161tok_prompt": 177.9,
+      "llamacpp_phase3_5_prefill_2k_prompt": 971.9,
+      "interpretation": "prompt 크기 의존성 강함 (153 tokens = 177.9 / 2001 tokens = 971.9). Ollama 의 prefill cache miss 가 small prompt 한정인지 별도 cycle 평가"
+    },
+    "honesty_limits": [
+      "다른 GGUF 비교 — bartowski conversion = First draft 시기 가능성, Ollama GGUF = 자체 fork 가능성. 동일 quant scheme 보장 0",
+      "단일 측정 cycle — 재현성 평가 자격 0 (Phase 3 R-17 답습)",
+      "interactive mode hang 으로 측정 종료 시점 정확성 한계 — 그러나 perf line 자체는 generation 종료 직후 출력",
+      "imatrix variant 영향 — bartowski Q4_K_M = imatrix calibration 사용. Ollama Q4_K_M = imatrix 사용 미verify, perplexity 변수 미분리 (C-H3 답습)",
+      "F2 가설 = *간접* input 한정 (C-H2 답습) — Ollama 단일 측정 + bartowski 단일 측정, 동일 환경 격리 측정 0건",
+      "Ollama Phase 1 측정은 다른 시점·다른 process startup state. system thermal·load 변수 미분리"
+    ]
+  },
+
+  "section_5_branch_status": {
+    "G": "성공 — tok/s 실측 획득. tensor mismatch 2건에도 불구 model load + 생성 raw evidence",
+    "B1_format_block": "선제 trigger 가능성 강했음 (tensor mismatch 2건) — 실제 발생 0건 (llama.cpp fallback 또는 graceful resolution 가설 강화)",
+    "B2_runtime_error": "발생 0건",
+    "B3_network": "발생 0건 (다운로드 26.4 MB/s 안정)",
+    "B4_disk": "발생 0건 (82% → 84%, brief 예상 정합)",
+    "B5_sha256_mismatch": "trigger 불가 (HF API lfs.sha256 = None, 대체 verify 사용)"
+  },
+
+  "egress_apt_isolation": {
+    "egress_baseline_pre_lines": 16,
+    "egress_baseline_post_lines": 13,
+    "delta_lines": -3,
+    "interpretation": "HF download 종료 후 3 connections 자연 감소 — 의도-외 egress 0건",
+    "apt_snapshot_pre": "dpkg 2757 / upgradable 26",
+    "apt_snapshot_post": "dpkg 2757 / upgradable 26",
+    "apt_delta": 0,
+    "r7_isolation_verdict": "✓ 확정 — R-7 격리 확정 (apt 변동 0)"
+  },
+
+  "disk_summary": {
+    "disk_pre_pct": 82,
+    "disk_post_pct": 84,
+    "brief_v1_1_predicted_pct": 84.6,
+    "disk_pre_free_GB": 331,
+    "disk_post_free_GB": 286,
+    "delta_GB_used": 45,
+    "interpretation": "brief v1.1 예상 (~48GB / 84.6%) 정합 (~45.38 GiB / 84%)"
+  },
+
+  "key_findings_intrinsic_value": [
+    "⭐⭐⭐ F2 가설 ('Ollama 효율성') *역방향 강한 evidence* — llama.cpp가 4배 빠름. Ollama 효율 *미달*",
+    "⭐⭐⭐ bartowski Q4_K_M GGUF = llama.cpp c0c7e147 HEAD 와 부분 호환에도 model load + 생성 성공. llama.cpp fallback 또는 graceful tensor name resolution 가설 (별도 verify cycle)",
+    "⭐⭐ Provider Liquidity finding — Ollama GGUF (`ssm_dt` suffix 0) = (i) falsification 답습 + bartowski GGUF (`ssm_dt.bias` ✓) = 부분 호환. format-version diversity 강한 evidence",
+    "⭐⭐ bartowski conversion = First draft 시기 (Sep~Nov 2025) 답습 가능성 — `ssm_ba.weight` + `ssm_conv` 명명. 다른 conversion path 가설 강화",
+    "⭐ R-1 anchor 12회 일치 확정 (Phase 1 5 + Phase 3 3 + Phase 3.5 4) — Ollama daemon silent 교체 0건 영구 답습",
+    "⭐ R-7 격리 확정 — apt 변동 0 (R-7 답습 영구)",
+    "⭐ HF egress = 본 프로젝트 단일 cycle 최대 (~45 GiB), 비례성 평가 답습 (R-11 답습)",
+    "⭐ 측정 도구 한계 — llama-cli default interactive mode (`-no-cnv` 미작동), prefill-2k log 6.9GB 누적 → cleanup 의무 (R-rec-1 `llama-bench` carry-over 정당화)"
+  ],
+
+  "additional_findings_during_phase3_5": [
+    {
+      "finding": "bartowski repo ID 정정 — `Qwen_` prefix",
+      "detail": "brief v1.1 §3.2 `bartowski/Qwen3-Next-80B-A3B-Instruct-GGUF` vs 실 = `bartowski/Qwen_Qwen3-Next-80B-A3B-Instruct-GGUF`",
+      "impact": "brief §3.2 placeholder 정정 자격 carry-over (자동 정정 0건, 별도 cycle 또는 SESSION 14차 entry 명문)"
+    },
+    {
+      "finding": "HF API lfs.sha256 = None (multipart upload)",
+      "detail": "Content-Length + ETag `15bb258d3d0a288fba5ac1e7bd3a38c0-1000` (multipart) 만 available",
+      "impact": "brief §3.3 Step 2 sha256 verify 자격 부분 미충족 — 대체 verify (Content-Length + ETag + GGUF metadata) 사용. brief 정직성 한계 추가 자격"
+    },
+    {
+      "finding": "llama-cli default interactive mode",
+      "detail": "`-no-cnv` flag 의도가 interactive 차단이나 실측 = 여전히 interactive `>` prompt 진입 (prefill-2k log 6.9GB 누적)",
+      "impact": "측정 표준화 약화 — R-rec-1 `llama-bench` carry-over 권고 정당화 강화 (Phase 3.5 (g) 합의 R-rec-1 답습)"
+    },
+    {
+      "finding": "bartowski Q4_K_M = imatrix variant",
+      "detail": "HF repo tag 'imatrix' + imatrix data 파일 (0.43 GiB) 별도 존재",
+      "impact": "tok/s 비교 시 imatrix 영향 변수 미분리 (C-H3 답습 정직성 한계)"
+    },
+    {
+      "finding": "bartowski tensor name 혼합 (First draft + PR merge 혼재)",
+      "detail": "ssm_dt.bias (PR merge 답습) + ssm_ba.weight + ssm_conv (First draft 답습) = 혼합 명명",
+      "impact": "bartowski conversion 시점 + script commit 정확성 별도 cycle 답습 의무"
+    }
+  ],
+
+  "next_cycle_recommendations": {
+    "high_priority": [
+      "Phase 3.5 (g) raw report → SESSION 14번째 entry + INDEX + commit + push (본 단계)",
+      "MVP-1 합의 R4 'llama.cpp ↔ Ollama 동급' framing 강화 evidence input — 별도 cycle 의무 (R-9 답습, 자동 정정 0건)",
+      "(h) Qwen3-30B-A3B 대조군 cycle — 변수 분리 강화 (Phase 3 R-5 답습, classical MoE + dense + SSM 미포함, format mismatch 0 자격)"
+    ],
+    "medium_priority": [
+      "llama.cpp fallback/graceful tensor name resolution 가설 검증 cycle — src/models/qwen3next.cpp + llama_model_loader 본문 read-only 분석",
+      "(j) advisory wall-clock 측정 — F2 가설 *역방향* 강한 evidence 후속 자비스 비전 직접 진전",
+      "(k) M3·M4 결정 *고정* cycle — Phase 1+2+3+3.5 종합, 단 (iii)(iv) 직접 evidence 가 *간접* 으로 한정 (format 차이 변수 미해소)",
+      "bartowski conversion script commit + imatrix calibration data 출처 verify cycle"
+    ],
+    "low_priority": [
+      "Phase 3 summary recommendation C 정정 (본 (i) falsification + (g) 성공 raw evidence 답습)",
+      "다른 quant 비교 (Q5_K_M / IQ4_XS) cycle (R-rec-2 답습, egress 비례성 평가)",
+      "(g)+(h) 통합 cycle (~96~100GB egress, 변수 분리 강화)"
+    ],
+    "defer": [
+      "(l) MVP-1 트랙 B 구현 — (k) 통과 의무 답습 영구",
+      "(m) §12 Ollama 위생 정정 — 본 cycle 결과 무관"
+    ],
+    "rejected_auto_entry": [
+      "(g1-N-3-adr-008+sip+adr-012'') prime-prime — chain 영구 종결 의무 답습 영구"
+    ]
+  },
+
+  "honesty_limits_phase3_5_post": [
+    "F2 가설 = *간접* input 한정 (C-H2 답습) — Ollama 단일 측정 + bartowski 단일 측정, 동일 환경 격리 측정 0건",
+    "format 차이 + conversion 차이 + quant scheme 차이 변수 미분리 — '비교 자격' 강도 약함 (단일 measurement, R-17 답습)",
+    "tensor mismatch 에도 model load 성공 = llama.cpp fallback 가설 (별도 verify 의무)",
+    "interactive mode hang 으로 측정 wall-clock 정확성 한계 — perf line 추출 후 종료, 그러나 추가 측정 자동 reload 자격 0건",
+    "imatrix calibration 영향 변수 미분리 (C-H3)",
+    "bartowski conversion 시점 직접 verify 0건 (HF createdAt 2025-09-09 답습 — file commit 시점 별도)",
+    "단일 (B) bartowski source 측정 — (A) unsloth / (C) 공식 / (D) 직접 conversion 비교 0건",
+    "Provider Liquidity finding 자체 = 본 cycle 결과 input only, MVP-1 합의 R4 본문 정정 자격 0건 (R-9 답습 영구)",
+    "본 측정 = Ollama daemon 미사용 시점 — Ollama daemon idle 시 GPU 0% 확인됨, 그러나 Ollama process 잔존 (pid 3375) 가 시스템 자원 미세 영향 가능성"
+  ],
+
+  "section_teardown": {
+    "llama_cli_termination": "✓ (timeout 600s SIGTERM, 잔존 0)",
+    "r23_post": "claude × 1 + Ollama daemon (3375) ✓ — 본 cycle 추가 LLM process 잔존 0",
+    "ollama_external_egress": 0,
+    "github_external_egress": 0,
+    "hf_egress_total_GiB": "~45.38 (Q4_K_M file) + ~수KB (API + HEAD)",
+    "build_dir_unchanged": true,
+    "llamacpp_head_unchanged": "c0c7e147 보존 ✓",
+    "ollama_daemon_unchanged": "pid 3375 보존, 4-anchor 일치 (R-1 9·10·11·12회 hash ce95c475...)",
+    "tmp_cleanup": "prefill-2k 6.9GB log 삭제 → condensed perf line 보존 (5 lines)",
+    "raw_artifacts_saved": "docs/phase0/v1-poc-raw/phase3-5/2026-05-25T05-46-phase3-5-*.{txt,log,json} 19 files"
+  },
+
+  "user_authorization_handling_honesty": "본 cycle 의 sudo 명령 (egress baseline pre/post + R-1 anchor 9·10·11·12회) = 사용자 임시 비밀번호 명시 후 사용. 비밀번호는 본 raw report / SESSION / brief 어떤 artifact 에도 기록 0건. 본 세션 한정 (사용자 명시 직접 의무 답습)."
+}

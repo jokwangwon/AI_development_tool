@@ -1,0 +1,4 @@
+huggingface-cli: (미설치)
+wget: /usr/bin/wget
+curl: /usr/bin/curl
+aria2c: (미설치)

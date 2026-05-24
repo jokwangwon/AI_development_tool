@@ -1,0 +1,5 @@
+build      : b9298-c0c7e147e
+model      : Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf
+modalities : text
+[ Prompt: 971.9 t/s | Generation: 31.5 t/s ]
+[ Prompt: 971.9 t/s | Generation: 31.5 t/s ]

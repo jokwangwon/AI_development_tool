@@ -1,0 +1,255 @@
+{
+  "cycle": "Phase 3.5-O (h-O) Ollama qwen3:30b-a3b-instruct-2507-q4_K_M direct measurement (inference engine variable partial isolation)",
+  "session_iso": "2026-05-25T20:39:45+09:00 ~ 2026-05-25T21:03:00+09:00 (~0.39 hours)",
+  "entry_count": "16번째 entry chain (1)~(7) 본 정리",
+  "predecessor": {
+    "h_cycle_commit": "fccec6a",
+    "h_cycle_findings": "F-1 classical MoE > SSM hybrid 1.44~2.19× / R-1 anchor 16회 누계 / OLLAMA_KEEP_ALIVE=-1 Docker container Ollama daemon",
+    "h_o_brief_v1_commit": "61cb005 (377 lines)",
+    "h_o_consensus_commit": "37bcd40 (459 lines, BLOCKING 14 + R-S1~R-S5)",
+    "h_o_brief_v1_1_commit": "e77e8d7 (476 lines, +238/-139)"
+  },
+  "user_explicit_decisions": {
+    "1_cycle_selection": "(h-O) Ollama 직접 측정 cycle (Recommended HIGH, R-S1 발효 carry-over)",
+    "2_entry_form": "(g)/(h) 동형 풀 7단계",
+    "3_pull_decision": "진행 (~18GB egress)",
+    "4_consensus_form": "합의 commit + brief v1.1 보강 연속",
+    "5_progress_form": "(4)~(7) 연속",
+    "6_sudo": "임시 비밀번호 재사용 (epffkddl12!@), claude sudo -S 진행"
+  },
+  "ollama_environment_findings": {
+    "version": "0.20.4",
+    "daemon_pid": 3375,
+    "deployment": "Docker container `oracle-game-ollama` (image: ollama/ollama:latest)",
+    "container_id_prefix": "61c77069dd92",
+    "mount_bind": "/home/delangi/문서/project/category/bootcamp_game/ollama-data -> /root/.ollama",
+    "env_vars_significant": {
+      "OLLAMA_HOST": "0.0.0.0:11434",
+      "OLLAMA_KEEP_ALIVE": "-1 (무한, Phase 1 finding 답습 확정 — 측정 시 keep_alive: 0 명시 의무 영구)",
+      "OLLAMA_NUM_PARALLEL": "1"
+    },
+    "ollama_cli_status": "host 측 미설치 (Phase 1 답습), HTTP API 또는 docker exec 만 가능",
+    "ollama_models_cache_pre_pull_size_GiB": 156
+  },
+  "model_pull": {
+    "tag": "qwen3:30b-a3b-instruct-2507-q4_K_M",
+    "size_bytes": 18556699186,
+    "size_gib": 17.28,
+    "size_gb_marketing": 18.55,
+    "manifest_digest_full": "19e422b0231392335cfc49cfd172de7034bb1aeabb08aa307cce745c60b272fe",
+    "manifest_digest_prefix_match_agent_c_webfetch": "19e422b02313 (Agent C answer 확정 일치 ✓)",
+    "model_blob_sha256_full": "78b329e716e7e9775973d392cd132b1f1ff1c8287a992887caeb6fd6c56ba9cc",
+    "model_blob_sha256_prefix_match_agent_c_websearch": "78b329e716e7 (Agent C answer 확정 일치 ✓)",
+    "modelfile_from_path_in_container": "/root/.ollama/models/blobs/sha256-78b329e716e7e9775973d392cd132b1f1ff1c8287a992887caeb6fd6c56ba9cc",
+    "r_s1_source_diversity_confirmed": {
+      "ollama_blob_sha256": "78b329e716e7e9775973d392cd132b1f1ff1c8287a992887caeb6fd6c56ba9cc",
+      "h_bartowski_sha256": "382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95",
+      "match": false,
+      "implication": "다른 source/conversion lineage 확정 — (h-OM) Ollama Modelfile (h) GGUF 직접 등록 cycle 의 valuable carry-over (R-S1 발효 직접 evidence)"
+    },
+    "pull_method": "docker exec -d oracle-game-ollama ollama pull (container 내 detached, parent shell 종료 영향 0)",
+    "pull_method_failure_first_attempt": "host curl -X POST /api/pull (background nohup) — log 진행 후 ~15% (2.83GB/18.55GB) 부적 종료 (h 답습 동일 issue)",
+    "pull_resume_via_docker_exec": "성공 (partial blob 답습 자동 + 완료)"
+  },
+  "model_metadata_from_show": {
+    "general.architecture": "qwen3moe",
+    "general.basename": "Qwen3",
+    "general.parameter_count": 30532122624,
+    "general.size_label": "30B-A3B",
+    "general.version": "2507",
+    "general.finetune": "Instruct",
+    "general.file_type": 15,
+    "qwen3moe.block_count": 48,
+    "qwen3moe.context_length": 262144,
+    "qwen3moe.embedding_length": 2048,
+    "qwen3moe.expert_count": 128,
+    "qwen3moe.expert_used_count": 8,
+    "qwen3moe.expert_feed_forward_length": 768,
+    "qwen3moe.feed_forward_length": 6144,
+    "qwen3moe.attention.head_count": 32,
+    "qwen3moe.attention.head_count_kv": 4,
+    "qwen3moe.attention.key_length": 128,
+    "qwen3moe.attention.value_length": 128,
+    "qwen3moe.attention.layer_norm_rms_epsilon": 1e-06,
+    "qwen3moe.rope.freq_base": 10000000,
+    "gqa_ratio": "32:4 (8:1, GQA confirmed)",
+    "tokenizer.ggml.model": "gpt2",
+    "tokenizer.ggml.pre": "qwen2",
+    "tokenizer.ggml.bos_token_id": 151643,
+    "tokenizer.ggml.eos_token_id": 151645,
+    "tokenizer.ggml.padding_token_id": 151643,
+    "tokenizer.ggml.add_bos_token": false,
+    "chat_template_family": "ChatML (<|im_start|>/<|im_end|>)",
+    "parameters_defaults": {"temperature": 0.7, "top_k": 20, "top_p": 0.8, "repeat_penalty": 1, "stop": ["<|im_start|>", "<|im_end|>"]}
+  },
+  "h_metadata_comparison": {
+    "h_qwen3moe_keys_match": "block_count 48 ✓ / context_length 262144 ✓ / expert_count 128 ✓ / expert_used_count 8 ✓ / parameter ~30.5B ✓ / version 2507 ✓",
+    "h_bartowski_match_implication": "model architecture + metadata 완전 동일, 단 conversion source = different (R-S1 답습)"
+  },
+  "r1_anchor_chain": {
+    "phase1": 5,
+    "phase3": 3,
+    "phase3_5_g": 4,
+    "phase3_5_h_pre_13x": 1,
+    "phase3_5_h_mid_14x": 1,
+    "phase3_5_h_post_15_16x": 1,
+    "phase3_5_h_o_pre_17x": 1,
+    "phase3_5_h_o_post_pull_18x": 1,
+    "phase3_5_h_o_pre_measurement_19x": 1,
+    "phase3_5_h_o_post_measurement_20x": 1,
+    "cumulative_total": 19,
+    "verified_total_in_session_15_summary": 15,
+    "delta_explanation": "(h) summary line 72 cumulative_total: 15 = phase1 5 + phase3 3 + phase3_5_g 4 + phase3_5_h 3 (13x + 14x + 15-16x) = 15. 본 (h-O) 4회 추가 = 누계 19회. R-8 답습 정합 명문.",
+    "hash_baseline_full_64char": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "all_match_verified": true,
+    "silent_replacement_count": 0,
+    "ollama_pid": 3375
+  },
+  "r7_isolation": {
+    "egress_baseline_pre_lines": 17,
+    "egress_baseline_post_pull_lines": 14,
+    "egress_baseline_post_measurement_lines": 15,
+    "delta_summary": "pre 17 → mid 14 → post 15, 자연 변동 미미 (HF/Ollama egress 종료 후 ESTABLISHED 자연 감소)",
+    "apt_pre_packages": 2757,
+    "apt_post_packages": 2757,
+    "apt_delta": 0,
+    "apt_pre_upgradable": 26,
+    "apt_post_upgradable": 26,
+    "apt_upgradable_delta": 0,
+    "intentional_egress_only": "Ollama pull (registry.ollama.ai via container daemon)",
+    "unintentional_egress_count": 0,
+    "sudo_count": 7,
+    "sudo_use_cases": ["egress baseline pre (1)", "R-1 anchor 17x (1)", "docker ps (1)", "docker inspect (1)", "R-1 anchor 18x post-pull (1)", "R-1 anchor 19x pre-measurement (1)", "R-1 anchor 20x post-measurement + egress + apt + disk post (2)"],
+    "sudo_authorization": "사용자 명시 임시 비밀번호 (epffkddl12!@) 재사용 — claude sudo -S, 본 세션 한정",
+    "password_leak_verification": "grep -r 'epffkddl' docs/phase0/v1-poc-raw/phase3-5-h-o/ → 0건 적중 ✓",
+    "r_s4_sudo_5_to_7_calls_confirmed": true
+  },
+  "disk_metrics": {
+    "pre_pull_used_gib_actual": 1500,
+    "pre_pull_free_gib": 268,
+    "pre_pull_percent": 85,
+    "post_pull_free_gib": 251,
+    "post_pull_percent": 86,
+    "pull_delta_gib": 17,
+    "ollama_cache_pre_pull_gib": 156,
+    "h_gguf_preservation": "보존 (R-13 답습)",
+    "g_gguf_preservation": "보존 (R-13 답습)",
+    "cumulative_disk_g_h_h_o": "~80 GiB ((g) 45.38 + (h) 17.353 + (h-O) ~17.28)"
+  },
+  "measurement_results": {
+    "decode_161tok_cold": {
+      "total_duration_s": 19.986,
+      "load_duration_s": 1.803,
+      "prompt_eval_count": 161,
+      "prompt_eval_duration_s": 1.359,
+      "eval_count": 256,
+      "eval_duration_s": 16.742,
+      "decode_tok_per_s_denom1_eval_only": 15.29,
+      "decode_tok_per_s_denom2_total_minus_load_prompt": 15.22,
+      "decode_tok_per_s_denom_delta_pct": 0.46,
+      "prompt_tok_per_s": 118.43,
+      "early_stop": false,
+      "http_status": 200,
+      "wall_clock_total_s": 19.99
+    },
+    "prefill_2k_cold": {
+      "total_duration_s": 37.866,
+      "load_duration_s": 1.570,
+      "prompt_eval_count": 2009,
+      "prompt_eval_duration_s": 25.034,
+      "eval_count": 139,
+      "eval_duration_s": 11.186,
+      "decode_tok_per_s_denom1_eval_only": 12.43,
+      "decode_tok_per_s_denom2_total_minus_load_prompt": 12.34,
+      "decode_tok_per_s_denom_delta_pct": 0.72,
+      "prompt_tok_per_s": 80.25,
+      "early_stop": true,
+      "early_stop_reason": "num_predict 256 미달 (139 / 256), eos token 또는 chat template 종료 적중",
+      "http_status": 200,
+      "wall_clock_total_s": 37.87
+    },
+    "r_s2_denominator_honesty_confirmed": {
+      "phase1_summary_decode_tok_per_sec_7_926": "Phase 1 summary value",
+      "phase1_raw_eval_count_eval_duration_7_11": "raw Agent A direct verify",
+      "phase1_pct_delta": "~11%",
+      "h_o_cycle_two_denominators": {
+        "decode_denom_delta_pct": 0.46,
+        "prefill_denom_delta_pct": 0.72,
+        "implication": "본 (h-O) cycle 양 분모 격차 < 1% — Phase 1 (~11% 격차) 와 달리 매우 일관. Phase 1 격차는 별도 cycle 의무 (정직성 명문)"
+      }
+    },
+    "r_s3_cold_only_measurement_confirmed": {
+      "measurement_protocol": "cold load (keep_alive: 0 후 첫 호출) 단독",
+      "warm_measurement_skipped": "(h) llama.cpp --no-warmup 답습 비대칭 회피, warm 측정 = 별도 단계 자격 평가",
+      "phase1_h_b1_compliance": "SSM state cache reuse 불가 H-B1 답습 영구 + qwen2.5-coder warm/cold ~628× cache hit 답습 회피"
+    },
+    "tokenizer_variable_evidence": {
+      "h_o_ollama_prompt_eval_count_decode_161tok": 161,
+      "h_llama_cpp_prompt_token_count_decode_161tok": 153,
+      "delta_tokens": 8,
+      "delta_pct": 5.2,
+      "phase1_ollama_prompt_eval_count_match": "Phase 1 qwen3-coder-next prompt_eval_count = 161 (본 cycle 동일)",
+      "implication": "Ollama tokenizer (gpt2 + qwen2 pre) ≠ llama.cpp tokenizer (Qwen3 GGUF 내장) — 8 tokens 격차 정직성 명문 (B6 분기 trigger 자격 약함, 5.2% mismatch는 분기 trigger 미발효 가능성, 단 정직성 명문 의무)",
+      "b6_branch_status": "B6 분기 trigger 미발효 (격차 < 10% 가능성, raw report 명문 한정)"
+    }
+  },
+  "comparison_h_vs_h_o": {
+    "h_baseline_llama_cpp_c0c7e147": {
+      "decode_161tok": {"prompt_tok_s": 389.4, "generation_tok_s": 49.6},
+      "prefill_2k": {"prompt_tok_s": 1916.8, "generation_tok_s": 45.4}
+    },
+    "h_o_current_ollama_0_20_4": {
+      "decode_161tok": {"prompt_tok_s": 118.43, "generation_tok_s": 15.29},
+      "prefill_2k": {"prompt_tok_s": 80.25, "generation_tok_s": 12.43}
+    },
+    "ratios_h_over_h_o_llama_faster": {
+      "decode_161tok_prompt": 3.29,
+      "decode_161tok_generation": 3.24,
+      "prefill_2k_prompt": 23.89,
+      "prefill_2k_generation": 3.65
+    },
+    "scenario_match": "S1 (Ollama 느림 ~10~30 t/s) 답습 — decode 15.29 t/s 정확 범위 내, prefill 12.43 t/s 범위 약간 below. **prefill prompt 격차 ~23.9× 매우 큰 ⭐⭐⭐**",
+    "single_variable_isolation_capability": "*부분* 분리 (R-S5 답습 약화) — model + quant + prompt + hardware 4 차원 통제, 단 5 미통제 변수 (측정 도구 framework + Ollama embedded llama.cpp version + Ollama internal caching/optimization + tokenizer 차이 8 tokens + Ollama library source conversion lineage R-S1 발효 sha256 다름)",
+    "framing_strength": "S1 confirmed (Ollama < llama.cpp 모든 차원) + Phase 1 F2 가설 (~4.07×) 답습 강함 (h-O decode ~3.24× 정합) + MVP-1 R4 framing 정정 강한 input HIGH (단 본문 정정 별도 cycle R-9 답습 영구)"
+  },
+  "additional_findings": {
+    "F1_inference_engine_variable_partial_isolation_confirmed": "⭐⭐⭐ Ollama (Docker container ollama/ollama:latest 0.20.4) vs llama.cpp (HEAD c0c7e147 direct) 모든 측정 차원에서 Ollama 가 ~3.24~23.89× 느림. inference engine 변수 *부분* 분리 evidence 강함 (단 5 미통제 변수 정직성 명문 R-S5 답습 영구)",
+    "F2_prefill_prompt_23_9x_outlier": "⭐⭐⭐ prefill_2k prompt tok/s 격차 = llama.cpp 1916.8 / Ollama 80.25 ≈ 23.89× = decode generation 격차 (~3.24×) 대비 ~7.4× 더 큼. Ollama prefill 처리 (HTTP API + JSON serialize + Ollama scheduling + 자체 KV cache 정책) framework overhead 우세 가설 강함. 별도 cycle verify 의무",
+    "F3_r_s1_source_diversity_full_64char_verified": "⭐⭐⭐ Ollama blob sha256 (full 64자) = 78b329e716e7e9775973d392cd132b1f1ff1c8287a992887caeb6fd6c56ba9cc ≠ (h) bartowski local sha256 382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95. 다른 source 자격 완전 확정 (8 octet prefix 답습에서 full 64자 확정으로 격상). (h-OM) Ollama Modelfile (h) GGUF 직접 등록 cycle valuable carry-over",
+    "F4_F2_hypothesis_reinforced": "⭐⭐ Phase 1 F2 가설 (~4.07× Ollama 느림 qwen3-coder-next vs unknown llama.cpp baseline) 답습 강화 — 본 (h-O) decode 격차 ~3.24× 정합 강함 (단 다른 model, 단일 trial). MVP-1 R4 framing 정정 강한 input HIGH carry-over (별도 cycle R-9 답습 영구)",
+    "F5_tokenizer_variable_8_tokens_5_2_pct": "⭐ Ollama prompt_eval_count 161 vs llama.cpp re-tokenize 153 = 8 tokens 격차 5.2%. tokenizer 변수 evidence (Ollama gpt2 + qwen2 pre vs llama.cpp Qwen3 GGUF embedded tokenizer). B6 분기 trigger 미발효 (격차 < 10% 가능성, 정직성 명문 한정)",
+    "F6_ollama_keep_alive_minus1_phase1_persistence": "⭐ Phase 1 finding 영구 답습 확정 — OLLAMA_KEEP_ALIVE=-1 (무한 keep alive), Docker container env vars 직접 verify. 측정 시 keep_alive: 0 명시 의무 영구",
+    "F7_r1_anchor_19_cumulative": "⭐ R-1 anchor 누계 19회 (phase1 5 + phase3 3 + phase3_5_g 4 + phase3_5_h 3 + phase3_5_h_o 4 = 19, hash baseline ce95c475...878b10 모두 일치). silent 교체 0건 영구. (h) summary cumulative_total 15 + (h-O) 4 = 19 R-8 답습 정합",
+    "F8_docker_container_ollama_evidence": "⭐ Ollama daemon = Docker container `oracle-game-ollama` 확정 (Phase 1 finding 답습 영구). image: ollama/ollama:latest, container_id: 61c77069dd92, mount: bootcamp_game/ollama-data -> /root/.ollama",
+    "F9_pull_method_docker_exec_detached": "⭐ host curl + nohup background 부적 종료 (h 답습 동일 issue) → docker exec -d (container 내 detached) 으로 변경 후 성공. container 별도 process tree 답습 명문 (~10분 미만 pull 완료, partial blob ~15% 답습 자동 resume)"
+  },
+  "machine_changes": {
+    "downloads": ["Ollama blob /home/delangi/문서/project/category/bootcamp_game/ollama-data/blobs/sha256-78b329e716e7e9775973d392cd132b1f1ff1c8287a992887caeb6fd6c56ba9cc (17.28 GiB)"],
+    "g_gguf_preserved": "보존 (R-13 답습)",
+    "h_gguf_preserved": "보존 (R-13 답습)",
+    "docs_new_files": ["jarvis-mvp1-v1-poc-phase3-5-h-o-ollama-direct-entry-brief.md (v1+v1.1)", "3plus1-consensus-2026-05-25-...h-o-ollama-direct-entry.md", "v1-poc-raw/phase3-5-h-o/* (28 files including this summary)"],
+    "ollama_changes": "0 daemon hash (pid 3375 exe hash baseline 19회 일관) + 1 model pull (qwen3:30b-a3b-instruct-2507-q4_K_M)",
+    "llamacpp_changes": "0 (HEAD c0c7e147 보존)",
+    "apt_changes": "0 (packages 2757 / upgradable 26 일관)",
+    "sudo_invocations": 7,
+    "egress_unintentional_count": 0,
+    "test_status_unchanged": "tests/jarvis/ 59 green / src/jarvis/ 커버리지 100% (불변, 본 cycle 무관)"
+  },
+  "next_cycle_recommendations": {
+    "A_HIGH": "(h-OM) Ollama Modelfile (h) GGUF 직접 등록 cycle (R-S1 + R-rec-16 답습 격상) — bartowski conversion lineage 100% 통제 + egress 0 + (h) ↔ (h-O-library) ↔ (h-OM) 3-way 비교 framing 자격 강함. F3 raw evidence 직접 후속",
+    "B_HIGH": "MVP-1 합의 R4 framing 정정 evidence 별도 cycle — (g)/(h)/(h-O) 종합 input 강함, S1 confirmed (Ollama < llama.cpp ~3.24~23.89×). 본문 정정 별도 cycle R-9 답습 영구",
+    "C_MEDIUM": "Ollama prefill 처리 framework overhead 검증 cycle (F2 23.9× outlier 답습) — Ollama HTTP API + JSON serialize + scheduling + KV cache 정책 직접 verify",
+    "D_MEDIUM": "(g)+(h)+(h-O) 3-way 통합 *분석* cycle (≠ 통합 *본문 정정*, N-12 격상 자격) — 변수 분리 종합 + Provider Liquidity finding 종합",
+    "E_MEDIUM": "(j) advisory wall-clock 측정 cycle — 자비스 비전 직접 진전",
+    "F_MEDIUM": "Phase 1 N=3 repetitions Ollama 답습 cycle (C-S2 답습) — Ollama noise 평가 자격 강화",
+    "G_MEDIUM": "Ollama embedded llama.cpp version verify cycle (R-S4 + N-15 답습) — (h) c0c7e147 와 commit 차이 평가",
+    "H_DEFER": "(k) M3·M4 결정 *고정* — 변수 분리 input 강화 후 평가",
+    "I_LOW": "다른 quant 비교 (Q5_K_M / IQ4_XS) / 외부 benchmark cross-ref / tokenizer 변수 단독 분리 / bartowski conversion lineage cross-check"
+  },
+  "chain_permanent_termination_status": {
+    "g_h_x_prime_auto_entry": "❌ 명백 부정 (chain 영구 종결 의무 답습 영구)",
+    "h_o_x_prime_auto_entry": "❌ 명백 부정 (chain 영구 종결 의무 답습 영구 R-13 발효)",
+    "g_n_3_adr_008_sip_adr_012_prime_prime_auto_entry": "❌ 명백 부정 (답습 영구)",
+    "next_cycle_entry_obligation": "사용자 명시 의무 답습 영구"
+  }
+}

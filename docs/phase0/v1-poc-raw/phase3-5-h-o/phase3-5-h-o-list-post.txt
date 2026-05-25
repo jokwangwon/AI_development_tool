@@ -1,0 +1,4 @@
+Total models: 5
+---
+  qwen2.5-coder:32b  (18.49 GiB, quant=Q4_K_M, family=qwen2, digest=b92d6a0bd47ee791)
+  qwen3-coder-next:latest  (48.19 GiB, quant=Q4_K_M, family=qwen3next, digest=ca06e9e4087c714d)

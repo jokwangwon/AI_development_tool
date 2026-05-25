@@ -1,0 +1,4 @@
+ls: '/home/delangi/.ollama/models/manifests/'에 접근할 수 없음: 그런 파일이나 디렉터리가 없습니다
+ls: '/home/delangi/.ollama/'에 접근할 수 없음: 그런 파일이나 디렉터리가 없습니다
+stat: '/home/delangi/.ollama/'에 statx 처리할 수 없음: 그런 파일이나 디렉터리가 없습니다
+df: /home/delangi/.ollama: 그런 파일이나 디렉터리가 없습니다

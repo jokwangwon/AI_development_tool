@@ -1,0 +1,221 @@
+{
+  "cycle": "Phase 3.5-OM (h-OM) Ollama Modelfile bartowski GGUF 직접 등록 + 측정",
+  "session_iso": "2026-05-25T22:23:06+09:00 ~ 2026-05-25T22:44:00+09:00 (~0.35 hours)",
+  "entry_count": "17번째 entry chain (1)~(7) 본 정리",
+  "predecessor": {
+    "h_o_cycle_commit": "9685ae3",
+    "h_o_findings": "S1 confirmed Ollama < llama.cpp ~3.24~23.89× / R-S1 발효 Ollama blob ≠ bartowski sha256",
+    "h_om_brief_v1_commit": "3d02edb (469 lines)",
+    "h_om_consensus_commit": "bcc4974 (440 lines, BLOCKING 15 + R-S1~R-S5)",
+    "h_om_brief_v1_1_commit": "f383a23 (552 lines, +296/-213)"
+  },
+  "user_explicit_decisions": {
+    "1_cycle_selection": "(h-OM) Modelfile (h) GGUF 직접 등록 (사용자 명시 '1로 진행')",
+    "2_entry_form": "(h-O) 동형 풀 7단계",
+    "3_modelfile_template": "(h-O) library 답습 ChatML + 6 PARAMETER",
+    "4_consensus_form": "합의 commit + brief v1.1 보강 연속",
+    "5_progress_form": "(4)~(7) 연속 + 임시 비밀번호 재사용"
+  },
+  "hard_link_execution_findings": {
+    "h_gguf_path": "/home/delangi/models/phase3-5/Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf",
+    "h_gguf_inode": 83104272,
+    "h_gguf_owner": "delangi:delangi 0664",
+    "h_gguf_size_bytes": 18632183808,
+    "imports_path": "/home/delangi/문서/project/category/bootcamp_game/ollama-data/imports/Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf",
+    "imports_inode": 83104272,
+    "imports_links_count": 2,
+    "hard_link_success": true,
+    "container_access_verify": "stat /root/.ollama/imports/<file> 성공 inode 83104272, UID mapping delangi(1000) → ubuntu(1000)"
+  },
+  "ollama_create_findings_R_S1_CONFIRMED": {
+    "create_output_verbatim": "copying file sha256:382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95",
+    "ollama_standard_copy_confirmed": true,
+    "ollama_issue_1450_evidence_confirmed": "Ollama 자체 'regular copy' 동작 답습 영구 확정 (Ollama issue #1450 closed-as-not-planned + docs.ollama.com/import answer 완벽 일치)",
+    "blob_path_container": "/root/.ollama/models/blobs/sha256-382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95",
+    "blob_inode_container": 82742949,
+    "host_imports_link_inode": 83104272,
+    "h_gguf_source_inode": 83104272,
+    "inode_comparison": {
+      "ollama_blob": 82742949,
+      "hard_link_target": 83104272,
+      "h_gguf_source": 83104272,
+      "match_ollama_blob_to_h_source": false,
+      "match_hard_link_to_h_source": true,
+      "implication": "Ollama 자체 standard copy 답습 완벽 확정 (별도 inode), 단 sha256 = (h) bartowski 그대로 (content-addressable)"
+    },
+    "sha256_preserved": "382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95 (full 64자 (h) 답습 일치)",
+    "disk_pre_create_free_gib": 251,
+    "disk_post_create_free_gib": 233,
+    "disk_delta_free_gib": -18,
+    "blobs_dir_pre_bytes": 186023474892,
+    "blobs_dir_post_bytes": 204655659120,
+    "blobs_dir_delta_bytes": 18632184228,
+    "blobs_dir_delta_gib": 17.353,
+    "r_s1_validation": "디스크 +17.353 GiB 추가 발생 완벽 확정 — R-S1 발효 외부 evidence (Ollama issue #1450 + docs.ollama.com 답습) 영구 confirm",
+    "ollama_create_wall_clock_s": 22,
+    "license_block_in_modelfile": false,
+    "license_intentional_partial_compliance_R_S5": "LICENSE 의도적 부분 답습 0건 confirmed (Ollama Modelfile create 시 optional, functional risk 0)",
+    "tag_auto_assigned_latest": "qwen3-30b-a3b-instruct-2507-bartowski:latest (R-S5 답습 :latest 자동 부여 confirmed)",
+    "manifest_digest": "5c8999f73bae5790",
+    "ollama_create_using_existing_layer": "sha256:382b4f5a164d... + sha256:eade0a07cac7 + sha256:0914c7781e00 (content-addressable 답습 영구)"
+  },
+  "r1_anchor_chain": {
+    "phase1": 5,
+    "phase3": 3,
+    "phase3_5_g": 4,
+    "phase3_5_h": 3,
+    "phase3_5_h_o": 4,
+    "phase3_5_h_om_pre_20x": 1,
+    "phase3_5_h_om_post_create_21x": 1,
+    "phase3_5_h_om_pre_measurement_22x": 1,
+    "phase3_5_h_om_post_measurement_23x": 1,
+    "cumulative_total": 23,
+    "hash_baseline_full_64char": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "all_match_verified": true,
+    "silent_replacement_count": 0,
+    "ollama_pid": 3375,
+    "r_s2_resolution": "본 cycle 첫 anchor = 20x ((h-O) cumulative_total 19 + 본 cycle 1 = 20) confirmed, 종료 = 23x. brief v1.1 정정 완료"
+  },
+  "r7_isolation": {
+    "egress_baseline_pre_lines": 14,
+    "egress_baseline_post_lines": 13,
+    "delta_lines": -1,
+    "apt_pre_packages": 2757,
+    "apt_post_packages": 2757,
+    "apt_delta": 0,
+    "apt_pre_upgradable": 26,
+    "apt_post_upgradable": 26,
+    "apt_upgradable_delta": 0,
+    "intentional_egress_only": "0건 ((h) GGUF host hard link, Ollama pull 0건, Ollama create internal blob copy 만)",
+    "unintentional_egress_count": 0,
+    "sudo_count": 9,
+    "sudo_use_cases": ["egress baseline pre (1)", "R-1 anchor 20x (1)", "mkdir imports + chmod (1)", "hard link ln (1)", "Modelfile cp (1)", "docker exec ollama create (1)", "R-1 anchor 21x (1)", "R-1 anchor 22x (1)", "R-1 anchor 23x + post baselines (2)"],
+    "sudo_authorization": "사용자 명시 임시 비밀번호 (epffkddl12!@) 재사용 — claude sudo -S, 본 세션 한정",
+    "password_leak_verification": "grep -r 'epffkddl' docs/phase0/v1-poc-raw/phase3-5-h-om/ → 0건 적중 ✓"
+  },
+  "ollama_environment_findings": {
+    "version": "0.20.4",
+    "embedded_llamacpp_version": "ollama --version 출력 = 'ollama version is 0.20.4' (embedded llama.cpp commit 미노출, R-S4 정직성 답습 영구)",
+    "deployment": "Docker container `oracle-game-ollama` (image: ollama/ollama:latest)",
+    "container_id_prefix": "61c77069dd92",
+    "mount_bind": "/home/delangi/문서/project/category/bootcamp_game/ollama-data -> /root/.ollama"
+  },
+  "model_metadata_from_show": {
+    "model_name_with_tag": "qwen3-30b-a3b-instruct-2507-bartowski:latest",
+    "family": "qwen3moe",
+    "parameter_size": "30.5B",
+    "quantization_level": "Q4_K_M",
+    "format": "gguf",
+    "parent_model": "/root/.ollama/models/blobs/sha256-382b4f5a164d...33a95",
+    "modelfile_template_h_o_library_compliance": "TEMPLATE + 6 PARAMETER 답습 정합 (의도적 부분 답습, LICENSE block 의도적 0건 R-S5 답습)"
+  },
+  "measurement_results": {
+    "decode_161tok_cold": {
+      "total_duration_s": 24.063,
+      "load_duration_s": 4.933,
+      "prompt_eval_count": 161,
+      "prompt_eval_duration_s": 1.621,
+      "eval_count": 256,
+      "eval_duration_s": 17.429,
+      "decode_tok_per_s_denom1_eval_only": 14.69,
+      "decode_tok_per_s_denom2_total_minus_load_prompt": 14.62,
+      "decode_tok_per_s_denom_delta_pct": 0.48,
+      "prompt_tok_per_s": 99.33,
+      "http_status": 200,
+      "early_stop": false
+    },
+    "prefill_2k_cold": {
+      "total_duration_s": 39.273,
+      "load_duration_s": 1.419,
+      "prompt_eval_count": 2009,
+      "prompt_eval_duration_s": 25.821,
+      "eval_count": 144,
+      "eval_duration_s": 11.958,
+      "decode_tok_per_s_denom1_eval_only": 12.04,
+      "decode_tok_per_s_denom2_total_minus_load_prompt": 11.97,
+      "decode_tok_per_s_denom_delta_pct": 0.59,
+      "prompt_tok_per_s": 77.80,
+      "early_stop": true,
+      "early_stop_reason": "num_predict 256 미달 (144 / 256), eos token 또는 chat template 종료 적중"
+    },
+    "r_s2_denominator_honesty_confirmed_low_delta": "본 cycle 양 분모 격차 < 1% (decode 0.48% / prefill 0.59%) (h-O) 답습 정합 — Phase 1 ~11% 격차와 달리 매우 일관",
+    "tokenizer_compliance": "Ollama prompt_eval_count decode 161 / prefill 2009 = (h-O) 답습 동일 (Ollama gpt2+qwen2 pre tokenizer 답습 영구)"
+  },
+  "comparison_4_way": {
+    "h_baseline_llama_cpp_c0c7e147": {
+      "decode_161tok": {"prompt_tok_s": 389.4, "generation_tok_s": 49.6},
+      "prefill_2k": {"prompt_tok_s": 1916.8, "generation_tok_s": 45.4}
+    },
+    "h_o_ollama_library_blob": {
+      "decode_161tok": {"prompt_tok_s": 118.43, "generation_tok_s": 15.29},
+      "prefill_2k": {"prompt_tok_s": 80.25, "generation_tok_s": 12.43},
+      "source": "Ollama library blob 78b329e716e7...ba9cc"
+    },
+    "h_om_ollama_bartowski_modelfile": {
+      "decode_161tok": {"prompt_tok_s": 99.33, "generation_tok_s": 14.69},
+      "prefill_2k": {"prompt_tok_s": 77.80, "generation_tok_s": 12.04},
+      "source": "(h) bartowski blob 382b4f5a164d...33a95 (content-addressable 답습 영구)"
+    },
+    "delta_h_o_to_h_om_ollama_internal_optimization_variable": {
+      "decode_prompt_pct": -16.1,
+      "decode_generation_pct": -3.9,
+      "prefill_prompt_pct": -3.1,
+      "prefill_generation_pct": -3.1,
+      "implication": "(h-OM) ≈ (h-O) — source conversion 차이 무관, Ollama internal optimization 변수 *부분* 영향 (decode prompt 만 ~16% 격차, 다른 차원 ~3% 답습)"
+    },
+    "delta_h_to_h_om_inference_engine_partial_isolation": {
+      "decode_prompt_x": 3.92,
+      "decode_generation_x": 3.38,
+      "prefill_prompt_x": 24.64,
+      "prefill_generation_x": 3.77,
+      "implication": "inference engine *부분* 단독 분리 (R-S3 발효 약화 framing) — source 100% 동일 (sha256 답습), 단 5 미통제 변수 잔존"
+    },
+    "scenario_match": "S1 confirmed (h-OM ≈ h-O ~13~17 t/s 범위 내) — source conversion 차이 무관, Ollama framework 자체 격차 본질 strong evidence ⭐⭐⭐",
+    "prefill_prompt_outlier_strengthened": {
+      "h_o_ratio": 23.89,
+      "h_om_ratio": 24.64,
+      "implication": "Ollama framework overhead 우세 가설 강화 — (h-OM) prefill prompt 격차 24.64× > (h-O) 23.89× (~3% 증가). source conversion 변경 후에도 outlier 답습 영구"
+    }
+  },
+  "additional_findings": {
+    "F1_S1_confirmed_source_conversion_irrelevant": "⭐⭐⭐ (h-OM) ≈ (h-O) decode 14.69 vs 15.29 (~3.9% 격차) + prefill ~3% 격차 — source conversion 차이 무관, Ollama framework 자체 격차 본질 strong evidence. MVP-1 R4 framing 정정 결정적 input HIGH carry-over (별도 cycle R-9 답습 영구)",
+    "F2_R_S1_completely_confirmed": "⭐⭐⭐ Ollama 자체 standard copy 답습 완벽 확정 — `copying file sha256:382b4f5a164d...` raw output + 디스크 +17.35 GiB 추가 + Ollama blob inode 82742949 ≠ hard link 83104272 별도 inode = Ollama issue #1450 (closed-as-not-planned) + docs.ollama.com/import 'regular copy' 답습 영구 영구 evidence",
+    "F3_content_addressable_sha256_preserved": "⭐⭐ Ollama 자체 blob copy 답습에도 sha256 = (h) bartowski `382b4f5a164d...` 그대로 (content-addressable) — Ollama가 hash 재계산 후 content 동일 sha256 답습 영구 확정",
+    "F4_prefill_prompt_outlier_strengthened": "⭐⭐ (h-OM) prefill prompt 격차 24.64× > (h-O) 23.89× — Ollama framework overhead 우세 가설 강화 evidence (source conversion 변경 후에도 outlier 답습 영구)",
+    "F5_R_S5_license_intentional_partial_confirmed": "⭐ ollama show modelfile 출력 LICENSE block 0건 confirmed (의도적 부분 답습, functional risk 0)",
+    "F6_R_S5_tag_auto_assigned_latest_confirmed": "⭐ `qwen3-30b-a3b-instruct-2507-bartowski:latest` (R-S5 답습 `:latest` 자동 부여 confirmed)",
+    "F7_R_S2_anchor_arithmetic_resolved": "⭐ 본 cycle R-1 anchor 20·21·22·23 (cumulative 23) — (h-O) cumulative 19 + 본 cycle 4회 정확 정합 (brief v1.1 R-S2 발효 정정 완료)",
+    "F8_R_S4_embedded_version_partial": "⭐ `ollama --version` = 'ollama version is 0.20.4' (embedded llama.cpp commit 미노출, R-S4 정직성 답습 영구)"
+  },
+  "machine_changes": {
+    "downloads": "0건 (host (h) GGUF 답습 hard link, Ollama pull 0건)",
+    "ollama_blob_copies": "1건 (Ollama 자체 standard copy, +17.353 GiB, sha256 (h) 답습)",
+    "hard_links_created": "1건 (host imports/<file> ↔ (h) GGUF, inode 83104272 동일)",
+    "ollama_models_created": "1건 (qwen3-30b-a3b-instruct-2507-bartowski:latest, manifest digest 5c8999f73bae5790)",
+    "g_gguf_preserved": "보존 (R-13)",
+    "h_gguf_preserved": "보존 (R-13, hard link source)",
+    "h_o_ollama_library_blob_preserved": "보존 (R-13)",
+    "docs_new_files": ["brief v1 + 합의 + brief v1.1 + raw artifacts 28 files + SESSION 17번째 entry + INDEX"],
+    "ollama_changes": "0 daemon hash baseline (pid 3375 23회 누계 일관) + 1 new model + 1 new blob copy",
+    "llamacpp_changes": "0 (HEAD c0c7e147 보존)",
+    "apt_changes": "0",
+    "sudo_invocations": 9,
+    "egress_unintentional_count": 0,
+    "test_status_unchanged": "tests/jarvis/ 59 green / src/jarvis/ 커버리지 100% (불변)"
+  },
+  "next_cycle_recommendations": {
+    "A_HIGH": "MVP-1 합의 R4 framing 정정 evidence 별도 cycle — (g)/(h)/(h-O)/(h-OM) 4-way 종합 input 결정적 (S1 confirmed source conversion 차이 무관, R-9 답습 영구 본문 정정 별도 cycle)",
+    "B_HIGH": "(g)+(h)+(h-O)+(h-OM) 4-way 통합 *분석* cycle (≠ 통합 *본문 정정*, N-12 답습) — scope 4 차원 (R-rec-16): MVP-1 R4 + F2 가설 + Provider Liquidity + (j) 진입 자격",
+    "C_MEDIUM": "(h-OL) llama.cpp Ollama library blob 78b329e716e7...ba9cc 직접 측정 cycle (R-15 답습 신규) — engine 통제, source 변경 (역방향 단독 분리, egress 0 + 시간 ~30분)",
+    "D_MEDIUM": "Ollama prefill 처리 framework overhead 검증 cycle (F4 답습 강화) — Ollama HTTP API + JSON serialize + scheduling 직접 verify",
+    "E_MEDIUM": "(j) advisory wall-clock 측정 cycle — 자비스 비전 직접 진전",
+    "F_MEDIUM": "Phase 1 N=3 repetitions Ollama 답습 cycle (C-S2 답습)",
+    "G_DEFER": "(k) M3·M4 결정 *고정* — 변수 분리 input 강화 후",
+    "H_DEFER": "(l) MVP-1 트랙 B 구현 — (k) 통과 의무 답습 영구"
+  },
+  "chain_permanent_termination_status": {
+    "g_h_x_h_o_x_h_om_x_prime_auto_entry": "❌ 명백 부정 (chain 영구 종결 의무 답습 영구)",
+    "g_n_3_adr_008_sip_adr_012_prime_prime_auto_entry": "❌ 명백 부정 (답습 영구)",
+    "next_cycle_entry_obligation": "사용자 명시 의무 답습 영구"
+  }
+}

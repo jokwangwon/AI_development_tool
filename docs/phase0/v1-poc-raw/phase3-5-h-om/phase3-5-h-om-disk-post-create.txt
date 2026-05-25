@@ -1,0 +1,3 @@
+파일 시스템     크기  사용  가용 사용% 마운트위치
+/dev/nvme0n1p2  1.9T  1.6T  233G   87% /
+204655659120	/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/

@@ -1,0 +1,189 @@
+{
+  "cycle": "Phase 3.5-B (h) Qwen3-30B-A3B-Instruct-2507 classical MoE control",
+  "session_iso": "2026-05-25T16:05:16+09:00 ~ 2026-05-25T17:58:00+09:00 (~1.88 hours)",
+  "entry_count": "15번째 entry chain (1)~(7) 본 정리",
+  "predecessor": {
+    "g_cycle_commit": "b3d4164",
+    "g_cycle_findings": "F-1 ~4.07× / F-2 부분 호환 model load 성공 / F-3 conversion path diversity / R-1 anchor 12회 / R-7 격리",
+    "h_brief_v1_commit": "a504352 (382 lines)",
+    "h_consensus_commit": "d74d205 (491 lines, BLOCKING 13 + R-S1~R-S5 + 권고 12 + NOTE 13 + 기각 5)",
+    "h_brief_v1_1_commit": "de0326b (467 lines, +223/-138)"
+  },
+  "user_explicit_decisions": {
+    "1_entry_form": "(g) 동형 7단계 (Recommended)",
+    "2_source": "bartowski (Recommended)",
+    "3_quant": "Q4_K_M (Recommended)",
+    "4_naming": "Phase 3.5-B",
+    "5_consensus_form": "합의 commit + brief v1.1 보강 연속 (Recommended)",
+    "6_g_gguf_preservation": "보존 (디스크 ~87% 임시, Recommended)",
+    "7_progress_form": "(4)→(7) 연속 (Recommended)",
+    "8_sudo": "임시 비밀번호 명시 (epffkddl12!@), claude sudo -S 진행"
+  },
+  "model": {
+    "repo_id": "bartowski/Qwen_Qwen3-30B-A3B-Instruct-2507-GGUF",
+    "filename": "Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf",
+    "size_bytes": 18632183808,
+    "size_gib": 17.353,
+    "size_gb_marketing": 18.63,
+    "split_shards": false,
+    "lfs_sha256_from_api": null,
+    "lfs_sha256_handling": "HF API lfs.sha256 = None (multipart upload, R-S4 발효 영구). 대체 verify = x-linked-etag (sha256 form) + Content-Length. (g) F finding 답습 정직성 명문",
+    "x_linked_etag": "382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95",
+    "x_repo_commit": "6c6e8692f43e4ca663f7ece8229a1361090d3a4c",
+    "x_xet_hash": "cf33bd39c558724ff8e1c20314fe472e42ccfaf0594f4d78981de40f53a6edfc",
+    "post_download_sha256_local": "382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95",
+    "etag_match": true,
+    "created_at": "2025-07-28"
+  },
+  "gguf_metadata": {
+    "namespace": "qwen3moe",
+    "version": 3,
+    "alignment": 32,
+    "n_kv": 39,
+    "n_tensors": 579,
+    "block_count": 48,
+    "expert_count_predicted": 128,
+    "expert_used_count_predicted": 8,
+    "imatrix": true,
+    "imatrix_metadata_keys": ["quantize.imatrix.file", "quantize.imatrix.dataset", "quantize.imatrix.entries_count", "quantize.imatrix.chunks_count"]
+  },
+  "tensor_pattern_unique": {
+    "attention": ["attn_k", "attn_k_norm", "attn_norm", "attn_output", "attn_q", "attn_q_norm", "attn_v"],
+    "ffn_moe": ["ffn_down_exps", "ffn_gate_exps", "ffn_gate_inp", "ffn_norm", "ffn_up_exps"],
+    "global": ["output.weight", "output_norm.weight", "token_embd.weight"],
+    "ssm_or_mamba_count": 0,
+    "ssm_grep_result_verbatim": "(empty)",
+    "qkv_format": "SPLIT (attn_q + attn_k + attn_v separately, not combined attn_qkv as in Qwen3-Next)",
+    "gqa_confirmed": "attn_v (860160) < attn_q (4718592) → head_count_kv < head_count"
+  },
+  "hypothesis_falsification_status": {
+    "core_hypothesis": "Qwen3-30B-A3B-Instruct-2507 = classical MoE + SSM 미포함",
+    "confirmed": true,
+    "evidence_strength": "강한 evidence (raw grep 0건 적중 + 모든 48 layer tensor pattern 동일 + n_tensors 579 ≪ Qwen3-Next 843)",
+    "framing": "R-S3 답습 — falsification 단정 금지 / '강한 evidence' 표현 답습 영구"
+  },
+  "r1_anchor_chain": {
+    "phase1": 5,
+    "phase3": 3,
+    "phase3_5_g": 4,
+    "phase3_5_h_pre_13x": 1,
+    "phase3_5_h_mid_14x": 1,
+    "phase3_5_h_post_15_16x": 1,
+    "cumulative_total": 15,
+    "hash_baseline": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "all_match_verified": true,
+    "silent_replacement_count": 0,
+    "ollama_pid": 3375
+  },
+  "r7_isolation": {
+    "egress_baseline_pre_lines": 11,
+    "egress_baseline_post_lines": 12,
+    "delta_lines": 1,
+    "delta_acceptable": "HF egress 종료 후 자연 변동",
+    "apt_pre_packages": 2757,
+    "apt_post_packages": 2757,
+    "apt_delta": 0,
+    "apt_pre_upgradable": 26,
+    "apt_post_upgradable": 26,
+    "apt_upgradable_delta": 0,
+    "intentional_egress_only": "HF download (wget direct)",
+    "unintentional_egress_count": 0,
+    "sudo_count": 5,
+    "sudo_use_cases": ["egress baseline pre (1)", "R-1 anchor 13x pre (1)", "R-1 anchor 14x mid (1)", "R-1 anchor 15/16x post (1)", "egress baseline post (1)"],
+    "sudo_authorization": "사용자 명시 임시 비밀번호 (epffkddl12!@) — claude sudo -S, 본 세션 한정",
+    "password_leak_verification": "grep -r 'epffkddl' docs/ → 0건 적중 ✓ ((g) F finding 답습 영구)"
+  },
+  "download_metrics": {
+    "tool": "wget direct (background + setsid for detachment)",
+    "start_iso": "2026-05-25T16:05:16+09:00",
+    "finish_iso": "2026-05-25T17:00:00+09:00 (approximate from file mtime)",
+    "wall_clock_min": 9.8,
+    "wall_clock_min_predicted": "11.8 (18.63GB / 26.4 MB/s scaling)",
+    "wall_clock_actual_better_than_predicted": "Yes (~17% faster, cas-bridge CDN 가속 가능성)",
+    "first_attempt_status": "정상 완료 (오해 — log tail '10%' 는 stdout buffer timing, 실제 완료까지 진행)",
+    "post_first_attempt_retry": "wget -c 재시작 = 이미 완성 파일 확인 → 즉시 종료 (PID exit 0)"
+  },
+  "measurement_results": {
+    "decode_161tok": {
+      "perf_line_verbatim": "[ Prompt: 389.4 t/s | Generation: 49.6 t/s ]",
+      "prompt_tok_per_s": 389.4,
+      "generation_tok_per_s": 49.6,
+      "exit_code": 124,
+      "exit_reason": "timeout 300s (interactive hang post-perf, (g) F-8 답습 영구)",
+      "log_size_pre_cleanup_bytes": 2581770377,
+      "log_cleanup_status": "head -2000 lines 보존 (~6KB), 5GB 누적 제거"
+    },
+    "prefill_2k": {
+      "perf_line_verbatim": "[ Prompt: 1916.8 t/s | Generation: 45.4 t/s ]",
+      "prompt_tok_per_s": 1916.8,
+      "generation_tok_per_s": 45.4,
+      "exit_code": 124,
+      "exit_reason": "timeout 300s (interactive hang post-perf, (g) F-8 답습 영구)",
+      "log_size_pre_cleanup_bytes": 2422602970,
+      "log_cleanup_status": "head -2000 lines 보존 (~6KB), 5GB 누적 제거"
+    }
+  },
+  "comparison_g_vs_h": {
+    "g_predecessor": {
+      "model": "bartowski Qwen3-Next-80B-A3B-Instruct Q4_K_M (SSM hybrid)",
+      "decode_161tok": {"prompt_tok_s": 177.9, "generation_tok_s": 32.3},
+      "prefill_2k": {"prompt_tok_s": 971.9, "generation_tok_s": 31.5}
+    },
+    "h_current": {
+      "model": "bartowski Qwen_Qwen3-30B-A3B-Instruct-2507 Q4_K_M (classical MoE)",
+      "decode_161tok": {"prompt_tok_s": 389.4, "generation_tok_s": 49.6},
+      "prefill_2k": {"prompt_tok_s": 1916.8, "generation_tok_s": 45.4}
+    },
+    "ratios_h_over_g": {
+      "decode_161tok_prompt": 2.19,
+      "decode_161tok_generation": 1.54,
+      "prefill_2k_prompt": 1.97,
+      "prefill_2k_generation": 1.44
+    },
+    "scenario_match": "S2 강화 시나리오 일부 답습 (decode generation 49.6 = S2 범위 ~40~85 t/s 내)",
+    "single_variable_isolation_capability": "0건 — (g) → (h) 변화 5+ 변수 동시: model size (80B→30B) + SSM (포함→미포함) + expert routing (512 top-10 → 128 top-8) + conversion 시점 ~3~4개월 격차 + 도구 version 변수",
+    "framing_strength": "classical MoE > SSM hybrid 강한 evidence (1.44~2.19× 범위), 단 단일 변수 분리 자격 0 = SSM 변수 *간접* input only (N-7 답습)"
+  },
+  "additional_findings": {
+    "F1_classical_moe_advantage": "⭐⭐⭐ (h) classical MoE = (g) SSM hybrid 보다 모든 측정 차원 빠름 (1.44~2.19×). F-2 가설 (SSM 본질적 cache miss 한계) 강한 evidence 추가 + Phase 1 H-B1/H-B2 결과 답습 강화",
+    "F2_qwen3moe_namespace": "⭐⭐ namespace = qwen3moe (Qwen3-Next 의 qwen3next 와 다름). brief v1.1 §3.3 Step 6 grep 패턴 답습 정합 ✓",
+    "F3_qkv_split_format": "⭐⭐ Qwen3-30B-A3B-Instruct-2507 = SPLIT QKV (attn_q + attn_k + attn_v separately). Qwen3-Next 의 combined attn_qkv 와 다름. R-S2 grep 패턴 답습 정합",
+    "F4_gqa_confirmed": "⭐ attn_v (860160 bytes) ≪ attn_q (4718592 bytes) = GQA confirmed (head_count_kv < head_count)",
+    "F5_imatrix_variant": "⭐ imatrix metadata keys 확인 (quantize.imatrix.file/dataset/entries_count/chunks_count) — bartowski imatrix 사용 ((g) F-7 답습 영구)",
+    "F6_etag_as_sha256_alternative": "⭐⭐ HF API lfs.sha256 = null 답습 (multipart upload), 단 x-linked-etag = local sha256 완벽 일치 → etag = sha256 form 답습. R-S4 답습 정직성 명문 영구",
+    "F7_classical_moe_smaller_tensor_count": "⭐ n_tensors = 579 (Qwen3-Next 843 의 ~69%) — SSM 미포함 → layer 당 tensor 수 적음 강한 evidence",
+    "F8_interactive_hang_repeated": "⭐ (g) F-8 답습 영구 — llama-cli `-no-cnv` flag 의도 미작동, < /dev/null stdin 차단 + timeout 300s 적용 후에도 perf line 출력 후 interactive hang 발생. R-rec-12 (llama-bench MEDIUM 격상) 답습 강화"
+  },
+  "hypothesis_implications": {
+    "F2_hypothesis_status": "F2 가설 ('Ollama 효율성' = format-internal 차이) *부정* 답습 영구 ((g) F-1 답습 + 본 (h) F-1 답습)",
+    "ssm_overhead_hypothesis": "강한 evidence — classical MoE = SSM hybrid 1.44~2.19× 빠름. 단 model size 변수 미분리 → SSM overhead 단독 자격 strict",
+    "provider_liquidity_finding": "F-3 답습 강화 — Ollama ≠ llama.cpp 격차 답습, MVP-1 R4 framing *복잡화* (SSM 한정 vs 일반화 변수 분리 의무)",
+    "mvp1_r4_framing_input_strength": "⭐ HIGH — F-1 답습 + 본 (h) F-1 답습 = MVP-1 R4 framing 강화 evidence 강한 carry-over input (별도 cycle 의무)"
+  },
+  "machine_changes": {
+    "downloads": ["/home/delangi/models/phase3-5/Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf (18.63 GB / 17.353 GiB)"],
+    "g_gguf_preserved": "/home/delangi/models/phase3-5/Qwen_Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf (45.38 GiB, R-13 사용자 명시 보존)",
+    "docs_new_files": ["jarvis-mvp1-v1-poc-phase3-5-h-qwen3-30b-control-entry-brief.md (v1+v1.1)", "3plus1-consensus-2026-05-25-...h-qwen3-30b-control-entry.md", "v1-poc-raw/phase3-5-h/* (23 files including this summary)"],
+    "ollama_changes": "0 (pid 3375 exe hash baseline 일관, keep_alive 0 unload 만)",
+    "llamacpp_changes": "0 (HEAD c0c7e147 보존)",
+    "apt_changes": "0 (packages 2757 / upgradable 26 일관)",
+    "sudo_invocations": 5,
+    "egress_unintentional_count": 0,
+    "test_status_unchanged": "tests/jarvis/ 59 green / src/jarvis/ 커버리지 100% (불변, 본 cycle 무관)"
+  },
+  "next_cycle_recommendations": {
+    "A_HIGH": "(h-O) Ollama qwen3:30b-a3b-instruct-2507-q4_K_M 직접 측정 cycle (R-S1 발효 carry-over) — 본 cycle 비교 framing 자격 강도 ↑, model + inference engine 양차원 통제 강함",
+    "B_HIGH": "MVP-1 합의 R4 framing 강화 evidence cycle — (g) F-1 + (h) F-1 종합 input 강함",
+    "C_MEDIUM": "llama.cpp graceful tensor name resolution 검증 cycle (g) F-2 답습 — src/llama-model-loader.cpp read-only 분석",
+    "D_LOW_R12": "Qwen3-Next-7B 변종 cycle / 다른 expert config 모델 비교 / imatrix variant 단독 / 외부 benchmark cross-ref (R-12 답습 6 후보)",
+    "E_MEDIUM": "(j) advisory wall-clock 측정 cycle (자비스 비전 직접 진전)",
+    "F_DEFER": "(k) M3·M4 결정 *고정* (변수 분리 강화 input 후 자격 평가)",
+    "G_LOW_R_rec_12": "llama-bench carry-over 격상 cycle (interactive hang risk 차단 by-design)",
+    "H_DEFER": "(g)+(h) 통합 *분석* cycle ≠ 통합 *본문 정정* cycle"
+  },
+  "chain_permanent_termination_status": {
+    "g_h_x_prime_auto_entry": "❌ 명백 부정 (chain 영구 종결 의무 답습 영구)",
+    "g_n_3_adr_008_sip_adr_012_prime_prime_auto_entry": "❌ 명백 부정 (답습 영구)",
+    "next_cycle_entry_obligation": "사용자 명시 의무 답습 영구"
+  }
+}

@@ -1,0 +1,2 @@
+memory.used [MiB], memory.free [MiB], utilization.gpu [%], temperature.gpu
+[N/A], [N/A], 0 %, 37

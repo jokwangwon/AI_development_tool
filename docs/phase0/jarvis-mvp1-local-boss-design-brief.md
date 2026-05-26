@@ -17,7 +17,7 @@
 | R1 | §4·§5 "green washing 구조적 차단" → "*기계적* flag 감산만 차단, *의미적* 우회는 못 막음 + 3중 방어 명시" | B | 🔴 |
 | R2 | §4 `BossAdvice` = 텍스트 전용 frozen dataclass 명문화(콜백·경로·명령 필드 금지) | B·A | 🔴 |
 | R3 | §5 advisory 실패 거동 = 게이트 진행(비차단) + **"Boss advisory 실패" 명시 경고**(fail-closed 정신) | B | 🔴 |
-| R4 | §6·M3 **llama.cpp ↔ Ollama 동급**, **vLLM "제외" → "MVP-2 재검토" 강등**(C-2 충돌) | C | 🔴 |
+| R4 | §6·M3 **llama.cpp > Ollama** (V-1 실측 2026-05-25 4 차원 격차: decode prompt ~3.29~3.92× / decode generation ~3.24~3.38× / prefill prompt ~24× outlier / prefill generation ~3.65~3.77×; 결정 *고정* = (k) 별도), **vLLM "제외" → "MVP-2 재검토" 강등**(C-2 충돌) | C | 🔴 |
 | R5 | §6 tok/s 기대치(roofline+실측) + prefill·입력 상한 V1-3 측정 항목 | A·C | 권고 |
 | R6 | §4 `BossAdvice.confidence` 삭제(LLM 자기보고=거짓 안전감) | C | 권고 |
 | R7 | §3 `Orchestrator(boss=None)` 하위호환 + `ApprovalRequest.advice` 필드 | A | 권고 |
@@ -121,8 +121,8 @@ worker.run → ReviewGuard(결정적, 권위/차단) → BossLLM.advise(advisory
 | V1-4 | `/v1/chat/completions` OpenAI-호환 확인 (Ollama·llama.cpp 둘 다) | §3 추상이 endpoint 교체로 성립 |
 | V1-5 | 메모리/대역폭 실측 (273GB/s 병목 확인) | MoE 가 dense 대비 tok/s 우위 재현 |
 
-**🔴 R4 — 런타임 후보 재조정 (Agent C, 2026 실측):**
-- **llama.cpp ↔ Ollama 동급 후보** (v1 의 "Ollama 유력" 정정). 2026 DGX Spark 실측: **llama.cpp Qwen3-Coder-30B-A3B ~31 tok/s(Q8_0)** 확인 / Ollama 는 dense qwen3:32b **9.4 tok/s** 공개되나 MoE 미공개. → **V-1 에서 둘 다 MoE 로 측정** 후 결정(M3).
+**🔴 R4 — 런타임 후보 재조정 (Agent C, 2026 실측 → V-1 PoC 답습 2026-05-25):**
+- **llama.cpp > Ollama 확정** (v1 의 "Ollama 유력" / brief v2 (R1~R13 반영) 의 "동급" framing 정정). V-1 실측 (2026-05-25, Qwen3-30B-A3B classical MoE Q4_K_M, DGX Spark): **llama.cpp 49.6 tok/s** (decode-161tok generation, bartowski direct) / **Ollama 14.69~15.29 tok/s** (qwen3:30b-a3b-instruct-2507-q4_K_M, Docker 0.20.4) = **~3.24~3.38× llama.cpp 빠름**. **Ollama MoE 공개 confirmed**. prefill prompt 격차 ~24× outlier. (R4 원본 "~31 tok/s" = (g) Qwen3-Next-80B SSM hybrid variant 32.3 ~4% 격차 정합). V-1 측정 완료 → 결정(M3) = (k) M3·M4 결정 *고정* cycle 답습 영구. Provider Liquidity 약화 0건 (헌법 5조-2 비협상).
 - **vLLM = "제외" → "MVP-1 비채택, MVP-2 재검토"로 강등**. 근거: 2026 기준 sm_120/121 binary-compat 으로 실동작 보고 + vLLM 0.17 해소 흐름(MXFP4 gpt-oss-120B ~56 tok/s 최고속). **영구 배제는 C-2(런타임도 교체 가능)와 충돌** → 문서에서 영구 못 박지 않음.
 
 **R5 — tok/s 기대치 (de-risk 신호, Agent A roofline + C 실측):**
@@ -138,7 +138,7 @@ worker.run → ReviewGuard(결정적, 권위/차단) → BossLLM.advise(advisory
 |---|------|------|------|
 | M1 | **판단 지점 범위** | **MVP-1=advisory 1개만**(§1) / 워커선택·작업분해 포함 | 비례성 — 본 brief 권고=1개 |
 | M2 | **로컬 모델** | Qwen3.x-A3B(MoE) / 30B이하 양자화 | tok/s 실측 기준, config |
-| M3 | **추론 런타임** | **llama.cpp ↔ Ollama 동급**(V-1 MoE 실측 후) | **vLLM=MVP-2 재검토(영구배제 아님, R4)** |
+| M3 | **추론 런타임** | **llama.cpp > Ollama**(V-1 실측 2026-05-25: decode prompt ~3.29~3.92× / decode generation ~3.24~3.38× / prefill prompt ~24× / prefill generation ~3.65~3.77×, S1 confirmed; 결정 *고정* = (k) 별도 cycle, Provider Liquidity 약화 0건) | **vLLM=MVP-2 재검토(영구배제 아님, R4)** |
 | M4 | **tok/s threshold** | advisory용 ~15+ 후보(MoE 2~8배 여유, R5) | *고정 금지* — V-1 실측 후 |
 | M5 | **advisory fail-safe 불변식** | flag 감산 불가(합집합만) + R1 의미적 한계 명시 | §4 — 확정 대상 |
 | M6 | **Boss endpoint 보안** | localhost 바인딩 한정(V-1 실측 확인) | §5 |

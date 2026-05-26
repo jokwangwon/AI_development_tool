@@ -60,7 +60,7 @@
 | **R1** | §4·§5 "green washing 구조적 차단" → "*기계적* flag 감산만 차단; *의미적* 우회(summary 오도)는 못 막음. 방어=결정적 flag 분리표시 + raw diff 사람 직접 확인 + ReviewGuard 권위" 정정 | B | 🔴 정직성 |
 | **R2** | `BossAdvice` = 텍스트 전용 frozen dataclass 명문화(콜백·경로·명령 필드 금지; 게이트 통과·argv·workdir에 영향 0 — 테스트로 고정) | B·A | 🔴 안전 |
 | **R3** | advisory 실패(timeout/다운/비정상) = advisory 누락 처리, 결정적 flag·게이트는 진행(비차단), **단 사람에게 "Boss advisory 실패" 명시 경고**(부재를 안전으로 오해 금지). 게이트는 항상 fail-closed, advisory는 부재 시 명시 | B | 🔴 안전 |
-| **R4** | M3 런타임 재조정 — **llama.cpp ↔ Ollama 동급**(MoE 실측 llama.cpp ~31 tok/s, Ollama MoE 미공개), V-1에서 둘 다 MoE 측정. **vLLM "제외(#36821)" → "MVP-1 비채택, MVP-2 재검토"**(sm_120/121 binary-compat·0.17 해소 흐름; 영구배제는 C-2 충돌) | C | 🔴 정합 |
+| **R4** | M3 런타임 재조정 — **llama.cpp > Ollama**(V-1 실측 2026-05-25: llama.cpp Qwen3-30B-A3B classical ~49.6 / Qwen3-Next-80B SSM ~32.3 t/s, Ollama 동일 모델 ~14.7~15.3 = ~3.24~3.38× llama.cpp 빠름, prefill prompt ~24× outlier, **Ollama MoE 공개 confirmed**; R4 원본 "~31 t/s" = (g) Qwen3-Next-80B SSM hybrid variant ~4% 격차 정합). V-1 측정 충족, 결정(M3) = (k) 별도 cycle. **vLLM "제외(#36821)" → "MVP-1 비채택, MVP-2 재검토"**(sm_120/121 binary-compat·0.17 해소 흐름; 영구배제는 C-2 충돌) | C | 🔴 정합 |
 | **R5** | §6에 tok/s 기대치 첨부(roofline A3B Q4 ~90–120 실효 / llama.cpp 실측 ~31 / ~15 2배 여유 = de-risk 신호). prefill(긴 diff) 지연 별도 → **advisory 입력 길이 상한/요약**을 V1-3 측정 항목에 추가 | A·C | 권고 |
 | **R6** | `BossAdvice.confidence` 삭제(또는 "표시만, 게이트 결정 미반영") — LLM 자기보고 confidence = injection 표적의 거짓 안전감 | C | 권고 |
 | **R7** | `Orchestrator.__init__(boss: BossLLM | None = None)` 주입 — `None`이면 advisory 없이 MVP-0 동작 보존(하위 호환). `ApprovalRequest.advice: BossAdvice | None = None` 필드 추가(frozen, default → 무파손) | A | 권고 |

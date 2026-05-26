@@ -1,0 +1,1 @@
+61c77069dd92   ollama/ollama:latest                  "/bin/ollama serve"       6 weeks ago   Up 5 days (healthy)   127.0.0.1:11434->11434/tcp                    oracle-game-ollama

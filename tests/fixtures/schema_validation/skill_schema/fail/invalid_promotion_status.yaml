@@ -1,0 +1,21 @@
+id: skill-invalid-promotion
+name: Invalid Promotion Status Skill
+version: 0.1.0
+scope: project
+owner: user
+description: Skill with promotion_status outside the 5-enum (proposed/approved/promoted/archived/revoked)
+inputs:
+  type: object
+outputs:
+  type: object
+allowed_actions:
+  - read
+forbidden_actions:
+  - shell
+required_evidence:
+  - test_pass
+promotion_status: pending
+provider_bindings:
+  anthropic: {}
+  openai: {}
+last_verified_at: 2026-05-10T11:10:00Z

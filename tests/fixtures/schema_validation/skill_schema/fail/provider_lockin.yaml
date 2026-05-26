@@ -1,0 +1,23 @@
+id: skill-provider-lockin
+name: Provider Lock-in Skill
+version: 0.1.0
+scope: project
+owner: user
+description: Skill demonstrating C-K lock-in marker violation per G4 section 3.2 field 15
+inputs:
+  type: object
+outputs:
+  type: object
+allowed_actions:
+  - read
+forbidden_actions:
+  - shell
+required_evidence:
+  - test_pass
+promotion_status: proposed
+provider_bindings:
+  openai:
+    required: true
+  anthropic:
+    exclusive: true
+last_verified_at: 2026-05-10T11:10:00Z

@@ -1,0 +1,171 @@
+{
+  "session_iso": "2026-05-23T21:30:00+09:00",
+  "scope": "V-1 PoC §4 V1-3 측정 종합 (Stage 4)",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-entry-brief.md (DRAFT v1.1, HEAD 9e68fbb) §4 + §6 + R-1/R-6/R-9/R-22/R-23",
+  "measurement_executed": true,
+
+  "r1_anchors": {
+    "stage_1_pre_measure": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "stage_4_just_before_measurement": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "stage_4_just_after_measurement": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "verdict": "✅ 3회 hash 일치 — silent 교체 미발생 확정. ALL via sudo (사용자 명시 prompt 입력 3회 총, read-only, 데몬 변경 0)",
+    "honest_caveat": "본 hash 일치는 *측정 세션 한정* 무결성 보장. 출처 미상 binary 의 표준 빌드 재현성 = 별도 검증 필요 (entry brief §1.2 + §12 옵션 E)"
+  },
+
+  "r23_environment_freeze": {
+    "pre_measure_kills": "kill + kill -9 / orphan claude 3개(3412017, 3731294, 2803969) + Cursor IDE claude 1개(3912298) 종료 (사용자 명시 prompt 입력)",
+    "active_during_measurement": "본 세션 (pid 3999024) only ✅",
+    "gpu_baseline": "Xorg + gnome-shell only (model 로드 시점 외 pmon active 0)",
+    "cpu_top": "본 세션 18-27% (측정 제어), 다른 process 모두 <10%",
+    "ollama_concurrent_calls": "0 (Bash sequential, /api/ps single-model load 시점 외)",
+    "telemetry_env_export": "0 (R-34 fresh subshell 미사용 — 클라이언트측 env 는 데몬 동작 영향 X, brief §8.1 명시 caveat)"
+  },
+
+  "qwen3_coder_next_results": {
+    "model": "qwen3-coder-next:latest",
+    "size_gb_on_disk": 48.2,
+    "arch": "qwen3next (hybrid SSM + Attention)",
+    "moe_config": {"total_params": 79674391296, "expert_count": 512, "expert_used_count": 10},
+    "quantization": "Q4_K_M",
+    "context_length": 262144,
+    "cold_load_first_call_ms": 18245,
+
+    "decode_5runs": {
+      "scenario": "num_predict=512, temperature=0, stop=[], seed=42, 161 입력 토큰",
+      "raw_tok_per_sec": [7.110, 8.023, 7.994, 8.083, 7.963],
+      "mean": 7.834,
+      "std": 0.364,
+      "std_over_mean_pct": 4.6,
+      "p50": 7.994,
+      "p95": 8.023,
+      "outlier_note": "run #1 = 7.11 (mean-2σ 경계, load_duration 139ms 잔존 영향). R-9 outlier trim 가능, 본 보고는 raw 모두 유지",
+      "done_reason_all": "length (num_predict 도달)",
+      "prompt_eval_count_per_run": 161
+    },
+
+    "prefill_2k_results": {
+      "scenario": "num_predict=16, prompt × 13 반복 → 2009 토큰 (목표 2048, -1.9%)",
+      "precheck_cold_tok_per_sec": 66.46,
+      "precheck_prefill_duration_ms": 30230,
+      "warm_5_raw_tok_per_sec": [86.72, 94.85, 90.34, 91.84, 94.15],
+      "warm_mean": 91.58,
+      "warm_std": 2.91,
+      "warm_std_over_mean_pct": 3.2,
+      "warm_p50": 91.84,
+      "warm_p95": 94.15,
+      "cache_hit_note": "precheck = cold (cache empty), warm 5 = prefix cache *부분* hit (24초 prefill = SSM state recomputation 일부). qwen2.5 와 달리 거의 완전 cache 가 아닌 부분 cache 동작",
+      "prompt_eval_count_consistent_5_runs": 2009
+    },
+
+    "prefill_8k_results": {
+      "scenario": "num_predict=16, prompt × 51 반복 → 7823 토큰 (목표 8192, -4.5%)",
+      "precheck_cold_tok_per_sec": 57.79,
+      "precheck_prefill_duration_ms": 135367,
+      "warm_5_raw_tok_per_sec": [287.78, 291.50, 295.42, 283.25, 299.80],
+      "warm_mean": 291.55,
+      "warm_std": 5.76,
+      "warm_std_over_mean_pct": 2.0,
+      "warm_p50": 291.50,
+      "warm_p95": 295.42,
+      "cache_hit_note": "warm = prefix cache 부분 hit. precheck (cold) 의 ~5배 — 그러나 dense 의 cache hit ~2300배보다는 훨씬 보수적",
+      "prompt_eval_count_consistent_5_runs": 7823
+    }
+  },
+
+  "qwen25_coder_32b_results": {
+    "model": "qwen2.5-coder:32b",
+    "size_gb_on_disk": 18.5,
+    "arch": "qwen2 (dense)",
+    "param_count": 32763876352,
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "cold_load_first_call_ms": 16431,
+
+    "decode_5runs": {
+      "scenario": "num_predict=512, temperature=0, stop=[], seed=42, 182 입력 토큰",
+      "raw_tok_per_sec": [4.526, 4.528, 4.508, 4.534, 4.986],
+      "mean": 4.616,
+      "std": 0.185,
+      "std_over_mean_pct": 4.0,
+      "p50": 4.528,
+      "p95": 4.534,
+      "outlier_note": "run #5 = 4.99 (mean+2σ 경계). R-9 trim 가능, 본 보고는 raw 유지",
+      "done_reason_all": "length"
+    },
+
+    "prefill_2k_results": {
+      "scenario": "num_predict=16, prompt × 13 반복 → 2030 토큰 (목표 2048, -0.9%)",
+      "precheck_cold_tok_per_sec": 13.19,
+      "precheck_prefill_duration_ms": 153875,
+      "warm_5_raw_tok_per_sec": [9927.31, 8251.74, 8268.38, 6782.78, 8224.42],
+      "warm_mean": 8290.93,
+      "warm_std": 995.86,
+      "warm_std_over_mean_pct": 12.0,
+      "warm_p50": 8251.74,
+      "warm_p95": 8268.38,
+      "cache_hit_note": "🔴 **warm = 거의 완전 prefix cache hit** (~200-300ms prefill = cache lookup only, compute 0). precheck (13.2 tok/s, 154초) 대비 ~600배. R-6 답습: raw 보고 only, 'PASS' 표현 X. production 동일 prefix 반복 시 효과 = cache hit 부분 의미"
+    },
+
+    "prefill_8k_results": {
+      "scenario": "num_predict=16, prompt × 51 반복 → 7844 토큰 (목표 8192, -4.2%)",
+      "precheck_cold_tok_per_sec": 11.75,
+      "precheck_prefill_duration_ms": 667322,
+      "warm_5_raw_tok_per_sec": [26885.17, 30311.38, 28503.66, 25751.86, 25873.99],
+      "warm_mean": 27465.21,
+      "warm_std": 1731.07,
+      "warm_p50": 26885.17,
+      "warm_p95": 28503.66,
+      "cache_hit_note": "🔴 cold 11.75 tok/s (667초 prefill = quadratic attention compute dominant) vs warm 27465 (~270-300ms = cache lookup) = **~2340배 차이**. dense 32B 의 attention quadratic compute 가 8k 에서 극도로 무거움. M3·M4 결정 입력은 raw 보고 후 별도 합의 단계"
+    }
+  },
+
+  "comparative_observations_raw_only_no_pass_fail": {
+    "decode_moe_vs_dense_ratio": {
+      "qwen3_coder_next_decode_mean": 7.834,
+      "qwen25_coder_decode_mean": 4.616,
+      "ratio_moe_over_dense": 1.697,
+      "r18_threshold_2x": "미달 (1.70배 < 2배). R-18 결론 강도 한정: '병목 가설과 *모순 안 함*' 까지만, 'MoE 우위 PASS' 결론 X"
+    },
+    "prefill_cold_compute_bound_moe_vs_dense": {
+      "prefill_2k_ratio": 5.04,
+      "prefill_8k_ratio": 4.92,
+      "note": "compute-bound 영역에서 MoE 의 sparse activation 효과 명백 (~5배). 단 SSM 의 cold prefill 동작 = full compute 가정, 별도 검증 별도 단계"
+    },
+    "prefill_warm_cache_hit_unexpected_reversal": {
+      "qwen3_coder_next_2k_warm": 91.58,
+      "qwen25_coder_2k_warm": 8290.93,
+      "ratio_dense_over_moe": 90.5,
+      "qwen3_coder_next_8k_warm": 291.55,
+      "qwen25_coder_8k_warm": 27465.21,
+      "ratio_dense_over_moe_8k": 94.2,
+      "honest_finding": "🔴 prefix cache hit 영역에서 dense >> MoE+SSM ~90배. 가설: SSM state 는 KV cache lookup 만으로 재사용 불가, 매 호출 partial recomputation 필요. 또는 Ollama 0.20.4 의 SSM cache 최적화 미완성. production 동일 prefix 반복 query 시 dense 가 유리한 의외 결과 — V-1 핵심 발견 후보, M3 결정 입력 별도 합의"
+    }
+  },
+
+  "r6_b_f8_honesty_findings": {
+    "pass_fail_framing_used": false,
+    "anchor_effect_avoided": "본 raw 어디에도 '≥15 PASS', 'MoE 우위 확정' 등 표현 0건",
+    "threshold_references": "brief v2 §6 R5 roofline ~90-120 / 합의 R4 외부 실측 ~31 = *측정 후 해석 단계 입력*. 본 raw 는 직접 비교 표현 X",
+    "next_decision_input": "M3 (런타임) · M4 (threshold) 결정 고정 = V-1 findings 후 *별도 합의*. 본 raw 의 어떤 행도 결정 입력 자격 X (raw 보고 only)"
+  },
+
+  "limitations": {
+    "active_parameter_unverified": "qwen3-coder-next 활성 파라미터 정량 = 외부 모델 카드 의존. top-10/512 + SSM state 의 *효율적* 활성 = ~3B 가정 미검증. decode 7.83 tok/s 가 활성 ~3B 가정에 맞지 않음 (roofline 미달)",
+    "cache_hit_dominant_in_warm_runs": "prefill warm 5회 = prefix cache 영역 한정. *실 compute* prefill 성능 = precheck (cold) 만 정확. R-9 5회 측정 권고 = noise 분포 확보 목적이나 cache hit 영역에서는 별 의미 X",
+    "ssm_implementation_correctness": "Ollama 0.20.4 SSM 레이어 정상 동작 미검증. 응답 한국어 정상 출력 = 동작 신호이나 정확성 별도 (golden output 비교 X)",
+    "prefix_cache_lru_eviction": "다른 prefix 호출 시 cache eviction 가능성 — 본 측정 sequential 동일 prompt = cache 유지 우호적 조건. 실 운영 mixed-prefix 패턴 시 cache hit ratio ↓",
+    "single_session_noise": "5회 × scenario = 통계적 power 한정. 환경 noise (다른 process tail latency·시스템 IO 부하 등) 완전 제거 불가",
+    "binary_origin_uncertain": "R-1 hash 일치 = silent 교체 미발생만 보장. 표준 빌드와 동등성은 별도 검증",
+    "telemetry_env_var_unverified_v0_20_4_recognition": "OLLAMA_NOHISTORY/NO_ANALYTICS = 본 진입 export 0건 + 데몬 환경 미점검. brief §8.1 Agent A 정직성 그대로 답습"
+  },
+
+  "next_step_recommendations": [
+    "A. V-1 findings 최종 정리 — Stage 1+2+3+4 통합 후 commit/push",
+    "B. M3·M4 결정 *합의* (별도 cycle) — raw 데이터 입력하여 풀 3+1 또는 단축 합의",
+    "C. cache hit/miss 영역 분리 측정 (별도 cycle) — unique prompt seed 또는 prefix 변형으로 cache miss 강제",
+    "D. SSM 실 동작 검증 (별도 cycle) — golden output 비교 또는 fresh prompt diversity",
+    "E. llama.cpp 비교 측정 — brief §7-B/C, 별도 명시 승인 필수 (빌드 발생)",
+    "F. gap-pull entry brief — Qwen3.5-A3B-Instruct 등 활성 ~3B 모델 비교 측정 후보",
+    "G. §12 옵션 E — 출처 미상 Ollama 위생 정정"
+  ]
+}

@@ -1,0 +1,29 @@
+# Dev-only dependencies (G2 GP-5 2차 PoC — TR-2 발화 답습)
+#
+# 답습 출처:
+#   - docs/review/3plus1-consensus-2026-05-10-g2-gp5-poc2-depcruise-full.md §5.4 TR-2
+#   - docs/phase0/g2-gp5-poc2-depcruise-rule-scope.md §8.1 T-2 (import-linter)
+#   - C-9 RA-9 사전 검증 PASS (2026-05-10)
+#
+# 본 manifest 는 dev-dep 만 등재. runtime application 의존성 0건.
+# pyproject.toml (PEP 621) 신설은 *별도 합의* 답습 (R-RF2 답습).
+
+# Provider Adapter Enforcement Layer 1 (Static graph)
+# C-9 검증 환경: import-linter 2.11 + grimp 3.14
+import-linter==2.11
+
+# Group C PoC — RFC 8785 JCS Primary 1 + Primary 2 cross-check
+# 답습 출처:
+#   - docs/review/3plus1-consensus-2026-05-10-g4-jcs-library-selection.md (Q1 풀 3+1 합의 17 조건)
+#   - docs/phase0/g4-jsonl-hash-chain-jcs-poc-spec.md §3 (사용자 명시 결정 갱신 — pyjcs PyPI 미존재 → jcs 대체)
+# 양 라이브러리 모두 Apache-2.0 + 의존성 0 + RA-9 §B.2 11/11 sanity 동등성 PASS
+rfc8785==0.1.4
+jcs==0.2.1
+
+# Jarvis 오케스트레이터 MVP-0 트랙 A — 단위 테스트 (TDD)
+# 답습 출처:
+#   - docs/phase0/jarvis-orchestrator-mvp-design-brief.md (v4, MVP-0 트랙 A)
+#   - docs/review/3plus1-consensus-2026-05-22-jarvis-orchestrator-mvp-v4-reviewer.md (APPROVE)
+# runtime application 의존성 0건 유지 (test-only).
+pytest==9.0.3
+pytest-cov==7.1.0

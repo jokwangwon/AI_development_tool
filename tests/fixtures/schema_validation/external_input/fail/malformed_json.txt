@@ -1,0 +1,6 @@
+{
+  "task_id": "task-malformed",
+  "result": completed
+  "summary": "missing comma + unquoted value above"
+  "items": [1, 2, 3,
+}

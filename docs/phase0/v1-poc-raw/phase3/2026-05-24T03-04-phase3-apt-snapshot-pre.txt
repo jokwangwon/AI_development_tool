@@ -1,0 +1,29 @@
+# Phase 3 apt snapshot (R-7 거버넌스)
+# Purpose: §2.2 빌드 중 의도-외 apt egress 발생 여부 격리
+
+## PRE-CCACHE (2026-05-24T02:12 추정)
+dpkg -l count: 2751
+apt list --upgradable count: 26
+ccache: 미설치 (`dpkg-query: ccache와 일치하는 패키지를 찾지 못했습니다`)
+
+## POST-CCACHE (2026-05-24T03:04, 사용자 명시 후)
+dpkg -l count: 2753 (+2)
+apt list --upgradable count: 26 (변동 0)
+ccache: 4.9.1-1 arm64 ✓
+libhiredis1.1.0: 1.2.0-6ubuntu3 arm64 ✓ (ccache 의존)
+
+## 설치 명령 (사용자 명시)
+sudo apt install -y ccache
+
+## egress
+- 다운로드: 582 KB (libhiredis 40.7 KB + ccache 541 KB)
+- 도메인: ports.ubuntu.com (ubuntu-ports noble/universe arm64)
+
+## 영향 평가
+- ccache 설치 = R14 권고 답습 (재빌드 시 ~30분 단축 효과, 첫 빌드는 cache miss)
+- libhiredis = ccache 의존 (redis storage 백엔드)
+- §2.2 빌드 *진입 직전* 추가 설치 0건 의무
+
+## 다음 측정 시점
+§2.2 Step 5 build 시작 직전 = POST-CCACHE snapshot 을 PRE-BUILD 로 재사용
+§2.2 Step 5 build 종료 직후 = POST-BUILD snapshot

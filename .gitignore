@@ -36,6 +36,46 @@ htmlcov/
 *.log
 logs/
 
-# .NET build outputs
-learn/**/bin/
-learn/**/obj/
+# Claude Code 로컬 사용자 설정 (개인 권한 승인 누적, 공유 미대상)
+.claude/settings.local.json
+
+# G2 GP-5 2차 PoC — 임시 probe (CI 자동 삽입/제거, 우발적 commit 차단)
+src/__transitive_probe__.py
+src/__*_probe__.py
+# import-linter 검증용 임시 venv (C-9 답습)
+.venv-c9*/
+.venv-poc*/
+
+# Group C RA-9 사전 검증 venv + sanity script (Q1 합의 진입 *전* 격리 환경)
+.poc-prep/
+
+# Group F PoC 격리 venv (rfc8785 + jcs 로컬 검증용 — Group C 답습)
+.venv-group-f/
+
+# Group F PoC CI artifact 임시 로컬 디렉토리 (workflow step 자동 생성, 우발적 commit 차단)
+# 후속 보완 (Option B 답습) — leading dot 제거하여 hidden directory 정책 미의존 (artifact upload 정상화)
+group-f-logs/
+
+# Group D PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-d-logs/
+
+# Group E PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-e-logs/
+
+# Group G PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-g-logs/
+
+# Group A 3차 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-a3-logs/
+
+# Group C 후속 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-c-followup-logs/
+
+# Group C 후속 후속 PoC CI artifact 임시 로컬 디렉토리 (Group F 후속 답습 — leading dot 미사용)
+group-cff-logs/
+
+# Jarvis 트랙 B — Landlock sandboxer 빌드 산출물(머신 의존, make 재빌드)
+src/jarvis/sandbox/ll_sandbox
+
+# V-1 PoC raw 로그 예외 — Phase 빌드/측정 기록 (cycle 영구 보존 가치, line 36 *.log 매칭 회피)
+!docs/phase0/v1-poc-raw/**/*.log

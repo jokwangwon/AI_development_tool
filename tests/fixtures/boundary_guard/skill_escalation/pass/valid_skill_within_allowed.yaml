@@ -1,0 +1,39 @@
+id: skill-tdd-runner
+name: TDD Runner (Group G PoC fixture)
+version: 0.1.0
+scope: project
+owner: user
+description: Group G G-1 PASS fixture — allowed_actions enum 정합 + disjoint forbidden_actions
+inputs:
+  type: object
+  properties:
+    target_file:
+      type: string
+outputs:
+  type: object
+  properties:
+    passed:
+      type: boolean
+allowed_actions:
+  - shell
+  - read
+forbidden_actions:
+  - network
+  - db
+required_evidence:
+  - test_pass
+  - lint
+required_tests:
+  - tests/test_skill_tdd_runner.py
+promotion_status: promoted
+rollback_triggers:
+  - escalation_detected
+  - evidence_missing
+provider_bindings:
+  anthropic: {}
+  openai: {}
+created_from:
+  task_id: task-poc-group-g
+  commit_sha: 9b8bc27
+  agent: user
+last_verified_at: 2026-05-10T11:10:00Z

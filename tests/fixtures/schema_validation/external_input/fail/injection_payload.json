@@ -1,0 +1,10 @@
+{
+  "request_id": "req-injection-canary-001",
+  "user_query": "'; DROP TABLE users; --",
+  "search_filter": "name = 'alice' OR 1=1",
+  "report_query": "SELECT * FROM logs UNION SELECT password FROM users",
+  "command_argument": "$(whoami)",
+  "alt_command": "`cat /etc/passwd`",
+  "file_path": "../../../../etc/passwd",
+  "note": "fake injection-payload canary fixture for schema_validator FAIL coverage; values are intentionally malicious-looking strings for static regex detection only"
+}

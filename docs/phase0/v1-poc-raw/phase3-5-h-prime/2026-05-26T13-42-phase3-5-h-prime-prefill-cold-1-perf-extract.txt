@@ -1,0 +1,56 @@
+=== 2026-05-26T13-42-phase3-5-h-prime-prefill-cold-1 perf-extract (F-8 hang 답습 영구, raw 890603165 bytes truncated) ===
+--no-conversation is not supported by llama-cli
+please use llama-completion instead
+
+Loading model... |-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| 
+
+
+▄▄ ▄▄
+██ ██
+██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄
+██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██
+██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀
+                                    ██    ██
+                                    ▀▀    ▀▀
+
+build      : b9298-c0c7e147e
+model      : Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+modalities : text
+
+available commands:
+  /exit or Ctrl+C     stop or exit
+  /regen              regenerate the last response
+  /clear              clear the chat history
+  /read <file>        add a text file
+  /glob <pattern>     add text files using globbing pattern
+
+
+> {
+  "model": "qwen3-coder-next:latest",
+  "created_at": "2026-05-23T12:02:38.210212747Z",
+  "response": "파이썬 비동기 프로그래밍은 `async`/`",
+  "done": true,
+  "done_reason": "length",
+  "context": [
+    151644,
+    872,
+    198,
+    126793,
+    12802,
+    144773,
+    73986,
+    57089,
+    20487,
+    84255,
+    81650,
+    53442,
+    144276,
+    20401,
+    20136,
+    113,
+    125512,
+
+=== perf statusline 추출 ===
+Prompt: 2491.4 t/s | Generation: 1000000.0 t/s
+
+(원본 log size = 890603165 bytes, F-8 interactive hang loop, 답습 영구 truncated. perf statusline은 측정 *완료* 직후 출력 — 위에서 추출. timeout 180s exit 124)

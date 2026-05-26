@@ -1,0 +1,24 @@
+# Stage 5 Cycle 4 fixture — FAIL expected (top-level permissions 부재)
+#
+# 본 fixture = top-level permissions: block 부재.
+#   - 기본 GitHub Actions 권한 = 광범위 (contents: write 등 포함)
+#   - → top-level permissions: contents: read 명시 의무 위반
+# → tools/workflow_permissions_check.py rc=1, violations>=1 (permissions-missing)
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — no permissions block (FAIL, missing)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+jobs:
+  sample_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sample step
+        run: |
+          set -e
+          echo "sample_job runs with default broad permissions — FAIL"

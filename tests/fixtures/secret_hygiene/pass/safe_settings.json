@@ -1,0 +1,8 @@
+{
+  "name": "alice",
+  "email": "public@example.com",
+  "page": 2,
+  "lang": "en",
+  "theme": "dark",
+  "max_results": 100
+}

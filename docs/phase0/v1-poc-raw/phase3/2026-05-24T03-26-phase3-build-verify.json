@@ -1,0 +1,141 @@
+{
+  "section": "§2.2 Step 4-8 빌드 + verify",
+  "step4_cmake_configure": {
+    "wall_clock_s": 3.7,
+    "cmake_cuda_architectures_resolved": "120a;121a",
+    "cmake_cuda_architectures_native": "121a-real",
+    "a_suffix_note": "cmake 가 120/121 → 120a/121a 자동 변환 (Blackwell arch-specific extensions activation)",
+    "fetchcontent_disconnected_warning": "Manually-specified variables were not used by the project: FETCHCONTENT_FULLY_DISCONNECTED (cmake 가 변수 인식 못함, R-7 격리 시도 불완전)",
+    "cuda_toolkit": "13.0.88",
+    "cuda_host_compiler": "GNU 13.3.0",
+    "nccl": "NOT FOUND (NCCL_LIBRARY/NCCL_INCLUDE_DIR 미존재) — multi-GPU 비최적, single-GPU 무관",
+    "openssl": "3.0.13 (libcrypto.so found)",
+    "ggml_version": "0.12.0",
+    "ggml_commit": "c0c7e147e",
+    "arm_features_detected": "HAVE_FMA only (NEON/SVE/SME/dotprod/matmul_int8/fp16_vector_arithmetic 모두 fail — GB10 ARM aarch64 인식 한계)",
+    "options_applied": ["GGML_CUDA=ON", "CMAKE_CUDA_ARCHITECTURES=120;121 → 120a;121a", "CMAKE_BUILD_TYPE=Release", "CMAKE_C_COMPILER_LAUNCHER=ccache", "CMAKE_CXX_COMPILER_LAUNCHER=ccache", "GGML_PERF=ON"]
+  },
+  "step5_build": {
+    "command": "DEBIAN_FRONTEND=noninteractive cmake --build build --config Release -j 10",
+    "wall_clock_start": "2026-05-24T03:21:59+09:00",
+    "wall_clock_end": "2026-05-24T03:26:37+09:00",
+    "wall_clock_duration_s": 278,
+    "wall_clock_duration_min": 4.63,
+    "expected_range_min": "30-120",
+    "outperformance_factor": "8-30× faster than estimate",
+    "factors": "GB10 nproc 20 (used -j 10 OOM margin) + nvcc Blackwell efficient + first build ccache miss",
+    "exit_code": 0,
+    "percent_completion": 100,
+    "fetchcontent_apt_egress_check": "0건 (download.cpp.o = llama-common source file, NOT FetchContent)",
+    "apt_snapshot_post_build": {"dpkg_count": 2753, "delta_from_pre": 0, "upgradable_count": 26, "delta": 0, "verdict": "R-7 격리 확정 — 빌드 중 의도-외 apt egress 0건"}
+  },
+  "step6_artifacts_verify": {
+    "binaries": [
+      {"name": "llama-cli", "size_bytes": 72480, "sha256": "6c46bb3dfe27baa1dc8411d241a31bf56d3fe4327e1b43019b5eff740f00e037"},
+      {"name": "llama-server", "size_bytes": 75104, "sha256": "3bfff2d16105c7447b16cb697d0d967c8acc7c15f726e8792c8ac8f85f78d4f3"},
+      {"name": "llama-gguf", "size_bytes": 75104, "sha256": "f74662e9d3e2e15c38c48fdb8f9519663dbdad87aa60f61a802376e8c729ed50"}
+    ],
+    "version_output": "version: 9298 (c0c7e147e), built with GNU 13.3.0 for Linux aarch64",
+    "version_cuda_identifier": "🟡 미출력 (cuobjdump cross-check 로 보완, R24 부분 충족)",
+    "libggml_cuda_size_MB": 102,
+    "cuobjdump_SASS_check": {
+      "command": "cuobjdump --list-elf build/bin/libggml-cuda.so.0.12.0",
+      "result": "ELF cubin: sm_120a.cubin + sm_121a.cubin 반복 패턴 (모든 CUDA kernel 양쪽 컴파일)",
+      "sm_120_included": true,
+      "sm_121_included": true,
+      "fallback_concern": "0 (양쪽 모두 native SASS 컴파일, PTX JIT fallback 의존 0)",
+      "verdict": "R-6 완전 충족 — sm_120a + sm_121a SASS 모두 포함 verbatim"
+    },
+    "build_dir_disk": "367MB (~10GB 예상 대비 27× 작음)",
+    "disk_use_pct_after": 82
+  },
+  "step6_5_gguf_metadata": {
+    "actual_blob_path": "/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb",
+    "brief_path_assumption_incorrect": "🔴 brief §2.1 Step 6 의 /root/.ollama/... 경로는 Ollama API /api/show 응답 (deprecated/stale) — 실제 daemon 사용 경로 다름. Phase 3 finding 기록 의무",
+    "discovery_method": "find / -name 'sha256-30e51a7cb1cf*' (실제 file 위치 탐색)",
+    "ollama_runner_env": {
+      "OLLAMA_HOST": "0.0.0.0:11434",
+      "OLLAMA_KEEP_ALIVE": "-1 (무한, 자연 idle 불가 — 측정 시 명시 unload 필요)",
+      "OLLAMA_NUM_PARALLEL": "1",
+      "LD_LIBRARY_PATH": "/usr/lib/ollama:/usr/lib/ollama/cuda_v13:/usr/local/nvidia/lib:/usr/local/nvidia/lib64",
+      "HOME": "/root",
+      "OLLAMA_LIBRARY_PATH": "/usr/lib/ollama:/usr/lib/ollama/cuda_v13"
+    },
+    "file_stat": {
+      "size_bytes": 51741599936,
+      "size_GiB": 48.18,
+      "perms": "0644",
+      "owner": "root:root",
+      "delangi_read_access": true,
+      "mtime": "2026-04-09 13:25:23",
+      "atime": "2026-05-23 11:57:42 (Phase 1 측정 시점)"
+    },
+    "content_hash_verify": {
+      "filename_hash": "sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb",
+      "computed_hash": "30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb",
+      "match": true,
+      "verdict": "integrity 확정"
+    },
+    "llama_gguf_dump": {
+      "gguf_version": 3,
+      "alignment": 32,
+      "data_offset": 6595776,
+      "n_kv": 38,
+      "n_tensors": 843,
+      "general_architecture_key": "✓ 존재 (kv[0])",
+      "qwen3next_keys": [
+        "qwen3next.attention.head_count", "qwen3next.attention.head_count_kv", "qwen3next.attention.key_length",
+        "qwen3next.attention.layer_norm_rms_epsilon", "qwen3next.attention.value_length",
+        "qwen3next.block_count", "qwen3next.context_length", "qwen3next.embedding_length",
+        "qwen3next.expert_count", "qwen3next.expert_feed_forward_length", "qwen3next.expert_shared_feed_forward_length",
+        "qwen3next.expert_used_count", "qwen3next.feed_forward_length",
+        "qwen3next.full_attention_interval", "qwen3next.norm_top_k_prob",
+        "qwen3next.rope.dimension_count", "qwen3next.rope.freq_base",
+        "qwen3next.ssm.conv_kernel", "qwen3next.ssm.group_count", "qwen3next.ssm.inner_size",
+        "qwen3next.ssm.state_size", "qwen3next.ssm.time_step_rank"
+      ],
+      "qwen3next_keys_count": 22,
+      "tokenizer_keys_count": 12,
+      "tensor_structure_verify": {
+        "layer_0_1_2_4_5_6": "SSM layer (ssm_a, ssm_ba.weight, ssm_conv1d.weight, ssm_dt, ssm_norm.weight, ssm_out.weight + ffn_*)",
+        "layer_3_7": "Attention layer (attn_k, attn_k_norm, attn_norm, attn_output, attn_q, attn_q_norm, attn_v + ffn_*)",
+        "interval_pattern": "full_attention_interval=4 정확 일치 (3, 7, 11, ..., 47 = 12 attention / 48 total)",
+        "phase1_finding_verification": "Phase 1 §3 V1-2 Step 1 SSM+Attention hybrid 발견 정확 검증 ✓"
+      },
+      "raw_log": "/tmp/llamacpp-gguf-dump.log (head -200 만 capture, full ~843 tensor lines)"
+    }
+  },
+  "step8_mid_cycle_anchor": {
+    "command": "sudo sha256sum /proc/3375/exe",
+    "hash": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "expected_hash": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "match": true,
+    "cumulative_count": "7회 (Phase 1 5회 + Phase 3 시작 1회 + 본 mid 1회)",
+    "verdict": "silent 교체 미발생, R-1 mid-cycle anchor 충족 (R-3 답습)"
+  },
+  "step1_post_build_freeze_check": {
+    "claude_processes": [1530918],
+    "ollama_daemon": 3375,
+    "ollama_runners": [912310, 4158963],
+    "r23_status": "본 세션 only ✓ (claude × 1)",
+    "ollama_runner_idle_status": "🟡 active (OLLAMA_KEEP_ALIVE=-1 무한 — §2.3 측정 진입 시 명시 unload 의무)"
+  },
+  "step7_deferred_to_2_3": {
+    "reason": "GGUF 로딩 51.7GiB GPU offload → 현재 가용 메모리 30GiB + swap 15GiB 부족 (Ollama runner × 2 점유 ~90GiB). OOM risk 명백",
+    "resolution": "§2.3 측정 단계에서 Ollama runner 명시 unload (`keep_alive: 0` API) 후 첫 측정 회가 sanity check 역할로 통합"
+  },
+  "section_2_2_summary": {
+    "all_steps_completed": true,
+    "blocking_findings": 0,
+    "critical_findings": [
+      "Qwen3-Next master 완전 지원 강한 evidence (Step 3 + Step 6.5)",
+      "sm_120a + sm_121a SASS 모두 포함 (Step 6 cuobjdump)",
+      "Ollama API /api/show FROM 경로 부정확 (Phase 3 finding)"
+    ],
+    "advisory_findings": [
+      "FETCHCONTENT_FULLY_DISCONNECTED 변수 cmake 인식 X (R-7 격리 시도 불완전, 단 빌드 중 fetch 실측 0)",
+      "llama-cli --version 가 CUDA 식별자 미출력 (R24 cuobjdump 로 보완)",
+      "OLLAMA_KEEP_ALIVE=-1 무한 → 자연 idle 불가, 명시 unload 의무"
+    ]
+  }
+}

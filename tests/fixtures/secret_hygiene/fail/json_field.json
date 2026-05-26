@@ -1,0 +1,6 @@
+{
+  "name": "fake-config",
+  "api_key": "ghp_FAKE_GROUP_D_NOT_REAL_TOKEN",
+  "redirect_url": "https://example.com/oauth/cb?access_token=fakecanaryR41T-NOTAREAL&state=x",
+  "version": "0.1"
+}

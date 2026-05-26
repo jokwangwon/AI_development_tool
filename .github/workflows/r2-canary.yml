@@ -1,0 +1,133 @@
+name: Redaction Canary Regression
+
+# R-6: CI/nightly canary regression workflow.
+#
+# 권위 근거:
+#   - ADR-011 §2.1 (d) 자동 회귀 검증 경로 확보
+#   - ADR-011 §3 R-6 매핑
+#   - R-5 §4 trigger matrix (CI/nightly + pattern/UDF change triggers)
+#   - R-5 §7 evidence format (Markdown + JSONL)
+#   - R-4.1 evidence §10.1 (docker compose command + JSON_EVIDENCE 추출)
+#
+# 본 workflow 는 검증만 수행한다 (CI verifies, CI does not decide policy,
+# CI does not mutate governance documents). 실패 시 workflow 실패 신호 발화 —
+# 정책/문서 자동 수정/commit/push 없음. permissions: contents: read 강제.
+#
+# 산출 artifact: r2-r4-canary-evidence
+#   - canary-output.log  (PoC stdout 전체)
+#   - canary-evidence.json  (JSON_EVIDENCE_BEGIN/END 구간 추출)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly 1회. UTC 18:00 = KST 03:00.
+    # 운영 영향 없는 시간대. 필요 시 사용자 단축 합의로 조정 (ADR-011 §2.4 T2).
+    - cron: "0 18 * * *"
+  push:
+    paths:
+      - "docker/r4-1-poc/**"
+      - "docker/r2-poc/**"
+      - "docs/architecture/canary-recheck-design.md"
+      - "docs/phase0/r4-1-trigger-extension-evidence.md"
+      - ".github/workflows/r2-canary.yml"
+  pull_request:
+    paths:
+      - "docker/r4-1-poc/**"
+      - "docker/r2-poc/**"
+      - "docs/architecture/canary-recheck-design.md"
+      - "docs/phase0/r4-1-trigger-extension-evidence.md"
+      - ".github/workflows/r2-canary.yml"
+
+# CI does not mutate governance documents.
+# 본 workflow 는 어떤 repository 파일도 자동 commit/push 하지 않는다.
+permissions:
+  contents: read
+
+jobs:
+  canary-regression:
+    name: R-4.1 Tier-1 42 canary regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show docker / compose versions
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Run R-4.1 PoC (Docker isolation, Tier-1 42 canary)
+        # R-4.1 evidence §10.1 명령 답습.
+        # `--exit-code-from r4-1-poc` 로 PoC service exit code 가
+        # workflow step exit code 로 propagate. PASS=0, FAIL=1.
+        # `set -o pipefail` 로 tee 통과 시에도 exit code 보존.
+        # `--no-log-prefix` 로 docker compose 의 service prefix
+        # ("r4-1-poc  | ...") 제거 — JSON_EVIDENCE_BEGIN/END 구간 추출
+        # 시 JSON 본문에 prefix 가 섞이지 않아 후속 step 의 json.load 가
+        # 정상 동작 (R-6 first run 인프라 fix, 사용자 단축 합의 2026-05-07).
+        run: |
+          set -o pipefail
+          docker compose \
+            -f docker/r4-1-poc/docker-compose.r4-1-poc.yml \
+            up --build --abort-on-container-exit --no-log-prefix --exit-code-from r4-1-poc \
+            | tee canary-output.log
+
+      - name: Extract JSON evidence segment
+        # 실패해도 추출 시도 (artifact 보존 위해).
+        # JSON_EVIDENCE_BEGIN / JSON_EVIDENCE_END 마커 사이 본문만 추출.
+        if: always()
+        run: |
+          awk '/=== JSON_EVIDENCE_BEGIN ===/{flag=1; next} /=== JSON_EVIDENCE_END ===/{flag=0} flag' \
+            canary-output.log > canary-evidence.json || true
+          if [ -s canary-evidence.json ]; then
+            echo "JSON evidence extracted (first 500 bytes):"
+            head -c 500 canary-evidence.json
+            echo ""
+            echo "---"
+            echo "Schema fields present:"
+            python3 -c "import json; d=json.load(open('canary-evidence.json')); print(sorted(d.keys()))" || echo "WARN: JSON parse failed"
+          else
+            echo "WARN: JSON evidence segment empty or missing"
+            ls -la canary-output.log canary-evidence.json || true
+          fi
+
+      - name: Verify canary verdict (PASS required)
+        # R-5 §5 판정: PASS 외 모든 verdict 는 workflow 실패.
+        # PARTIAL/FAIL/ROLLBACK 시 사용자 알림 + 정책 변경은 ADR/단축 합의 절차 (CI 외).
+        # 실 secret 검증 없음 — Tier-1 fake canary 만 inject.
+        if: success()
+        run: |
+          if [ ! -s canary-evidence.json ]; then
+            echo "R-6 FAIL: JSON evidence missing — PoC output 형식 변경 가능성"
+            exit 1
+          fi
+          python3 <<'PY'
+          import json, sys
+          with open("canary-evidence.json") as f:
+              data = json.load(f)
+          verdict = data.get("verdict", "UNKNOWN")
+          tier1_rate = data.get("tier1_pass_rate", "unknown")
+          tier1_count = data.get("tier1_count", "?")
+          print(f"verdict={verdict}  tier1_pass_rate={tier1_rate}  tier1_count={tier1_count}")
+          if verdict != "PASS":
+              print(f"R-6 FAIL: canary verdict={verdict} (PASS 외 — R-5 §5 판정 위반)")
+              sys.exit(1)
+          if tier1_rate != "42/42":
+              print(f"R-6 FAIL: tier1_pass_rate={tier1_rate} (42/42 외 — R-4.1 catalog drift)")
+              sys.exit(1)
+          print("R-6 PASS: canary regression OK (Tier-1 42/42 BLOCK, verdict PASS)")
+          PY
+
+      - name: Upload canary evidence artifact
+        # 성공/실패 무관 항상 업로드 (실패 evidence 도 분석 가치).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-r4-canary-evidence
+          path: |
+            canary-output.log
+            canary-evidence.json
+          retention-days: 30
+          if-no-files-found: warn

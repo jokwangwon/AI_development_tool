@@ -1,0 +1,5 @@
+a1b2c3d feat: initial commit
+b2c3d4e feat: add jsonl_hash_chain
+9999999 feat: add canonical_json (FORCE-PUSHED — sha changed)
+8888888 feat: add round-trip (FORCE-PUSHED — sha changed)
+7777777 feat: add history_anchor_verifier (FORCE-PUSHED — sha changed)

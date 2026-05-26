@@ -1,0 +1,13 @@
+# Provider configuration — config-driven URL은 allowlist 통과 (yaml ext)
+# 본 fixture 는 Tier-1 URL endpoint 가 yaml 파일에 *적법* 위치한 정상 사례.
+providers:
+  anthropic:
+    endpoint: https://api.anthropic.com/v1/messages
+  openai:
+    endpoint: https://api.openai.com/v1/chat/completions
+  google_ai:
+    endpoint: https://generativelanguage.googleapis.com/v1beta/models
+  azure_openai:
+    endpoint: https://my-tenant.openai.azure.com/openai/deployments
+  ollama_local:
+    endpoint: http://localhost:11434

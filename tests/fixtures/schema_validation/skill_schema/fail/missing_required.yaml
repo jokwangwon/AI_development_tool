@@ -1,0 +1,5 @@
+name: Incomplete Skill
+version: 0.1.0
+description: Missing required fields (id, scope, owner, inputs, outputs, allowed_actions, promotion_status, provider_bindings, last_verified_at)
+required_tests:
+  - tests/test_incomplete.py

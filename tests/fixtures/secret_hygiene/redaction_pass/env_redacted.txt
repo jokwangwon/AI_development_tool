@@ -1,0 +1,7 @@
+[INFO] config loaded
+OPENAI_API_KEY=[REDACTED]
+ANTHROPIC_API_KEY=[REDACTED]
+GITHUB_TOKEN=[REDACTED]
+AWS_ACCESS_KEY=[REDACTED]
+Authorization: [REDACTED]
+[INFO] all secrets masked, residual scan expected: 0 violations

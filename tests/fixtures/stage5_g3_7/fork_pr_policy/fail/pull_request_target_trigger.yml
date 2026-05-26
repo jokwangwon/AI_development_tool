@@ -1,0 +1,27 @@
+# Stage 5 Cycle 3 fixture — FAIL expected (pull_request_target HIGH risk)
+#
+# 본 fixture = HIGH risk trigger ``pull_request_target`` 검출 시연.
+#   - pull_request_target 은 fork PR 이 repo secrets 권한으로 실행됨
+#   - fork PR 코드가 repo secrets 에 접근 가능 → 심각한 노출 위험
+# → tools/workflow_fork_pr_secret_policy_check.py rc=1, violations>=1 (HIGH)
+#
+# 본 fixture 는 실 workflow 가 아니며 — 정적 verifier negative case 데이터.
+
+name: Fixture — pull_request_target (FAIL, HIGH)
+
+on:
+  pull_request_target:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  risky_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sample risky step
+        run: |
+          set -e
+          echo "risky_job runs on fork PR with repo secrets — HIGH RISK"

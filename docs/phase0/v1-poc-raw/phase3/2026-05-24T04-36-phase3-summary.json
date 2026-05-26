@@ -1,0 +1,142 @@
+{
+  "phase": "V-1 PoC Phase 3 (C-e 정공법) — BLOCKED by GGUF compatibility",
+  "session_iso": "2026-05-24T02:12 ~ 04:36 (~2.4 hours, 빌드 4.6분 + 진단 ~30분 + 종료 ~5분 + 사용자 대화/결정 ~1.7h)",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-phase3-entry-brief.md v1.1 + 3+1 합의 e76acc8 BLOCKING 7",
+  "outcome": "정공법 측정 *진입 차단* — §2.5 분기 발동 (GGUF 로딩 실패). 본 cycle = 측정 *시도* + GGUF 호환성 finding 확보. (iii)(iv) 직접 측정 0건.",
+
+  "section_2_1_precheck_pass": true,
+  "section_2_2_build_pass": true,
+  "section_2_3_measurement_blocked": true,
+  "section_2_4_teardown_pass": true,
+
+  "r1_anchors_cumulative": {
+    "phase1_5x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_start_6x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_mid_7x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "phase3_end_8x": "ce95c475432376728311695163fae21c7406998e4c05450e48b7908b78877b10",
+    "verdict": "8회 hash 일치 확정 — silent 교체 미발생, R-1 mid + end 추가 (R-3 답습)"
+  },
+
+  "build_summary": {
+    "llamacpp_repo": "ggml-org/llama.cpp.git (R-2 canonical)",
+    "head_sha": "c0c7e147e7efa6c5858754b47259ba4880f8a906",
+    "head_describe": "b9297-1-gc0c7e147",
+    "head_commit_msg": "requirements : bump torch to 2.11.0 (#23503)",
+    "wall_clock_build_min": 4.63,
+    "cuda_arch_actual": "120a;121a (cmake auto-suffix Blackwell)",
+    "sm_120_SASS_included": true,
+    "sm_121_SASS_included": true,
+    "qwen3_next_support_strong_evidence": true,
+    "fetchcontent_apt_egress": 0
+  },
+
+  "blocking_finding_detail": {
+    "trigger": "§2.3 Step 3 cold load 측정 시도 — 즉시 model load 실패",
+    "error_verbatim": "llama_model_load: error loading model: missing tensor 'blk.0.ssm_dt.bias'",
+    "ollama_gguf_path": "/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/sha256-30e51a7cb1cf1333b9e298b90b4c7790fe2572d8736b002482a0ac96328a2ffb",
+    "ollama_gguf_size_GiB": 48.18,
+    "ollama_gguf_tensor_pattern": "blk.X.ssm_dt (size=128) — 모든 SSM layer 존재, .bias suffix 별도 미저장",
+    "llamacpp_required_tensor": "LLM_TENSOR_SSM_DT + suffix 'bias' = blk.X.ssm_dt.bias",
+    "llamacpp_source": "src/models/qwen3next.cpp:87 — create_tensor(tn(LLM_TENSOR_SSM_DT, 'bias', i), {ssm_dt_rank}, 0) — flag=0 = required",
+    "conversion_qwen_py": "conversion/qwen.py:299-300 — 새 conversion 은 .dt_bias → .dt_proj.bias rename",
+    "root_cause_hypothesis": "Ollama 가 보유한 GGUF = 더 오래된 conversion (ssm_dt.bias 미저장 형식). llama.cpp c0c7e147 master = 최근 conversion 형식 강제 required.",
+    "implication_for_iii_iv": "Phase 3 정공법 (iii)(iv) 직접 측정 = 본 GGUF 로 차단. 측정 0건.",
+    "implication_for_provider_liquidity": "⭐ 헌법 5조 Provider Liquidity 답습 강도 ↑ — 모델 교체 = GGUF 변환 호환성 의무. llama.cpp ↔ Ollama 동급 비교 = format-version 일치 필수.",
+    "blocking_finding_intrinsic_value": "Phase 3 가 측정 자격 X 라도 본 finding 자체가 강한 evidence — F1·F2 가설 (Ollama 효율성 = format 차이 가능성) 의 입력 후보 추가"
+  },
+
+  "gguf_metadata_values": {
+    "general.architecture": "qwen3next",
+    "general.file_type": 15,
+    "general.parameter_count": 79674391296,
+    "qwen3next.block_count": 48,
+    "qwen3next.context_length": 262144,
+    "qwen3next.embedding_length": 2048,
+    "qwen3next.expert_count": 512,
+    "qwen3next.expert_used_count": 10,
+    "qwen3next.full_attention_interval": 4,
+    "qwen3next.attention.head_count": 16,
+    "qwen3next.attention.head_count_kv": 2,
+    "qwen3next.ssm.state_size": 128,
+    "qwen3next.ssm.conv_kernel": 4,
+    "qwen3next.ssm.inner_size": 4096
+  },
+
+  "phase1_prompt_detokenize_executed": {
+    "method": "GGUFReader + GPT-2 ByteLevel decoder + Qwen3 chat template parse",
+    "numpy_apt_install": "사용자 명시 (1회), dpkg 2753→2757 (+4), egress ubuntu repo",
+    "detokenized_prompts": {
+      "decode-161tok": {"tokens": 153, "preview": "파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3)..."},
+      "prefill-2k": {"tokens": 2001, "preview": "(same start)"},
+      "prefill-8k": {"tokens": 7815, "preview": "(same start, length ~13×)"},
+      "cc-prefill-8k-nonce": {"tokens": 7847, "preview": "[측정 nonce: 1779544042526946854-18716] 파이썬 비동기 프로그래밍..."}
+    },
+    "value_for_future_cycles": "Phase 3.5 / Phase 4 cycle 에서 동일 prompt 재사용 가능 — Phase 1 답습 정확 보장"
+  },
+
+  "additional_findings_during_phase3": [
+    {
+      "finding": "Ollama API /api/show 의 FROM 경로 = deprecated/stale",
+      "detail": "API 응답 'FROM /root/.ollama/models/blobs/sha256-30e51a7cb1cf...' 가 실제 daemon 사용 경로 (/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs/...) 와 불일치",
+      "impact": "brief §2.1 Step 6 정보 정정 필요 — 실제 path 식별은 find / -name 'sha256-*' 또는 /proc/<runner_pid>/maps 권고"
+    },
+    {
+      "finding": "OLLAMA_KEEP_ALIVE=-1 (무한)",
+      "detail": "runner subprocess env 에서 확인, 자연 idle 불가",
+      "impact": "측정 진입 시 명시 unload (`/api/generate` + keep_alive: 0) 의무 — brief §2.3 Step 2 보강 권고",
+      "resolution_in_cycle": "qwen2.5-coder + qwen3-coder-next 양쪽 keep_alive: 0 unload 성공 (메모리 33→6.2GB used, GPU 30.8GB→0)"
+    },
+    {
+      "finding": "Port 11434 listening process = docker-proxy (pid 4218)",
+      "detail": "Ollama daemon (pid 3375 root /bin/ollama serve) 와 별개로, docker-proxy 가 11434 forward — Ollama 가 Docker container 내 실행 가능성 시사",
+      "impact": "brief Ollama daemon architecture 가정 재검토 필요 — 별도 cycle 권고 (docker ps + container 식별)"
+    },
+    {
+      "finding": "GGUF Qwen3-Next 완전 구조 검증",
+      "detail": "843 tensors, 38 KV, SSM layer (0,1,2,4,5,6,8,9,10,...) + Attention layer (3,7,11,...,47) = full_attention_interval=4 정확 일치",
+      "value": "Phase 1 §3 V1-2 Step 1 SSM+Attention hybrid 발견 = llama.cpp 측정 가능했다면 cross-validation 가능했음"
+    },
+    {
+      "finding": "ccache + python3-numpy 신규 설치",
+      "detail": "ccache 4.9.1 (apt 582KB) + numpy 1.26.4 + 3 deps (apt ~30MB) — dpkg 2751 → 2757 (+6)",
+      "impact": "R-7 격리 — 모두 사용자 명시, cycle 진입 *전* 단계로 분리. 빌드 중 의도-외 apt egress 0건 확정"
+    }
+  ],
+
+  "iii_iv_v_6_hypothesis_status_post_phase3": {
+    "iii_ollama_vs_llamacpp": "🔴 직접 측정 차단 (GGUF format 호환성). *간접 후보*: GGUF format 차이 자체가 Ollama 구현 path 다름 시사",
+    "iv_router_overhead": "🔴 직접 측정 차단 (llama.cpp 로딩 실패). *간접 후보*: 별도 cycle (PyTorch/torch.profiler, NSight, vLLM tracing 등)",
+    "v_bw_bottleneck": "Phase 2 §9 답습 — dense effective BW ~85GB/s 강한 evidence carry-over. Phase 3 직접 강화/약화 0",
+    "6_sm_120_121_misunsupported": "🟢 강한 약화 evidence — cuobjdump verify sm_120a + sm_121a SASS 모두 포함 + 빌드 100% success. GB10 sm_121 미지원 가설 *후보 약화*",
+    "new_provider_liquidity_finding": "⭐ GGUF format 버전 의존성 = 모델 교체 비협상 (헌법 5조) 와 llama.cpp ↔ Ollama 동급 (MVP-1 합의) 간 긴장. 차세대 cycle 의 핵심 변수"
+  },
+
+  "next_cycle_recommendations": {
+    "A_phase3_5_new_gguf": "HF community GGUF (unsloth/bartowski Qwen3-Next-80B-A3B-Q4_K_M) 다운로드 → llama.cpp 재시도. egress ~50GB + 디스크 +50GB. 별도 brief + 사용자 명시.",
+    "B_phase3_5_qwen3_30b_a3b_control": "Qwen3-30B-A3B 대조군 cycle — classical MoE + dense, SSM 미포함 → GGUF format 호환성 격차 X (LLM_ARCH_QWEN3MOE 사용). 변수 분리 강화. (R-5 carry-over 답습)",
+    "C_llamacpp_older_commit": "llama.cpp .ssm_dt.bias optional 였던 commit checkout + 재빌드. git log 검색 ~10분. 단 측정 의도 (master 본질 비교) 부분 손상",
+    "D_b_hybrid_fallback": "B hybrid (prebuilt binary) — 단 prebuilt 도 동일 GGUF format 의존 가능성. 빠른 verify 후 결정",
+    "E_provider_liquidity_finding_deep_dive": "본 finding 자체 → ADR-011 §2.1 + 헌법 5조 + MVP-1 합의 (llama.cpp ↔ Ollama 동급) 교차 검토 cycle. 별도 합의 brief",
+    "F_advisory_wall_clock_measurement": "F2 production 영향 평가 (M3·M4 합의 R-12 답습) — Phase 3 결과 무관 진행 가능",
+    "G_m3_m4_decision_fixation_consensus": "현 상태 (Phase 1+2+3 부분) 종합 → M3·M4 결정 *고정* 자격 평가. (iii) 직접 측정 부재 = 자격 미충족 답습. 별도 합의 cycle"
+  },
+
+  "honesty_limits_phase3_post_blocked": [
+    "정공법 측정 자체 차단 — (iii)(iv) 직접 답 0건",
+    "GGUF format 호환성 차단은 본 (Ollama 보유) 단일 GGUF 한정 — 다른 GGUF (HF community 또는 새 conversion) 에서 답 다를 가능성",
+    "llama.cpp HEAD c0c7e147 한정 — 다른 commit (이전 또는 fork) 에서 답 다를 가능성",
+    "Provider Liquidity finding 자체는 강한 evidence 이나 본 cycle 외 cross-cycle 검증 별도 의무",
+    "Ollama daemon Docker wrapper 가능성 = 별도 cycle 검증 의무, 본 finding 추측 한정",
+    "qwen3-coder-next 단일 모델 한정 — 다른 Qwen3-Next 변종 (Instruct vs Thinking 등) 에서 답 다를 가능성"
+  ],
+
+  "section_2_4_teardown": {
+    "llama_cli_termination": "0건 ✓",
+    "r23_post": "claude × 1 (1530918, 본 세션 only) + Ollama daemon (3375) ✓",
+    "ollama_external_egress": 0,
+    "github_external_egress": 0,
+    "build_dir_disk_MB": 367,
+    "disk_use_pct": 82,
+    "apt_snapshot_final": {"dpkg": 2757, "upgradable": 26, "delta_from_post_numpy": 0}
+  }
+}

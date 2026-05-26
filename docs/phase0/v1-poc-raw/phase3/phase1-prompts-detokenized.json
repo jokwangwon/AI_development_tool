@@ -1,0 +1,122 @@
+{
+  "decode-161tok": {
+    "file": "2026-05-24-a-diagnosis-decode-result.json",
+    "token_count": 153,
+    "context_total": 674,
+    "first_tokens": [
+      126793,
+      12802,
+      144773,
+      73986,
+      57089,
+      20487,
+      84255,
+      81650,
+      53442,
+      144276
+    ],
+    "last_tokens": [
+      18411,
+      133970,
+      82190,
+      64577,
+      41429,
+      125511,
+      133828,
+      127268,
+      57268,
+      13
+    ],
+    "text_preview": "파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3) Future·Task·await 가능 객체의 차이, 4) 동시성과 병렬성의 구분 및 GIL 하에서 IO-bound 최적화, 5) 에러 처리·취"
+  },
+  "prefill-2k": {
+    "file": "2026-05-23T21-1-qwen3cnext-prefill2k.json",
+    "token_count": 2001,
+    "context_total": 2025,
+    "first_tokens": [
+      126793,
+      12802,
+      144773,
+      73986,
+      57089,
+      20487,
+      84255,
+      81650,
+      53442,
+      144276
+    ],
+    "last_tokens": [
+      17877,
+      61298,
+      53435,
+      40853,
+      42039,
+      85997,
+      125535,
+      127268,
+      57268,
+      25
+    ],
+    "text_preview": "파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3) Future·Task·await 가능 객체의 차이, 4) 동시성과 병렬성의 구분 및 GIL 하에서 IO-bound 최적화, 5) 에러 처리·취"
+  },
+  "prefill-8k": {
+    "file": "2026-05-23T21-1-qwen3cnext-prefill8k.json",
+    "token_count": 7815,
+    "context_total": 7839,
+    "first_tokens": [
+      126793,
+      12802,
+      144773,
+      73986,
+      57089,
+      20487,
+      84255,
+      81650,
+      53442,
+      144276
+    ],
+    "last_tokens": [
+      17877,
+      61298,
+      53435,
+      40853,
+      42039,
+      85997,
+      125535,
+      127268,
+      57268,
+      25
+    ],
+    "text_preview": "파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3) Future·Task·await 가능 객체의 차이, 4) 동시성과 병렬성의 구분 및 GIL 하에서 IO-bound 최적화, 5) 에러 처리·취"
+  },
+  "cc-prefill-8k-nonce": {
+    "file": "2026-05-24-cc-1-qwen3cnext-prefill8k-unique.json",
+    "token_count": 7847,
+    "context_total": 7871,
+    "first_tokens": [
+      58,
+      132612,
+      29281,
+      39676,
+      25,
+      220,
+      16,
+      22,
+      22,
+      24
+    ],
+    "last_tokens": [
+      17877,
+      61298,
+      53435,
+      40853,
+      42039,
+      85997,
+      125535,
+      127268,
+      57268,
+      25
+    ],
+    "text_preview": "[측정 nonce: 1779544042526946854-18716] 파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3) Future·Task·await 가능 객체의 차이, 4) 동시성과 병렬성의"
+  }
+}

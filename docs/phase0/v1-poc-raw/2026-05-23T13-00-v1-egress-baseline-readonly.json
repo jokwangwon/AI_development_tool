@@ -1,0 +1,89 @@
+{
+  "session_iso": "2026-05-23T13:00:00+09:00",
+  "scope": "V-1 PoC §8.1 egress baseline (측정 *전* snapshot)",
+  "brief_ref": "docs/phase0/jarvis-mvp1-v1-poc-entry-brief.md (DRAFT v1.1, HEAD 9e68fbb) §8.1 + R-3 + R-23",
+  "measurement_executed": false,
+  "ollama_external_egress_established": 0,
+  "notes": "본 raw = §4 측정 *전* baseline 캡처 한정. polling(30s)·lazy upload 재점검(5분)·tcpdump = 미적용(별도 cycle R-11b).",
+
+  "method": {
+    "primary": "sudo ss -tnp state established (사용자 명시 prompt 입력 1회, read-only)",
+    "secondary": "ss -tn state established + ss -tn 'state established ! ( src 127.0.0.0/8 or dst 127.0.0.0/8 )' (delangi 일반 사용자, process info 없음)",
+    "listen_recheck": "ss -tlnp | grep 11434 → 127.0.0.1:11434 only (M6 충족, Stage 1 일치)",
+    "sport_11434_established": "ss -tnp sport :11434 → 0건 (LISTEN only, ESTABLISHED 0)"
+  },
+
+  "external_established_full": [
+    {"local": "192.168.45.100:50562", "peer": "160.79.104.10:443",    "process": "claude",      "pid": 3999024, "fd": 18, "category": "claude_code_anthropic_api"},
+    {"local": "192.168.45.100:57068", "peer": "160.79.104.10:443",    "process": "claude",      "pid": 3999024, "fd": 17, "category": "claude_code_anthropic_api"},
+    {"local": "192.168.45.100:55416", "peer": "34.149.66.137:443",    "process": "claude",      "pid": 3999024, "fd": 21, "category": "claude_code_misc(GCP_likely)"},
+    {"local": "192.168.45.100:22",    "peer": "192.168.45.21:54612",  "process": "sshd",        "pid": 3905411, "fd": 4,  "category": "ssh_inbound_user_self"},
+    {"local": "192.168.45.100:22",    "peer": "192.168.45.21:56907",  "process": "sshd",        "pid": 3910996, "fd": 4,  "category": "ssh_inbound_user_self"},
+    {"local": "192.168.45.100:46386", "peer": "172.238.6.34:443",     "process": "tailscaled",  "pid": 2122,    "fd": 26, "category": "tailscale_vpn"},
+    {"local": "192.168.45.100:41948", "peer": "199.165.136.101:443",  "process": "tailscaled",  "pid": 2122,    "fd": 21, "category": "tailscale_vpn"},
+    {"local": "192.168.45.100:33450", "peer": "192.200.0.112:443",    "process": "tailscaled",  "pid": 2122,    "fd": 20, "category": "tailscale_vpn"},
+    {"local": "192.168.45.100:51532", "peer": "52.204.199.125:443",   "process": "node",        "pid": 3911129, "fd": 53, "category": "claude_code_node(AWS_likely)"}
+  ],
+
+  "localhost_established_full": [
+    {"local": "127.0.0.1:56496", "peer": "127.0.0.1:44733",  "process": "sshd",   "pid": 3910996, "fd": 7,  "category": "sshd_internal"},
+    {"local": "127.0.0.1:56500", "peer": "127.0.0.1:44733",  "process": "sshd",   "pid": 3910996, "fd": 8,  "category": "sshd_internal"},
+    {"local": "127.0.0.1:44733", "peer": "127.0.0.1:56496",  "process": "node",   "pid": 3908018, "fd": 21, "category": "claude_code_node_internal"},
+    {"local": "127.0.0.1:44733", "peer": "127.0.0.1:56500",  "process": "node",   "pid": 3911129, "fd": 24, "category": "claude_code_node_internal"},
+    {"local": "127.0.0.1:59626", "peer": "127.0.0.1:33309",  "process": "claude", "pid": 3912298, "fd": 18, "category": "additional_claude_instance"},
+    {"local": "127.0.0.1:33309", "peer": "127.0.0.1:59626",  "process": "node",   "pid": 3911129, "fd": 59, "category": "additional_claude_instance"},
+    {"local": "127.0.0.1:52086", "peer": "127.0.0.1:40613",  "process": "claude", "pid": 2803969, "fd": 18, "category": "additional_claude_instance"}
+  ],
+
+  "ollama_egress_finding": {
+    "ollama_pid": 3375,
+    "ollama_established_external": 0,
+    "ollama_established_localhost": 0,
+    "ollama_listen": "127.0.0.1:11434 only",
+    "verdict": "✅ §8.1 기준(측정 중 ESTABLISHED 외부 연결 0)에 *Ollama 한정* 으로 충족 — baseline 캡처 시점",
+    "honest_caveat": "본 snapshot = baseline (측정 0건 idle 상태). 측정 *중* / *직후* / *5분 후 lazy upload* 재점검 = 별도 cycle (R-11b·R-3)"
+  },
+
+  "process_inventory_active_concurrent": {
+    "claude_code_instances": [
+      {"pid": 3999024, "role": "본 세션 (외부 API 호출 활성)"},
+      {"pid": 3912298, "role": "additional instance (localhost only)"},
+      {"pid": 2803969, "role": "additional instance (localhost only, 큰 Recv-Q 116084)"},
+      {"pid": 3911129, "role": "node 컴포넌트 (외부 + 내부)"},
+      {"pid": 3908018, "role": "node 컴포넌트 (내부)"}
+    ],
+    "tailscale_vpn": {"pid": 2122, "external_connections": 3},
+    "sshd_inbound_sessions": 2,
+    "r23_finding": "🔴 **§4.6 R-23 측정 환경 동결 위반 — 측정 진입 시 의무**: 본 baseline 시점 활성 Claude Code 인스턴스 ≥ 3개. R-15 합류 — 측정 *중* 다른 Claude Code 인스턴스 호출 0. 측정 단계 진입 *전* 다른 세션 종료 의무 (사용자 책임). tailscaled = 측정에 직접 영향 X 가능 (외부 egress 발생이나 GPU/CPU 사용 ↓). sshd = 동결 불필요 (inbound)."
+  },
+
+  "telemetry_env_var_identification": {
+    "scope": "변수명 *식별 한정*. export 0건. 영구 설정 0건. brief §8.1 명시: Ollama 0.20.4 가 실제 인식하는지 미확정 (Agent A 정직성).",
+    "candidates": [
+      {"name": "OLLAMA_NOHISTORY",     "purpose_external": "history 비활성", "v0_20_4_recognition": "미확정 (소스 inspection 또는 측정 후 효과 비교 필요)"},
+      {"name": "OLLAMA_NO_ANALYTICS",  "purpose_external": "analytics 비활성", "v0_20_4_recognition": "미확정"},
+      {"name": "OLLAMA_NOPRUNE",       "purpose_external": "blob prune 비활성 (egress 직접 X, 디스크 관련)", "v0_20_4_recognition": "확정 (공식 README 일관)"},
+      {"name": "OLLAMA_HOST",          "purpose_external": "바인딩 주소 (egress X, M6 관련)", "v0_20_4_recognition": "확정"},
+      {"name": "OLLAMA_ORIGINS",       "purpose_external": "CORS origin (egress X)", "v0_20_4_recognition": "확정"}
+    ],
+    "current_export_state": "delangi shell: 모든 OLLAMA_* unset (Stage 1 §2 Step 5 확인). 데몬 환경 (/proc/3375/environ) root 권한 필요 미점검",
+    "next_action_recommendation": "측정 *진입* 시 fresh subshell (R-34) 에서 OLLAMA_NOHISTORY=1 + OLLAMA_NO_ANALYTICS=1 export 시도 → 효과 검증 (variable 인식 시 데몬 로그·동작 변경 관찰) → findings 첨부. 영구 설정 ❌"
+  },
+
+  "model_pull_egress_status": "본 진입 모델 pull 0건 → §8.1 점검 3(ollama.com / 미러 도메인) 미적용",
+
+  "limitations_per_brief": {
+    "R3_time_scope_limit": "본 baseline = 단일 snapshot. 측정 *중* polling(30s) / 측정 *직후* / 5분 lazy upload 재점검 = 미적용 (브리프 §8.3 별도 cycle R-11b)",
+    "lifetime_egress_invisible": "Ollama 자체 update check / 텔레메트리 lazy upload 가능성 = 본 snapshot 미커버. 데몬 lifetime 전체 egress = 별도 cycle",
+    "binary_origin_uncertain": "출처 미상 Ollama (R-1) → 표준 빌드와 동일한 egress 정책 적용 미확정. 측정 *후* sha256sum 재기록으로 silent 교체만 감지",
+    "domain_reverse_lookup_skipped": "외부 IP 9개 reverse DNS = DNS query egress 발생 → 본 진입 R-11 답습 0건. IP 정체 = process 식별로 추정 (Anthropic / Tailscale / SSH 클라이언트 등)"
+  },
+
+  "summary": {
+    "ollama_egress_baseline": "✅ Ollama PID 3375 → ESTABLISHED 외부 0, LISTEN 127.0.0.1:11434 only",
+    "r23_finding_actionable": "측정 진입 *전* 다른 Claude Code 인스턴스 종료 의무 (≥3개 활성)",
+    "telemetry_var_identification": "5종 후보 식별 (변수 인식 = 측정 단계 검증), export 0건",
+    "blocking_failures": 0,
+    "fail_closed_branches_triggered": 0
+  }
+}

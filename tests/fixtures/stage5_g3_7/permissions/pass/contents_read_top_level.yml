@@ -1,0 +1,25 @@
+# Stage 5 Cycle 4 fixture — PASS expected (top-level permissions: contents: read)
+#
+# 본 fixture = top-level permissions block 에 contents: read 명시.
+# → tools/workflow_permissions_check.py rc=0, violations=0
+#
+# 본 fixture 는 실 workflow 가 아니며 (CI 실행 0건) — 정적 verifier 입력 데이터 한정.
+
+name: Fixture — contents read at top level (PASS)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+permissions:
+  contents: read
+
+jobs:
+  sample_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sample step
+        run: |
+          set -e
+          echo "sample_job=PASS"

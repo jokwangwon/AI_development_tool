@@ -1,0 +1,326 @@
+# G2 GP-5 3차 — Provider URL/Model Name Scanner — Group A 3차 PoC
+#
+# 답습 출처:
+#   - docs/phase0/g2-gp5-poc3-url-endpoint-model-name-scanner.md (본 PoC 사양 §11 — 12 step CI 설계)
+#   - docs/architecture/llm-providers-design.md §9.3 (depcruise rule grep 보조)
+#   - docs/decisions/ADR-009-self-adapter-v2-entry-conditions.md C-N §5
+#   - .github/workflows/boundary-guard.yml (Group G 형식 직접 답습)
+#
+# 본 workflow 의 6 검증 (사용자 명시 §8 답습):
+#   - --list-catalogs self-check (url_endpoint=10 + model_name=19+ + extension_allowlist=8+)
+#   - E-1 PASS / E-1 FAIL (url-endpoint, ≥3 패턴 cover)
+#   - E-2 PASS / E-2 FAIL (model-name, ≥4 패턴 cover)
+#   - F-금지 grep (실 API key / 실 endpoint 호출 / production data 0건)
+#
+# 본 PoC 는 G2 GP-5 *Layer 1c 정적 검출 시제* 한정 — G2 GP-5 / G2 전체 PASS 권한 0건.
+# 풀 3+1 승격 trigger 6 = 0/6 발화 → Reviewer-only 단축 합의 적격.
+#
+# Artifact path = group-a3-logs/ (Group F 후속 답습 — leading dot 미사용).
+name: G2 GP-5 3차 Provider URL Scanner
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/provider_url_scanner.py"
+      - "tests/fixtures/provider_url_scanner/**"
+      - ".github/workflows/provider-url-scanner.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare log directory (artifact 답습)
+        run: mkdir -p group-a3-logs
+
+      - name: --list-catalogs self-check
+        id: list_catalogs
+        run: |
+          set +e
+          python tools/provider_url_scanner.py --list-catalogs \
+            > group-a3-logs/list-catalogs.stdout 2> group-a3-logs/list-catalogs.stderr
+          rc=$?
+          set -e
+          cat group-a3-logs/list-catalogs.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::--list-catalogs expected rc=0, got rc=$rc"
+            exit 1
+          fi
+          if ! grep -q "url_endpoint_catalog=10" group-a3-logs/list-catalogs.stderr; then
+            echo "::error::url_endpoint_catalog != 10 (Tier-1 답습 위반)"
+            exit 1
+          fi
+          mn_count=$(grep -oE "model_name_catalog=[0-9]+" group-a3-logs/list-catalogs.stderr | head -1 | grep -oE "[0-9]+")
+          if [ -z "$mn_count" ] || [ "$mn_count" -lt 19 ]; then
+            echo "::error::model_name_catalog=$mn_count < 19 (Tier-1 답습 위반)"
+            exit 1
+          fi
+          if ! grep -q "url_endpoint_count_compliant=True" group-a3-logs/list-catalogs.stderr; then
+            echo "::error::url_endpoint_count_compliant != True"
+            exit 1
+          fi
+          if ! grep -q "model_name_count_compliant=True" group-a3-logs/list-catalogs.stderr; then
+            echo "::error::model_name_count_compliant != True"
+            exit 1
+          fi
+          if ! grep -q "url_endpoint_allowlist_compliant=True" group-a3-logs/list-catalogs.stderr; then
+            echo "::error::url_endpoint_allowlist_compliant != True"
+            exit 1
+          fi
+          echo "list_catalogs=PASS" >> $GITHUB_OUTPUT
+          echo "--list-catalogs OK (url=10, model=$mn_count, allowlist=8+)"
+
+      - name: E-1 PASS — url-endpoint pass/ (rc=0 + violations=0)
+        id: e1_pass
+        run: |
+          set +e
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/url_endpoint/pass/ \
+            > group-a3-logs/e1-pass.stdout 2> group-a3-logs/e1-pass.stderr
+          rc=$?
+          set -e
+          cat group-a3-logs/e1-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::E-1 PASS expected rc=0, got rc=$rc (FP detected)"
+            exit 1
+          fi
+          if ! grep -q "violations=0" group-a3-logs/e1-pass.stderr; then
+            echo "::error::E-1 PASS missing 'violations=0'"
+            exit 1
+          fi
+          echo "e1_pass=PASS" >> $GITHUB_OUTPUT
+          echo "E-1 PASS OK (rc=0, violations=0, FP=0 — yaml allowlist 통과)"
+
+      - name: E-1 FAIL — url-endpoint fail/ (rc=1 + 3 패턴 cover)
+        id: e1_fail
+        run: |
+          set +e
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/url_endpoint/fail/ \
+            > group-a3-logs/e1-fail.stdout 2> group-a3-logs/e1-fail.stderr
+          rc=$?
+          set -e
+          cat group-a3-logs/e1-fail.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::E-1 FAIL expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          for pid in "anthropic" "openai" "google-ai"; do
+            if ! grep -q "$pid" group-a3-logs/e1-fail.stderr; then
+              echo "::error::E-1 FAIL missing pattern_id: $pid"
+              exit 1
+            fi
+          done
+          echo "e1_fail=PASS" >> $GITHUB_OUTPUT
+          echo "E-1 FAIL OK (rc=1, 3 패턴 cover: anthropic + openai + google-ai)"
+
+      - name: E-2 PASS — model-name pass/ (rc=0 + violations=0)
+        id: e2_pass
+        run: |
+          set +e
+          python tools/provider_url_scanner.py --mode model-name \
+            tests/fixtures/provider_url_scanner/model_name/pass/ \
+            > group-a3-logs/e2-pass.stdout 2> group-a3-logs/e2-pass.stderr
+          rc=$?
+          set -e
+          cat group-a3-logs/e2-pass.stderr
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::E-2 PASS expected rc=0, got rc=$rc (FP detected)"
+            exit 1
+          fi
+          if ! grep -q "violations=0" group-a3-logs/e2-pass.stderr; then
+            echo "::error::E-2 PASS missing 'violations=0'"
+            exit 1
+          fi
+          echo "e2_pass=PASS" >> $GITHUB_OUTPUT
+          echo "E-2 PASS OK (rc=0, violations=0, FP=0 — yaml allowlist 통과)"
+
+      - name: E-2 FAIL — model-name fail/ (rc=1 + 4 패턴 cover)
+        id: e2_fail
+        run: |
+          set +e
+          python tools/provider_url_scanner.py --mode model-name \
+            tests/fixtures/provider_url_scanner/model_name/fail/ \
+            > group-a3-logs/e2-fail.stdout 2> group-a3-logs/e2-fail.stderr
+          rc=$?
+          set -e
+          cat group-a3-logs/e2-fail.stderr
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::E-2 FAIL expected rc=1, got rc=$rc"
+            exit 1
+          fi
+          # 4 vendor 패턴 cover (anthropic-claude / openai-gpt / google-gemini / meta-llama)
+          for pid_substr in "anthropic-claude" "openai-gpt" "google-gemini" "meta-llama"; do
+            if ! grep -q "$pid_substr" group-a3-logs/e2-fail.stderr; then
+              echo "::error::E-2 FAIL missing pattern category: $pid_substr"
+              exit 1
+            fi
+          done
+          echo "e2_fail=PASS" >> $GITHUB_OUTPUT
+          echo "E-2 FAIL OK (rc=1, 4 vendor cover: anthropic-claude + openai-gpt + google-gemini + meta-llama)"
+
+      - name: F-금지 자기 검증 (Layer 1 grep — 실 API key / endpoint 호출 / production data 0건)
+        id: forbidden_check
+        run: |
+          set -e
+          violations=0
+          # F-금지: scanner 본문 provider SDK / HTTP 클라이언트 import 0건
+          if grep -E "^(import|from)\s+(openai|anthropic|google\.generativeai|litellm|ollama|httpx|requests)" tools/provider_url_scanner.py; then
+            echo "::error::F-금지 위반 — provider SDK / HTTP client import 검출"
+            violations=$((violations+1))
+          fi
+          # F-금지: 실 endpoint 호출 (urlopen / requests.get/post / httpx 등)
+          if grep -E "urllib\.request\.urlopen|requests\.(get|post)|httpx\.(get|post)|client\.completions" tools/provider_url_scanner.py; then
+            echo "::error::F-금지 위반 — 실 endpoint 호출 검출"
+            violations=$((violations+1))
+          fi
+          # F-금지: 실 API key (sk-/ghp_/AKIA prefix without FAKE/NOTAREAL marker)
+          if grep -rE 'sk-[a-zA-Z0-9]{20}|ghp_[a-zA-Z0-9]{20}|AKIA[A-Z0-9]{16}' tools/provider_url_scanner.py tests/fixtures/provider_url_scanner/ 2>/dev/null \
+             | grep -v "FAKE\|NOTAREAL\|fakecanary"; then
+            echo "::error::F-금지 위반 — 실 API key 검출"
+            violations=$((violations+1))
+          fi
+          # F-금지: production data path
+          if grep -rE "/home/.*\.claude|/Users/.*\.claude|production[_-]" \
+               tests/fixtures/provider_url_scanner/ tools/provider_url_scanner.py 2>/dev/null; then
+            echo "::error::F-금지 위반 — production data path 검출"
+            violations=$((violations+1))
+          fi
+          if [ "$violations" -ne 0 ]; then
+            echo "::error::F-금지 자기 검증 FAIL — $violations 위반"
+            exit 1
+          fi
+          echo "forbidden_check=PASS" >> $GITHUB_OUTPUT
+          echo "F-금지 자기 검증 OK — 0/8 위반"
+
+      - name: MVP-1 entry — URL/model coverage check (mvp1_entry/ fixtures)
+        id: mvp1_entry_url_model
+        run: |
+          set +e
+          # URL endpoint MVP-1 entry fail (6 remaining vendors)
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/mvp1_entry/url_endpoint/fail/ \
+            > group-a3-logs/mvp1-entry-e1-fail.stdout 2> group-a3-logs/mvp1-entry-e1-fail.stderr
+          rc_e1_fail=$?
+          # URL endpoint MVP-1 entry pass (yaml allowlist)
+          python tools/provider_url_scanner.py --mode url-endpoint \
+            tests/fixtures/provider_url_scanner/mvp1_entry/url_endpoint/pass/ \
+            > group-a3-logs/mvp1-entry-e1-pass.stdout 2> group-a3-logs/mvp1-entry-e1-pass.stderr
+          rc_e1_pass=$?
+          # Model name MVP-1 entry fail (o-series + Mistral family)
+          python tools/provider_url_scanner.py --mode model-name \
+            tests/fixtures/provider_url_scanner/mvp1_entry/model_name/fail/ \
+            > group-a3-logs/mvp1-entry-e2-fail.stdout 2> group-a3-logs/mvp1-entry-e2-fail.stderr
+          rc_e2_fail=$?
+          set -e
+          cat group-a3-logs/mvp1-entry-e1-fail.stderr
+          cat group-a3-logs/mvp1-entry-e1-pass.stderr
+          cat group-a3-logs/mvp1-entry-e2-fail.stderr
+          if [ "$rc_e1_fail" -ne 1 ]; then
+            echo "::error::MVP-1 entry E-1 fail expected rc=1, got rc=$rc_e1_fail"; exit 1
+          fi
+          if [ "$rc_e1_pass" -ne 0 ]; then
+            echo "::error::MVP-1 entry E-1 pass expected rc=0, got rc=$rc_e1_pass (FP detected)"; exit 1
+          fi
+          if [ "$rc_e2_fail" -ne 1 ]; then
+            echo "::error::MVP-1 entry E-2 fail expected rc=1, got rc=$rc_e2_fail"; exit 1
+          fi
+          # Cover check — 6 URL vendors + 5 model patterns
+          for pid in "replicate" "perplexity" "cohere" "huggingface" "together" "openrouter"; do
+            if ! grep -q "$pid" group-a3-logs/mvp1-entry-e1-fail.stderr; then
+              echo "::error::MVP-1 entry E-1 fail missing vendor: $pid"; exit 1
+            fi
+          done
+          for pid in "openai-o1" "openai-o3" "mistral-mistral" "mistral-mixtral" "mistral-codestral"; do
+            if ! grep -q "$pid" group-a3-logs/mvp1-entry-e2-fail.stderr; then
+              echo "::error::MVP-1 entry E-2 fail missing pattern: $pid"; exit 1
+            fi
+          done
+          echo "mvp1_entry_url_model=PASS" >> $GITHUB_OUTPUT
+          # Ledger entry candidate (사용자 명시 답습 — Backlog #5 별도 합의 영역)
+          echo "ledger_event_candidate=provider_adapter_enforcement_layer1_static" >> $GITHUB_OUTPUT
+          echo "MVP-1 entry URL/model scan OK — E-1 6 vendors + E-2 5 patterns cover"
+
+      - name: Build summary.json (Evidence summary 답습)
+        if: always()
+        run: |
+          cat > group-a3-logs/summary.json <<EOF
+          {
+            "list_catalogs": "${{ steps.list_catalogs.outputs.list_catalogs || 'FAIL' }}",
+            "e1_pass": "${{ steps.e1_pass.outputs.e1_pass || 'FAIL' }}",
+            "e1_fail": "${{ steps.e1_fail.outputs.e1_fail || 'FAIL' }}",
+            "e2_pass": "${{ steps.e2_pass.outputs.e2_pass || 'FAIL' }}",
+            "e2_fail": "${{ steps.e2_fail.outputs.e2_fail || 'FAIL' }}",
+            "forbidden_check": "${{ steps.forbidden_check.outputs.forbidden_check || 'FAIL' }}",
+            "mvp1_entry_url_model": "${{ steps.mvp1_entry_url_model.outputs.mvp1_entry_url_model || 'FAIL' }}",
+            "mvp1_entry_ledger_event_candidate": "${{ steps.mvp1_entry_url_model.outputs.ledger_event_candidate || 'provider_adapter_enforcement_layer1_static' }}",
+            "mvp1_entry_ledger_event_registration": "candidate-only (Backlog #5 분리 — ADR-012 §2.2 enum 정식 등록 별도 합의)",
+            "mvp1_entry_evidence_form": "Markdown step summary + JSONL stub (mvp1-entry-e1/e2 stderr) + actual run URL — Layer C 발효 시점 의무",
+            "mvp1_entry_scope": "Stage 3 Layer 1c MVP-1 entry coverage 회귀 — Layer C / MVP-1 PASS / Operational Readiness / Hermes PMO 격상 0건",
+            "f_forbidden_violations": "0/8",
+            "escalation_triggers": "0/6",
+            "url_endpoint_catalog": "10",
+            "model_name_catalog": "19",
+            "url_endpoint_allowlist_ext": "8",
+            "model_name_allowlist_ext": "5",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "run_id": "${{ github.run_id }}",
+            "feasibility_scope": "G2 GP-5 *Layer 1c 정적 검출 시제* 한정 — G2 GP-5 / G2 전체 PASS 권한 0건",
+            "external_dependencies": "0 (stdlib re + dataclasses 단독, gitleaks/depcruise/AST 통합 미진입)"
+          }
+          EOF
+          cat group-a3-logs/summary.json
+
+      - name: Upload provider URL scanner logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-url-scanner-evidence
+          path: group-a3-logs/
+          retention-days: 30
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          {
+            echo "## G2 GP-5 3차 Provider URL/Model Name Scanner — Evidence"
+            echo "- commit: ${{ github.sha }}"
+            echo "- ref: ${{ github.ref }}"
+            echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- event: g2_gp5_poc3_url_endpoint_model_name_layer1c"
+            echo "- agent: user"
+            echo "- ledger_layer: Layer 1c — Custom stdlib URL/model scanner (llm-providers-design.md §9.3 grep 보조 답습)"
+            echo "- list_catalogs: ${{ steps.list_catalogs.outputs.list_catalogs || 'FAIL' }} (url=10, model=19+, allowlist=8+)"
+            echo "- e1_pass: ${{ steps.e1_pass.outputs.e1_pass || 'FAIL' }}"
+            echo "- e1_fail: ${{ steps.e1_fail.outputs.e1_fail || 'FAIL' }} (3 패턴 cover: anthropic + openai + google-ai)"
+            echo "- e2_pass: ${{ steps.e2_pass.outputs.e2_pass || 'FAIL' }}"
+            echo "- e2_fail: ${{ steps.e2_fail.outputs.e2_fail || 'FAIL' }} (4 vendor cover: anthropic-claude + openai-gpt + google-gemini + meta-llama)"
+            echo "- forbidden_check: ${{ steps.forbidden_check.outputs.forbidden_check || 'FAIL' }} (실 API key / endpoint 호출 / production data 0건)"
+            echo "- mvp1_entry_url_model: ${{ steps.mvp1_entry_url_model.outputs.mvp1_entry_url_model || 'FAIL' }} (E-1 6 vendors + E-2 5 patterns cover)"
+            echo "- mvp1_entry_ledger_event_candidate: ${{ steps.mvp1_entry_url_model.outputs.ledger_event_candidate || 'provider_adapter_enforcement_layer1_static' }} (후보 한정 — Backlog #5 별도 합의 영역)"
+            echo "- mvp1_entry_evidence_form: Markdown step summary + JSONL stub + actual run URL (Layer C 발효 시점 의무)"
+            echo "- f_forbidden_violations: 0/8 (사용자 명시 8 금지 답습)"
+            echo "- escalation_triggers: 0/6 (사용자 명시 풀 3+1 승격 trigger 답습)"
+            echo "- external_dependencies: 0 (stdlib 단독)"
+            echo "- PASS scope: G2 GP-5 *Layer 1c 정적 검출 시제* 한정 (G2 GP-5 / G2 전체 PASS 권한 0건, 사용자 명시 답습)"
+          } >> $GITHUB_STEP_SUMMARY

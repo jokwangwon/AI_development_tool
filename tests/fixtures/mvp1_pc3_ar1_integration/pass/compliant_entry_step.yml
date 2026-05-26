@@ -1,0 +1,30 @@
+# Stage 4 PC-3 + AR-1 integration check fixture — PASS expected
+#
+# 본 fixture = PC-3 + AR-1 통합 검증 PASS sample workflow snippet.
+#   - entry step name 에 "MVP-1 entry" 포함 (감지 trigger)
+#   - `continue-on-error: true` 없음 → PC-3 PASS (CI-only enforcement 보존)
+#   - step body 에 `set -e` + `exit 1` 두 패턴 모두 존재 → AR-1 PASS (fail-closed)
+#
+# 본 fixture 는 실 workflow 가 아니며 (CI 실행 0건) — 정적 verifier 입력 데이터 한정.
+
+name: Fixture — PC-3 + AR-1 compliant entry step (PASS)
+
+on:
+  push:
+    branches:
+      - "fixture-only/**"
+
+jobs:
+  fixture_pass:
+    runs-on: ubuntu-latest
+    steps:
+      - name: MVP-1 entry — sample compliant scanner check
+        id: mvp1_entry_sample
+        run: |
+          set -e
+          # set -e + 명시 exit 1 양방향 fail-closed semantics
+          if [ ! -f "tools/sample_scanner.py" ]; then
+            echo "scanner missing"
+            exit 1
+          fi
+          echo "mvp1_entry_sample=PASS"

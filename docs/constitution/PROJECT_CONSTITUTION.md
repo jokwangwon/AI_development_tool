@@ -72,6 +72,13 @@
 4. **Fail-Fast**: 필수 환경 변수 누락 시 앱 시작을 즉시 중단한다
 5. **점진적 확장**: MVP 최소 변수로 시작, 서비스 추가 시 변수를 추가한다
 
+## 제5조-2: Provider Liquidity 원칙 (비협상)
+
+1. 모든 LLM/AI 도구 관련 결정은 Provider Liquidity 제약을 만족해야 한다 — 어떤 모델, 구독, 오케스트레이터에도 락인되지 않아야 하며, 교체가 코드 변경 없이 가능해야 한다 (메모리 line 7 답습)
+2. LLM provider 선택은 코드가 아닌 설정 파일(YAML 등)에서만 — 모델명·provider 분기 코드는 금지 (메모리 line 12 답습)
+3. 단일 provider 의존 시스템 금지 — 최소 2 provider always-on 원칙 (메모리 line 14 답습)
+4. 본 원칙은 비협상 — ADR-011 line 6 **상위 권위 매핑 답습** ("헌법 제8조 (보안), 헌법 제5조 (Provider Liquidity)"). **다른 권위 위계 (예: 8-2조 환경 관리 원칙 vs 5조-2) 자격 평가 = 본 cycle 범위 외, 별도 cycle 의무**
+
 ## 제9조: Git 워크플로우 원칙
 
 1. Conventional Commits 형식을 따른다

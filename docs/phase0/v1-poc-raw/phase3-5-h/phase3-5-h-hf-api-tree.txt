@@ -1,0 +1,5 @@
+PATH: Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+  SIZE: 18632183808 bytes / 17.353 GiB
+  LFS sha256: None
+  LFS oid: 382b4f5a164d200f93790ee0e339fae12852896d23485cfb203ce868fea33a95
+---

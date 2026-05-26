@@ -1,0 +1,2 @@
+83104272 -rw-rw-r-- 2 delangi delangi 18632183808  5월 25 17:00 /home/delangi/models/phase3-5/Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+83104272 -rw-rw-r-- 2 delangi delangi 18632183808  5월 25 17:00 /home/delangi/문서/project/category/bootcamp_game/ollama-data/imports/Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf

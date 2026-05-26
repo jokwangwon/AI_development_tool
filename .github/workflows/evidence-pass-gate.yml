@@ -1,0 +1,95 @@
+# Evidence / PASS Gate — Group B PoC (G3 통합 — Hermes-originated marker + Evidence 없는 PASS 차단)
+#
+# 답습 출처:
+#   - docs/phase0/g3-evidence-pass-gate-poc.md (본 PoC 사양)
+#   - .github/workflows/provider-adapter-enforcement.yml (Group A 1차/2차 시제 직접 답습)
+#   - docs/architecture/implementation-runtime-roadmap.md §3.1 (G3 영역 매트릭스)
+#   - docs/architecture/hermes-not-root-of-trust-runtime.md §2.2 #20
+#   - docs/decisions/ADR-012-evidence-ledger-protection.md §2.12
+#
+# 본 workflow 는 *Markdown governance 문서* 에 대한 양방향 검증:
+#   - PASS fixture: rc=0 (위반 0건)
+#   - FAIL fixture: rc=1 (≥4건 위반, 3 패턴 모두 cover)
+#
+# 본 PoC 는 *형식적 차단* 한정. 실 GitHub branch protection / 실 git pre-commit hook
+# 활성화는 별도 합의.
+name: Evidence / PASS Gate
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "tools/evidence_pass_gate.py"
+      - "tests/fixtures/evidence_pass_gate/**"
+      - ".github/workflows/evidence-pass-gate.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: PASS fixture — expect no violations (exit 0)
+        run: |
+          set +e
+          python tools/evidence_pass_gate.py tests/fixtures/evidence_pass_gate/pass/
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::PASS fixture reported violations (rc=$rc) — Layer 1 false positive"
+            exit 1
+          fi
+          echo "PASS fixture verified — no violations (rc=0)"
+
+      - name: FAIL fixture — expect violations (exit 1)
+        run: |
+          set +e
+          python tools/evidence_pass_gate.py tests/fixtures/evidence_pass_gate/fail/ > gate_output.txt
+          rc=$?
+          set -e
+          cat gate_output.txt
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::FAIL fixture did not return exit 1 (rc=$rc) — Layer 1 disabled?"
+            exit 1
+          fi
+          violation_count=$(wc -l < gate_output.txt)
+          if [ "$violation_count" -lt 4 ]; then
+            echo "::error::Expected >=4 violations, got $violation_count — pattern coverage regression"
+            exit 1
+          fi
+          # 3 패턴 모두 출현 검증 (책무 분담 회귀 차단)
+          for pat in hermes-originated-marker pass-without-evidence implementation-pass-unscoped; do
+            if ! grep -q "$pat" gate_output.txt; then
+              echo "::error::Expected pattern '$pat' missing — pattern coverage regression"
+              exit 1
+            fi
+          done
+          echo "FAIL fixture verified — $violation_count violations across 3 patterns (rc=1)"
+
+      - name: Evidence summary
+        if: always()
+        run: |
+          echo "## Evidence / PASS Gate — Evidence" >> $GITHUB_STEP_SUMMARY
+          echo "- commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ref: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- event: evidence_pass_gate_layer1" >> $GITHUB_STEP_SUMMARY
+          echo "- agent: user" >> $GITHUB_STEP_SUMMARY
+          echo "- ledger_layer: Layer 1 — Markdown governance gate (Group B PoC)" >> $GITHUB_STEP_SUMMARY

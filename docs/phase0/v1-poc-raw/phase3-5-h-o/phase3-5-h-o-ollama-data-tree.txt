@@ -1,0 +1,5 @@
+/home/delangi/문서/project/category/bootcamp_game/ollama-data/
+/home/delangi/문서/project/category/bootcamp_game/ollama-data/models
+/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/manifests
+/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/manifests/registry.ollama.ai
+/home/delangi/문서/project/category/bootcamp_game/ollama-data/models/blobs

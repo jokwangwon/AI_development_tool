@@ -1,0 +1,24 @@
+id: skill-invalid-action
+name: Invalid Action Skill
+version: 0.1.0
+scope: project
+owner: user
+description: Skill with allowed_actions ∩ forbidden_actions != empty + unknown action enum
+inputs:
+  type: object
+outputs:
+  type: object
+allowed_actions:
+  - shell
+  - network
+  - hack
+forbidden_actions:
+  - shell
+  - db
+required_evidence:
+  - test_pass
+promotion_status: proposed
+provider_bindings:
+  anthropic: {}
+  openai: {}
+last_verified_at: 2026-05-10T11:10:00Z

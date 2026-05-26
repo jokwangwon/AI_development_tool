@@ -65,8 +65,10 @@ def test_ollama_boss_advise_posts_chat_endpoint_with_model() -> None:
     assert captured["data"]["stream"] is False
     msgs = captured["data"]["messages"]
     assert msgs[0]["role"] == "system"
-    # system prompt 가 텍스트-전용 책무를 명시
-    assert "텍스트" in msgs[0]["content"] or "text" in msgs[0]["content"].lower()
+    # system prompt 가 검토 책무 + 재출력 금지 + 체크리스트 어휘를 명시
+    sp = msgs[0]["content"]
+    assert "재출력" in sp or "옮겨 쓰" in sp     # mirror 차단 어휘
+    assert "advisory" in sp.lower() or "검토" in sp
     # 사용자 prompt / worker 출력 / deterministic flags 가 user 메시지에 포함
     user_blob = msgs[-1]["content"]
     assert "작업 X" in user_blob
@@ -115,3 +117,35 @@ def test_ollama_boss_endpoint_is_localhost_only() -> None:
     assert "url" not in sig.parameters
     assert "host" not in sig.parameters
     assert "endpoint" not in sig.parameters
+
+
+# --- prompt 정밀화 (h) 답습: mirror 차단 + 4 항목 체크리스트 ---
+
+def test_system_prompt_forbids_mirroring_worker_output() -> None:
+    """신규 _SYSTEM_PROMPT 가 코드/명령 재출력 명시 금지 어휘 포함."""
+    from src.jarvis.boss import _SYSTEM_PROMPT
+    # mirror 차단 = "재출력" / "옮겨 쓰지 마십시오" / "그대로" 중 1+ 어휘
+    assert "재출력" in _SYSTEM_PROMPT
+    assert "옮겨 쓰" in _SYSTEM_PROMPT or "그대로" in _SYSTEM_PROMPT
+
+
+def test_system_prompt_includes_four_evaluation_axes() -> None:
+    """4 항목 체크리스트 어휘 (의도 부합 / 정확성 / 위험 / 품질) 모두 포함."""
+    from src.jarvis.boss import _SYSTEM_PROMPT
+    assert "의도" in _SYSTEM_PROMPT
+    assert "정확성" in _SYSTEM_PROMPT
+    assert "위험" in _SYSTEM_PROMPT
+    assert "품질" in _SYSTEM_PROMPT
+
+
+def test_system_prompt_long_enough_for_guidance() -> None:
+    """sufficient guidance 길이 — few-shot 예시 + 체크리스트 = 최소 400 chars."""
+    from src.jarvis.boss import _SYSTEM_PROMPT
+    assert len(_SYSTEM_PROMPT) >= 400
+
+
+def test_system_prompt_preserves_authority_invariants() -> None:
+    """기존 R2 답습 어휘 — 사람 게이트 단독 권위 + 결정적 flag 대체 금지 보존."""
+    from src.jarvis.boss import _SYSTEM_PROMPT
+    assert "사람 게이트" in _SYSTEM_PROMPT
+    assert "대체" in _SYSTEM_PROMPT     # 결정적 flag 대체 금지 답습

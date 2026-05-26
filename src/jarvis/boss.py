@@ -114,7 +114,7 @@ _DOMAIN_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], tuple[str, str, st
         ("의도 부합: ✅ fizzbuzz.py 생성 요청 충족",
          "정확성: ✅ 1~15 출력, FizzBuzz 분기 정확",
          "위험 신호: 없음",
-         "품질: 단순/명료, 검사 순서 명확"),
+         "품질: ✅ 단순/명료, 검사 순서 명확"),
     ),
     "shell": (
         ("의도 부합: 요청한 명령이 실행됐는가",
@@ -124,7 +124,7 @@ _DOMAIN_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], tuple[str, str, st
         ("의도 부합: ✅ pytest + lint 실행 요청 충족",
          "결과·로그 의미: ✅ 75 passed / Contracts 1 kept 0 broken",
          "위험 신호: 없음 (sudo·rm 흔적 0)",
-         "품질: 명령 chain 명료, 실행 ~2초"),
+         "품질: ✅ 명령 chain 명료, 실행 ~2초"),
     ),
     "file": (
         ("의도 부합: 요청한 파일이 생성·수정됐는가",
@@ -134,7 +134,7 @@ _DOMAIN_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], tuple[str, str, st
         ("의도 부합: ✅ hello.txt 생성 요청 충족",
          "내용 일치: ✅ 'JARVIS_E2E_OK' 본문 정확",
          "위험 신호: 없음",
-         "품질: UTF-8 평문, 줄바꿈 일관"),
+         "품질: ✅ UTF-8 평문, 줄바꿈 일관"),
     ),
     "general": (
         ("의도 부합: 요구·요청이 반영됐는가",
@@ -144,7 +144,7 @@ _DOMAIN_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], tuple[str, str, st
         ("의도 부합: ✅ 사용자 요구 핵심 반영",
          "사실 정확: ✅ 출처·근거 명시",
          "위험 신호: 없음",
-         "품질: 단락 구조 명료"),
+         "품질: ✅ 단락 구조 명료"),
     ),
 }
 

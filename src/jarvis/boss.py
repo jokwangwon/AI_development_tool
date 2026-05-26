@@ -12,11 +12,16 @@
   - §5 R3: advisory 실패는 게이트 진행(비차단) + 명시 경고. 본 모듈은 advise 가
     실패를 *던지게* 두고, 누락→경고 변환은 orchestrator(가용성 정책)에서.
 
-본 모듈은 외부 LLM SDK 를 직접 import 하지 않는다(트랙 B 에서 httpx/OpenAI-호환).
+본 모듈은 외부 LLM SDK 를 직접 import 하지 않는다(트랙 B 에서 stdlib urllib).
 트랙 A = StubBoss 주입으로 결정적 — 실 호출·HTTP·설치 0건.
+트랙 B = OllamaBoss(stdlib urllib.request 단독, `ollama` python SDK import 0건 —
+`.importlinter` 답습 + 신규 dep 0).
 """
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -87,6 +92,79 @@ class StubBoss:
         if self._fail:
             raise RuntimeError("boss endpoint 실패(모사)")
         return self._advice
+
+
+# Ollama 직결 — endpoint 하드코딩(SSRF 회피, 외부 host 주입 경로 0).
+_OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
+_DEFAULT_TIMEOUT_S = 60.0
+
+# 시스템 prompt — Boss 출력 책무(R2: 텍스트 전용 + 게이트 비-자동통과).
+_SYSTEM_PROMPT = (
+    "당신은 워커 출력 검토 advisory 입니다. "
+    "워커가 산출한 결과를 사람 게이트에 보여줄 *텍스트 요약*만 생성하십시오. "
+    "명령·콜백·실행 지시·자동 승인 어휘는 금지합니다(사람 게이트가 단독 권위). "
+    "위험 신호가 보이면 사실적으로 기술하되, 결정적 flag 를 *대체*하려 하지 마십시오."
+)
+
+
+class OllamaBoss:
+    """Ollama HTTP `/api/chat` 직결 BossLLM — stdlib urllib 단독.
+
+    답습: docs/phase0/jarvis-v00-working-sprint-brief.md §2
+      - `name` = 모델 식별자(헌법 5조 provider 교체 키).
+      - endpoint = localhost:11434 하드코딩(생성자에 url 인자 0건 — SSRF 회피).
+      - HTTP 실패·malformed JSON·content 누락 → RuntimeError (R3: 호출측 누락→경고).
+      - BossAdvice(summary, extra_flags=[], advisory_failed=False) — R2 텍스트 전용.
+
+    extra_flags 자동 추출 0건 = "boss 출력은 결정적 flag 를 *대체* 못 한다" 답습.
+    flag 합집합은 호출측(orchestrator merge_flags)이 결정적 flag 위주로 수행.
+    """
+
+    def __init__(self, model: str, timeout_s: float = _DEFAULT_TIMEOUT_S) -> None:
+        self.name = model
+        self._timeout = timeout_s
+
+    def advise(self, req: AdviceRequest) -> BossAdvice:
+        user_blob = (
+            f"[task prompt]\n{req.prompt}\n\n"
+            f"[worker alias] {req.worker_alias}\n\n"
+            f"[worker output]\n{req.output}\n\n"
+            f"[deterministic flags]\n" + ", ".join(req.deterministic_flags)
+        )
+        body = {
+            "model": self.name,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_blob},
+            ],
+        }
+        data = json.dumps(body).encode("utf-8")
+        request = urllib.request.Request(
+            _OLLAMA_CHAT_URL,
+            data=data,
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self._timeout) as resp:
+                raw = resp.read()
+        except (urllib.error.URLError, OSError) as exc:
+            raise RuntimeError(f"Ollama 호출 실패: {exc}") from exc
+
+        try:
+            payload = json.loads(raw)
+        except (ValueError, TypeError) as exc:
+            raise RuntimeError(f"Ollama 응답 JSON 파싱 실패: {exc}") from exc
+
+        # Ollama `/api/chat` 응답 schema = {"message": {"role": ..., "content": "..."}}
+        message = payload.get("message") if isinstance(payload, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str) or not content:
+            raise RuntimeError(
+                "Ollama 응답에 message.content 누락 — silent empty advice 차단"
+            )
+        return BossAdvice(summary=content, extra_flags=[], advisory_failed=False)
 
 
 def merge_flags(deterministic: list[str], extra: list[str]) -> list[str]:

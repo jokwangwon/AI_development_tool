@@ -21,7 +21,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.jarvis.approval import ApprovalGate, ApprovalRequest
-from src.jarvis.boss import OllamaBoss
+from src.jarvis.boss import OllamaBoss, boss_prompt_for
 from src.jarvis.isolation import PassthroughIsolation
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
@@ -58,7 +58,12 @@ def main() -> int:
     registry = WorkerRegistry()
     registry.register(worker)
 
-    boss = OllamaBoss(model=args.model, timeout_s=180.0)
+    # (m) shell 도메인 prompt 주입 — pytest+lint 명령 실행 검토 (코드 도메인 부적합).
+    boss = OllamaBoss(
+        model=args.model,
+        timeout_s=180.0,
+        system_prompt=boss_prompt_for("shell"),
+    )
 
     def approver(req: ApprovalRequest) -> bool:
         return True   # demo = 자동 승인 (게이트 *경로* 보존, 의사결정만 자동)

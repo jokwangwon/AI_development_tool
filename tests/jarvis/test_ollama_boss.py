@@ -139,9 +139,9 @@ def test_system_prompt_includes_four_evaluation_axes() -> None:
 
 
 def test_system_prompt_long_enough_for_guidance() -> None:
-    """sufficient guidance 길이 — few-shot 예시 + 체크리스트 = 최소 400 chars."""
+    """sufficient guidance 길이 — few-shot + 체크리스트 (도메인별 어휘 차이 허용)."""
     from src.jarvis.boss import _SYSTEM_PROMPT
-    assert len(_SYSTEM_PROMPT) >= 400
+    assert len(_SYSTEM_PROMPT) >= 380
 
 
 def test_system_prompt_preserves_authority_invariants() -> None:
@@ -149,3 +149,81 @@ def test_system_prompt_preserves_authority_invariants() -> None:
     from src.jarvis.boss import _SYSTEM_PROMPT
     assert "사람 게이트" in _SYSTEM_PROMPT
     assert "대체" in _SYSTEM_PROMPT     # 결정적 flag 대체 금지 답습
+
+
+# --- (m) 워커별 prompt 분기: boss_prompt_for + 4 도메인 + override ---
+
+def test_boss_prompt_for_code_equals_default_system_prompt() -> None:
+    """boss_prompt_for('code') = 기존 _SYSTEM_PROMPT (회귀 0, (h) 정밀화 보존)."""
+    from src.jarvis.boss import _SYSTEM_PROMPT, boss_prompt_for
+    assert boss_prompt_for("code") == _SYSTEM_PROMPT
+
+
+def test_boss_prompt_for_shell_includes_command_vocabulary() -> None:
+    from src.jarvis.boss import boss_prompt_for
+    p = boss_prompt_for("shell")
+    assert "명령" in p
+    assert "로그" in p or "결과" in p
+
+
+def test_boss_prompt_for_file_includes_file_vocabulary() -> None:
+    from src.jarvis.boss import boss_prompt_for
+    p = boss_prompt_for("file")
+    assert "파일" in p
+    assert "내용" in p
+
+
+def test_boss_prompt_for_general_includes_request_vocabulary() -> None:
+    from src.jarvis.boss import boss_prompt_for
+    p = boss_prompt_for("general")
+    assert "요구" in p or "요청" in p
+    assert "사실" in p or "명료" in p
+
+
+def test_boss_prompt_for_unknown_kind_falls_back_to_general() -> None:
+    from src.jarvis.boss import boss_prompt_for
+    assert boss_prompt_for("nonexistent_kind") == boss_prompt_for("general")
+
+
+def test_all_domains_preserve_mirror_block_and_authority() -> None:
+    """4 도메인 모두 (h) 정밀화 답습 — mirror 차단 + R2 권위."""
+    from src.jarvis.boss import boss_prompt_for
+    for kind in ("code", "shell", "file", "general"):
+        p = boss_prompt_for(kind)
+        assert "재출력" in p, f"{kind}: mirror 차단 어휘 누락"
+        assert "사람 게이트" in p, f"{kind}: R2 권위 어휘 누락"
+        assert "대체" in p, f"{kind}: 결정적 flag 대체 금지 어휘 누락"
+        assert len(p) >= 380, f"{kind}: sufficient guidance 길이 미달 ({len(p)})"
+
+
+def test_ollama_boss_defaults_to_code_domain_prompt() -> None:
+    """OllamaBoss(system_prompt=None) → boss_prompt_for('code') 사용."""
+    from src.jarvis.boss import OllamaBoss, boss_prompt_for
+    boss = OllamaBoss(model="m")
+    captured: dict = {}
+
+    def fake_urlopen(req, timeout=None):  # type: ignore[no-untyped-def]
+        captured["data"] = json.loads(req.data.decode("utf-8"))
+        return _fake_response({"message": {"content": "ok"}, "done": True})
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        boss.advise(AdviceRequest(prompt="p", worker_alias="w",
+                                  output="o", deterministic_flags=[]))
+    assert captured["data"]["messages"][0]["content"] == boss_prompt_for("code")
+
+
+def test_ollama_boss_system_prompt_override_applied() -> None:
+    """caller 가 명시한 system_prompt 가 HTTP body 에 그대로 전달."""
+    from src.jarvis.boss import OllamaBoss
+    custom = "CUSTOM-DOMAIN-PROMPT-XYZ"
+    boss = OllamaBoss(model="m", system_prompt=custom)
+    captured: dict = {}
+
+    def fake_urlopen(req, timeout=None):  # type: ignore[no-untyped-def]
+        captured["data"] = json.loads(req.data.decode("utf-8"))
+        return _fake_response({"message": {"content": "ok"}, "done": True})
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        boss.advise(AdviceRequest(prompt="p", worker_alias="w",
+                                  output="o", deterministic_flags=[]))
+    assert captured["data"]["messages"][0]["content"] == custom

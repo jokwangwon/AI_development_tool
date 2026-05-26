@@ -98,27 +98,85 @@ class StubBoss:
 _OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
 _DEFAULT_TIMEOUT_S = 60.0
 
-# 시스템 prompt — Boss 출력 책무 (R2 텍스트 전용 + 게이트 비-자동통과 +
-# 재출력 금지 + 체크리스트 형식). 답습: docs/phase0/jarvis-boss-prompt-
-# refinement-brief.md §2 — 이전 prompt 에서 LLM 이 워커 결과 코드를 mirror
-# 하던 행동 차단. 4 항목 평가 + few-shot 예시로 응답 형태 stabilize.
-_SYSTEM_PROMPT = (
-    "당신은 워커 출력 검토 advisory 입니다. 사람 게이트가 단독 권위이므로 "
-    "명령·콜백·실행 지시·자동 승인 어휘는 금지합니다.\n\n"
-    "⚠️ 워커 출력의 코드·명령·파일 내용을 *그대로 옮겨 쓰지 마십시오*. "
-    "재출력은 검토가 아닙니다. 다음 4 항목 각 1 line, 총 3~6 line, 한국어로 "
-    "평가만 작성하십시오.\n\n"
-    "- 의도 부합: 작업이 요청대로 수행됐는가\n"
-    "- 정확성: 결과 자체가 올바른가\n"
-    "- 위험 신호: 파괴적 명령·민감 정보·외부 호출 등 사후 검토 사항\n"
-    "- 품질: 간결성·완성도 (간단히)\n\n"
-    "예시:\n"
-    "- 의도 부합: ✅ fizzbuzz.py 생성 요청 충족\n"
-    "- 정확성: ✅ 1~15 출력, FizzBuzz 분기 정확\n"
-    "- 위험 신호: 없음\n"
-    "- 품질: 단순/명료, 검사 순서 명확\n\n"
-    "결정적 flag 를 *대체*하려 하지 마십시오 (추가 의견만)."
-)
+# 시스템 prompt 골격 — Boss 출력 책무 (R2 텍스트 전용 + 게이트 비-자동통과 +
+# 재출력 금지 + 체크리스트 형식). 답습: jarvis-boss-prompt-refinement-brief.md
+# (h) 및 jarvis-boss-prompt-branching-brief.md (m). 4 도메인 (code/shell/file/
+# general) 모두 동일 골격 + 도메인 어휘만 교체.
+
+# 도메인별 4 평가 항목 + few-shot 예시. mirror 차단 + R2 권위 = 답습 보존.
+_DOMAIN_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], tuple[str, str, str, str]]] = {
+    # (4 axis labels), (4 few-shot examples)
+    "code": (
+        ("의도 부합: 작업이 요청대로 수행됐는가",
+         "정확성: 결과 자체가 올바른가",
+         "위험 신호: 파괴적 명령·민감 정보·외부 호출 등 사후 검토 사항",
+         "품질: 간결성·완성도 (간단히)"),
+        ("의도 부합: ✅ fizzbuzz.py 생성 요청 충족",
+         "정확성: ✅ 1~15 출력, FizzBuzz 분기 정확",
+         "위험 신호: 없음",
+         "품질: 단순/명료, 검사 순서 명확"),
+    ),
+    "shell": (
+        ("의도 부합: 요청한 명령이 실행됐는가",
+         "결과·로그 의미: 출력 로그가 성공·실패 어디를 가리키는가",
+         "위험 신호: 파괴적 명령 흔적·민감 정보 누출·예기치 못한 부작용",
+         "품질: 명령 형태·실행 시간 (간단히)"),
+        ("의도 부합: ✅ pytest + lint 실행 요청 충족",
+         "결과·로그 의미: ✅ 75 passed / Contracts 1 kept 0 broken",
+         "위험 신호: 없음 (sudo·rm 흔적 0)",
+         "품질: 명령 chain 명료, 실행 ~2초"),
+    ),
+    "file": (
+        ("의도 부합: 요청한 파일이 생성·수정됐는가",
+         "내용 일치: 파일 내용이 요구 사항을 충족하는가",
+         "위험 신호: 민감 정보·외부 URL·credential 누출 흔적",
+         "품질: 포맷·스키마 정합 (간단히)"),
+        ("의도 부합: ✅ hello.txt 생성 요청 충족",
+         "내용 일치: ✅ 'JARVIS_E2E_OK' 본문 정확",
+         "위험 신호: 없음",
+         "품질: UTF-8 평문, 줄바꿈 일관"),
+    ),
+    "general": (
+        ("의도 부합: 요구·요청이 반영됐는가",
+         "사실 정확: 진술이 사실과 일치하는가",
+         "위험 신호: 오해 소지·민감 정보·검증되지 않은 주장",
+         "품질: 명료성·간결성 (간단히)"),
+        ("의도 부합: ✅ 사용자 요구 핵심 반영",
+         "사실 정확: ✅ 출처·근거 명시",
+         "위험 신호: 없음",
+         "품질: 단락 구조 명료"),
+    ),
+}
+
+
+def _render_prompt(axes: tuple[str, str, str, str],
+                   shots: tuple[str, str, str, str]) -> str:
+    return (
+        "당신은 워커 출력 검토 advisory 입니다. 사람 게이트가 단독 권위이므로 "
+        "명령·콜백·실행 지시·자동 승인 어휘는 금지합니다.\n\n"
+        "⚠️ 워커 출력의 코드·명령·파일 내용을 *그대로 옮겨 쓰지 마십시오*. "
+        "재출력은 검토가 아닙니다. 다음 4 항목 각 1 line, 총 3~6 line, "
+        "한국어로 평가만 작성하십시오.\n\n"
+        + "\n".join(f"- {a}" for a in axes) + "\n\n예시:\n"
+        + "\n".join(f"- {s}" for s in shots) + "\n\n"
+        "결정적 flag 를 *대체*하려 하지 마십시오 (추가 의견만)."
+    )
+
+
+def boss_prompt_for(task_kind: str) -> str:
+    """워커 출력 형태별 system prompt — code/shell/file/general 4 도메인.
+
+    답습: docs/phase0/jarvis-boss-prompt-branching-brief.md §2·§3
+      - 4 도메인 모두 동일 골격 (mirror 차단 + 4 항목 + few-shot + R2 권위).
+      - 미지 kind → 'general' fallback (silent error 차단).
+      - caller 가 명시 = OllamaBoss(system_prompt=boss_prompt_for("shell")).
+    """
+    template = _DOMAIN_TEMPLATES.get(task_kind) or _DOMAIN_TEMPLATES["general"]
+    return _render_prompt(*template)
+
+
+# 기본 prompt = code 도메인 (회귀 0 — 기존 _SYSTEM_PROMPT 상수 답습).
+_SYSTEM_PROMPT = boss_prompt_for("code")
 
 
 class OllamaBoss:
@@ -134,9 +192,16 @@ class OllamaBoss:
     flag 합집합은 호출측(orchestrator merge_flags)이 결정적 flag 위주로 수행.
     """
 
-    def __init__(self, model: str, timeout_s: float = _DEFAULT_TIMEOUT_S) -> None:
+    def __init__(
+        self,
+        model: str,
+        timeout_s: float = _DEFAULT_TIMEOUT_S,
+        system_prompt: str | None = None,
+    ) -> None:
         self.name = model
         self._timeout = timeout_s
+        # None = 기본 code 도메인 (회귀 0). caller = boss_prompt_for(kind) 주입.
+        self._system_prompt = system_prompt or _SYSTEM_PROMPT
 
     def advise(self, req: AdviceRequest) -> BossAdvice:
         user_blob = (
@@ -149,7 +214,7 @@ class OllamaBoss:
             "model": self.name,
             "stream": False,
             "messages": [
-                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "system", "content": self._system_prompt},
                 {"role": "user", "content": user_blob},
             ],
         }

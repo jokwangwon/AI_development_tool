@@ -5,16 +5,20 @@
     total_cost_usd(비용신호 공짜). 화면 스크래핑 함정 회피.
   - D-2: 워커 = CLI 에이전트, headless subprocess 우선.
 
-본 모듈은 외부 LLM SDK 를 직접 import 하지 않는다(워커 = 외부 *바이너리* 실행).
-Provider Liquidity(헌법 5조) 답습: 워커 교체 = 다른 바이너리 headless 호출.
+본 모듈은 외부 LLM SDK 를 직접 import 하지 않는다(워커 = 외부 *바이너리* 실행 또는
+stdlib HTTP 호출). Provider Liquidity(헌법 5조) 답습: 워커 교체 = 다른 바이너리
+headless 호출 또는 OllamaWorker model 인자 교체.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import subprocess
 import time
+import urllib.error
+import urllib.request
 import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol, runtime_checkable
@@ -214,3 +218,128 @@ class TmuxWorker:
             if self._poll_interval > 0:
                 time.sleep(self._poll_interval)
         return pane_text, None
+
+
+# ─── OllamaWorker (LLM-only) ──────────────────────────────────────────────
+# 답습: docs/phase0/jarvis-ollama-worker-promotion-brief.md
+#   - LLM 응답 텍스트만 수신. fs 행동 능력 *경로 부재* (구조적 안전 본질).
+#   - 결정적 fs 쓰기 = workdir 안 단일 파일 한정 + realpath traversal 차단.
+#   - claude/codex(CliWorker) 와 다른 책임 모델 = prompt injection 으로 LLM 이
+#     위험 명령 출력해도 실행 0건.
+# 헌법 5조: model 인자 교체 = provider 교체 = Provider Liquidity 답습.
+
+_OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
+_OLLAMA_WORKER_DEFAULT_TIMEOUT_S = 180.0
+
+# 기본 system prompt — "코드 외 출력 차단" 어휘. 사용자 override 가능.
+_DEFAULT_SYSTEM_PROMPT = (
+    "You output only code with no explanations or markdown fences."
+)
+
+# 마크다운 fence 제거 — `` ```python ... ``` `` 또는 ``` ... ``` 모두 처리.
+_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_+-]*\n?|\n?```$", re.MULTILINE)
+
+
+def _strip_code_fences(text: str) -> str:
+    """LLM 응답에서 마크다운 코드 fence 제거. fence 없으면 원문 그대로."""
+    stripped = _FENCE_RE.sub("", text).strip()
+    return stripped or text.strip()
+
+
+class OllamaWorker:
+    """Ollama HTTP /api/chat LLM-only 워커.
+
+    답습: docs/phase0/jarvis-ollama-worker-promotion-brief.md §1·§4
+      - 책무 = LLM 응답 + fence 제거 + (option) workdir 안 단일 파일 작성.
+      - LLM 임의 명령 실행 *경로 부재* → prompt injection 안전 본질.
+      - fail-soft (HTTP/JSON/content 실패 → WorkerResult is_error=True, raise 0).
+      - endpoint = localhost:11434 하드코딩 (SSRF 회피).
+
+    fs 행동:
+      - output_filename=None → 파일 미작성 (텍스트만 반환).
+      - output_filename="x.py" → workdir/x.py 결정적 작성 (realpath traversal 차단).
+      - 절대 경로 / .. escape → is_error=True + 파일 미생성.
+    """
+
+    def __init__(
+        self,
+        alias: str,
+        model: str,
+        output_filename: str | None = None,
+        timeout_s: float = _OLLAMA_WORKER_DEFAULT_TIMEOUT_S,
+        system_prompt: str | None = None,
+    ) -> None:
+        self.alias = alias
+        self._model = model
+        self._output_filename = output_filename
+        self._timeout = timeout_s
+        self._system_prompt = system_prompt or _DEFAULT_SYSTEM_PROMPT
+
+    def run(self, prompt: str, workdir: str) -> WorkerResult:
+        body = {
+            "model": self._model,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        }
+        data = json.dumps(body).encode("utf-8")
+        req = urllib.request.Request(
+            _OLLAMA_CHAT_URL, data=data, method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                raw = resp.read()
+        except (urllib.error.URLError, OSError) as exc:
+            return self._error(f"Ollama 호출 실패: {exc}")
+
+        try:
+            payload = json.loads(raw)
+        except (ValueError, TypeError) as exc:
+            return self._error(f"Ollama 응답 JSON 파싱 실패: {exc}")
+
+        message = payload.get("message") if isinstance(payload, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str) or not content.strip():
+            return self._error("Ollama 응답에 message.content 누락 — silent 차단")
+
+        code = _strip_code_fences(content)
+
+        if self._output_filename:
+            written = self._write_workdir_file(code, workdir)
+            if written is not None:
+                return written      # path traversal 또는 IO 실패 → 조기 종료
+
+        # WorkerResult.from_cli 가 기대하는 claude-shaped JSON 으로 정규화
+        result_blob = json.dumps(
+            {"result": code, "is_error": False, "total_cost_usd": 0.0},
+            ensure_ascii=False,
+        )
+        return WorkerResult.from_cli(0, result_blob)
+
+    def _error(self, msg: str) -> WorkerResult:
+        return WorkerResult(
+            exit_code=1, output=msg, cost_usd=None, is_error=True, raw=None,
+        )
+
+    def _write_workdir_file(self, code: str, workdir: str) -> WorkerResult | None:
+        """workdir 안 결정적 fs 쓰기. 성공 = None / 실패 = WorkerResult(is_error)."""
+        path = os.path.join(workdir, self._output_filename)  # type: ignore[arg-type]
+        # path traversal 차단: realpath 가 workdir 안인지 검증
+        try:
+            real_workdir = os.path.realpath(workdir)
+            real_path = os.path.realpath(path)
+        except OSError as exc:
+            return self._error(f"realpath 실패: {exc}")
+        if not real_path.startswith(real_workdir + os.sep):
+            return self._error(
+                f"path traversal 차단: {self._output_filename} → {real_path}"
+            )
+        try:
+            with open(real_path, "w", encoding="utf-8") as fh:
+                fh.write(code)
+        except OSError as exc:
+            return self._error(f"파일 쓰기 실패: {exc}")
+        return None

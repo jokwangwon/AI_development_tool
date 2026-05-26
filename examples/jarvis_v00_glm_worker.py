@@ -16,22 +16,19 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
 import tempfile
 import time
-import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.jarvis.approval import ApprovalGate, ApprovalRequest
 from src.jarvis.boss import OllamaBoss
-from src.jarvis.isolation import PassthroughIsolation
 from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
-from src.jarvis.worker import WorkerResult
+from src.jarvis.worker import OllamaWorker
 
 BOSS_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 WORKER_MODEL = "glm-4.7-flash:latest"
@@ -45,99 +42,6 @@ DEFAULT_PROMPT = (
     "(multiples of 3 -> 'Fizz', multiples of 5 -> 'Buzz', multiples of both -> "
     "'FizzBuzz', otherwise the number). Output only the code."
 )
-
-OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_+-]*\n?|\n?```$", re.MULTILINE)
-
-
-def _strip_code_fences(text: str) -> str:
-    """LLM 응답에서 마크다운 코드 fence 제거 (`` ```python ... ``` `` 등).
-
-    fence 가 없으면 원문 그대로 반환. boundary 정규화 한정 = 코드 외
-    설명 텍스트는 system prompt 가 차단 (의미 검증 = 파일 내 키워드).
-    """
-    stripped = _FENCE_RE.sub("", text).strip()
-    return stripped or text.strip()
-
-
-class OllamaWorker:
-    """LLM-only worker — Ollama 응답 텍스트만 받음. fs 행동 = orchestrator 책무.
-
-    답습: brief §1
-      - LLM 책무 = 텍스트 생성. fs 변경 *경로 부재* = prompt injection 안전.
-      - output_filename 지정 시 demo helper(run 내부) 가 결정적으로 작성.
-      - Worker Protocol 충족 = alias + run(prompt, workdir) -> WorkerResult.
-
-    헌법 5조 답습: model 인자로 워커 교체 가능 = Provider Liquidity 확장.
-    """
-
-    def __init__(
-        self,
-        alias: str,
-        model: str,
-        output_filename: str | None = None,
-        timeout_s: float = 180.0,
-    ) -> None:
-        self.alias = alias
-        self._model = model
-        self._output_filename = output_filename
-        self._timeout = timeout_s
-
-    def run(self, prompt: str, workdir: str) -> WorkerResult:
-        body = {
-            "model": self._model,
-            "stream": False,
-            "messages": [
-                {"role": "system",
-                 "content": "You output only code with no explanations or markdown fences."},
-                {"role": "user", "content": prompt},
-            ],
-        }
-        data = json.dumps(body).encode("utf-8")
-        req = urllib.request.Request(
-            OLLAMA_CHAT_URL, data=data, method="POST",
-            headers={"Content-Type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
-                raw = resp.read()
-        except (urllib.error.URLError, OSError) as exc:
-            return WorkerResult(exit_code=1, output=f"Ollama 호출 실패: {exc}",
-                                cost_usd=None, is_error=True, raw=None)
-        try:
-            payload = json.loads(raw)
-        except (ValueError, TypeError) as exc:
-            return WorkerResult(exit_code=1, output=f"JSON 파싱 실패: {exc}",
-                                cost_usd=None, is_error=True, raw=None)
-
-        message = payload.get("message") or {}
-        content = message.get("content")
-        if not isinstance(content, str) or not content.strip():
-            return WorkerResult(exit_code=1, output="응답 content 누락",
-                                cost_usd=None, is_error=True, raw=None)
-
-        code = _strip_code_fences(content)
-
-        # 결정적 fs 쓰기 (orchestrator 책무 — workdir 안에만)
-        if self._output_filename:
-            path = os.path.join(workdir, self._output_filename)
-            # path traversal 차단: realpath 가 workdir 안인지 검증
-            real_workdir = os.path.realpath(workdir)
-            real_path = os.path.realpath(path)
-            if not real_path.startswith(real_workdir + os.sep):
-                return WorkerResult(exit_code=1,
-                                    output=f"path 이탈 차단: {path}",
-                                    cost_usd=None, is_error=True, raw=None)
-            with open(path, "w", encoding="utf-8") as fh:
-                fh.write(code)
-
-        # claude-shaped result 정규화 (boss/guard/memory 의 일관 인터페이스)
-        result_blob = json.dumps(
-            {"result": code, "is_error": False, "total_cost_usd": 0.0},
-            ensure_ascii=False,
-        )
-        return WorkerResult.from_cli(0, result_blob)
-
 
 def _ollama_has_model(model: str) -> bool:
     try:

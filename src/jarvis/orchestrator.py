@@ -16,6 +16,7 @@ from typing import Callable
 
 from src.jarvis.approval import ApprovalGate, ApprovalRequest
 from src.jarvis.boss import AdviceRequest, BossAdvice, BossLLM, merge_flags
+from src.jarvis.memory import MemoryLog
 from src.jarvis.review import ReviewGuard, ReviewVerdict
 from src.jarvis.worker import Worker, WorkerResult
 
@@ -68,6 +69,7 @@ class Orchestrator:
         gate: ApprovalGate,
         workdir_factory: Callable[[str], str] | None = None,
         boss: BossLLM | None = None,
+        memory: MemoryLog | None = None,
     ) -> None:
         self._registry = registry
         self._guard = guard
@@ -75,6 +77,21 @@ class Orchestrator:
         self._workdir_factory = workdir_factory or _default_workdir_factory
         # R7: boss=None 이면 advisory 없이 MVP-0 동작 그대로 보존(하위 호환).
         self._boss = boss
+        # 자가진화 Layer 0: memory=None 이면 누적 0(하위 호환). 주입 시 fail-soft 적재.
+        self._memory = memory
+
+    def _record(self, report: "OutcomeReport") -> None:
+        """Layer 0 관찰 누적 — 부재·실패 모두 dispatch 차단 사유 0건(fail-soft).
+
+        MemoryLog 자체도 fail-soft 이지만 호출측 또 한 겹 try/except = 책무 분리
+        (memory 가 예외를 던지더라도 dispatch 는 완료).
+        """
+        if self._memory is None:
+            return
+        try:
+            self._memory.append(report)
+        except Exception:
+            return
 
     def _advise(
         self, prompt: str, worker: Worker, result: WorkerResult, verdict: ReviewVerdict
@@ -111,9 +128,11 @@ class Orchestrator:
         # 완료감지 = exit code(결정적). 실패 워커 결과는 반영 후보가 아님 → 게이트 미진입.
         # R8: 실패 워커엔 advise 미호출(비용·injection 표면 회피) — early-return 위.
         if result.is_error:
-            return OutcomeReport(prompt, worker.alias, result, verdict,
-                                 approved=False, applied=False,
-                                 status=OutcomeStatus.WORKER_FAILED)
+            failed = OutcomeReport(prompt, worker.alias, result, verdict,
+                                   approved=False, applied=False,
+                                   status=OutcomeStatus.WORKER_FAILED)
+            self._record(failed)        # Layer 0: 실패도 관찰 (운영 신호)
+            return failed
 
         # MVP-1 판단 지점: boss 주입 시에만 advisory(결정적 가드 *뒤*, 사람 게이트 *앞*).
         advice = self._advise(prompt, worker, result, verdict) if self._boss else None
@@ -130,6 +149,8 @@ class Orchestrator:
         )
         approved = self._gate.request(req)
         status = OutcomeStatus.APPLIED if approved else OutcomeStatus.DENIED
-        return OutcomeReport(prompt, worker.alias, result, verdict,
-                             approved=approved, applied=approved, status=status,
-                             advice=advice)
+        report = OutcomeReport(prompt, worker.alias, result, verdict,
+                               approved=approved, applied=approved, status=status,
+                               advice=advice)
+        self._record(report)            # Layer 0: 정상 종료도 관찰
+        return report

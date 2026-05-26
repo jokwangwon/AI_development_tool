@@ -1,0 +1,23 @@
+{
+  "cycle": "(h)'",
+  "timestamp": "2026-05-26T13-42",
+  "scope": "Qwen3-30B-A3B classical Q4_K_M bartowski direct, N=3 cold, 2 prompts",
+  "decode_161tok_generation_tok_per_s": {
+    "samples": [
+      "NaN",
+      "NaN",
+      "NaN"
+    ],
+    "valid_n": 0,
+    "error": "insufficient valid samples"
+  },
+  "prefill_2k_prompt_tok_per_s": {
+    "samples": [
+      "NaN",
+      "NaN",
+      "NaN"
+    ],
+    "valid_n": 0,
+    "error": "insufficient valid samples"
+  }
+}

@@ -1,0 +1,3 @@
+apt_dpkg_count: 2757
+ollama_egress_port_11434: 1
+timestamp: 2026. 05. 26. (화) 14:19:56 KST

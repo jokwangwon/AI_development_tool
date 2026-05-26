@@ -1,0 +1,56 @@
+=== 2026-05-26T13-42-phase3-5-h-prime-decode-cold-3 perf-extract (F-8 hang 답습 영구, raw 882987995 bytes truncated) ===
+--no-conversation is not supported by llama-cli
+please use llama-completion instead
+
+Loading model... |-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/ 
+
+
+▄▄ ▄▄
+██ ██
+██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄
+██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██
+██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀
+                                    ██    ██
+                                    ▀▀    ▀▀
+
+build      : b9298-c0c7e147e
+model      : Qwen_Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+modalities : text
+
+available commands:
+  /exit or Ctrl+C     stop or exit
+  /regen              regenerate the last response
+  /clear              clear the chat history
+  /read <file>        add a text file
+  /glob <pattern>     add text files using globbing pattern
+
+
+> 파이썬 비동기 프로그래밍의 핵심 개념을 다섯 가지 단락으로 자세히 한국어로 설명하시오. 1) async/await 키워드와 coroutine 객체의 의미, 2) 이벤트 루프 구조와 asyncio.run의 동작, 3) Future·Task·await 가능 객체의 차이, 4) 동시성과 병렬성의 구분 및 GIL 하에서 IO-bound 최적화, 5) 에러 처리·취소·timeout 패턴 (asyncio.gather, asyncio.wait_for, CancelledError). 각 단락에 구체적인 코드 예시를 포함하 ... (truncated)
+
+|-\| ---
+
+### 1) `async/await` 키워드와 Coroutine 객체의 의미
+
+파이썬의 비동기 프로그래밍 핵심은 `async`와 `await` 키워드를 사용해 **코루틴**(Coroutine)을 정의하고 조작하는 방식입니다. `async def`로 정의된 함수는 일반 함수가 아니라 **코루틴 함수**(coroutine function)이며, 이 함수를 호출하면 **코루틴 객체**(coroutine object)가 반환됩니다. 이 객체는 실제로 실행되지 않고, 나중에 이벤트 루프에 등록되어 비동기적으로 실행될 수 있습니다. `await`는 코루틴 객체가 완료될 때까지 기다
+
+[ Prompt: 431.6 t/s | Generation: 89.6 t/s ]
+
+> 
+
+> 
+
+> 
+
+> 
+
+> 
+
+> 
+
+> 
+
+
+=== perf statusline 추출 ===
+Prompt: 431.6 t/s | Generation: 89.6 t/s
+
+(원본 log size = 882987995 bytes, F-8 interactive hang loop, 답습 영구 truncated. perf statusline은 측정 *완료* 직후 출력 — 위에서 추출. timeout 180s exit 124)

@@ -53,7 +53,7 @@
 |-------|----|----------|---------|---------|--------------|
 | **α-1 (R-4)** | 3 도구 본문 | 3 file | **829** | Group D PoC + Group A 1차 + Group A 3차 | S-1 (`secret_scanner.py` 368) + T-2 (`provider_import_scanner.py` 178) + T-5 (`provider_url_scanner.py` 283) |
 | **α-2 (R-5)** | `.importlinter` 본문 | 1 file | **35** | Group A 2차 합의 + C-9 RA-9 사전 검증 PASS | T-2 import-linter |
-| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 §2.6.2 R2-1 | ST-3 |
+| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 차단조건 #6 (Docker 격리) (37번째 entry R-S1 정정 답습) | ST-3 |
 | **합산** | **3 영역** | **13 file** | **1192** | — | **4 sub-수단** (S-1 + T-2 + T-2 import-linter + T-5 + ST-3) |
 
 ### 2.2 Layer B §5.5 9 sub-수단 中 본 합의 영역 매트릭스

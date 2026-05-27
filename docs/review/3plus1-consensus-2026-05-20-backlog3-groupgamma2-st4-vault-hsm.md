@@ -14,7 +14,7 @@
 - Group α 합의 (`2026-05-14`) + Group β 합의 (`aa8a29a`) — 풀 3+1 형식 답습
 - 외부 LLM 응답 = `docs/external-review/2026-05-13-backlog3-t3-zone-review-response-gemini.md` (Q14/Q16/Q18) + `...-gpt.md` (Q14/Q16/Q18) — 양 vendor 종합 (C) PARTIAL = **BLOCK / DEFER to MVP-6** 수렴
 - **ADR-010** (`ADR-010-sqlcipher-vault-key-management.md`, Vault HSM + Shamir SSS 3-of-3 채택 §B + 운영 인프라 + §부정적 "Vault = 신규 SPOF" 자인) — §X 진입
-- ADR-012 §원칙 12 (1인 동일 호스트 SPOF 면책 + multi-host 전환 시 Layer 3/5 의무 트리거) / ADR-011 §2.1 (a)~(d) 4조건 [+ (e) 합의 APPROVE 패턴] + §2.4 T3 영역 / ADR-008 §A.2 R1-2 + P3
+- ADR-012 §원칙 12 (1인 동일 호스트 SPOF 면책 + multi-host 전환 시 Layer 3/5 의무 트리거) / ADR-011 §2.1 (a)~(d) 4조건 [+ (e) 합의 APPROVE 패턴] + §2.4 T3 영역 / ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + P3 (37번째 entry R-S1 정정 답습)
 - 5 영구 핵심 제약 (특히 #1 Hermes ≠ root of trust + #4 단일 source-of-truth) + Provider Liquidity 5-way
 
 ---

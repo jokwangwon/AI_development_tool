@@ -11,7 +11,7 @@
 - §C-1 충족 갱신 합의 = `docs/review/3plus1-consensus-2026-05-13-mvp1-pass-c1-k2-satisfaction.md` (commit `1dd1036`)
 - MVP-1 deepening roadmap = `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3.3 (ST-1~ST-5) + §3.4.2 + §3.5 + §3.6.3
 - Governance preconditions = `docs/architecture/governance-preconditions.md` §5.3 + §5.4
-- ADR-008 §A.2 R1-2 + §2.6.2 R2-1 (저장 경로 secret 보호 + docker secret 권위)
+- ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 (저장 경로 secret 보호 + docker secret 권위, 37번째 entry R-S1 정정 답습)
 - ADR-011 §2.4 (T1/T2/T3 분류)
 
 **검토 목적**: Backlog #1 ST-2 *단독 우선* 진입 적격성 + 4 결정 답습 적절성 확정. **본 합의 = ST-2 진입 적격성 권위 확정 한정 ≠ ST-2 실 구현 / docker-compose 변경 / CI workflow / hook 추가 / 다른 backlog 자동 진입 / MVP-1 PASS 재선언 / Operational Readiness PASS / Hermes PMO 격상 / §C-5 Satisfied 자동 갱신**.
@@ -37,7 +37,7 @@
 **사용자 명시 4 결정 답습**:
 1. fail-closed = **F-B 우선** (status file → Hermes healthcheck unhealthy) / F-C 보조 / **F-A 비채택** (docker socket 권한 영역 회피)
 2. Multi-host parity = **미요구** (MVP-1 단일 host 한정)
-3. inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 §2.6.2 R2-1 docker secret 답습)
+3. inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 차단조건 #6 + 부록 B (37번째 entry R-S1 정정 답습) docker secret 답습)
 4. secret rotation 정책 = **별도 합의 영역 분리** (runtime 변경 = fail-closed)
 
 ### 0.2 단축 채택 사유
@@ -201,10 +201,10 @@
 | docker secret 표준 mount 경로 | ✅ (Docker secret 공식 mount 경로 `/run/secrets/<name>` 표준) |
 | ST-3 docker secret 흐름과 정합 | ✅ (mvp1.md §5.5.1 ST-3 본문 채택 답습 — docker secret 메커니즘) |
 | Hermes upstream 변경 없이 sidecar 에서 감시 가능 | ✅ (sidecar = 별도 mount, Hermes container 자체 변경 0건) |
-| ADR-008 §2.6.2 R2-1 답습 | ✅ (docker secret 권위 출처) |
+| ADR-008 차단조건 #6 + 부록 B (37번째 entry R-S1 정정 답습) 답습 | ✅ (docker secret 권위 출처) |
 | 사용자 정의 mount 경로 = 구현 시점 후보로 보류 | ✅ (brief §5.4 답습 — 본 합의 = `/run/secrets/*` 기본) |
 
-**판정**: ✅ **적절** — `/run/secrets/*` = docker secret 표준 + ST-3 정합 + ADR-008 §2.6.2 R2-1 답습 + Hermes upstream 변경 회피. 사용자 명시 #3 결정 답습 충실.
+**판정**: ✅ **적절** — `/run/secrets/*` = docker secret 표준 + ST-3 정합 + ADR-008 차단조건 #6 + 부록 B (37번째 entry R-S1 정정 답습) 답습 + Hermes upstream 변경 회피. 사용자 명시 #3 결정 답습 충실.
 
 ### 1.7 검토 기준 #7 — runtime secret 변경 fail-closed 처리가 적절한지
 
@@ -223,11 +223,11 @@ runtime secret 변경 = 기본적으로 fail-closed
 **검증**:
 
 - 보안 우선 원칙 — runtime 변경 = 잠재적 attack vector 가능성 (false negative > false positive 회피)
-- ADR-008 §A.2 R1-2 답습 — 저장 경로 secret 보호 강화
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (37번째 entry R-S1 정정 답습) 답습 — 저장 경로 secret 보호 강화
 - GP-3 §5.3 답습 — "inotify 런타임 감시 (mtime/perm 변경 → 컨테이너 정지)"
 - secret rotation 정책 분리로 정상 rotation 시나리오 = 별도 합의 (사용자 #4 결정 답습)
 
-**판정**: ✅ **적절** — runtime 변경 fail-closed = 보안 우선 + ADR-008 §A.2 R1-2 답습 + GP-3 §5.3 답습 + secret rotation 정책 별도 합의 분리 정합. 사용자 명시 #4 결정 답습 충실.
+**판정**: ✅ **적절** — runtime 변경 fail-closed = 보안 우선 + ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (37번째 entry R-S1 정정 답습) 답습 + GP-3 §5.3 답습 + secret rotation 정책 별도 합의 분리 정합. 사용자 명시 #4 결정 답습 충실.
 
 ### 1.8 검토 기준 #8 — secret rotation 정책을 별도 합의로 분리했는지
 
@@ -276,8 +276,8 @@ runtime secret 변경 = 기본적으로 fail-closed
 | 3 | F-B 우선 채택 적절성 | ✅ 적절 (사용자 #1 결정 답습 + brief §7.2 6/6 사유 충족) |
 | 4 | F-A 비채택 적절성 | ✅ 적절 (사용자 #1 결정 답습 + brief §7.3 5/5 사유 충족) |
 | 5 | Multi-host parity 미요구 적절성 | ✅ 적절 (사용자 #2 결정 답습 + Backlog #7 영역 분리 보존) |
-| 6 | `/run/secrets/*` 감시 경로 적절성 | ✅ 적절 (사용자 #3 결정 답습 + ADR-008 §2.6.2 R2-1 + ST-3 정합) |
-| 7 | runtime secret 변경 fail-closed 처리 적절성 | ✅ 적절 (사용자 #4 결정 답습 + ADR-008 §A.2 R1-2 + GP-3 §5.3 답습) |
+| 6 | `/run/secrets/*` 감시 경로 적절성 | ✅ 적절 (사용자 #3 결정 답습 + ADR-008 차단조건 #6 + 부록 B (37번째 entry R-S1 정정 답습) + ST-3 정합) |
+| 7 | runtime secret 변경 fail-closed 처리 적절성 | ✅ 적절 (사용자 #4 결정 답습 + ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (37번째 entry R-S1 정정 답습) + GP-3 §5.3 답습) |
 | 8 | secret rotation 정책 별도 합의 분리 적절성 | ✅ 적절 (사용자 #4 결정 답습 + 연결 가능 후속 합의 영역 enumeration) |
 | 9 | T3 자동 진입 0건 적절성 | ✅ 적절 (10/10 T3 침범 후보 0건 — 사용자 명시 4 결정 답습 결과) |
 
@@ -425,7 +425,7 @@ Layer F : Hermes PMO 격상                                 — 아직 아님 (C
 | MVP-1 PASS Layer D 본문 답습 | ✅ (`210c98f` APPROVE WITH CONDITIONS 그대로 유지) |
 | Backlog #1 진입 직전 정비 합의 (`43b898c`) 답습 | ✅ |
 | ADR-011 §2.4 T1/T2/T3 분류 답습 | ✅ (ST-2 = T2 + T3 침범 10/10 0건) |
-| ADR-008 §A.2 R1-2 + §2.6.2 R2-1 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건) |
+| ADR-008 차단조건 #1 + #6 + 부록 B 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건, 37번째 entry R-S1 정정 답습) |
 | 5 영구 핵심 제약 보존 | ✅ (Provider Liquidity / Hermes ≠ root of trust / 메타포 강제 금지 / T3 분리 / 수단/목적 분리 모두 답습) |
 | 7 backlog 분리 매트릭스 답습 | ✅ (Backlog #2/#3/#4/#5/#7 자동 진입 0건) |
 | 자동 진입 0건 (ST-2 실 구현 / 다른 backlog / T3 영역 / Multi-host parity) | ✅ |
@@ -437,7 +437,7 @@ Layer F : Hermes PMO 격상                                 — 아직 아님 (C
 
 ## 6. 본 합의 요약 (한 단락)
 
-본 합의 는 **Backlog #1 ST-2 (inotify sidecar) *단독 우선 진입* 적격성 권위 확정 + 사용자 명시 4 결정 답습 적절성 확정 (Reviewer-only 단축 합의)** 이다. 사용자 명시 9 검토 기준 (ST-2 T2 영역 / Hermes upstream 변경 0건 / F-B 우선 채택 / F-A 비채택 / Multi-host parity 미요구 / `/run/secrets/*` 감시 경로 / runtime secret 변경 fail-closed / secret rotation 정책 별도 합의 분리 / T3 자동 진입 0건) 모두 9/9 적절 확정 + 7 풀 3+1 승격 트리거 0/7 발화 확인 + §5.5 9 sub-수단 본문 채택 변경 0건 + C-1~C-8 상태 변경 0건 (§C-5 Deferred 그대로 유지). 사용자 명시 4 결정 — (1) fail-closed = **F-B 우선** (status file → Hermes healthcheck unhealthy, docker-compose level) / F-C 보조 / **F-A 비채택** (docker socket 권한 영역 회피) / (2) **Multi-host parity 미요구** (MVP-1 단일 host 한정) / (3) inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 §2.6.2 R2-1 docker secret 답습) / (4) **runtime secret 변경 = fail-closed + secret rotation 정책 = 별도 합의 영역 분리** — 모두 권위 확정. **본 합의 ≠ ST-2 실 구현 / docker-compose 변경 / CI workflow / hook / Hermes Dockerfile 변경 / 다른 backlog 자동 진입 / T3 영역 자동 진입 / Multi-host parity 자동 진입 / MVP-1 PASS *재선언* / Operational Readiness PASS / Hermes PMO 격상 / §C-5 *Satisfied* 자동 갱신** (사용자 명시 답습 — "구현은 아직 하지 않음"). 다음 단계 사용자 결정 영역 = ST-2 *실 구현* 진입 (별도 합의 + 사용자 명시) 또는 CONTEXT / INDEX / SESSION 메타 갱신 (별도 commit 분리 답습) 또는 다른 backlog 진입.
+본 합의 는 **Backlog #1 ST-2 (inotify sidecar) *단독 우선 진입* 적격성 권위 확정 + 사용자 명시 4 결정 답습 적절성 확정 (Reviewer-only 단축 합의)** 이다. 사용자 명시 9 검토 기준 (ST-2 T2 영역 / Hermes upstream 변경 0건 / F-B 우선 채택 / F-A 비채택 / Multi-host parity 미요구 / `/run/secrets/*` 감시 경로 / runtime secret 변경 fail-closed / secret rotation 정책 별도 합의 분리 / T3 자동 진입 0건) 모두 9/9 적절 확정 + 7 풀 3+1 승격 트리거 0/7 발화 확인 + §5.5 9 sub-수단 본문 채택 변경 0건 + C-1~C-8 상태 변경 0건 (§C-5 Deferred 그대로 유지). 사용자 명시 4 결정 — (1) fail-closed = **F-B 우선** (status file → Hermes healthcheck unhealthy, docker-compose level) / F-C 보조 / **F-A 비채택** (docker socket 권한 영역 회피) / (2) **Multi-host parity 미요구** (MVP-1 단일 host 한정) / (3) inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 차단조건 #6 + 부록 B (37번째 entry R-S1 정정 답습) docker secret 답습) / (4) **runtime secret 변경 = fail-closed + secret rotation 정책 = 별도 합의 영역 분리** — 모두 권위 확정. **본 합의 ≠ ST-2 실 구현 / docker-compose 변경 / CI workflow / hook / Hermes Dockerfile 변경 / 다른 backlog 자동 진입 / T3 영역 자동 진입 / Multi-host parity 자동 진입 / MVP-1 PASS *재선언* / Operational Readiness PASS / Hermes PMO 격상 / §C-5 *Satisfied* 자동 갱신** (사용자 명시 답습 — "구현은 아직 하지 않음"). 다음 단계 사용자 결정 영역 = ST-2 *실 구현* 진입 (별도 합의 + 사용자 명시) 또는 CONTEXT / INDEX / SESSION 메타 갱신 (별도 commit 분리 답습) 또는 다른 backlog 진입.
 
 ---
 

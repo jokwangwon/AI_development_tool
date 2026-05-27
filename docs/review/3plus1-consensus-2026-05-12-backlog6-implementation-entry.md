@@ -81,7 +81,7 @@
 | 항목 | 본 검토 답습 | 충족 |
 |------|----------|------|
 | **S-1 본문 채택 적격성** | Group D PoC (`tools/secret_scanner.py` 261줄) 답습 변경 0건 + R-4.1 Tier-1 45 patterns 답습 변경 0건 + actual run `25623028888` SUCCESS 답습 + Layer A §1.2 답습 | ✅ |
-| **ST-3 본문 채택 적격성** | docker secret 단독 (ADR-008 §2.6.2 R2-1 답습) + Tier-2 (Vault HSM) 미진입 (Backlog #7 Operational Readiness 분리) + Layer A §1.2 답습 | ✅ |
+| **ST-3 본문 채택 적격성** | docker secret 단독 (ADR-008 차단조건 #6 (Docker 격리) 답습) + Tier-2 (Vault HSM) 미진입 (Backlog #7 Operational Readiness 분리) + Layer A §1.2 답습 (37번째 entry R-S1 정정 답습) | ✅ |
 | **PC-3 본문 채택 적격성** | CI-only enforcement (T2 영역) + local pre-commit framework PC-4 미진입 (Backlog #1 1.5차 보강 분리) + Layer A §1.2 답습 | ✅ |
 | **AR-1 본문 채택 적격성** | CI step fail-closed (T2 영역) + branch protection AR-2 미진입 (Backlog #3 T3 영역 분리) + Layer A §1.2 답습 | ✅ |
 | **G3-7 row 4 항목** | MVP-1 영역 4 항목 ((i) GitHub Actions secrets 사용 0건 grep / (ii) `secrets.*` 참조 감지 / (iv) fork PR secret 접근 차단 default / (v) workflow `permissions: contents: read` 명시) — 본문 채택 적격 / 분리 영역 2 항목 ((iii)(`pull_request_target`)) — Backlog #1 + T2/T3 별도 합의 분리 | ✅ |
@@ -131,7 +131,7 @@
 |------|------------|------|
 | **R-4.1 Tier-1 45 patterns** | 변경 0건 (Group D 답습 그대로 — Prefix 36 + regex 7 + alternation 2) | ✅ |
 | **Tier-2 / Tier-3 catalog 자동 확장** | 0건 (Tier-1 한정 — 별도 합의 영역) | ✅ |
-| **Docker secret 도입** | ADR-008 §2.6.2 R2-1 답습 (정책 변경 0건) — entrypoint stat / inotify watch (ST-1 / ST-2) = 1.5차 보강 영역 분리 | ✅ |
+| **Docker secret 도입** | ADR-008 차단조건 #6 (Docker 격리) 답습 (정책 변경 0건) — entrypoint stat / inotify watch (ST-1 / ST-2) = 1.5차 보강 영역 분리 (37번째 entry R-S1 정정 답습) | ✅ |
 | **`pull_request_target` workflow** | 미도입 (G3-7 row 분리 영역 답습 — T2/T3 별도 합의) | ✅ |
 | **Vault HSM ST-4** | Operational Readiness 분리 (T3 영역 — Backlog #7) — 정책 변경 0건 | ✅ |
 | **외부 LLM 자동 호출 / 실 API key / provider SDK 호출** | 0건 (본 합의 = 시작 권한 발효 *적격성* 한정) | ✅ |

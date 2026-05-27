@@ -73,23 +73,44 @@
 
 ### 3.2 11 workflow check name catalog 본문 채택 (R-3 BLOCKING 흡수)
 
-| # | workflow file | workflow name | job id | job name | required check 후보 (GitHub UI 인식 형식) |
-|---|---|---|---|---|---|
-| 1 | `boundary-guard.yml` | `G3 + G4 Boundary Guard` | guard | `guard` | "**G3 + G4 Boundary Guard / guard**" 또는 "**guard**" |
-| 2 | `evidence-pass-gate.yml` | `Evidence / PASS Gate` | enforce | `enforce` | "**Evidence / PASS Gate / enforce**" (workflow name 에 `/` 포함 — verify 의무) |
-| 3 | `g4-hash-chain.yml` | `G4 Hash Chain + JCS` | enforce | `enforce` | "**G4 Hash Chain + JCS / enforce**" |
-| 4 | `history-anchor-verifier.yml` | `G4 History Anchor Verifier (Layer 5)` | verify | `verify` | "**G4 History Anchor Verifier (Layer 5) / verify**" |
-| 5 | `memory-skill-migration-feasibility.yml` | `G2 GP-6 Memory/Skill Feasibility` | feasibility | `feasibility` | "**G2 GP-6 Memory/Skill Feasibility / feasibility**" |
-| 6 | `provider-adapter-enforcement.yml` | `Provider Adapter Enforcement` | enforce | `enforce` | "**Provider Adapter Enforcement / enforce**" |
-| 7 | `provider-url-scanner.yml` | `G2 GP-5 3차 Provider URL Scanner` | scan | `scan` | "**G2 GP-5 3차 Provider URL Scanner / scan**" |
-| 8 | `r2-canary.yml` | `Redaction Canary Regression` | canary-regression | `R-4.1 Tier-1 42 canary regression` | "**Redaction Canary Regression / R-4.1 Tier-1 42 canary regression**" |
-| 9 | `rewrite-defense.yml` | `G4 Rewrite Defense (Layer 2/3/4)` | defense | `defense` | "**G4 Rewrite Defense (Layer 2/3/4) / defense**" |
-| 10 | `schema-validation.yml` | `G2 GP-4 + G4 Schema Validation` | validate | `validate` | "**G2 GP-4 + G4 Schema Validation / validate**" |
-| 11 | `secret-hygiene-egress-redaction.yml` | `G2 GP-3 + GP-2 Secret Hygiene & Egress Redaction` | scan | `scan` | "**G2 GP-3 + GP-2 Secret Hygiene & Egress Redaction / scan**" |
+> ⚠️ **R-MVP1-1.5-AR3-2a 발효 정정 (단계 7 적용 시점, 2026-05-27)**: 본 §3.2 의 11 후보 (workflow name + job name 조합) 은 brief v1 작성 시점 추측. **GitHub 실 check_run name = job name 만** (workflow name 미포함). 적용 시점 실 verify 결과 = **8 unique job name** (아래 §3.2.1 답습). brief v1 의 11 후보 = R-MVP1-1.5-AR3-2a 답습 정정 영역 — 본 §3.2 = historical 기록 보존, §3.2.1 = 적용 정확 catalog. 정확한 본 evidence = `docs/phase0/mvp1-ar3-branch-protection-applied-evidence.md` (`7f57323` 직후 commit) 답습.
 
-> **note**: `enforce` job id 가 3개 workflow (`evidence-pass-gate.yml` / `g4-hash-chain.yml` / `provider-adapter-enforcement.yml`) 에서 중복 + `scan` job id 가 2개 workflow (`provider-url-scanner.yml` / `secret-hygiene-egress-redaction.yml`) 에서 중복. GitHub 은 workflow name 으로 구분하므로 11 check 모두 unique 자격.
->
-> **`Evidence / PASS Gate`** workflow name 에 `/` 문자 포함 — GitHub branch protection 의 required check string 매칭 시 `/` separator 와 충돌 우려, **first actual run 후 GitHub UI Required status checks dropdown 실 표시 string 검증 의무**.
+| # | workflow file | workflow name | job id | job name | brief v1 후보 (정정 대상 — historical) |
+|---|---|---|---|---|---|
+| 1 | `boundary-guard.yml` | `G3 + G4 Boundary Guard` | guard | `guard` | ~~"G3 + G4 Boundary Guard / guard"~~ → `guard` |
+| 2 | `evidence-pass-gate.yml` | `Evidence / PASS Gate` | enforce | `enforce` | ~~"Evidence / PASS Gate / enforce"~~ → `enforce` (중복) |
+| 3 | `g4-hash-chain.yml` | `G4 Hash Chain + JCS` | enforce | `enforce` | ~~"G4 Hash Chain + JCS / enforce"~~ → `enforce` (중복) |
+| 4 | `history-anchor-verifier.yml` | `G4 History Anchor Verifier (Layer 5)` | verify | `verify` | ~~"G4 History Anchor Verifier (Layer 5) / verify"~~ → `verify` |
+| 5 | `memory-skill-migration-feasibility.yml` | `G2 GP-6 Memory/Skill Feasibility` | feasibility | `feasibility` | ~~"G2 GP-6 Memory/Skill Feasibility / feasibility"~~ → `feasibility` |
+| 6 | `provider-adapter-enforcement.yml` | `Provider Adapter Enforcement` | enforce | `enforce` | ~~"Provider Adapter Enforcement / enforce"~~ → `enforce` (중복) |
+| 7 | `provider-url-scanner.yml` | `G2 GP-5 3차 Provider URL Scanner` | scan | `scan` | ~~"G2 GP-5 3차 Provider URL Scanner / scan"~~ → `scan` (중복) |
+| 8 | `r2-canary.yml` | `Redaction Canary Regression` | canary-regression | `R-4.1 Tier-1 42 canary regression` | ~~"Redaction Canary Regression / R-4.1 Tier-1 42 canary regression"~~ → `R-4.1 Tier-1 42 canary regression` |
+| 9 | `rewrite-defense.yml` | `G4 Rewrite Defense (Layer 2/3/4)` | defense | `defense` | ~~"G4 Rewrite Defense (Layer 2/3/4) / defense"~~ → `defense` |
+| 10 | `schema-validation.yml` | `G2 GP-4 + G4 Schema Validation` | validate | `validate` | ~~"G2 GP-4 + G4 Schema Validation / validate"~~ → `validate` |
+| 11 | `secret-hygiene-egress-redaction.yml` | `G2 GP-3 + GP-2 Secret Hygiene & Egress Redaction` | scan | `scan` | ~~"G2 GP-3 + GP-2 Secret Hygiene & Egress Redaction / scan"~~ → `scan` (중복) |
+
+#### 3.2.1 적용 정확 catalog (8 unique job name)
+
+`gh api -X PUT repos/.../branches/main/protection` 적용 시 사용된 `required_status_checks.contexts` (단계 7, `7f57323` 직후):
+
+```
+[
+  "guard",
+  "verify",
+  "feasibility",
+  "scan",
+  "enforce",
+  "R-4.1 Tier-1 42 canary regression",
+  "defense",
+  "validate"
+]
+```
+
+→ 11 workflow → 8 unique job name. 중복:
+- `scan` x2 (provider-url-scanner + secret-hygiene-egress-redaction)
+- `enforce` x3 (evidence-pass-gate + g4-hash-chain + provider-adapter-enforcement)
+
+> **중복 동작 검증 미완** = 첫 PR 시 verify 의무 (carry-over, evidence §1.3 답습). mismatch 발견 시 workflow job name unique 화 별도 sub-cycle.
 
 ### 3.3 GitHub 인식 형식 verify 절차 (R-3 BLOCKING 답습)
 

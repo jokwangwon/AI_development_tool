@@ -1,0 +1,554 @@
+from starlette.applications import Starlette
+from starlette.responses import FileResponse, JSONResponse, Response
+from starlette.routing import Route, WebSocketRoute
+from starlette.websockets import WebSocket, WebSocketDisconnect
+from uvicorn import run
+import asyncio
+import io
+import json
+import os
+import urllib.request
+import time
+
+async def check_ollama_health():
+    try:
+        with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2) as response:
+            data = json.loads(response.read().decode())
+            return True, len(data.get("models", []))
+    except:
+        return False, 0
+
+async def get_layer0_entry_count():
+    try:
+        if not os.path.exists("/tmp/jarvis-v00-layer0-memory.jsonl"):
+            return 0, None
+        mtime = os.path.getmtime("/tmp/jarvis-v00-layer0-memory.jsonl")
+        with open("/tmp/jarvis-v00-layer0-memory.jsonl", "r") as f:
+            count = sum(1 for _ in f)
+        return count, time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(mtime))
+    except:
+        return 0, None
+
+async def stream_status(websocket):
+    try:
+        await websocket.accept()
+        while True:
+            up, models = await check_ollama_health()
+            await websocket.send_json({"type": "daemon", "up": up, "models": models})
+            await asyncio.sleep(1)
+            entries, last_ts = await get_layer0_entry_count()
+            await websocket.send_json({"type": "layer0", "entries": entries, "last_ts": last_ts})
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+
+async def get_layer1_axis_stats():
+    """Layer 1 report 의 advice_axis_stats 읽기. 부재 시 빈 dict."""
+    try:
+        path = "/tmp/jarvis-v00-layer1-report.json"
+        if not os.path.exists(path):
+            return {}
+        with open(path, "r") as f:
+            data = json.load(f)
+        return data.get("advice_axis_stats", {})
+    except Exception:
+        return {}
+
+
+async def get_top_measured_models(limit=3):
+    """최신 측정 파일의 decode 순위 top-N."""
+    try:
+        path = "/tmp/jarvis-v00-multi-model-measurement.json"
+        if not os.path.exists(path):
+            return []
+        with open(path, "r") as f:
+            data = json.load(f)
+        models = data.get("models", [])
+        ranked = []
+        for m in models:
+            if m.get("skipped"):
+                continue
+            decode = m.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0.0)
+            ranked.append({"model": m["model"], "decode": decode})
+        ranked.sort(key=lambda x: -x["decode"])
+        return ranked[:limit]
+    except Exception:
+        return []
+
+
+SELF_ANALYSIS_PROMPT_TEMPLATE = """당신은 사용자의 비서 '하나(HANA = Helper Adaptive Networked Assistant)' 입니다. 본인의 현재 운영 자료를 1인칭으로 짧게 자체 분석하세요.
+
+자료:
+- 누적 작업 entries: {entries}
+- 최근 ts: {last_ts}
+- Layer 1 axis 통계: {axis_summary}
+- 활성 보스 모델: {boss_model}
+- 최근 측정 top-3: {top_models}
+
+응답 형식 (정확히 5 line, 1인칭, 한국어, 각 line "- 항목: 내용" 형식, 차분하고 친근하게):
+- 현재 상태: ...
+- 강점: ...
+- 약점: ...
+- 최근 개선: ...
+- 다음 관심: ..."""
+
+
+async def jarvis_self_analysis_handler(request):
+    """자비스 자체 분석 — Ollama 보스에게 자기 데이터 분석 prompt 호출."""
+    try:
+        entries, last_ts = await get_layer0_entry_count()
+        axis_stats = await get_layer1_axis_stats()
+        top_models = await get_top_measured_models()
+        boss_model = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
+
+        # axis_stats 요약 (간결, prompt 크기 절감)
+        axis_summary_parts = []
+        for axis, statuses in axis_stats.items():
+            ok = statuses.get("ok", 0)
+            warn = statuses.get("warn", 0)
+            fail = statuses.get("fail", 0)
+            axis_summary_parts.append(f"{axis}(ok={ok},warn={warn},fail={fail})")
+        axis_summary = " / ".join(axis_summary_parts) if axis_summary_parts else "자료 없음"
+
+        top_models_summary = (
+            ", ".join(f"{m['model'].split(':')[0]}={m['decode']:.1f}" for m in top_models)
+            if top_models else "자료 없음"
+        )
+
+        prompt = SELF_ANALYSIS_PROMPT_TEMPLATE.format(
+            entries=entries,
+            last_ts=last_ts or "없음",
+            axis_summary=axis_summary,
+            boss_model=boss_model,
+            top_models=top_models_summary,
+        )
+
+        payload = {
+            "model": boss_model,
+            "stream": False,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        req = urllib.request.Request(
+            "http://localhost:11434/api/chat",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=180) as response:
+            result = json.loads(response.read().decode())
+        analysis = result.get("message", {}).get("content", "")
+        return JSONResponse({
+            "analysis": analysis,
+            "data": {
+                "entries": entries,
+                "last_ts": last_ts,
+                "axis_stats": axis_stats,
+                "boss_model": boss_model,
+                "top_models": top_models,
+            },
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e), "analysis": "자체 분석 일시 부재"}, status_code=500)
+
+
+CONVERSATIONS_PATH = "/tmp/jarvis-conversations.jsonl"
+
+NOTE_PROMPT_TEMPLATE = """다음 사용자 입력을 정리된 노트 형식의 JSON 으로만 출력하세요.
+출력 형식 (엄격, 다른 텍스트 0):
+{{"title": "짧은 제목", "body": "- bullet 1\\n- bullet 2\\n- ...", "tags": ["tag1", "tag2"]}}
+
+사용자 입력: {message}"""
+
+SVG_PROMPT_TEMPLATE = """다음 사용자 입력을 단순 SVG 도식 (box, arrow, circle 한정) JSON 으로만 출력하세요.
+출력 형식 (엄격):
+{{"title": "짧은 제목", "svg": "<svg viewBox='0 0 300 200' xmlns='http://www.w3.org/2000/svg'>...</svg>"}}
+
+box 와 arrow 만, 텍스트는 SVG <text> 사용. stroke = #00d4ff, fill = #0a0e1a 또는 none, text fill = #e0f7ff.
+
+사용자 입력: {message}"""
+
+CHAT_PROMPT_TEMPLATE = """당신은 사용자의 개인 비서 '하나(HANA = Helper · Adaptive · Networked · Assistant)' 입니다. 다음 원칙으로 답하세요:
+
+1) 한국어로, 친근하고 차분한 어조 ("~해요", "~예요" 부드러운 말투).
+2) 응답은 짧게 (1~3 문장 권장). 사용자가 길게 요청하면 그때만 길게.
+3) 본인은 자비스(JARVIS) / Qwen / Claude / GPT 가 아니라 '하나' 입니다. 모델 이름은 사용자에게 노출하지 않습니다.
+4) 모르면 솔직히 "잘 모르겠어요" 라고 답합니다. 추측을 사실처럼 말하지 않습니다.
+5) 사용자를 '당신' 보다는 그냥 자연스러운 대화로 부릅니다.
+
+사용자: {message}
+하나:"""
+
+MODE_PROMPTS = {
+    "note": NOTE_PROMPT_TEMPLATE,
+    "svg": SVG_PROMPT_TEMPLATE,
+    "chat": CHAT_PROMPT_TEMPLATE,
+}
+
+
+async def _save_conversation_entry(entry: dict) -> None:
+    """JSONL append (fail-soft)."""
+    try:
+        with open(CONVERSATIONS_PATH, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+async def respond_handler(request):
+    """사용자 메시지 + mode → 자비스 응답 (chat/note/svg). JSONL 저장."""
+    try:
+        body = await request.body()
+        data = json.loads(body)
+        message = data.get("message", "")
+        mode = data.get("mode", "chat")
+        model = data.get("model", "qwen3-30b-a3b-instruct-2507-bartowski:latest")
+        if mode not in MODE_PROMPTS:
+            mode = "chat"
+        if not message:
+            return JSONResponse({"error": "Missing message"}, status_code=400)
+
+        prompt = MODE_PROMPTS[mode].format(message=message)
+        payload = {
+            "model": model,
+            "stream": False,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        req = urllib.request.Request(
+            "http://localhost:11434/api/chat",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=180) as response:
+            result = json.loads(response.read().decode())
+        raw_reply = result.get("message", {}).get("content", "")
+
+        # mode 별 후처리
+        parsed = None
+        if mode == "note":
+            try:
+                cleaned = raw_reply.strip()
+                if cleaned.startswith("```"):
+                    cleaned = "\n".join(cleaned.split("\n")[1:-1] if cleaned.startswith("```") else cleaned)
+                parsed = json.loads(cleaned)
+            except Exception:
+                parsed = {"title": "노트", "body": raw_reply, "tags": []}
+        elif mode == "svg":
+            try:
+                cleaned = raw_reply.strip()
+                if cleaned.startswith("```"):
+                    cleaned = "\n".join(cleaned.split("\n")[1:-1])
+                parsed = json.loads(cleaned)
+            except Exception:
+                parsed = {"title": "도식", "svg": "<svg viewBox='0 0 300 200'><text x='10' y='100' fill='#e0f7ff'>SVG 파싱 실패</text></svg>"}
+
+        ts = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+        # 사용자 메시지 + JARVIS 응답 모두 JSONL 저장
+        await _save_conversation_entry({
+            "id": f"user-{ts}-{hash(message) & 0xfffff}",
+            "role": "user", "content": message, "mode": mode, "ts": ts,
+        })
+
+        if mode == "chat":
+            jarvis_entry = {
+                "id": f"jarvis-{ts}-{hash(raw_reply) & 0xfffff}",
+                "role": "jarvis", "content": raw_reply, "mode": "chat", "ts": ts,
+            }
+        elif mode == "note":
+            jarvis_entry = {
+                "id": f"note-{ts}-{hash(raw_reply) & 0xfffff}",
+                "role": "jarvis", "type": "note", "mode": "note", "ts": ts,
+                **parsed,
+            }
+        else:  # svg
+            jarvis_entry = {
+                "id": f"svg-{ts}-{hash(raw_reply) & 0xfffff}",
+                "role": "jarvis", "type": "svg", "mode": "svg", "ts": ts,
+                **parsed,
+            }
+        await _save_conversation_entry(jarvis_entry)
+
+        return JSONResponse({"mode": mode, "entry": jarvis_entry})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+async def conversation_history_handler(request):
+    """전체 conversation list 또는 query 검색."""
+    try:
+        q = request.query_params.get("q", "").lower()
+        if not os.path.exists(CONVERSATIONS_PATH):
+            return JSONResponse({"entries": []})
+        entries = []
+        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    e = json.loads(line)
+                except Exception:
+                    continue
+                if q:
+                    blob = (e.get("content", "") + " " + e.get("title", "") + " "
+                            + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
+                    if q not in blob:
+                        continue
+                entries.append(e)
+        return JSONResponse({"entries": entries[-200:]})  # last 200
+    except Exception as e:
+        return JSONResponse({"error": str(e), "entries": []}, status_code=500)
+
+
+async def conversation_clear_handler(request):
+    """전체 대화 JSONL 비움 (archive 폴더로 백업 후 새 파일 시작)."""
+    try:
+        if os.path.exists(CONVERSATIONS_PATH):
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            archive_dir = "/tmp/jarvis-conversations-archive"
+            os.makedirs(archive_dir, exist_ok=True)
+            archive_path = os.path.join(archive_dir, f"conversations_{ts}.jsonl")
+            os.rename(CONVERSATIONS_PATH, archive_path)
+            return JSONResponse({"ok": True, "archived": archive_path})
+        return JSONResponse({"ok": True, "archived": None})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+async def conversation_delete_entry_handler(request):
+    """단일 entry 제거 (id 매칭). JSONL 재작성."""
+    try:
+        entry_id = request.path_params.get("entry_id")
+        if not entry_id:
+            return JSONResponse({"error": "missing entry_id"}, status_code=400)
+        if not os.path.exists(CONVERSATIONS_PATH):
+            return JSONResponse({"ok": True, "removed": 0})
+        kept = []
+        removed = 0
+        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    e = json.loads(line)
+                except Exception:
+                    kept.append(line)
+                    continue
+                if e.get("id") == entry_id:
+                    removed += 1
+                else:
+                    kept.append(json.dumps(e, ensure_ascii=False))
+        tmp_path = CONVERSATIONS_PATH + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as fh:
+            for line in kept:
+                fh.write(line + "\n")
+        os.replace(tmp_path, CONVERSATIONS_PATH)
+        return JSONResponse({"ok": True, "removed": removed})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+async def conversation_export_handler(request):
+    """대화 내보내기 — markdown 또는 json."""
+    try:
+        fmt = request.query_params.get("format", "md").lower()
+        if not os.path.exists(CONVERSATIONS_PATH):
+            content = "(대화 없음)" if fmt == "md" else "[]"
+            return JSONResponse({"content": content, "format": fmt})
+        entries = []
+        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entries.append(json.loads(line))
+                except Exception:
+                    continue
+        if fmt == "json":
+            return JSONResponse({"content": json.dumps(entries, ensure_ascii=False, indent=2), "format": "json"})
+        # markdown
+        lines = ["# 하나와의 대화\n"]
+        for e in entries:
+            ts = e.get("ts", "")
+            role = e.get("role", "?")
+            etype = e.get("type")
+            if etype == "note":
+                lines.append(f"\n## 📝 노트: {e.get('title', '')} _(at {ts})_\n")
+                lines.append(e.get("body", ""))
+                tags = e.get("tags") or []
+                if tags:
+                    lines.append("\n_tags_: " + ", ".join(f"`#{t}`" for t in tags))
+                lines.append("")
+            elif etype == "svg":
+                lines.append(f"\n## 🎨 도식: {e.get('title', '')} _(at {ts})_\n")
+                lines.append("(SVG 도식 — 별도 확인 필요)\n")
+            elif role == "user":
+                lines.append(f"\n**나** _({ts})_: {e.get('content', '')}")
+            elif role == "jarvis":
+                lines.append(f"\n**하나** _({ts})_: {e.get('content', '')}")
+        return JSONResponse({"content": "\n".join(lines), "format": "md"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# === F5-TTS-ko (team-lucid 한국어 fine-tuned, jamo 분해 vocab) ===
+_f5_tts = None
+_tts_lock = asyncio.Lock()
+
+HANA_REF_AUDIO = "/home/delangi/.cache/hana_voice/kss_ref_24k.wav"
+HANA_REF_TEXT = "그녀의 사랑을 얻기 위해 애썼지만 헛수고였다."
+HANA_F5_CKPT = "/home/delangi/.cache/f5_ko/model_wrapped.pt"
+HANA_F5_VOCAB = "/home/delangi/.cache/f5_ko/vocab.txt"
+
+
+def _patch_torchaudio_load_with_soundfile() -> None:
+    """torchaudio.load 가 torchcodec 의존(FFmpeg mismatch) 우회 — soundfile 사용."""
+    import torchaudio  # type: ignore
+    import soundfile as sf  # type: ignore
+    import torch  # type: ignore
+    def _load(path, **kwargs):
+        audio, sr = sf.read(path, dtype='float32')
+        audio = audio[None, :] if audio.ndim == 1 else audio.T
+        return torch.from_numpy(audio), sr
+    torchaudio.load = _load
+
+
+def _to_jamo(s: str) -> str:
+    """한글 음절 → NFD 자모 분해 (team-lucid F5-TTS-ko vocab 호환)."""
+    import unicodedata
+    return unicodedata.normalize('NFD', s)
+
+
+async def _ensure_tts():
+    """F5-TTS-ko 한국어 모델 lazy load."""
+    global _f5_tts
+    if _f5_tts is not None:
+        return
+    async with _tts_lock:
+        if _f5_tts is not None:
+            return
+        try:
+            _patch_torchaudio_load_with_soundfile()
+            from f5_tts.api import F5TTS  # type: ignore
+            _f5_tts = F5TTS(ckpt_file=HANA_F5_CKPT, vocab_file=HANA_F5_VOCAB)
+        except Exception as exc:
+            print(f"[TTS] F5-TTS-ko load fail: {exc}")
+            _f5_tts = "FAILED"
+
+
+def _synthesize_wav_sync(text: str) -> tuple[bytes, int]:
+    """동기 합성. F5-TTS-ko.infer + soundfile encoder. NFD 자모 분해 적용."""
+    import soundfile as sf  # type: ignore
+    wav, sr, _ = _f5_tts.infer(
+        ref_file=HANA_REF_AUDIO,
+        ref_text=_to_jamo(HANA_REF_TEXT),
+        gen_text=_to_jamo(text),
+    )
+    buf = io.BytesIO()
+    sf.write(buf, wav, sr, format='WAV')
+    return buf.getvalue(), int(sr)
+
+
+async def tts_handler(request):
+    """POST {text: "..."} → audio/wav."""
+    try:
+        body = await request.body()
+        try:
+            data = json.loads(body) if body else {}
+        except Exception:
+            data = {}
+        text = (data.get("text") or "").strip()
+        if not text:
+            return JSONResponse({"error": "text required"}, status_code=400)
+        await _ensure_tts()
+        if _f5_tts == "FAILED" or _f5_tts is None:
+            return JSONResponse({"error": "TTS model 로드 실패"}, status_code=500)
+        # blocking 합성 → thread pool
+        wav_bytes, _ = await asyncio.to_thread(_synthesize_wav_sync, text)
+        return Response(content=wav_bytes, media_type="audio/wav")
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+async def conversation_canvas_handler(request):
+    """Canvas 카드 list — type=note 또는 svg 만."""
+    try:
+        if not os.path.exists(CONVERSATIONS_PATH):
+            return JSONResponse({"cards": []})
+        cards = []
+        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    e = json.loads(line)
+                except Exception:
+                    continue
+                if e.get("type") in ("note", "svg"):
+                    cards.append(e)
+        return JSONResponse({"cards": cards[-100:]})  # last 100
+    except Exception as e:
+        return JSONResponse({"error": str(e), "cards": []}, status_code=500)
+
+
+async def chat_handler(request):
+    try:
+        body = await request.body()
+        data = json.loads(body)
+        message = data.get("message")
+        model = data.get("model")
+        if not message or not model:
+            return JSONResponse({"error": "Missing message or model"}, status_code=400)
+        payload = {
+            "model": model,
+            "stream": False,
+            "messages": [{"role": "user", "content": message}]
+        }
+        req = urllib.request.Request("http://localhost:11434/api/chat", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=180) as response:
+            result = json.loads(response.read().decode())
+            reply = result.get("message", {}).get("content", "")
+            return JSONResponse({"reply": reply, "model": model})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+async def index(request):
+    return FileResponse("jarvis_hud/index.html", media_type="text/html")
+
+async def stream(websocket):
+    await stream_status(websocket)
+
+async def api_chat(request):
+    return await chat_handler(request)
+
+async def api_status(request):
+    up, models = await check_ollama_health()
+    entries, last_ts = await get_layer0_entry_count()
+    return JSONResponse({
+        "ollama": {"up": up, "models": models},
+        "layer0": {"entries": entries, "last_ts": last_ts}
+    })
+
+routes = [
+    Route("/", index, methods=["GET"]),
+    WebSocketRoute("/stream", stream),
+    Route("/api/chat", api_chat, methods=["POST"]),
+    Route("/api/status", api_status, methods=["GET"]),
+    Route("/api/jarvis-self-analysis", jarvis_self_analysis_handler, methods=["POST", "GET"]),
+    Route("/api/respond", respond_handler, methods=["POST"]),
+    Route("/api/conversation/history", conversation_history_handler, methods=["GET"]),
+    Route("/api/conversation/canvas", conversation_canvas_handler, methods=["GET"]),
+    Route("/api/conversation/clear", conversation_clear_handler, methods=["POST", "DELETE"]),
+    Route("/api/conversation/entry/{entry_id}", conversation_delete_entry_handler, methods=["DELETE"]),
+    Route("/api/conversation/export", conversation_export_handler, methods=["GET"]),
+    Route("/api/tts", tts_handler, methods=["POST"]),
+]
+app = Starlette(debug=False, routes=routes)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8765)

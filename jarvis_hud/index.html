@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>하나 (HANA) — 나의 비서</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg:        #0e1218;
+      --surface:   #161b24;
+      --surface-2: #1d2330;
+      --border:    rgba(255, 255, 255, 0.06);
+      --border-strong: rgba(255, 255, 255, 0.12);
+      --text:      #e6e9ef;
+      --text-dim:  #8a93a3;
+      --text-mute: #5a6273;
+      --accent:    #a8d5e8;
+      --accent-dim: #6b9bb0;
+      --user-bg:   rgba(168, 213, 232, 0.08);
+      --user-border: rgba(168, 213, 232, 0.18);
+      --success:   #7fb892;
+      --warning:   #e0b568;
+      --danger:    #d97a85;
+      --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.25);
+      --radius-card: 16px;
+      --radius-pill: 24px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr 320px;
+      grid-template-rows: 56px 1fr 76px;
+      grid-template-areas:
+        "topbar topbar topbar"
+        "sidebar main canvas"
+        "sidebar input  canvas";
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* === Top bar === */
+    .topbar {
+      grid-area: topbar;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(168, 213, 232, 0.6);
+      animation: avatar-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes avatar-pulse {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50%      { opacity: 1;    transform: scale(1.15); }
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+
+    .brand-status {
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+    }
+
+    .topbar-spacer { flex: 1; }
+
+    .search {
+      width: 240px;
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 200ms ease;
+    }
+    .search:focus { border-color: var(--accent-dim); }
+    .search::placeholder { color: var(--text-mute); }
+
+    .clock { color: var(--text-dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    /* === Settings (gear popover) === */
+    .gear-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 150ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .gear-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+    .settings-popover {
+      position: absolute;
+      top: 64px;
+      right: 24px;
+      width: 320px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      display: none;
+      animation: slide-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .settings-popover.open { display: block; }
+
+    .settings-section {
+      margin-bottom: 16px;
+    }
+    .settings-section:last-child { margin-bottom: 0; }
+
+    .settings-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-mute);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .settings-row label { flex: 1; }
+    .settings-row .val {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      min-width: 38px;
+      text-align: right;
+    }
+
+    .settings-row input[type=range] {
+      flex: 1.5;
+      accent-color: var(--accent);
+    }
+
+    .settings-row select {
+      flex: 1.5;
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 200ms;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: all 200ms;
+    }
+    .toggle.on { background: rgba(168, 213, 232, 0.2); border-color: var(--accent-dim); }
+    .toggle.on::after { background: var(--accent); transform: translateX(16px); }
+
+    .danger-btn, .ghost-btn {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 150ms;
+      margin-bottom: 8px;
+    }
+    .ghost-btn {
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      color: var(--text-dim);
+    }
+    .ghost-btn:hover { color: var(--text); border-color: var(--accent-dim); }
+
+    .danger-btn {
+      background: transparent;
+      border: 1px solid rgba(217, 122, 133, 0.3);
+      color: var(--danger);
+    }
+    .danger-btn:hover { background: rgba(217, 122, 133, 0.1); }
+
+    /* msg row hover delete */
+    .msg-row { position: relative; }
+    .msg-row .msg-actions {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      display: none;
+      gap: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2px;
+    }
+    .msg-row:hover .msg-actions { display: flex; }
+    .msg-row.user .msg-actions { left: -4px; right: auto; }
+    .msg-action-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-mute);
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 150ms;
+    }
+    .msg-action-btn:hover { color: var(--danger); background: rgba(217, 122, 133, 0.1); }
+
+    /* === Sidebar === */
+    .sidebar {
+      grid-area: sidebar;
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    /* === Character (Presence Orb) === */
+    .character-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 8px 22px;
+      border-bottom: 1px solid var(--border);
+      margin: -20px -16px 16px;
+      gap: 8px;
+    }
+
+    .character {
+      width: 180px;
+      height: 180px;
+      position: relative;
+      filter: drop-shadow(0 0 24px rgba(168, 213, 232, 0.35));
+      animation: char-breath 4s ease-in-out infinite;
+      transition: filter 400ms ease;
+    }
+
+    @keyframes char-breath {
+      0%, 100% { transform: scale(1)    translateY(0); }
+      50%      { transform: scale(1.03) translateY(-3px); }
+    }
+
+    .character svg { width: 100%; height: 100%; display: block; }
+
+    .character-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .character-state {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    /* state 별 character 효과 */
+    .character.listening { filter: drop-shadow(0 0 30px rgba(168, 213, 232, 0.7)); }
+    .character.thinking  { filter: drop-shadow(0 0 30px rgba(212, 168, 232, 0.55));
+                           animation: char-breath 2.2s ease-in-out infinite; }
+    .character.speaking  { filter: drop-shadow(0 0 36px rgba(168, 213, 232, 0.8));
+                           animation: char-breath 1.5s ease-in-out infinite; }
+
+    /* eye blink */
+    .eye {
+      transform-origin: center;
+      animation: blink 6s infinite;
+    }
+    .eye.right { animation-delay: 0.05s; }
+    .character.listening .eye { animation: blink 3s infinite, eye-grow 1s ease-out; }
+    @keyframes blink {
+      0%, 92%, 100% { transform: scaleY(1); }
+      94%, 98%      { transform: scaleY(0.05); }
+    }
+    @keyframes eye-grow {
+      from { transform: scale(0.8); }
+      to   { transform: scale(1.1); }
+    }
+
+    /* mouth wave (TTS speaking) */
+    .mouth {
+      transition: d 80ms ease;
+    }
+
+    /* === 원자 모델: nucleus + orbits + electrons === */
+
+    /* orbit 전체 시스템이 천천 회전 (3 orbit + electrons 동시) */
+    @keyframes system-rotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    #orbits {
+      animation: system-rotate 30s linear infinite;
+      transform-origin: 90px 90px;
+    }
+    .character.thinking  #orbits { animation: system-rotate 12s linear infinite; }
+    .character.speaking  #orbits { animation: system-rotate 6s  linear infinite; }
+    .character.listening #orbits { animation: system-rotate 18s linear infinite; }
+
+    /* nucleus pulse (심장 박동) */
+    @keyframes nucleus-pulse {
+      0%, 100% { transform: scale(1);    opacity: 1; }
+      50%      { transform: scale(1.15); opacity: 0.92; }
+    }
+    @keyframes halo-pulse {
+      0%, 100% { transform: scale(1);   opacity: 0.3; }
+      50%      { transform: scale(1.4); opacity: 0.5; }
+    }
+    #nucleus      { animation: nucleus-pulse 3s ease-in-out infinite; transform-origin: 90px 90px; transform-box: view-box; }
+    #nucleus-halo { animation: halo-pulse 3s ease-in-out infinite;    transform-origin: 90px 90px; transform-box: view-box; }
+    .character.thinking #nucleus      { animation: nucleus-pulse 1.5s ease-in-out infinite; }
+    .character.thinking #nucleus-halo { animation: halo-pulse 1.5s ease-in-out infinite; }
+    .character.speaking #nucleus      { animation: nucleus-pulse 0.8s ease-in-out infinite; }
+    .character.speaking #nucleus-halo { animation: halo-pulse 0.8s ease-in-out infinite; }
+
+    /* aura 천천 호흡 */
+    @keyframes aura-pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50%      { opacity: 0.7; transform: scale(1.05); }
+    }
+    .aura { animation: aura-pulse 6s ease-in-out infinite; transform-origin: 90px 90px; transform-box: view-box; }
+
+    /* electron glow trail (light shadow) */
+    .electron { filter: drop-shadow(0 0 4px rgba(168,213,232,0.7)); }
+
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-mute);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0 8px 8px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: background 150ms ease, color 150ms ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-item:hover { background: var(--surface); color: var(--text); }
+    .sidebar-item.active { background: var(--surface-2); color: var(--text); }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 4px;
+    }
+
+    .new-chat {
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px dashed var(--border-strong);
+      border-radius: 10px;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 150ms ease;
+      margin-bottom: 8px;
+    }
+    .new-chat:hover { border-color: var(--accent-dim); color: var(--text); }
+
+    /* === Main chat === */
+    .main {
+      grid-area: main;
+      overflow-y: auto;
+      padding: 32px 48px 16px;
+      min-height: 0;
+    }
+
+    .chat-day {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-mute);
+      letter-spacing: 0.05em;
+      padding: 8px 0 20px;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      max-width: 720px;
+      animation: slide-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .msg-row.jarvis .msg-avatar {
+      background: var(--surface-2);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .msg-row.user .msg-avatar {
+      background: var(--user-bg);
+      color: var(--accent);
+      border: 1px solid var(--user-border);
+    }
+
+    .msg-content {
+      padding: 12px 16px;
+      border-radius: var(--radius-card);
+      max-width: 540px;
+      font-size: 14px;
+      line-height: 1.65;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .msg-row.jarvis .msg-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top-left-radius: 6px;
+    }
+
+    .msg-row.user .msg-content {
+      background: var(--user-bg);
+      border: 1px solid var(--user-border);
+      border-top-right-radius: 6px;
+      color: var(--text);
+    }
+
+    .msg-meta {
+      font-size: 10px;
+      color: var(--text-mute);
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .msg-row.user .msg-meta { text-align: right; }
+
+    .msg-pending {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-dim);
+      font-style: normal;
+      font-size: 13px;
+    }
+
+    .pending-dots {
+      display: inline-flex;
+      gap: 3px;
+    }
+    .pending-dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.4;
+      animation: dot-bounce 1.4s ease-in-out infinite;
+    }
+    .pending-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .pending-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-bounce {
+      0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+      40%           { opacity: 1;   transform: translateY(-4px); }
+    }
+
+    .mode-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(168, 213, 232, 0.08);
+      border: 1px solid var(--user-border);
+      border-radius: 10px;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    /* === Input row === */
+    .input-bar {
+      grid-area: input;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 48px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .input-shell {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 8px 8px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      transition: border-color 200ms ease;
+    }
+    .input-shell:focus-within { border-color: var(--accent-dim); }
+
+    #chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      padding: 6px 0;
+    }
+    #chat-input::placeholder { color: var(--text-mute); }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 150ms ease;
+    }
+    .icon-btn:hover {
+      color: var(--accent);
+      border-color: var(--border);
+      background: var(--surface-2);
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: var(--bg);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 150ms ease;
+      font-weight: 600;
+    }
+    .send-btn:hover {
+      background: #b9deec;
+      transform: scale(1.05);
+    }
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* === Canvas (right) === */
+    .canvas {
+      grid-area: canvas;
+      border-left: 1px solid var(--border);
+      padding: 24px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .canvas-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-mute);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0 4px 8px;
+    }
+
+    .canvas-empty {
+      padding: 36px 18px;
+      text-align: center;
+      color: var(--text-mute);
+      font-size: 12px;
+      line-height: 1.7;
+      border: 1px dashed var(--border-strong);
+      border-radius: 14px;
+    }
+
+    /* === 환영 (chat 비어있을 때) === */
+    .chat-welcome {
+      max-width: 520px;
+      margin: 80px auto 0;
+      text-align: center;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+    .chat-welcome h2 {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .chat-welcome p { font-size: 14px; }
+    .chat-welcome .hints {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+    .chat-welcome .hint {
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .chat-welcome .hint:hover {
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+
+    .canvas-card {
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      transition: all 200ms ease;
+      animation: slide-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .canvas-card:hover {
+      border-color: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+
+    .canvas-card .title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .canvas-card .body {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      font-family: 'Inter', monospace;
+    }
+
+    .canvas-card .tags {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .canvas-card .tag {
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(168, 213, 232, 0.06);
+      border: 1px solid var(--user-border);
+      border-radius: 10px;
+      padding: 2px 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .canvas-card svg {
+      max-width: 100%;
+      height: auto;
+      margin-top: 4px;
+    }
+
+    /* === scrollbar === */
+    *::-webkit-scrollbar { width: 6px; height: 6px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      background: var(--surface-2);
+      border-radius: 3px;
+    }
+    *::-webkit-scrollbar-thumb:hover { background: var(--text-mute); }
+
+    /* === responsive === */
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 200px 1fr 280px; }
+      .main, .input-bar { padding-left: 24px; padding-right: 24px; }
+    }
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "topbar"
+          "main"
+          "input";
+      }
+      .sidebar, .canvas { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="brand">
+        <span class="avatar" id="avatar"></span>
+        <span class="brand-name">하나 <span style="color:var(--text-mute);font-weight:400;font-size:11px;letter-spacing:0.06em;margin-left:6px;">HANA</span></span>
+        <span class="brand-status" id="status">대기 중</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <input type="text" id="search" class="search" placeholder="대화·노트 검색..." />
+      <span class="clock" id="clock">00:00</span>
+      <button class="gear-btn" id="gear-btn" title="설정">⚙</button>
+    </div>
+
+    <!-- Settings popover -->
+    <div class="settings-popover" id="settings">
+      <div class="settings-section">
+        <div class="settings-title">목소리 (TTS)</div>
+        <div class="settings-row">
+          <label>음성 켜기</label>
+          <div class="toggle" id="tts-toggle"></div>
+        </div>
+        <div class="settings-row">
+          <label>AI 음성 (서버, 한국어)</label>
+          <div class="toggle" id="tts-ai-toggle"></div>
+        </div>
+        <div class="settings-row" id="tts-voice-row">
+          <label>브라우저 음성</label>
+          <select id="tts-voice"><option value="">기본</option></select>
+        </div>
+        <div class="settings-row">
+          <label>볼륨</label>
+          <input type="range" id="tts-volume" min="0" max="1" step="0.05" value="1" />
+          <span class="val" id="tts-volume-val">100</span>
+        </div>
+        <div class="settings-row">
+          <label>속도</label>
+          <input type="range" id="tts-rate" min="0.5" max="1.8" step="0.05" value="0.95" />
+          <span class="val" id="tts-rate-val">0.95</span>
+        </div>
+        <div class="settings-row">
+          <label>음높이</label>
+          <input type="range" id="tts-pitch" min="0.5" max="2" step="0.05" value="1.1" />
+          <span class="val" id="tts-pitch-val">1.10</span>
+        </div>
+        <button class="ghost-btn" id="tts-test">🔊 미리 듣기</button>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">대화 관리</div>
+        <button class="ghost-btn" id="export-md">⬇ Markdown 으로 내보내기</button>
+        <button class="ghost-btn" id="export-json">⬇ JSON 으로 내보내기</button>
+        <button class="danger-btn" id="clear-all">🗑 모든 대화 삭제</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Character (presence) -->
+      <div class="character-shell">
+        <div class="character" id="character">
+          <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg" aria-label="원자체">
+            <!-- v0.5.3: Bohr 원자 모델. nucleus + 3 orbits + 3 electrons.
+                 시스템 진화 시 future-face 점진 활성. -->
+            <defs>
+              <radialGradient id="nucleusGrad" cx="50%" cy="40%" r="55%">
+                <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
+                <stop offset="40%"  stop-color="#cfe9f3" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#7faab9" stop-opacity="0.7"/>
+              </radialGradient>
+              <radialGradient id="electronGradC" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
+                <stop offset="50%"  stop-color="#a8d5e8" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#a8d5e8" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="electronGradL" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
+                <stop offset="50%"  stop-color="#d4a8e8" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#d4a8e8" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="auraGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="#a8d5e8" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="#a8d5e8" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="glowSoft" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2.5"/>
+              </filter>
+
+              <!-- orbit paths (각 다른 각도) — animateMotion 의 mpath 가 참조 -->
+              <ellipse id="orbitPath1" cx="90" cy="90" rx="68" ry="22"
+                       transform="rotate(0 90 90)"
+                       fill="none" stroke="none"/>
+              <ellipse id="orbitPath2" cx="90" cy="90" rx="68" ry="22"
+                       transform="rotate(60 90 90)"
+                       fill="none" stroke="none"/>
+              <ellipse id="orbitPath3" cx="90" cy="90" rx="68" ry="22"
+                       transform="rotate(-60 90 90)"
+                       fill="none" stroke="none"/>
+            </defs>
+
+            <!-- ambient aura -->
+            <circle class="aura" cx="90" cy="90" r="84" fill="url(#auraGrad)"/>
+
+            <!-- 3 orbit ellipses (visible 가는 선) -->
+            <g id="orbits">
+              <ellipse class="orbit"
+                       cx="90" cy="90" rx="68" ry="22"
+                       fill="none" stroke="rgba(168,213,232,0.28)" stroke-width="1"/>
+              <ellipse class="orbit"
+                       cx="90" cy="90" rx="68" ry="22"
+                       transform="rotate(60 90 90)"
+                       fill="none" stroke="rgba(168,213,232,0.28)" stroke-width="1"/>
+              <ellipse class="orbit"
+                       cx="90" cy="90" rx="68" ry="22"
+                       transform="rotate(-60 90 90)"
+                       fill="none" stroke="rgba(212,168,232,0.22)" stroke-width="1"/>
+            </g>
+
+            <!-- nucleus 발광 -->
+            <circle id="nucleus-halo" cx="90" cy="90" r="14"
+                    fill="#a8d5e8" opacity="0.3" filter="url(#glowSoft)"/>
+            <circle id="nucleus" cx="90" cy="90" r="8" fill="url(#nucleusGrad)"/>
+
+            <!-- 3 electrons — animateMotion 으로 각 orbit 따라 회전 -->
+            <circle class="electron" r="5" fill="url(#electronGradC)">
+              <animateMotion dur="3.5s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#orbitPath1"/>
+              </animateMotion>
+            </circle>
+            <circle class="electron" r="5" fill="url(#electronGradL)">
+              <animateMotion dur="4.5s" repeatCount="indefinite" rotate="auto" begin="-1.2s">
+                <mpath href="#orbitPath2"/>
+              </animateMotion>
+            </circle>
+            <circle class="electron" r="4.5" fill="url(#electronGradC)">
+              <animateMotion dur="2.8s" repeatCount="indefinite" rotate="auto" begin="-0.5s">
+                <mpath href="#orbitPath3"/>
+              </animateMotion>
+            </circle>
+
+            <!-- 진화 후 활성화될 face (현재 hidden) -->
+            <g id="future-face" style="display:none;">
+              <circle class="eye left"  cx="72"  cy="84" r="6.5" fill="#0e1218"/>
+              <circle class="eye right" cx="108" cy="84" r="6.5" fill="#0e1218"/>
+              <path id="mouth" class="mouth"
+                    d="M 72 116 Q 90 124 108 116"
+                    fill="none" stroke="#0e1218" stroke-width="3"
+                    stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+        <div class="character-name">하나</div>
+        <div class="character-state" id="char-state">평온히 있어요</div>
+      </div>
+
+      <button class="new-chat">+ 새 대화</button>
+      <div class="sidebar-title">최근 대화</div>
+      <div id="sidebar-list">
+        <div class="sidebar-item active">오늘의 대화</div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-title">정보</div>
+      <div class="sidebar-item" id="info-models">모델: --</div>
+      <div class="sidebar-item" id="info-layer0">관찰: --</div>
+      <div class="sidebar-item" id="info-perf">속도: --</div>
+    </aside>
+
+    <!-- Main chat -->
+    <main class="main" id="main">
+      <div class="chat-day" id="chat-day">오늘</div>
+      <div id="messages"></div>
+      <div class="chat-welcome" id="welcome">
+        <h2>안녕하세요, 하나예요.</h2>
+        <p>곁에서 함께 일하고 정리해드릴게요.<br/>대화하시거나, 노트·그림으로 남길 수도 있어요.</p>
+        <div class="hints">
+          <span class="hint" data-prompt="하나야, 안녕. 오늘 컨디션 어때?">하나야, 안녕</span>
+          <span class="hint" data-prompt="오늘 할 일 3개를 정리해줘">오늘 할 일 정리해줘</span>
+          <span class="hint" data-prompt="간단한 데이터 흐름을 그림으로 그려줘">간단한 흐름 그려줘</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input bar -->
+    <div class="input-bar">
+      <div class="input-shell">
+        <button class="icon-btn" id="attach-btn" title="첨부 (예정)">＋</button>
+        <input type="text" id="chat-input" placeholder="무엇이든 말씀하세요..." autocomplete="off" />
+        <button class="icon-btn" id="voice-btn" title="음성 입력">🎤</button>
+      </div>
+      <button class="send-btn" id="send-btn" title="보내기">→</button>
+    </div>
+
+    <!-- Canvas (right) -->
+    <aside class="canvas">
+      <div class="canvas-title">정리 노트 · 도식</div>
+      <div id="canvas-list"></div>
+    </aside>
+  </div>
+
+  <script>
+    // === DOM refs ===
+    const $ = (id) => document.getElementById(id);
+    const messages = $('messages');
+    const canvasList = $('canvas-list');
+    const chatInput = $('chat-input');
+    const sendBtn = $('send-btn');
+    const voiceBtn = $('voice-btn');
+    const searchInput = $('search');
+    const avatar = $('avatar');
+    const statusEl = $('status');
+    const clockEl = $('clock');
+    const infoModels = $('info-models');
+    const infoLayer0 = $('info-layer0');
+    const infoPerf = $('info-perf');
+    const character = $('character');
+    const charState = $('char-state');
+    const mouth = $('mouth');
+
+    // === Character state machine ===
+    const STATE_LABEL = {
+      idle:      '곁에 있어요',
+      listening: '듣고 있어요',
+      thinking:  '생각하는 중이에요',
+      speaking:  '말하는 중이에요',
+    };
+
+    // === 자가진화 단계 (Layer 시스템 매핑) — 현재 v0 (얼굴 없는 원소)
+    const EVOLUTION_STAGE = 0;  // 0=formless / 1=eyes / 2=face / 3=full
+    // 추후 Layer 1/2/3 발효 시 EVOLUTION_STAGE 증가 → future-face 점진 활성
+    const MOUTH_PATHS = {
+      smile:  'M 72 116 Q 90 124 108 116',
+      neutral:'M 72 118 Q 90 118 108 118',
+      tiny:   'M 78 118 Q 90 120 102 118',
+      open_s: 'M 76 116 Q 90 122 104 116',
+      open_m: 'M 72 114 Q 90 128 108 114',
+      open_l: 'M 70 112 Q 90 134 110 112',
+    };
+
+    let mouthAnim = null;
+
+    const setCharState = (s) => {
+      character.classList.remove('listening', 'thinking', 'speaking');
+      if (s !== 'idle') character.classList.add(s);
+      charState.textContent = STATE_LABEL[s] || s;
+
+      // stop any mouth animation
+      if (mouthAnim) { clearInterval(mouthAnim); mouthAnim = null; }
+
+      // mouth 는 future-face 가 활성화된 진화 후 단계에서만 적용 (현재 hidden = null safe)
+      if (mouth && document.getElementById('future-face').style.display !== 'none') {
+        if (s === 'speaking') {
+          const seq = ['open_s', 'open_m', 'open_l', 'open_m', 'open_s', 'tiny'];
+          let i = 0;
+          mouthAnim = setInterval(() => {
+            mouth.setAttribute('d', MOUTH_PATHS[seq[i % seq.length]]);
+            i++;
+          }, 140);
+        } else if (s === 'thinking') {
+          mouth.setAttribute('d', MOUTH_PATHS.neutral);
+        } else if (s === 'listening') {
+          mouth.setAttribute('d', MOUTH_PATHS.tiny);
+        } else {
+          mouth.setAttribute('d', MOUTH_PATHS.smile);
+        }
+      }
+    };
+    setCharState('idle');
+
+    // === Clock ===
+    const updateClock = () => {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    };
+    setInterval(updateClock, 30000);
+    updateClock();
+
+    // === Mode detection ===
+    const detectMode = (text) => {
+      if (/정리|노트|메모|요약/.test(text)) return 'note';
+      if (/그림|그려|도식|flow|다이어그램/.test(text)) return 'svg';
+      return 'chat';
+    };
+    const MODE_LABEL = { chat: '대화', note: '노트', svg: '도식' };
+
+    // === Render helpers ===
+    const escapeHtml = (s) => (s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+    const welcome = $('welcome');
+    const hideWelcome = () => { if (welcome) welcome.style.display = 'none'; };
+
+    const renderMsg = (role, text, opts = {}) => {
+      hideWelcome();
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+      const initial = role === 'user' ? '나' : 'H';
+      let modeTag = '';
+      if (opts.mode && opts.mode !== 'chat') {
+        modeTag = `<span class="mode-tag">${MODE_LABEL[opts.mode] || opts.mode}</span><br/>`;
+      }
+      const entryId = opts.entryId || '';
+      row.dataset.entryId = entryId;
+      row.innerHTML = `
+        <div class="msg-avatar">${initial}</div>
+        <div>
+          <div class="msg-content">${modeTag}${escapeHtml(text)}</div>
+          ${opts.meta ? `<div class="msg-meta">${escapeHtml(opts.meta)}</div>` : ''}
+        </div>
+        <div class="msg-actions">
+          <button class="msg-action-btn" title="삭제" data-action="delete">✕</button>
+        </div>
+      `;
+      // delete button
+      row.querySelector('[data-action="delete"]').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = row.dataset.entryId;
+        if (id) {
+          try { await fetch(`/api/conversation/entry/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch (_) {}
+        }
+        row.style.transition = 'opacity 200ms';
+        row.style.opacity = '0';
+        setTimeout(() => row.remove(), 200);
+      });
+      messages.appendChild(row);
+      messages.parentElement.scrollTop = messages.parentElement.scrollHeight;
+      return row;
+    };
+
+    const renderPending = () => {
+      const row = document.createElement('div');
+      row.className = 'msg-row jarvis pending';
+      row.innerHTML = `
+        <div class="msg-avatar">J</div>
+        <div class="msg-content">
+          <div class="msg-pending">
+            <span>생각 중</span>
+            <span class="pending-dots"><span></span><span></span><span></span></span>
+          </div>
+        </div>
+      `;
+      messages.appendChild(row);
+      messages.parentElement.scrollTop = messages.parentElement.scrollHeight;
+      return row;
+    };
+
+    const renderCanvasCard = (entry) => {
+      const card = document.createElement('div');
+      card.className = 'canvas-card';
+      if (entry.type === 'svg') {
+        card.innerHTML = `
+          <div class="title">${escapeHtml(entry.title || '도식')}</div>
+          ${entry.svg || ''}
+        `;
+      } else {
+        const tags = Array.isArray(entry.tags) ? entry.tags : [];
+        card.innerHTML = `
+          <div class="title">${escapeHtml(entry.title || '노트')}</div>
+          <div class="body">${escapeHtml(entry.body || '')}</div>
+          ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        `;
+      }
+      canvasList.appendChild(card);
+      card.parentElement.scrollTop = card.parentElement.scrollHeight;
+      return card;
+    };
+
+    const updateCanvasEmpty = () => {
+      const hasCards = canvasList.querySelector('.canvas-card');
+      const existingEmpty = canvasList.querySelector('.canvas-empty');
+      if (!hasCards && !existingEmpty) {
+        const empty = document.createElement('div');
+        empty.className = 'canvas-empty';
+        empty.textContent = '"정리해줘" 또는 "그림으로 그려줘" 라고 말씀하시면 여기에 노트나 도식이 정리됩니다.';
+        canvasList.appendChild(empty);
+      } else if (hasCards && existingEmpty) {
+        existingEmpty.remove();
+      }
+    };
+
+    // === Initial load ===
+    async function loadInitial() {
+      try {
+        const res = await fetch('/api/conversation/history');
+        const data = await res.json();
+        const entries = data.entries || [];
+        entries
+          .filter(e => e.role === 'user' || (e.role === 'jarvis' && !e.type))
+          .forEach(e => {
+            renderMsg(e.role, e.content || '', { mode: e.mode, entryId: e.id });
+          });
+      } catch (e) { console.warn('history load fail', e); }
+
+      try {
+        const res = await fetch('/api/conversation/canvas');
+        const data = await res.json();
+        (data.cards || []).forEach(c => renderCanvasCard(c));
+      } catch (e) { console.warn('canvas load fail', e); }
+
+      updateCanvasEmpty();
+    }
+
+    // === Self analysis (info sidebar update) ===
+    async function loadInfo() {
+      try {
+        const res = await fetch('/api/jarvis-self-analysis', { method: 'POST' });
+        const data = await res.json();
+        const d = data.data || {};
+        const topModel = (d.top_models && d.top_models[0]) || null;
+        infoModels.textContent = `모델: ${d.boss_model ? d.boss_model.split(':')[0] : '--'}`;
+        infoLayer0.textContent = `관찰: ${d.entries || 0}건`;
+        infoPerf.textContent = topModel
+          ? `속도: ${topModel.decode.toFixed(1)} tok/s`
+          : '속도: --';
+        statusEl.textContent = '준비됨';
+      } catch (e) {
+        statusEl.textContent = '연결 끊김';
+      }
+    }
+    loadInfo();
+    setInterval(loadInfo, 60000);
+
+    // === WebSocket ===
+    let ws = null;
+    const connectWS = () => {
+      const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${window.location.host}/stream`);
+      ws.onmessage = (e) => {
+        try {
+          const m = JSON.parse(e.data);
+          if (m.type === 'daemon') {
+            statusEl.textContent = m.up ? '준비됨' : '연결 끊김';
+            infoModels.textContent = `모델: 보스 (총 ${m.models}개)`;
+          } else if (m.type === 'layer0') {
+            infoLayer0.textContent = `관찰: ${m.entries}건`;
+          }
+        } catch (_) {}
+      };
+      ws.onclose = () => setTimeout(connectWS, 3000);
+      ws.onerror = () => {};
+    };
+    connectWS();
+
+    // === Send ===
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      const mode = detectMode(text);
+
+      renderMsg('user', text, { mode });
+      chatInput.value = '';
+      sendBtn.disabled = true;
+      const pendingRow = renderPending();
+      setCharState('thinking');
+
+      try {
+        const res = await fetch('/api/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, mode })
+        });
+        const data = await res.json();
+        const entry = data.entry || {};
+        pendingRow.remove();
+
+        if (mode === 'chat') {
+          const reply = entry.content || data.error || '(응답이 도착하지 않았어요)';
+          renderMsg('jarvis', reply, { entryId: entry.id });
+          // TTS — settings 답습
+          if (window.__hanaSpeak) {
+            window.__hanaSpeak(reply);
+            setTimeout(() => { if (character.classList.contains('thinking')) setCharState('idle'); }, 500);
+          } else {
+            setCharState('idle');
+          }
+        } else {
+          renderMsg('jarvis', `${mode === 'note' ? '노트로 정리했어요' : '도식으로 그렸어요'} — 우측 패널을 보세요.`, { meta: '캔버스 갱신됨', entryId: entry.id });
+          renderCanvasCard(entry);
+          updateCanvasEmpty();
+          setCharState('idle');
+        }
+      } catch (err) {
+        pendingRow.remove();
+        renderMsg('jarvis', `[전송에 실패했어요] ${err.message || err}`);
+        setCharState('idle');
+      } finally {
+        sendBtn.disabled = false;
+        chatInput.focus();
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // === Voice ===
+    voiceBtn.addEventListener('click', () => {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        renderMsg('jarvis', '음성 인식을 지원하지 않는 브라우저에요.');
+        return;
+      }
+      const r = new SR();
+      r.lang = 'ko-KR';
+      r.continuous = false;
+      r.interimResults = false;
+      voiceBtn.style.color = 'var(--danger)';
+      setCharState('listening');
+      r.onresult = (e) => {
+        chatInput.value = e.results[0][0].transcript;
+        sendMessage();
+      };
+      r.onend = () => { voiceBtn.style.color = ''; if (!character.classList.contains('thinking') && !character.classList.contains('speaking')) setCharState('idle'); };
+      r.onerror = () => { voiceBtn.style.color = ''; setCharState('idle'); };
+      r.start();
+    });
+
+    // === Search ===
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.msg-row, .canvas-card').forEach(el => {
+        if (!q) { el.style.display = ''; return; }
+        el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    // === Hint click → 자동 입력 ===
+    document.querySelectorAll('.hint').forEach(h => {
+      h.addEventListener('click', () => {
+        chatInput.value = h.dataset.prompt;
+        sendMessage();
+      });
+    });
+
+    // === Settings (TTS + 대화 관리) ===
+    const SETTINGS_KEY = 'hana.settings.v1';
+    const DEFAULT_SETTINGS = { ttsOn: true, ttsAI: false, voice: '', volume: 1.0, rate: 0.95, pitch: 1.1 };
+    let settings = { ...DEFAULT_SETTINGS };
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      settings = { ...DEFAULT_SETTINGS, ...saved };
+    } catch (_) {}
+
+    const gearBtn = $('gear-btn');
+    const settingsPanel = $('settings');
+    const ttsToggle = $('tts-toggle');
+    const ttsAIToggle = $('tts-ai-toggle');
+    const ttsVoiceRow = $('tts-voice-row');
+    const ttsVoiceSel = $('tts-voice');
+    const ttsVolume = $('tts-volume');
+    const ttsRate = $('tts-rate');
+    const ttsPitch = $('tts-pitch');
+    const ttsVolumeVal = $('tts-volume-val');
+    const ttsRateVal = $('tts-rate-val');
+    const ttsPitchVal = $('tts-pitch-val');
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    function applySettingsToUI() {
+      ttsToggle.classList.toggle('on', settings.ttsOn);
+      ttsAIToggle.classList.toggle('on', settings.ttsAI);
+      ttsVoiceRow.style.opacity = settings.ttsAI ? 0.4 : 1;  // AI 켜지면 브라우저 음성 안 씀
+      ttsVoiceSel.value = settings.voice || '';
+      ttsVolume.value = settings.volume;
+      ttsRate.value = settings.rate;
+      ttsPitch.value = settings.pitch;
+      ttsVolumeVal.textContent = Math.round(settings.volume * 100);
+      ttsRateVal.textContent = (+settings.rate).toFixed(2);
+      ttsPitchVal.textContent = (+settings.pitch).toFixed(2);
+    }
+    applySettingsToUI();
+
+    // Populate voice list (ko-KR 우선)
+    function populateVoices() {
+      const voices = speechSynthesis.getVoices();
+      const ko = voices.filter(v => v.lang.startsWith('ko'));
+      const others = voices.filter(v => !v.lang.startsWith('ko'));
+      ttsVoiceSel.innerHTML = '<option value="">기본 (브라우저 자동)</option>';
+      if (ko.length) {
+        const koGroup = document.createElement('optgroup');
+        koGroup.label = '한국어';
+        ko.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.name;
+          opt.textContent = `${v.name} (${v.lang})`;
+          koGroup.appendChild(opt);
+        });
+        ttsVoiceSel.appendChild(koGroup);
+      }
+      if (others.length) {
+        const otherGroup = document.createElement('optgroup');
+        otherGroup.label = '기타';
+        others.slice(0, 30).forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.name;
+          opt.textContent = `${v.name} (${v.lang})`;
+          otherGroup.appendChild(opt);
+        });
+        ttsVoiceSel.appendChild(otherGroup);
+      }
+      if (settings.voice) ttsVoiceSel.value = settings.voice;
+    }
+    populateVoices();
+    speechSynthesis.onvoiceschanged = populateVoices;
+
+    gearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsPanel.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!settingsPanel.contains(e.target) && e.target !== gearBtn) {
+        settingsPanel.classList.remove('open');
+      }
+    });
+
+    ttsToggle.addEventListener('click', () => {
+      settings.ttsOn = !settings.ttsOn;
+      ttsToggle.classList.toggle('on', settings.ttsOn);
+      saveSettings();
+    });
+    ttsAIToggle.addEventListener('click', () => {
+      settings.ttsAI = !settings.ttsAI;
+      ttsAIToggle.classList.toggle('on', settings.ttsAI);
+      ttsVoiceRow.style.opacity = settings.ttsAI ? 0.4 : 1;
+      saveSettings();
+    });
+    ttsVoiceSel.addEventListener('change', () => {
+      settings.voice = ttsVoiceSel.value;
+      saveSettings();
+    });
+    ttsVolume.addEventListener('input', () => {
+      settings.volume = +ttsVolume.value;
+      ttsVolumeVal.textContent = Math.round(settings.volume * 100);
+      saveSettings();
+    });
+    ttsRate.addEventListener('input', () => {
+      settings.rate = +ttsRate.value;
+      ttsRateVal.textContent = (+settings.rate).toFixed(2);
+      saveSettings();
+    });
+    ttsPitch.addEventListener('input', () => {
+      settings.pitch = +ttsPitch.value;
+      ttsPitchVal.textContent = (+settings.pitch).toFixed(2);
+      saveSettings();
+    });
+
+    // 현재 재생 중인 audio (AI 음성)
+    let currentAudio = null;
+
+    // AI 음성 (server /api/tts)
+    async function speakAI(text) {
+      try {
+        setCharState('thinking');  // 합성 대기
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        if (!res.ok) {
+          setCharState('idle');
+          return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (currentAudio) { try { currentAudio.pause(); } catch (_) {} }
+        const audio = new Audio(url);
+        currentAudio = audio;
+        audio.volume = settings.volume;
+        audio.playbackRate = settings.rate;
+        audio.onplay = () => setCharState('speaking');
+        audio.onended = () => { setCharState('idle'); URL.revokeObjectURL(url); };
+        audio.onerror = () => { setCharState('idle'); URL.revokeObjectURL(url); };
+        await audio.play();
+      } catch (e) {
+        setCharState('idle');
+        console.warn('AI 음성 실패:', e);
+      }
+    }
+
+    // 브라우저 음성 (Web Speech API)
+    function speakBrowser(text) {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ko-KR';
+        u.volume = settings.volume;
+        u.rate = settings.rate;
+        u.pitch = settings.pitch;
+        const voices = speechSynthesis.getVoices();
+        const picked = settings.voice ? voices.find(v => v.name === settings.voice) : null;
+        const koVoice = picked || voices.find(v => v.lang.startsWith('ko'));
+        if (koVoice) u.voice = koVoice;
+        u.onstart = () => setCharState('speaking');
+        u.onend = () => setCharState('idle');
+        u.onerror = () => setCharState('idle');
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    // 통합 speak (AI on 이면 서버, 아니면 브라우저)
+    function speakReply(text) {
+      if (!settings.ttsOn || !text) return;
+      if (settings.ttsAI) speakAI(text);
+      else                speakBrowser(text);
+    }
+    window.__hanaSpeak = speakReply;
+
+    // TTS 미리 듣기
+    $('tts-test').addEventListener('click', () => {
+      speakReply('안녕하세요, 하나예요. 이렇게 들려요.');
+    });
+
+    // === 대화 내보내기 ===
+    function downloadFile(content, filename, mime='text/plain') {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    $('export-md').addEventListener('click', async () => {
+      const res = await fetch('/api/conversation/export?format=md');
+      const data = await res.json();
+      const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      downloadFile(data.content || '', `hana-conversations-${ts}.md`, 'text/markdown');
+      settingsPanel.classList.remove('open');
+    });
+    $('export-json').addEventListener('click', async () => {
+      const res = await fetch('/api/conversation/export?format=json');
+      const data = await res.json();
+      const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      downloadFile(data.content || '[]', `hana-conversations-${ts}.json`, 'application/json');
+      settingsPanel.classList.remove('open');
+    });
+
+    // === 모든 대화 삭제 ===
+    $('clear-all').addEventListener('click', async () => {
+      if (!confirm('모든 대화를 삭제하시겠어요? (백업은 /tmp 안에 보존됩니다)')) return;
+      try {
+        const res = await fetch('/api/conversation/clear', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          messages.innerHTML = '';
+          canvasList.innerHTML = '';
+          updateCanvasEmpty();
+          if (welcome) welcome.style.display = '';
+          renderMsg('jarvis', '대화를 비웠어요. 백업은 ' + (data.archived || '안 만들었어요') + ' 에 있어요.');
+          settingsPanel.classList.remove('open');
+        }
+      } catch (e) {
+        renderMsg('jarvis', `[삭제 실패] ${e.message || e}`);
+      }
+    });
+
+    // === 메시지 hover 삭제 === renderMsg 갱신 (action button 추가)
+    const _origRenderMsg = renderMsg;
+    // (renderMsg 는 이미 위에 정의됨; 메시지 삭제 버튼은 별도 wrap)
+
+    // === init ===
+    loadInitial();
+    chatInput.focus();
+  </script>
+</body>
+</html>

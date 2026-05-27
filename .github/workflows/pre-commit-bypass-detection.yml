@@ -26,6 +26,9 @@
 
 name: PC-1-T3 bypass detection
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:

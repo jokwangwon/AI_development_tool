@@ -242,3 +242,127 @@ def test_format_report_mentions_status_and_worker_stats() -> None:
     assert "A" in out and "B" in out
     assert "applied" in out
     assert "destructive-rm" in out
+
+
+# --- (n) advice 4 항목 axis 추출 (parse_advice_axes + axis_stats) ---
+
+from src.jarvis.layer1 import parse_advice_axes
+
+
+def test_parse_advice_axes_empty_returns_empty_dict() -> None:
+    assert parse_advice_axes("") == {}
+    assert parse_advice_axes(None) == {}        # type: ignore[arg-type]
+
+
+def test_parse_advice_axes_code_domain_4axes_ok() -> None:
+    summary = (
+        "- 의도 부합: ✅ fizzbuzz.py 생성 요청 충족\n"
+        "- 정확성: ✅ 분기 정확\n"
+        "- 위험 신호: 없음\n"
+        "- 품질: ✅ 단순 명료"
+    )
+    out = parse_advice_axes(summary)
+    assert out["의도 부합"] == "ok"
+    assert out["정확성"] == "ok"
+    assert out["위험 신호"] == "none"
+    assert out["품질"] == "ok"
+
+
+def test_parse_advice_axes_shell_domain_axis2() -> None:
+    summary = (
+        "- 의도 부합: ✅ pytest 실행\n"
+        "- 결과·로그 의미: ✅ 132 passed\n"
+        "- 위험 신호: 없음\n"
+        "- 품질: 명료"
+    )
+    out = parse_advice_axes(summary)
+    assert out["결과·로그 의미"] == "ok"
+    assert out["품질"] == "unknown"             # "명료" 만 = no emoji = unknown
+
+
+def test_parse_advice_axes_status_mapping_warn_fail() -> None:
+    summary = (
+        "- 의도 부합: ⚠️ 부분 충족\n"
+        "- 정확성: ❌ 오류 있음\n"
+        "- 위험 신호: ⚠️ sudo 흔적"
+    )
+    out = parse_advice_axes(summary)
+    assert out["의도 부합"] == "warn"
+    assert out["정확성"] == "fail"
+    assert out["위험 신호"] == "warn"
+
+
+def test_parse_advice_axes_malformed_line_skipped() -> None:
+    summary = (
+        "- 의도 부합: ✅ ok\n"
+        "garbage line not axis\n"                # parse 대상 아님
+        "no leading dash 정확성: ✅\n"
+        "- 위험 신호: 없음"
+    )
+    out = parse_advice_axes(summary)
+    assert out == {"의도 부합": "ok", "위험 신호": "none"}
+
+
+def test_parse_advice_axes_no_colon_skipped() -> None:
+    summary = "- 의도 부합 (콜론 없음)\n- 정확성: ✅"
+    out = parse_advice_axes(summary)
+    assert out == {"정확성": "ok"}
+
+
+# --- mine() axis_stats 집계 ---
+
+def _entry_with_advice(summary: str | None) -> dict[str, Any]:
+    return _entry(advice_summary=summary)
+
+
+def test_mine_axis_stats_aggregates() -> None:
+    entries = [
+        _entry_with_advice("- 의도 부합: ✅ a\n- 정확성: ✅ b\n- 위험 신호: 없음\n- 품질: ✅ c"),
+        _entry_with_advice("- 의도 부합: ✅ x\n- 정확성: ⚠️ y\n- 위험 신호: 없음\n- 품질: ❌ z"),
+    ]
+    rep = mine(entries)
+    stats = rep.advice_axis_stats
+    assert stats["의도 부합"]["ok"] == 2
+    assert stats["정확성"]["ok"] == 1
+    assert stats["정확성"]["warn"] == 1
+    assert stats["위험 신호"]["none"] == 2
+    assert stats["품질"]["ok"] == 1
+    assert stats["품질"]["fail"] == 1
+
+
+def test_mine_axis_stats_skips_advice_absent() -> None:
+    entries = [
+        _entry_with_advice(None),                                       # advice 없음
+        _entry_with_advice("- 의도 부합: ✅ a\n- 정확성: ✅ b"),
+        _entry_with_advice(""),                                         # 빈 advice
+    ]
+    rep = mine(entries)
+    stats = rep.advice_axis_stats
+    assert stats["의도 부합"]["ok"] == 1
+    assert stats["정확성"]["ok"] == 1
+
+
+def test_pattern_report_default_axis_stats_empty() -> None:
+    """기존 코드 회귀 0 — axis_stats 기본값 = {} (entry 0)."""
+    rep = mine([])
+    assert rep.advice_axis_stats == {}
+
+
+# --- format_report axis 섹션 ---
+
+def test_format_report_renders_axis_stats() -> None:
+    entries = [
+        _entry_with_advice("- 의도 부합: ✅ ok\n- 정확성: ✅ ok"),
+    ]
+    rep = mine(entries)
+    out = format_report(rep)
+    assert "의도 부합" in out
+    assert "정확성" in out
+    assert "ok" in out or "1" in out
+
+
+def test_format_report_empty_axis_stats_safe() -> None:
+    """axis_stats={} 일 때도 정상 렌더 (예외 0, '없음' 명시 또는 정상 fallback)."""
+    rep = mine([_entry_with_advice(None)])
+    out = format_report(rep)
+    assert isinstance(out, str) and out.strip()

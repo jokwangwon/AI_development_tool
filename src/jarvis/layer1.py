@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Iterable
@@ -52,6 +53,55 @@ class PatternReport:
     advice_total: int
     advice_failed: int
     recent_failures: tuple[dict[str, Any], ...]
+    advice_axis_stats: dict[str, dict[str, int]] = field(default_factory=dict)
+
+
+# --- (n) advice 4 항목 axis 추출 ---
+# 답습: docs/phase0/jarvis-layer1-axis-extraction-brief.md §3
+#   boss prompt (h)+(m) 발효 형식 = "- <axis>: <body>" line 4 개.
+#   body 의 첫 이모지/단어 = status (✅/⚠️/❌/없음/unknown).
+
+_AXIS_LINE_RE = re.compile(r"^\s*-\s*([^:]+?)\s*:\s*(.+?)\s*$")
+
+
+def _classify_status(body: str) -> str:
+    """body 의 첫 시그널 → ok/warn/fail/none/unknown 매핑."""
+    stripped = body.strip()
+    if not stripped:
+        return "unknown"
+    # 이모지 우선 매핑 (4 종)
+    if stripped.startswith("✅"):
+        return "ok"
+    if stripped.startswith("⚠️") or stripped.startswith("⚠"):
+        return "warn"
+    if stripped.startswith("❌"):
+        return "fail"
+    # "없음" = 위험 신호 axis 의 정상 상태
+    if stripped.startswith("없음"):
+        return "none"
+    return "unknown"
+
+
+def parse_advice_axes(summary: str | None) -> dict[str, str]:
+    """advice_summary → {axis_label: status} dict.
+
+    답습: brief §3 — boss prompt (h)+(m) 4 항목 체크리스트 형식 한정.
+      - "- <axis>: <body>" 패턴 매칭 (다른 line skip).
+      - body 의 첫 이모지/단어 = status.
+      - 빈 입력 / None → {} (silent, axis 0건 추가).
+      - 같은 axis 중복 line → 마지막 채택.
+    """
+    if not summary:
+        return {}
+    out: dict[str, str] = {}
+    for line in summary.splitlines():
+        m = _AXIS_LINE_RE.match(line)
+        if m is None:
+            continue
+        axis = m.group(1).strip()
+        body = m.group(2)
+        out[axis] = _classify_status(body)
+    return out
 
 
 def _is_failure(entry: dict[str, Any]) -> bool:
@@ -90,6 +140,7 @@ def mine(
             total_entries=0, first_ts=None, last_ts=None,
             status_counts={}, workers=(), flag_frequency={},
             advice_total=0, advice_failed=0, recent_failures=(),
+            advice_axis_stats={},
         )
 
     status_counts: dict[str, int] = dict(Counter(e["status"] for e in valid))
@@ -121,6 +172,16 @@ def mine(
     advice_total = sum(1 for e in valid if e.get("advice_summary"))
     advice_failed = sum(1 for e in valid if e.get("advice_failed"))
 
+    # (n) advice 4 항목 axis 추출 — advice 부재 entry 는 자동 skip
+    advice_axis_stats: dict[str, dict[str, int]] = {}
+    for e in valid:
+        axes = parse_advice_axes(e.get("advice_summary"))
+        for axis, status in axes.items():
+            bucket = advice_axis_stats.setdefault(
+                axis, {"ok": 0, "warn": 0, "fail": 0, "none": 0, "unknown": 0}
+            )
+            bucket[status] = bucket.get(status, 0) + 1
+
     # recent_failures — ts 내림차순 top N
     failures = [e for e in valid if _is_failure(e)]
     failures.sort(key=lambda e: e.get("ts", ""), reverse=True)
@@ -141,6 +202,7 @@ def mine(
         advice_total=advice_total,
         advice_failed=advice_failed,
         recent_failures=recent_failures,
+        advice_axis_stats=advice_axis_stats,
     )
 
 
@@ -171,10 +233,12 @@ def format_report(report: PatternReport) -> str:
     lines.append("")
     lines.append("Verdict flag 빈도:")
     if report.flag_frequency:
-        for flag, cnt in sorted(
-            report.flag_frequency.items(), key=lambda kv: (-kv[1], kv[0])
-        ):
-            lines.append(f"  {flag:<24} {cnt}")
+        # (b1-PC1-D6-false-positives) FP 회피 (multiline `key=lambda` 매칭) — tuple default sort
+        ordered = sorted(
+            (-cnt, flag) for flag, cnt in report.flag_frequency.items()
+        )
+        for neg_cnt, flag in ordered:
+            lines.append(f"  {flag:<24} {-neg_cnt}")
     else:
         lines.append("  (없음)")
 
@@ -185,6 +249,19 @@ def format_report(report: PatternReport) -> str:
         f"Boss advisory: total={report.advice_total} failed={report.advice_failed}"
         f" rate={rate * 100:.1f}%"
     )
+
+    lines.append("")
+    lines.append("Advice 4 항목 (axis · ok / warn / fail / none / unknown):")
+    if report.advice_axis_stats:
+        for axis, stats in report.advice_axis_stats.items():
+            lines.append(
+                f"  {axis:<16} "
+                f"ok={stats.get('ok', 0)} warn={stats.get('warn', 0)} "
+                f"fail={stats.get('fail', 0)} none={stats.get('none', 0)} "
+                f"unknown={stats.get('unknown', 0)}"
+            )
+    else:
+        lines.append("  (advice 자료 없음 — boss 미주입 또는 advice 부재)")
 
     lines.append("")
     lines.append(f"최근 실패 (top {len(report.recent_failures)}):")

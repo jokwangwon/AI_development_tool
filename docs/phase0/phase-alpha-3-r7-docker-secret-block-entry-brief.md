@@ -19,7 +19,7 @@
 - `docs/review/3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` (GP-3 MVP-1 진입 합의 — ST-3 단독 채택 권위 권고, commit `6dc5bdc`)
 - `docs/review/3plus1-consensus-2026-05-12-gp3-stage2-implementation-entry.md` (**GP-3 Stage 2 (ST-3 docker secret) 단독 구현 진입 합의 APPROVE — sub-step 2.1 ~ 2.4 4 cycle**)
 - `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3.4.2 (`docker_secret_isolation_check` + `container_restart_recovery`) + §5.3 (ST-3 MVP-1 1차 단독 — Hermes upstream 변경 회피) + §5.5.1 ST-3 본문 채택 (commit `55c5b4b`)
-- ADR-008 §2.6.2 R2-1 (file system secret isolation — docker secret) + §A.2 R1-2 (저장 경로 isolation)
+- ADR-008 차단조건 #6 + 부록 B (file system secret isolation — docker secret) + §A.2 R1-2 (저장 경로 isolation)
 - ADR-011 §2.1 (a)~(e) 5조건 패턴 + §2.4 T2 영역 (CI step Entry)
 
 ---
@@ -72,7 +72,7 @@
 
 - ❌ **실 hook 구현 (0건)** — `.git/hooks/pre-commit` 본문 작성 / `.pre-commit-config.yaml` 본문 변경 0건
 - ❌ **Production `docker-compose.yml` 변경 (0건)** — PoC 격리 디렉토리 (`docker/gp3-st3-poc/`) 한정 — production docker-compose 변경 0건 보존
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 답습 = upstream 변경 회피 (Backlog #1 1.5차 보강 ST-1 entrypoint stat / ST-2 inotify sidecar 분리 영역)
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 회피 (Backlog #1 1.5차 보강 ST-1 entrypoint stat / ST-2 inotify sidecar 분리 영역)
 - ❌ **R-4 도구 본문 변경 (0건)** — Phase α-1 R-4 영역 (`tools/secret_scanner.py` / `tools/provider_import_scanner.py` / `tools/provider_url_scanner.py`) 본문 변경 모두 0건 (Phase α-1 = 별도 영역, `1b3090b` 합의 답습)
 - ❌ **R-5 `.importlinter` 본문 변경 (0건)** — Phase α-2 영역 분리 (`6a79247` 합의 답습)
 - ❌ **R-1 CI workflow 통합 (0건)** — Phase α-4 영역 분리
@@ -150,7 +150,7 @@
 | 합의 형태 | Reviewer-only 단축 합의 (5/5 트리거 0건 발화 확정) |
 | 발효 시점 | 2026-05-12 후속 13 (Stage 1 + Stage 3 actual run PASS 후속 — `7262240` 기준) |
 | 4 sub-step 분할 | 2.1 docker-compose secret block / 2.2 image layer 검증 / 2.3 container restart recovery / 2.4 CI Stage 2 entry step + Evidence |
-| 본문 채택 | ST-3 = Hermes upstream 변경 0건 보존 (ADR-008 §2.6.2 R2-1 답습) |
+| 본문 채택 | ST-3 = Hermes upstream 변경 0건 보존 (ADR-008 차단조건 #6 + 부록 B 답습) |
 | 발효 영역 | Stage 2 *구현 진입 적격성* 한정 — Implementation Evidence PASS 발효 / MVP-1 PASS / Operational Readiness PASS / Hermes PMO 격상 모두 영역 외 |
 
 **본 brief 관계**: GP-3 Stage 2 합의는 *Stage 단위* 진입 적격성 권위 권고 (Layer B 흡수 영역). 본 brief = Phase α-3 = **Backlog #6 우선 진입 합의의 4 Phase 분할 中 1순위 1단계** *진입 가능성 검토 한정* (별도 framing — Layer A/B → Backlog #6 우선 진입 → Phase α 4단계 framing).
@@ -225,14 +225,14 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 |------|---------|----------------------|
 | 책무 (ST-3 영역) | GP-3 저장 경로 secret 검출 (G3-1) — file system secret isolation | Layer B §5.5.1 ST-3 본문 채택 답습 |
 | 도구 | docker-compose secret block + image layer 검증 + container restart recovery | GP-3 Stage 2 합의 4 sub-step 답습 |
-| 권위 | ADR-008 §2.6.2 R2-1 + §A.2 R1-2 | upstream 변경 회피 답습 |
+| 권위 | ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 | upstream 변경 회피 답습 |
 | 책무 분리 (ST-3 단독) | Vault HSM ST-4 미진입 (Backlog #7) / entrypoint stat ST-1 / inotify sidecar ST-2 미진입 (Backlog #1 1.5차 보강) / ST-5 Defense in depth (MVP-2 이후) | GP-3 진입 합의 답습 (ST-3 단독 채택) |
 
 ### 2.2 R-7 본문 9 artifacts 답습 (현 라인 수 — 실 본문 변경 0건, enumerate 한정)
 
 | # | 산출물 | 경로 | 현 라인 수 | sub-step | 답습 출처 |
 |---|--------|------|---------|---------|---------|
-| 1 | docker-compose secret block | `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` | 34 | 2.1 | ADR-008 §2.6.2 R2-1 + mvp1.md §3.4.2 + §5.3 답습 |
+| 1 | docker-compose secret block | `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` | 34 | 2.1 | ADR-008 차단조건 #6 + 부록 B + mvp1.md §3.4.2 + §5.3 답습 |
 | 2 | Dockerfile (PoC) | `docker/gp3-st3-poc/Dockerfile` | 12 | 2.1 | PoC 격리 영역 한정 |
 | 3 | 응용 (secret read) | `docker/gp3-st3-poc/app.py` | 46 | 2.1 | PoC 격리 영역 한정 |
 | 4 | placeholder secret material | `docker/gp3-st3-poc/secrets/api_key.placeholder` | 1 | 2.1 | FAKE_TEST_SECRET marker 답습 (Group D F-금지 #1) |
@@ -249,7 +249,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | sub-수단 ID | 영역 | 본문 채택 권위 (답습 한정) | R-7 관계 | 본 brief 영역 |
 |----------|------|----------------------|----------|------------|
 | S-1 | 코드 본문 secret 검출 (R-4.1 Tier-1 45 patterns) | Group D PoC 답습 | R-4 영역 (Phase α-1) — Stage 1 | 영역 외 (별도 Phase) |
-| **ST-3** | **docker secret (저장 경로 isolation)** | **ADR-008 §2.6.2 R2-1 답습 + Layer A §1.2 + Layer B §1.1 답습** | **R-7 본문 = ST-3 본문 (Stage 2)** | **본 brief 영역 내** |
+| **ST-3** | **docker secret (저장 경로 isolation)** | **ADR-008 차단조건 #6 + 부록 B 답습 + Layer A §1.2 + Layer B §1.1 답습** | **R-7 본문 = ST-3 본문 (Stage 2)** | **본 brief 영역 내** |
 | PC-3 | CI-only enforcement (pre-commit) | T2 영역 답습 | Stage 4 영역 (양 GP 공유 — PC-4 T3 분리) | 영역 외 (별도 Stage) |
 | AR-1 | CI step fail-closed (PR auto-reject) | T2 영역 답습 | Stage 4 영역 (양 GP 공유 — AR-2 T3 분리) | 영역 외 (별도 Stage) |
 
@@ -289,7 +289,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 
 | sub-step | 영역 | 답습 출처 | Phase α-3 진입 시 본 작업 후보 (본 brief 영역 외 — 실 진입 시점 결정) |
 |---------|------|---------|---------------------------------------|
-| 2.1 | docker-compose secret block 본문 답습 검증 (34줄) | ADR-008 §2.6.2 R2-1 + mvp1.md §3.4.2 답습 | 답습 변경 0건 — `secrets:` block + `file:` source + mode 0400 + cap_drop ALL + read_only + tmpfs noexec/nosuid + no-new-privileges + network_mode none + user 1000:1000 답습 검증 |
+| 2.1 | docker-compose secret block 본문 답습 검증 (34줄) | ADR-008 차단조건 #6 + 부록 B + mvp1.md §3.4.2 답습 | 답습 변경 0건 — `secrets:` block + `file:` source + mode 0400 + cap_drop ALL + read_only + tmpfs noexec/nosuid + no-new-privileges + network_mode none + user 1000:1000 답습 검증 |
 | 2.1.a | Dockerfile (12줄) + app.py (46줄) + placeholder (1줄) 답습 검증 | PoC 격리 영역 답습 | 답습 변경 0건 — PoC 격리 디렉토리 (`docker/gp3-st3-poc/`) 한정 |
 | 2.1.b | `secrets/.gitignore` 답습 검증 (placeholder 한정) | F-금지 #1 marker 답습 | 답습 검증 한정 — 실 secret commit 금지 영구 답습 |
 | 2.2 | image layer 검증 도구 답습 (99줄) | mvp1.md §3.4.2 `docker_secret_isolation_check` (0건 leak 강제) | 답습 변경 0건 — docker build → docker history / docker save tar → secret material grep → 0 leak 강제 답습 검증 |
@@ -303,7 +303,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 
 | Stage | 도구 | sub-step | 신규 작업 비율 (실 진입 시점) | PoC 답습 비율 | 본 brief 영역 |
 |-------|------|---------|------------------------|------------|------------|
-| Stage 2 (ST-3) | 9 artifacts (328줄) | 9 sub-step (2.1 + 2.1.a + 2.1.b + 2.2 + 2.2.a + 2.3 + 2.4 + 2.4.a + 2.4.b) | 低 (GP-3 Stage 2 합의 답습 변경 0건 + 4 cycle commit 완료 답습) | 高 (GP-3 Stage 2 합의 + ADR-008 §2.6.2 R2-1 답습) | enumerate 한정 |
+| Stage 2 (ST-3) | 9 artifacts (328줄) | 9 sub-step (2.1 + 2.1.a + 2.1.b + 2.2 + 2.2.a + 2.3 + 2.4 + 2.4.a + 2.4.b) | 低 (GP-3 Stage 2 합의 답습 변경 0건 + 4 cycle commit 완료 답습) | 高 (GP-3 Stage 2 합의 + ADR-008 차단조건 #6 + 부록 B 답습) | enumerate 한정 |
 
 ### 3.3 Phase α-1 / α-2 / α-3 분리 매트릭스
 
@@ -315,7 +315,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | 본문 라인 수 | 829줄 (368 + 178 + 283) | 35줄 | **328줄 (9 artifacts)** |
 | 책무 | code-level Layer 1a + 1c | code-level Layer 1b | **file-system Layer (R2-1)** |
 | 동시 진입 적격성 | Phase α-1 + α-2 + α-3 병렬 진입 적격 (§6.1 답습) | 동상 | 동상 (Stage 2 합의 §1.2 답습 — 0 의존성) |
-| Hermes upstream 변경 | 0건 | 0건 | **0건 (ADR-008 §2.6.2 R2-1 답습)** |
+| Hermes upstream 변경 | 0건 | 0건 | **0건 (ADR-008 차단조건 #6 + 부록 B 답습)** |
 
 ### 3.4 본 §3 의 *범위 한계*
 
@@ -402,7 +402,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | 조건 # | 조건 | 본 brief 검토 결과 | 판정 |
 |------|------|------------------|----|
 | **C-α3-1** | **사용자 명시 7 금지 영역 충돌 0** | R-7 docker secret block = file-system 격리 영역 — 금지 #3 (branch protection) / #4 (dev 환경 강제) / #5 (pre-commit install 의무화) / #6 (Layer E) / #7 (Layer F) 모두 직교 (충돌 0). 금지 #1 (실 R-7 수정) / #2 (CI workflow 변경) = Phase α-3 *실 진입* 시점 적용 — 본 brief = 검토 한정 (충돌 0). | ✅ **0/7 충돌** |
-| **C-α3-2** | **PoC 답습 변경 0** | R-7 영역 9 artifacts × 328줄 답습 + GP-3 Stage 2 합의 §1.3 4 sub-step 답습 + ADR-008 §2.6.2 R2-1 답습 + ST-3 단독 채택 답습 + Layer B §5.5.1 ST-3 본문 채택 답습 모두 변경 0건 | ✅ **답습 100% 보존** |
+| **C-α3-2** | **PoC 답습 변경 0** | R-7 영역 9 artifacts × 328줄 답습 + GP-3 Stage 2 합의 §1.3 4 sub-step 답습 + ADR-008 차단조건 #6 + 부록 B 답습 + ST-3 단독 채택 답습 + Layer B §5.5.1 ST-3 본문 채택 답습 모두 변경 0건 | ✅ **답습 100% 보존** |
 | **C-α3-3** | **의존성 0 (Phase α-1 / α-2 / α-3 병렬 진입 적격)** | R-7 ↔ R-4 = 영역 분리 (S-1 코드 본문 vs ST-3 저장 경로 — 의존 0, Stage 2 합의 §1.2 답습) + R-7 ↔ R-5 = 영역 분리 (provider import vs file-system isolation — 의존 0) + R-7 ↔ R-1 = Phase α-4 영역 (본 brief 영역 외) + Stage 2 actual run PASS 검증 답습 (run_id `25728590939` 후속) — 의존성 해소됨 | ✅ **의존성 0 (병렬 진입 적격)** |
 | **C-α3-4** | **Provider Liquidity 5-way 100% 보존** | R-7 = file-system secret isolation Layer (R2-1) — catalog / provider 영역과 직교 + docker secret = vendor-agnostic 표준 (Docker BuildKit / Docker Compose) + secret material = placeholder 답습 (실 vendor SDK 무관) | ✅ **5/5 100% 보존** |
 | **C-α3-5** | **5 영구 핵심 제약 보존** | Hermes ≠ root of trust 보존 (R-7 = file-system isolation, Hermes PMO 영역 분리 + Hermes upstream 변경 0건) / 단일 source-of-truth 보존 (PoC 답습 변경 0건) / 수단/목적 분리 보존 (R-7 = 수단, 목적 = 저장 경로 secret isolation) / T1/T2/T3 분리 보존 (R-7 = T2 영역, ST-4 Vault HSM = T3 영역 분리) / SPOF 의도적 수용 보존 (R-7 = enforcement single point 답습) | ✅ **5/5 보존** |
@@ -418,7 +418,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | 5 | 본 brief 가 5 영구 핵심 제약 中 1+ 약화 포함 | ❌ 0건 — 5/5 보존 답습 |
 | 6 | 본 brief 가 T3 영역 진입 권고 | ❌ 0건 — T3 분리 명시 한정 (R-7 = T2 영역, ST-4 Vault HSM = T3 영역 분리) |
 | 7 | 본 brief 가 ADR-008 부록 C Hermes PMO Activation 12 조건 中 1+ 충족 발생 | ❌ 0건 — Hermes PMO 격상 분리 명시 한정 |
-| 8 | 본 brief 가 secret handling 방식이 기존 정책 변경 권고 (GP-3 Stage 2 §1.8 #1 답습) | ❌ 0건 — ADR-008 §2.6.2 R2-1 답습 변경 0건 + Hermes upstream 변경 0건 |
+| 8 | 본 brief 가 secret handling 방식이 기존 정책 변경 권고 (GP-3 Stage 2 §1.8 #1 답습) | ❌ 0건 — ADR-008 차단조건 #6 + 부록 B 답습 변경 0건 + Hermes upstream 변경 0건 |
 | 9 | 본 brief 가 Hermes upstream root of trust 변경 권고 (GP-3 Stage 2 §1.8 #2 답습) | ❌ 0건 — docker secret = upstream 분리 영역 (ADR-011 §2.1 (b) 수단/목적 분리 답습) |
 | 10 | 본 brief 가 Docker secret / local config / CI secret 경계 불명확 (GP-3 Stage 2 §1.8 #3 답습) | ❌ 0건 — ST-3 (Docker secret) + S-1 (local config + 코드 본문 secret) + G3-7 (CI secret — Stage 5 분리) 경계 명확 |
 | 11 | 본 brief 가 ST-3 = ST-1/2/4/5 흡수 시도 권고 | ❌ 0건 — ST-3 단독 답습 한정 (mvp1.md §5.3 답습) |
@@ -508,7 +508,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | 7 | **Hermes PMO 격상 (Layer F)** (사용자 명시 7 금지 #7) | 0건 |
 | 8 | 실 hook 구현 (`.git/hooks/pre-commit` 본문 / `.pre-commit-config.yaml` 본문 변경) | 0건 |
 | 9 | Production `docker-compose.yml` 신설 / 변경 (PoC 격리 디렉토리 한정 답습) | 0건 |
-| 10 | Hermes upstream Dockerfile 변경 (ADR-008 §2.6.2 R2-1 답습 보존) | 0건 |
+| 10 | Hermes upstream Dockerfile 변경 (ADR-008 차단조건 #6 + 부록 B 답습 보존) | 0건 |
 | 11 | R-4 도구 본문 (`secret_scanner.py` / `provider_import_scanner.py` / `provider_url_scanner.py`) 변경 | 0건 |
 | 12 | R-5 `.importlinter` 본문 변경 | 0건 |
 | 13 | R-1 CI workflow 통합 (`.github/workflows/*.yml` 신설/변경) | 0건 |
@@ -666,7 +666,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | Group α 7 단계 승격 Trigger 답습 | ✅ (발화 0건) |
 | 5 영구 핵심 제약 보존 | ✅ (Hermes ≠ root of trust + Hermes upstream 변경 0건 / 단일 source-of-truth / 수단/목적 분리 / T1/T2/T3 분리 / SPOF 의도적 수용 5/5 보존) |
 | Provider Liquidity 5-way 100% 보존 | ✅ (R-7 = file-system secret isolation = catalog / provider 영역과 직교, docker secret = vendor-agnostic 표준) |
-| ADR-008 §2.6.2 R2-1 + §A.2 R1-2 답습 | ✅ (Hermes upstream 변경 회피 보존) |
+| ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 답습 | ✅ (Hermes upstream 변경 회피 보존) |
 | ST-3 단독 답습 (ST-1/2/4/5 분리) | ✅ (MVP-1 1차 ST-3 단독 답습 — mvp1.md §5.3) |
 | Vault HSM ST-4 미진입 (Backlog #7 분리) | ✅ 분리 명시 |
 | inotify sidecar ST-2 미진입 (Backlog #1 분리) | ✅ 분리 명시 (`tools/docker_secret_inotify_sidecar_check.sh` 258줄 = 영역 외) |
@@ -698,7 +698,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 - ❌ **Hermes PMO 격상 (Layer F)** (사용자 명시 7 금지 #7)
 - ❌ 실 hook 구현 (`.pre-commit-config.yaml` 본문 / `.git/hooks/pre-commit` 본문)
 - ❌ Production `docker-compose.yml` 신설 / 변경 (PoC 격리 디렉토리 한정 답습)
-- ❌ Hermes upstream Dockerfile 변경 (ADR-008 §2.6.2 R2-1 답습)
+- ❌ Hermes upstream Dockerfile 변경 (ADR-008 차단조건 #6 + 부록 B 답습)
 - ❌ R-7 영역 9 artifacts × 328줄 본문 어느 줄도 변경 (`docker/gp3-st3-poc/` + `tools/docker_secret_*.sh` + `tests/fixtures/gp3_st3/`)
 - ❌ R-4 도구 본문 변경 (`tools/*.py`)
 - ❌ R-5 `.importlinter` 본문 변경

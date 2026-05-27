@@ -199,7 +199,7 @@ brief 그대로 승인 합의 보고서 작성 (Reviewer-only 단축 적격 후�
 |---|----|--------|-----------|
 | 1 | **R-4 도구 본문 (829줄, α-1)** | Group D PoC + Group A 1차 + Group A 3차 합의 영구 + Layer C evidence 영구 | ✅ |
 | 2 | **R-5 `.importlinter` 본문 (35줄, α-2)** | Group A 2차 합의 영구 + C-9 RA-9 사전 검증 PASS + 각주 1 google.generativeai | ✅ |
-| 3 | **R-7 docker secret block (328줄, α-3)** | GP-3 Stage 2 합의 영구 + ADR-008 §2.6.2 R2-1 + Hermes upstream Dockerfile 변경 0건 | ✅ |
+| 3 | **R-7 docker secret block (328줄, α-3)** | GP-3 Stage 2 합의 영구 + ADR-008 차단조건 #6 + 부록 B + Hermes upstream Dockerfile 변경 0건 | ✅ |
 | 4 | **R-1 CI workflow 통합 (1593줄, α-4)** | Stage 4 cycle 1~4 (W-1 0-line + W-2 0-line + W-3 0-line + W-4 trigger-deferred) + 본문 변경 0건 | ✅ |
 | 5 | **Stage 4 step (line 318~360) wired** | sub-step 4.1 (PC-3 CI step 통합) + sub-step 4.2 (AR-1 fail-closed 통합) 본문 변경 0건 | ✅ |
 | 6 | **Layer C 발효 evidence** | 9/9 evidence + 4/4 prerequisite actual run + 8/8 line count 정확 일치 + 5 source cross-reference | ✅ |

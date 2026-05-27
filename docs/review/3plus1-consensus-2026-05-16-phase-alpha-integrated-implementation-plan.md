@@ -53,7 +53,7 @@
 |-------|----|----------|---------|---------|--------------|
 | **α-1 (R-4)** | 3 도구 본문 | 3 file | **829** | Group D PoC + Group A 1차 + Group A 3차 | S-1 (`secret_scanner.py` 368) + T-2 (`provider_import_scanner.py` 178) + T-5 (`provider_url_scanner.py` 283) |
 | **α-2 (R-5)** | `.importlinter` 본문 | 1 file | **35** | Group A 2차 합의 + C-9 RA-9 사전 검증 PASS | T-2 import-linter (T-6 = T-2 + T-5 병행 中 transitive 측면) |
-| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 §2.6.2 R2-1 | ST-3 (Hermes upstream 변경 0건 보존) |
+| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 차단조건 #6 + 부록 B | ST-3 (Hermes upstream 변경 0건 보존) |
 | **α-4 (R-1)** | CI workflow 통합 | 7 file | **1593** | Stage 4 합의 + Layer B §5.5.1 | PC-3 + AR-1 (양 GP 공유) |
 | **합산** | **4 영역** | **20 file** | **2785** | — | **5 sub-수단** (S-1 + T-2 + T-5 + ST-3 + PC-3 + AR-1) |
 
@@ -237,7 +237,7 @@
 | S-2 gitleaks 진입 | ❌ 0건 (Backlog #1) |
 | R-4.1 Tier-1 / URL Tier-1 / Model Tier-1 catalog 변경 | ❌ 0건 (Backlog #3) |
 | Tier-2 / Tier-3 catalog 자동 확장 | ❌ 0건 |
-| Hermes upstream Dockerfile 변경 | ❌ 0건 (ADR-008 §2.6.2 R2-1 영구 답습) |
+| Hermes upstream Dockerfile 변경 | ❌ 0건 (ADR-008 차단조건 #6 + 부록 B 영구 답습) |
 | Production `docker-compose.yml` 변경 | ❌ 0건 |
 | 실 secret material commit | ❌ 0건 (F-금지 #1 영구 답습) |
 | GitHub Actions secrets 사용 도입 | ❌ 0건 (F-금지 #1 영구 답습) |

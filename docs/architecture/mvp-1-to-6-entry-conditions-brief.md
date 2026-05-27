@@ -90,7 +90,7 @@
 |---|------|------|------|
 | (a) | 동등 이상의 보안 결과 | gitleaks/detect-secrets/custom scanner 결과 R-4.1 Tier-1 42 catalog 답습 동등 이상 | depcruise/import-linter 결과 §9.3 답습 동등 이상 |
 | (b) | 격리 환경 PoC 실증 | docker secret + chmod 600 + inotify (저장) PoC + gitleaks PR auto-reject (코드) PoC | depcruise/import-linter PR auto-reject + facade single entry point PoC |
-| (c) | ADR / SDD 권위 명시 | ADR-008 §A.2 R1-2 + ADR-010 + R-4 + `roadmap-mvp1.md` §3 | ADR-008 차단조건 #4 + ADR-009 C-N §5 + P1 v2 + `roadmap-mvp1.md` §4 |
+| (c) | ADR / SDD 권위 명시 | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + R-4 + `roadmap-mvp1.md` §3 (36번째 entry R-S1 정정 답습) | ADR-008 차단조건 #4 + 부록 B + ADR-009 C-N §5 + ADR-011 + P1 v2 + `roadmap-mvp1.md` §4 (36번째 entry R-S1 정정 답습) |
 | (d) | 자동 회귀 검증 경로 확보 | `.github/workflows/secret-scan.yml` (또는 R-6 통합) + nightly | `.github/workflows/provider-adapter-enforcement.yml` 기존 + depcruise/import-linter step 추가 + 매 PR + nightly |
 | (e) | 합의 APPROVE | 단축 또는 풀 3+1 (수단 결정 시 풀 3+1 권고 — `roadmap-mvp1.md` §3.6 답습) | 단축 또는 풀 3+1 (T-1 vs T-2 vs T-9 결정 시 풀 3+1 권고 — `roadmap-mvp1.md` §4.6 답습) |
 

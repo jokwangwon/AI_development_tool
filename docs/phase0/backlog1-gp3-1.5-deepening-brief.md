@@ -116,8 +116,8 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 
 | 항목 ID | 항목 | 영역 | 본문 채택 권위 (답습 한정) | 답습 출처 |
 |--------|------|------|----------------------|---------|
-| **ST-1** | Hermes Dockerfile entrypoint stat 검증 (chmod 600 강제) | GP-3 저장 경로 secret 검출 보강 (G3-1) | ❌ 미채택 (mvp1.md §3.3.2 + §5.5.1 답습 — Backlog #1 분리) | ADR-008 §A.2 R1-2 + GP-3 §5.3 답습 |
-| **ST-2** | inotify sidecar (mtime/perm 변경 → 컨테이너 정지) | GP-3 저장 경로 secret 검출 보강 (G3-1) | ❌ 미채택 (mvp1.md §3.3.2 + §5.5.1 답습 — Backlog #1 분리) | ADR-008 §A.2 R1-2 + GP-3 §5.3 답습 |
+| **ST-1** | Hermes Dockerfile entrypoint stat 검증 (chmod 600 강제) | GP-3 저장 경로 secret 검출 보강 (G3-1) | ❌ 미채택 (mvp1.md §3.3.2 + §5.5.1 답습 — Backlog #1 분리) | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + GP-3 §5.3 답습 |
+| **ST-2** | inotify sidecar (mtime/perm 변경 → 컨테이너 정지) | GP-3 저장 경로 secret 검출 보강 (G3-1) | ❌ 미채택 (mvp1.md §3.3.2 + §5.5.1 답습 — Backlog #1 분리) | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + GP-3 §5.3 답습 |
 | **PC-4** | PC-1 + PC-3 병행 (local pre-commit framework + CI-only enforcement, Defense in depth) | GP-3 + GP-5 공유 pre-commit hook 보강 (G3-2 / G5-2) | ❌ 미채택 (mvp1.md §4.3.2 + §5.5.1 + §5.5.2 답습 — Backlog #1 + #2 분리) | Group D PoC §1.2 #7 + Group A 2차 §1.2 답습 |
 
 **합산 = 3 항목 (GP-3 저장 경로 강화 2 + GP-3/GP-5 공유 pre-commit framework 1)**.
@@ -132,7 +132,7 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 
 - **검증 시점**: 컨테이너 시작 시 (entrypoint script)
 - **메커니즘**: `/run/secrets/*` 또는 동등 경로의 secret 파일 권한이 `0600` 인지 stat 검증, 미달 시 `exit 1` (컨테이너 정지)
-- **권위 출처**: ADR-008 §A.2 R1-2 ("저장 경로 secret 보호") + GP-3 §5.3 강제 메커니즘 ("chmod 600 강제 + entrypoint stat 검증 (R1-2) — Hermes Dockerfile entrypoint")
+- **권위 출처**: ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 ("저장 경로 secret 보호") + GP-3 §5.3 강제 메커니즘 ("chmod 600 강제 + entrypoint stat 검증 (R1-2) — Hermes Dockerfile entrypoint")
 
 #### 2.1.2 Hermes upstream 영향
 
@@ -163,7 +163,7 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 
 - **검증 시점**: 런타임 지속 (inotify event 기반)
 - **메커니즘**: sidecar 컨테이너가 secret 파일 경로를 inotify 감시 → mtime/perm 변경 event 발생 시 메인 컨테이너에 정지 signal 송출 (또는 docker-compose dependency 통한 graceful shutdown)
-- **권위 출처**: ADR-008 §A.2 R1-2 ("저장 경로 secret 보호") + GP-3 §5.3 강제 메커니즘 ("inotify 런타임 감시 — Hermes runtime") + mvp1.md §3.3.1 ("inotify sidecar | 런타임 지속 | ❌ (sidecar 분리 가능) | ✅")
+- **권위 출처**: ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 ("저장 경로 secret 보호") + GP-3 §5.3 강제 메커니즘 ("inotify 런타임 감시 — Hermes runtime") + mvp1.md §3.3.1 ("inotify sidecar | 런타임 지속 | ❌ (sidecar 분리 가능) | ✅")
 
 #### 2.2.2 Hermes upstream 영향
 
@@ -329,7 +329,7 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 |----------|------|----------|----------|----------|
 | (a) 동등 이상의 보안 결과 | docker secret + chmod 600 + entrypoint stat + inotify 동작 확인 (GP-3 §5.4 답습) | ✅ entrypoint stat 검증 추가 | ✅ inotify 감시 추가 | (PC-3 답습 + pre-commit framework 추가) |
 | (b) 격리 환경 PoC 실증 | docker secret 누락 / chmod 644 / mtime 변경 → 컨테이너 정지 시연 | ✅ chmod 644 시뮬레이션 + entrypoint stat fail evidence | ✅ mtime 변경 시뮬레이션 + 컨테이너 정지 evidence | (의도적 violation commit → pre-commit reject 시연) |
-| (c) ADR / SDD 권위 명시 | ADR-008 §A.2 R1-2 + R2-1 + GP-3 §5.3 + mvp1.md §3 답습 | ✅ | ✅ | mvp1.md §4.3 + §5.5.1/.2 답습 |
+| (c) ADR / SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + R2-1 + GP-3 §5.3 + mvp1.md §3 답습 | ✅ | ✅ | mvp1.md §4.3 + §5.5.1/.2 답습 |
 | (d) 자동 회귀 검증 경로 확보 | entrypoint stat 검증 매 컨테이너 시작 시 강제 + inotify nightly 또는 매 PR 실행 | ✅ | ✅ | `.pre-commit-config.yaml` 답습 매 commit 시 강제 + CI step 통합 (PC-3 답습) |
 | (e) 합의 APPROVE | 항목별 합의 형태 (§3.2 답습) | 풀 3+1 + Hermes PR | 단축 또는 풀 3+1 | T2 sub = 단축 / T3 sub = 풀 3+1 |
 
@@ -397,7 +397,7 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 | 5 | Vault HSM (ST-4) 진입 | Backlog #7 Operational Readiness 영역 분리 (ADR-010 §X 진입 합의 + Multi-host 인프라 검토) |
 | 6 | branch protection rule 변경 (AR-2 / AR-3) | Backlog #3 T3 영역 별도 풀 3+1 합의 + 외부 LLM 1+ + 사용자 명시 |
 | 7 | Tier-2 / Tier-3 catalog 확장 (R-4.1 Tier-1 / URL Tier-1 / Model Tier-1 변경) | Backlog #3 별도 합의 영역 |
-| 8 | ADR 본문 자동 갱신 (ADR-008 §A.2 R1-2 / R2-1 본문 변경) | cross-reference 답습 한정 — 보강 발효 후 별도 commit 영역 |
+| 8 | ADR 본문 자동 갱신 (ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 / R2-1 본문 변경) | cross-reference 답습 한정 — 보강 발효 후 별도 commit 영역 |
 | 9 | event enum 정식 등록 (`event:` field 신규 추가) | Backlog #5 ADR-012 §2.2 schema 진화 정책 별도 합의 |
 | 10 | MVP-1 PASS *재선언* (Layer D 본문 변경) | 별도 합의 + 사용자 명시 결정 |
 | 11 | Operational Readiness PASS (Layer E) / Hermes PMO 격상 (Layer F) | MVP-6 영역 — 별도 합의 + 외부 LLM cross-vendor blind + 사람 리뷰 의무 |
@@ -450,7 +450,7 @@ brief 그대로 승인 합의 보고서 작성 또는 일부 조정
 | C-1~C-8 상태 답습 | ✅ (C-1 Satisfied + C-2 Satisfied + C-3~C-8 Deferred/Requires separate — 변경 0건) |
 | MVP-1 PASS Layer D 본문 답습 | ✅ (`210c98f` APPROVE WITH CONDITIONS 그대로 유지) |
 | ADR-011 §2.4 T1/T2/T3 분류 답습 | ✅ (§2.4 답습 — T3 영역 자동 진입 0건 / T2 영역 단축 합의 적격 명시) |
-| ADR-008 §A.2 R1-2 + §2.6.2 R2-1 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건) |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건) |
 | 5 영구 핵심 제약 보존 | ✅ (Provider Liquidity 5-way / Hermes ≠ root of trust / 메타포 강제 금지 / T3 분리 / 수단/목적 분리 모두 답습) |
 | 7 backlog 분리 매트릭스 답습 | ✅ (Backlog #2 / #3 / #4 / #5 / #7 모두 분리 명시 — 자동 진입 0건) |
 | 풀 3+1 승격 트리거 0/7 발화 | ✅ (§3.3 답습) |

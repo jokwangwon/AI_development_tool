@@ -133,9 +133,9 @@
 
 | # | 조건 | ST-2 evidence |
 |---|------|--------------|
-| (a) | 동등 이상의 보안 결과 | ✅ inotify 감시 (6 event) + F-B fail-closed + F-C 보조 — ADR-008 §A.2 R1-2 답습 동등 이상 |
+| (a) | 동등 이상의 보안 결과 | ✅ inotify 감시 (6 event) + F-B fail-closed + F-C 보조 — ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 답습 동등 이상 (37번째 entry R-S1 정정 답습) |
 | (b) | 격리 환경 PoC 실증 | ✅ `docker/gp3-st2-poc/docker-compose.gp3-st2.yml` + 5 fixture 시뮬레이션 (2 pass + 3 fail-closed action) |
-| (c) | ADR / SDD 권위 명시 | ✅ ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `6c616a8` + brief 답습 |
+| (c) | ADR / SDD 권위 명시 | ✅ ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `6c616a8` + brief 답습 (37번째 entry R-S1 정정 답습) |
 | (d) | 자동 회귀 검증 경로 확보 | ✅ `secret-hygiene-egress-redaction.yml` 확장 + Run 양쪽 SUCCESS + paths trigger 자동 진입 |
 
 **판정 (e)**: ✅ **합의 APPROVE** — 본 합의가 (e) 조건 충족.
@@ -383,7 +383,7 @@ Layer F (Hermes PMO 격상)                                  — 아직 아님 (
 | MVP-1 PASS *재선언* 0건 | ✅ |
 | Layer E / Layer F 격상 0건 | ✅ |
 | ADR-011 §2.4 T1/T2/T3 분류 답습 | ✅ |
-| ADR-008 §A.2 R1-2 + §2.6.2 R2-1 답습 | ✅ (cross-reference 답습 한정) |
+| ADR-008 차단조건 #1 + #6 + 부록 B 답습 | ✅ (cross-reference 답습 한정, 37번째 entry R-S1 정정 답습) |
 | 5 영구 핵심 제약 보존 | ✅ (Provider Liquidity / Hermes ≠ root of trust / 메타포 강제 금지 / T3 분리 / 수단·목적 분리) |
 | 7 backlog 분리 매트릭스 답습 | ✅ |
 | 자동 진입 0건 (C-5b / C-5c / 다른 backlog / T3 / Layer E·F) | ✅ |

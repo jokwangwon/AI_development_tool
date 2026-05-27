@@ -115,9 +115,9 @@
 
 | # | 조건 | ST-2 evidence |
 |---|------|--------------|
-| (a) | 동등 이상의 보안 결과 | ✅ inotify 감시 (6 event) + F-B fail-closed + F-C 보조 — ADR-008 §A.2 R1-2 답습 동등 이상 |
+| (a) | 동등 이상의 보안 결과 | ✅ inotify 감시 (6 event) + F-B fail-closed + F-C 보조 — ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 답습 동등 이상 |
 | (b) | 격리 환경 PoC 실증 | ✅ `docker/gp3-st2-poc/docker-compose.gp3-st2.yml` + 5 fixture 시뮬레이션 (2 pass + 3 fail-closed action) |
-| (c) | ADR / SDD 권위 명시 | ✅ ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `6c616a8` + 본 brief 답습 |
+| (c) | ADR / SDD 권위 명시 | ✅ ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `6c616a8` + 본 brief 답습 |
 | (d) | 자동 회귀 검증 경로 확보 | ✅ `secret-hygiene-egress-redaction.yml` 확장 + Run `25801710538` SUCCESS + Run `25802079925` SUCCESS + paths trigger 자동 진입 |
 | (e) | 합의 APPROVE | (본 brief = 준비안, 합의 보고서 = 별도 단계) |
 

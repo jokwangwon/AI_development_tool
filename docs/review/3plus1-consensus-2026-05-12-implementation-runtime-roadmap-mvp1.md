@@ -112,7 +112,7 @@
 | 사용자 명시 영역 | 본 roadmap 답습 | 충족 |
 |----------------|---------------|------|
 | secret source 관리 — `.env` | §3.2 코드 본문 secret 검출 (S-1 R-4.1 Tier-1 catalog ENV assignment regex H-A 답습 — `env_assignment.py` fixture 답습) | ✅ |
-| secret source 관리 — Docker secret | §3.3.1 ST-3 단독 답습 (ADR-008 §2.6.2 R2-1 직접 답습) + §3.3.2 권고 ST-3 1차 채택 | ✅ |
+| secret source 관리 — Docker secret | §3.3.1 ST-3 단독 답습 (ADR-008 차단조건 #6 + 부록 B 직접 답습) + §3.3.2 권고 ST-3 1차 채택 | ✅ |
 | secret source 관리 — local config | §3.2 (Group D `safe_settings.json` PASS fixture + JSON field regex H-B 답습) | ✅ |
 | secret source 관리 — CI secret | ⚠️ **명시적 sub-section 부재** — Group D PoC §1.2 #6 답습 (Hermes upstream + ADR-010 Vault HSM 분리 영역 명시), GP-3 §3.5 R-MVP1-G3-3 (ADR-008/ADR-010 본문 변경 trigger) 답습으로 *부분* 커버. 본 영역 = MVP-1 → MVP-2 (GP-2 송신 redaction) 또는 P11 (Enforcement Tool 자체 secret) 영역으로 분리 가능 | ⚠️ **부분 (Observation O-1)** |
 | secret scanner 후보 | §3.2.1 5 수단 매트릭스 (S-1 custom / S-2 gitleaks / S-3 detect-secrets / S-4 trufflehog / S-5 병행) + §3.2.2 권고 (S-1 단독 + 1.5차 S-3 부분 통합 권고) | ✅ |
@@ -180,7 +180,7 @@
 | 후보 enum | 영역 | T1/T2/T3 | 본 roadmap 답습 | 충족 |
 |----------|------|---------|---------------|------|
 | `secret_scan_layer1_implementation` | GP-3 코드 본문 | T2 (CI step) | §5.2 #1 — Group D PoC §11 evidence summary 답습 | ✅ |
-| `secret_storage_isolation_implementation` | GP-3 저장 경로 | T2 (Hermes upstream sidecar) | §5.2 #2 — ADR-008 §A.2 R1-2 답습 | ✅ |
+| `secret_storage_isolation_implementation` | GP-3 저장 경로 | T2 (Hermes upstream sidecar) | §5.2 #2 — ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 답습 | ✅ |
 | `provider_adapter_enforcement_layer1_static` | GP-5 Layer 1a/1b/1c 통합 | T2 (CI step) | §5.2 #3 — `g2-gp5-poc2-import-linter-implementation.md` §4 ledger entry 직접 답습 | ✅ |
 | `mvp1_gate_pass` | MVP-1 = GP-3 + GP-5 양쪽 PASS | T3 (사용자 명시 + ADR-011 §2.1 5/5 evidence) | §5.2 #4 — 통합 enum | ✅ |
 | 본 4 enum = *후보 한정* 명시 (정식 등록 = 별도 합의) | §5.2 본문 + ADR-012 §2.2 답습 + G4 §10.2 schema 진화 정책 답습 | ✅ |
@@ -365,7 +365,7 @@
 | 항목 | 내용 |
 |------|------|
 | 발견 | 본 roadmap §3.1.2 gap 매트릭스 G3-1 ~ G3-6 中, CI secret (GitHub Actions secret) 관리 영역 명시적 row 없음 |
-| 본 roadmap 부분 커버 | Group D PoC §1.2 #6 답습 (Hermes upstream + ADR-010 Vault HSM 분리 영역) + GP-3 §3.5 R-MVP1-G3-3 (ADR-008 / ADR-010 본문 변경 trigger) + 본 roadmap §3.6.2 의존성 (ADR-008 §A.2 R1-2 cross-reference 갱신) |
+| 본 roadmap 부분 커버 | Group D PoC §1.2 #6 답습 (Hermes upstream + ADR-010 Vault HSM 분리 영역) + GP-3 §3.5 R-MVP1-G3-3 (ADR-008 / ADR-010 본문 변경 trigger) + 본 roadmap §3.6.2 의존성 (ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 cross-reference 갱신) |
 | 영향 | DRAFT 적격성 영향 0건 — 본 영역 = MVP-1 → MVP-2 (GP-2 송신 redaction) 또는 P11 (Enforcement Tool 자체 secret) 영역으로 분리 가능 |
 | 권고 처리 | GP-3 MVP-1 진입 합의 시점에 §3.1.2 gap 매트릭스에 **G3-7 (CI secret — GitHub Actions secret 관리)** row 추가 권고. 본 row 의 책무 분리 = (i) GitHub secret 정의 / (ii) workflow 노출 정책 / (iii) Hermes upstream R2-6 Hermes upstream 영역 분리 / (iv) Vault HSM 통합 = ADR-010 영역 분리 |
 

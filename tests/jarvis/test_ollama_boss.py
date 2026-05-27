@@ -212,6 +212,20 @@ def test_ollama_boss_defaults_to_code_domain_prompt() -> None:
     assert captured["data"]["messages"][0]["content"] == boss_prompt_for("code")
 
 
+def test_all_domains_quality_axis_few_shot_starts_with_check_emoji() -> None:
+    """(o) 답습 — 4 도메인 모두 few-shot 의 품질 line 이 ✅ 시작.
+
+    (n) Layer 1 evidence 에서 발견된 unknown=3/3 mode collapse 차단.
+    Qwen3 가 응답에서 품질도 ✅ 로 시작하도록 mode 유도.
+    """
+    from src.jarvis.boss import boss_prompt_for
+    for kind in ("code", "shell", "file", "general"):
+        p = boss_prompt_for(kind)
+        # few-shot 영역 (예시: 이후) 의 "- 품질: ✅" 패턴 검증
+        # 단일 매칭 — 4 도메인 모두 1 회 등장
+        assert "품질: ✅" in p, f"{kind}: 품질 axis few-shot 이 ✅ 시작 아님"
+
+
 def test_ollama_boss_system_prompt_override_applied() -> None:
     """caller 가 명시한 system_prompt 가 HTTP body 에 그대로 전달."""
     from src.jarvis.boss import OllamaBoss

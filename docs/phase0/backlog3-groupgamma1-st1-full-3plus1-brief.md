@@ -13,7 +13,7 @@
 - Group α 합의 = `docs/review/3plus1-consensus-2026-05-14-backlog3-enforcement-defense.md` (3/3 만장일치 형식 답습 + §6.1 Group γ-2 cross-reference)
 - 외부 LLM 응답 = `docs/external-review/2026-05-13-backlog3-t3-zone-review-response-gemini.md` (Q13/Q15/Q17) + `...-gpt.md` (Q13/Q15/Q17) — 양 vendor 종합 (C) PARTIAL (γ-1 = downstream preflight 진입 가능 수렴)
 - prep brief 계보 = v1 `ad9a02d` (§3.4 (4) C-5b ST-1 정의) / v2 `2a9d02d` / Group α brief `db0e3ac`
-- ADR-008 §A.2 R1-2 (entrypoint stat) + §2.6.2 R2-1 (docker secret) + `~/.hermes/auth.json` (line 128) / ADR-012 §원칙 9 (Hermes ≠ root of trust) / ADR-011 §2.4 T3 영역
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (entrypoint stat) + §2.6.2 R2-1 (docker secret) + `~/.hermes/auth.json` (line 128) / ADR-012 §원칙 9 (Hermes ≠ root of trust) / ADR-011 §2.4 T3 영역
 - 5 영구 핵심 제약 (특히 #1 Hermes ≠ root of trust) + Provider Liquidity 5-way
 
 ---
@@ -69,7 +69,7 @@
 | 현 상태 | C-5b (ST-1) = Deferred (`78483c5` 답습) — Backlog #3 T3 영역 = 본 brief 영역 |
 | 책무 영역 | secret source / Hermes upstream (file system perm) |
 | T3 진입 속성 | Hermes upstream Dockerfile *본문* 변경 ✅ HIGH / **Hermes ≠ root of trust 검토 의무 ✅ HIGH** / Hermes upstream PR 의무 ⚠️ HIGH / sidecar (ST-2) 와 책무 분담 결정 의무 ⚠️ MEDIUM |
-| ADR 권위 | ADR-008 §A.2 R1-2 (entrypoint stat) + `~/.hermes/auth.json` (line 128 credential 저장 경로) |
+| ADR 권위 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (entrypoint stat) + `~/.hermes/auth.json` (line 128 credential 저장 경로) |
 
 ### 1.2 ST 군 (secret hygiene) 답습 — γ-1 위치
 
@@ -179,7 +179,7 @@ GPT γ-1/γ-2 분리 권고 흡수 (follow-up brief §1.1) — ST-1 = 비교적 
 | Agent | 관점 | 분석 영역 (γ-1) |
 |----|----|----|
 | **Agent A** (구현 분석가) | "실제로 동작하는가?" | entrypoint stat / chmod 600 검증 기술 구현 + downstream wrapper vs upstream PR 기술 비교 + dev/CI 환경 분기 구현 + image build ↔ runtime check 분리 + 컨테이너 정지 (fail-closed) 동작 + 기술 한계 (read-only fs / non-root user / volume mount perm) |
-| **Agent B** (품질/안전성 검증가) | "안전하고 견고한가?" | **Hermes ≠ root of trust 보존** (자기 검증 위험) + 5 영구 핵심 제약 영향 + 엣지케이스 (644 위반 / symlink / volume perm override / rollback) + ST-1~ST-4 책무 중첩 안전성 + ADR-008 §A.2 R1-2 정합 + PMO 격상 경계 |
+| **Agent B** (품질/안전성 검증가) | "안전하고 견고한가?" | **Hermes ≠ root of trust 보존** (자기 검증 위험) + 5 영구 핵심 제약 영향 + 엣지케이스 (644 위반 / symlink / volume perm override / rollback) + ST-1~ST-4 책무 중첩 안전성 + ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 정합 + PMO 격상 경계 |
 | **Agent C** (대안 탐색가) | "더 나은 방법이 있는가?" | downstream wrapper vs Dockerfile layer 추가 vs upstream PR 트레이드오프 (Gemini 대안 답습) + ST-1~ST-4 역할 분담 대안 + 환경별 canonical secret source 형태 + 신규 영역 발굴 (예: rollback 절차 / evidence 형태 / 외부 harness 검증 구조) |
 | Reviewer | "최선의 합의는?" | 3 출력 교차 비교 + 일치/부분/불일치/누락 + 6 결정 영역 최종 합의 권고 + Hermes ≠ root of trust 보존 검증 |
 
@@ -258,7 +258,7 @@ Backlog #3 T3 영역 中 Group γ-1 (C-5b ST-1 — Hermes upstream Dockerfile en
 | `2026-05-13-backlog3-t3-zone-review-response-gemini.md` | Q13 / Q15 / Q17 (입력 한정) |
 | `2026-05-13-backlog3-t3-zone-review-response-gpt.md` | Q13 / Q15 / Q17 (입력 한정) |
 | prep brief v1 `ad9a02d` §3.4 | (4) C-5b ST-1 정의 |
-| ADR-008 §A.2 R1-2 + line 128 (`~/.hermes/auth.json`) / ADR-012 §원칙 9 | entrypoint stat + Hermes ≠ root of trust |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + line 128 (`~/.hermes/auth.json`) / ADR-012 §원칙 9 | entrypoint stat + Hermes ≠ root of trust |
 
 ## 부록 B — 금지 사항 (사용자 명시 영구 답습)
 

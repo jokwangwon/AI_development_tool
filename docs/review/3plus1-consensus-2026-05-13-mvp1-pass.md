@@ -12,7 +12,7 @@
 - Stage 4 actual run PASS 후보 (run_id `25738531295` GP-3 secret-hygiene Stage 4 PC-3 + AR-1 integration, commit `26bc2bb`)
 - Stage 5 actual run PASS 후보 (run_id `25744711391` GP-3 secret-hygiene Stage 5 G3-7 4 cycle, commit `de727de`)
 - ADR-011 §2.1 (a)~(e) 5조건 패턴 답습 (`docs/decisions/ADR-011-means-vs-ends-redaction.md`)
-- ADR-009 §5 (Provider Liquidity 5-way Multi-layer Defense) + ADR-008 §2.6.2 R2-1 (Hermes upstream 변경 회피)
+- ADR-009 §5 (Provider Liquidity 5-way Multi-layer Defense) + ADR-008 차단조건 #6 + 부록 B (Hermes upstream 변경 회피)
 - `docs/architecture/implementation-runtime-roadmap-mvp1.md` (MVP-1 영역 정의 + 9 sub-수단 + 18 Rollback Trigger + 7 backlog 분리)
 - `docs/phase0/mvp1-gp3-gp5-condition-status.md` (GP-3 + GP-5 4+4 condition + 7 backlog + MVP-1 Entry Readiness 상태)
 - `docs/external-review/2026-05-07-g2-g3-g4-integrated-gate-review-response.md` line 242 + `docs/review/3plus1-consensus-2026-05-07-g2-g3-g4-gate-adoption.md` §C-7 line 378 (MVP-1 정의 = G2 GP-3 + GP-5)
@@ -85,7 +85,7 @@
 | PC-4 local pre-commit framework 진입 | ❌ (Backlog #1 + #2 분리) |
 | AR-3 자동 revert bot 도입 | ❌ (Backlog #3 T3) |
 | ADR 본문 자동 갱신 | ❌ (cross-reference 답습 한정) |
-| Hermes upstream 변경 | ❌ (ADR-008 §2.6.2 R2-1 답습 = upstream 변경 0건) |
+| Hermes upstream 변경 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 0건) |
 | 외부 LLM 자동 호출 | ❌ (cross-vendor blind 의뢰 4건 누적 답습 한정) |
 | 실 GitHub API / branch protection / repo settings 호출 | ❌ (정적 검증 한정) |
 | Tier-2 / Tier-3 catalog 자동 확장 | ❌ (R-4.1 45 patterns / URL 10 / Model 19 답습 한정) |
@@ -236,7 +236,7 @@
 
 **Hermes upstream 변경 0건 보존 검증**:
 - 본 합의 영역 = CI step / 정적 검증 + Layer C 결과 행사 한정 — Hermes runtime code / config 미진입
-- ADR-008 §2.6.2 R2-1 답습 (upstream 변경 회피)
+- ADR-008 차단조건 #6 + 부록 B 답습 (upstream 변경 회피)
 - Layer F 자동 진입 0건 — 사용자 명시 결정 영역 보존
 - Layer F 격상 시 외부 LLM + 사람 리뷰 의무 답습 (P2 v3 §11.1)
 
@@ -319,7 +319,7 @@
 
 **처리 형태**: Deferred (MVP-6 영역)
 
-**답습 출처**: P2 v3 §11.1 (Hermes PMO 격상 *전* 인간 전문 리뷰 의무화) + Layer C 합의 §1.7 + ADR-008 §2.6.2 R2-1 (Hermes upstream 변경 회피)
+**답습 출처**: P2 v3 §11.1 (Hermes PMO 격상 *전* 인간 전문 리뷰 의무화) + Layer C 합의 §1.7 + ADR-008 차단조건 #6 + 부록 B (Hermes upstream 변경 회피)
 
 **본 합의 발효 영향**: 0건 (Layer D ≠ Layer F 명시 분리 보존 + Hermes upstream 변경 0건)
 
@@ -418,7 +418,7 @@
 ❌ 다른 backlog 자동 진입 (모두 별도 합의)
 ❌ ADR 본문 자동 갱신 (cross-reference 답습 한정)
 ❌ runtime code / CI / hook *추가* 구현 (본 합의 = Layer C 결과 행사 한정)
-❌ Hermes upstream 변경 (ADR-008 §2.6.2 R2-1 답습)
+❌ Hermes upstream 변경 (ADR-008 차단조건 #6 + 부록 B 답습)
 ❌ 외부 LLM 자동 호출 (cross-vendor blind 의뢰 4건 누적 답습 한정)
 ❌ Tier-2 / Tier-3 catalog 자동 확장 (R-4.1 답습 한정)
 ❌ 실 GitHub API / branch protection / repo settings 호출 (정적 검증 한정)
@@ -519,7 +519,7 @@ Layer F : Hermes PMO 격상                          — 아직 아님 (C-4, MVP
 | 6 | ADR 본문 *자동 갱신* | ❌ 본 §0.4 + §4.2 명시 — cross-reference 답습 한정 |
 | 7 | runtime code / CI / hook *추가* 구현 | ❌ 본 §0.4 + §4.2 명시 — Layer C 결과 행사 한정, 신규 구현 0건 |
 | 8 | Tier-2 / Tier-3 catalog *자동 확장* | ❌ 본 §C-7 + §0.4 + §4.2 명시 — R-4.1 답습 한정 (T3 영역 분리) |
-| 9 | Hermes upstream *변경* | ❌ 본 §C-4 + §1.8 + §0.4 + §4.2 명시 — ADR-008 §2.6.2 R2-1 답습 |
+| 9 | Hermes upstream *변경* | ❌ 본 §C-4 + §1.8 + §0.4 + §4.2 명시 — ADR-008 차단조건 #6 + 부록 B 답습 |
 | 10 | 외부 LLM *자동 호출* | ❌ 본 §0.4 + §4.2 + §5 명시 — cross-vendor blind 의뢰 4건 누적 답습 한정 (Layer F 격상 시 의무 답습) |
 
 → 10/10 금지 0건 위반 = **충족**.

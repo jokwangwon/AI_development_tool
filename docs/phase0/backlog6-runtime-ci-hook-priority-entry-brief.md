@@ -174,7 +174,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | **R-4 도구 본문 (tools/*.py)** | `tools/secret_scanner.py` (Group D 261줄 답습) / `tools/provider_import_scanner.py` (Group A 1차 답습) / `tools/provider_url_scanner.py` (Group A 3차 답습) | Layer B §5.5 + backlog6-implementation-step-brief §4.3 답습 |
 | **R-5 `.importlinter` 본문** | TR-1~TR-5 답습 (5-vendor 차단 rule) | Group A 2차 합의 §5.5 답습 |
 | **R-6 `.pre-commit-config.yaml` 본문** | `default_install_hook_types` + `fail_fast: false` + `minimum_pre_commit_version` 4.6.0 답습 | Group α 합의 5.2 #10 + #11 + #12 답습 |
-| **R-7 docker secret block** | `docker-compose.yml` (또는 동등 매니페스트) docker secret 정의 | ADR-008 §2.6.2 R2-1 + Layer B Stage 2 답습 |
+| **R-7 docker secret block** | `docker-compose.yml` (또는 동등 매니페스트) docker secret 정의 | ADR-008 차단조건 #6 + 부록 B + Layer B Stage 2 답습 |
 | **R-8 Evidence Artifact 생성** | Markdown report + JSONL entry + actual run SUCCESS URL | Layer B §1.8 (a)~(g) 답습 |
 | **R-9 hook 실행 환경** | `pre-commit` framework 4.6.0 + 의존성 install | Group α 합의 5.2 #12 답습 |
 | **R-10 `tools/doctor.py` 신규 도구** | dev 환경 검증 도구 (PC-4 T3 sub 단계적 진입 시 활용) | Group α 합의 5.2 #9 답습 |
@@ -348,7 +348,7 @@ Layer C 발효 합의 — Implementation Evidence PASS              ← 본 brie
 |-----|------|------|----------|
 | α-1 | R-4 도구 본문 (Stage 1 + Stage 3) | Layer B §5.5 답습 + Group D + Group A PoC 답습 | Stage 1 + Stage 3 *병렬 진입 적격* (backlog6-implementation-step-brief §3 순서 A 답습) |
 | α-2 | R-5 `.importlinter` 본문 (Stage 3) | TR-1~TR-5 답습 + Group A 2차 답습 | α-1 R-4 (provider_import_scanner) 와 *동시 진입 적격* |
-| α-3 | R-7 docker secret block (Stage 2) | ADR-008 §2.6.2 R2-1 답습 | α-1 / α-2 와 *독립 진입 적격* |
+| α-3 | R-7 docker secret block (Stage 2) | ADR-008 차단조건 #6 + 부록 B 답습 | α-1 / α-2 와 *독립 진입 적격* |
 | α-4 | R-1 CI workflow (Stage 4 통합) | α-1 + α-2 + α-3 완료 후 통합 | α-1 ~ α-3 *완료 후* 진입 |
 
 **Phase α 합산**: 4 단계 (α-1 ~ α-4) — 5 금지 영역 충돌 0건 + Layer B §5.5 답습 한정 + 본 brief 권고 영역 (실 진입 = Backlog #6 + 사용자 명시 결정 영역).

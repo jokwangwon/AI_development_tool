@@ -92,7 +92,7 @@
 - ❌ **`pull_request_target` workflow 도입 (0건)** — T2/T3 별도 합의 영역
 - ❌ **commit signing 도입 (0건)** — MVP-6 영역
 - ❌ **GitHub Actions secrets 사용 도입 (0건)** — F-금지 #1 영구 답습
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 영구 답습
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 영구 답습
 - ❌ **Production `docker-compose.yml` 신설 / 변경 (0건)** — PoC 격리 디렉토리 한정
 - ❌ **실 secret material commit (0건)** — FAKE_TEST_SECRET marker 답습 영구 보존
 - ❌ **Tier-2 / Tier-3 catalog 자동 확장 (0건)**
@@ -268,7 +268,7 @@
 | G3-20 | `pull_request_target` workflow 도입 | T2/T3 별도 합의 |
 | G3-21 | commit signing 도입 | MVP-6 영역 |
 | G3-22 | GitHub Actions secrets 사용 도입 | F-금지 #1 영구 답습 |
-| G3-23 | Hermes upstream Dockerfile 변경 | ADR-008 §2.6.2 R2-1 영구 답습 |
+| G3-23 | Hermes upstream Dockerfile 변경 | ADR-008 차단조건 #6 + 부록 B 영구 답습 |
 | G3-24 | Production `docker-compose.yml` 신설 / 변경 | PoC 격리 디렉토리 한정 |
 | G3-25 | Tier-2 / Tier-3 catalog 자동 확장 | T2/T3 합의 영역 |
 | G3-26 | threshold *고정* | *후보 한정* 유지 |

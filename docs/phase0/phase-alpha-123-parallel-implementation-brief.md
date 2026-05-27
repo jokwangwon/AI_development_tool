@@ -87,7 +87,7 @@
 - ❌ **`pull_request_target` workflow 도입 (0건)** — T2/T3 별도 합의 영역
 - ❌ **commit signing 도입 (0건)** — MVP-6 영역
 - ❌ **GitHub Actions secrets 사용 도입 (0건)** — F-금지 #1 영구 답습
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 영구 답습
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 영구 답습
 - ❌ **Production `docker-compose.yml` 신설 / 변경 (0건)** — PoC 격리 디렉토리 한정
 - ❌ **실 secret material commit (0건)** — FAKE_TEST_SECRET marker 답습 영구 보존
 - ❌ **Tier-2 / Tier-3 catalog 자동 확장 (0건)**
@@ -208,7 +208,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 |-------|----|----------|---------|---------|--------------|
 | **α-1 (R-4)** | 3 도구 본문 | 3 file | **829** | Group D PoC + Group A 1차 + Group A 3차 | S-1 + T-2 + T-5 |
 | **α-2 (R-5)** | `.importlinter` 본문 | 1 file | **35** | Group A 2차 합의 + C-9 RA-9 사전 검증 PASS | T-2 import-linter |
-| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 §2.6.2 R2-1 | ST-3 |
+| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 + ADR-008 차단조건 #6 + 부록 B | ST-3 |
 | **합산** | **3 영역** | **13 file** | **1192** | — | **4 sub-수단** (S-1 + T-2 + T-5 + ST-3) |
 
 **Phase α 통합 실제 구현 계획 합의 (`542e77e`) §2.1 답습 中 1순위 부분** — 2785줄 中 1순위 1192줄 + 2순위 (α-4) 1593줄 분리.
@@ -399,7 +399,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 | **합산** | — | **9 file** | **328** | **답습 한정 + minor CLI 정렬 권고** |
 
 **Phase α-3 수정 범위 *영역 외*** (변경 0건 영구 답습):
-- Hermes upstream Dockerfile 변경 (ADR-008 §2.6.2 R2-1 영구 답습)
+- Hermes upstream Dockerfile 변경 (ADR-008 차단조건 #6 + 부록 B 영구 답습)
 - Production `docker-compose.yml` 신설 / 변경 (PoC 격리 디렉토리 한정)
 - 실 secret material commit (영구 금지)
 - `secrets/.gitignore` 변경
@@ -456,7 +456,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 | **실 docker build / docker run 자동 실행** | ❌ 영역 외 (사용자 명시 결정 영역) | 0건 (영구 답습) |
 | **실 docker history 자동 실행** | ❌ 영역 외 | 0건 |
 | **actual run regression** | `25731846625` (secret-hygiene-egress-redaction.yml Stage 2 entry) | 답습 한정 (재실행 0건) |
-| **ADR-008 §2.6.2 R2-1 + §A.2 R1-2 답습** | Hermes upstream Dockerfile 변경 0건 영구 답습 | 검증 한정 |
+| **ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 답습** | Hermes upstream Dockerfile 변경 0건 영구 답습 | 검증 한정 |
 
 ### 5.4 테스트 범위 합산 매트릭스
 
@@ -549,7 +549,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 |------|----|---------------|
 | (a) 동등 이상의 보안 결과 | S-1 + T-2 + T-5 정적 차단 (R-4.1 Tier-1 45 + URL Tier-1 10 + Model Tier-1 19) | ✅ 답습 한정 (Layer C 발효 시점 PASS) |
 | (b) 격리 환경 PoC 실증 | Group D PoC 368줄 + Group A 1차 178줄 + Group A 3차 283줄 | ✅ 829줄 답습 (변경 0건) |
-| (c) ADR/SDD 권위 명시 | ADR-008 §A.2 R1-2 + 차단조건 #4 + ADR-009 C-N §5 + ADR-010 + ADR-011 + R-4 + R-4.1 + mvp1.md §3 + §4 + Layer B §5.5.1 + §5.5.2 | ✅ 답습 한정 |
+| (c) ADR/SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + 차단조건 #4 + ADR-009 C-N §5 + ADR-010 + ADR-011 + R-4 + R-4.1 + mvp1.md §3 + §4 + Layer B §5.5.1 + §5.5.2 | ✅ 답습 한정 |
 | (d) 자동 회귀 검증 경로 | `secret-hygiene-egress-redaction.yml` 694줄 + `provider-adapter-enforcement.yml` 186줄 + `provider-url-scanner.yml` 326줄 + actual runs `25728590939` + `25728590916` + `25728590977` PASS | ✅ 답습 한정 (재실행 0건) |
 | (e) 합의 APPROVE | GP-3 + GP-5 MVP-1 진입 + Stage 1 + Stage 3 + Phase α-1 (`1b3090b`) + Layer C 발효 (`eb01bc4`) | ✅ Layer C 시점 발효 完 |
 
@@ -569,7 +569,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 |------|----|---------------|
 | (a) 동등 이상의 보안 결과 | docker secret isolation (file system) + image layer leak 차단 + container restart recovery + Hermes upstream 변경 0건 보존 | ✅ 답습 한정 |
 | (b) 격리 환경 PoC 실증 | `docker/gp3-st3-poc/` 4 file 93줄 + `tools/docker_secret_*.sh` 217줄 + `tests/fixtures/gp3_st3/` 18줄 | ✅ 328줄 답습 (변경 0건) |
-| (c) ADR/SDD 권위 명시 | ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + ADR-010 + R-4 + mvp1.md §3.4.2 + §5.3 + Layer B §5.5.1 ST-3 | ✅ 답습 한정 |
+| (c) ADR/SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + ADR-010 + R-4 + mvp1.md §3.4.2 + §5.3 + Layer B §5.5.1 ST-3 | ✅ 답습 한정 |
 | (d) 자동 회귀 검증 경로 | `secret-hygiene-egress-redaction.yml` Stage 2 entry step + actual run `25731846625` PASS | ✅ 답습 한정 (재실행 0건) |
 | (e) 합의 APPROVE | GP-3 MVP-1 진입 + Stage 2 + Phase α-3 (`3f6306d`) + Layer C 발효 (`eb01bc4`) | ✅ Layer C 시점 발효 完 |
 
@@ -670,7 +670,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 | 16 | S-2 gitleaks 진입 | Backlog #1 분리 |
 | 17 | R-4.1 Tier-1 / URL Tier-1 / Model Tier-1 catalog 변경 | Backlog #3 분리 |
 | 18 | Tier-2 / Tier-3 catalog 자동 확장 | 영구 분리 |
-| 19 | Hermes upstream Dockerfile 변경 | ADR-008 §2.6.2 R2-1 영구 답습 |
+| 19 | Hermes upstream Dockerfile 변경 | ADR-008 차단조건 #6 + 부록 B 영구 답습 |
 | 20 | Production `docker-compose.yml` 변경 | PoC 격리 디렉토리 한정 |
 | 21 | 실 secret material commit | F-금지 #1 영구 답습 |
 | 22 | GitHub Actions secrets 사용 도입 | F-금지 #1 영구 답습 |
@@ -797,7 +797,7 @@ Phase α-4 (2순위 의존) 진입 brief                                        
 | 5 | 1순위 병렬 실 진입 시 Phase α-4 자동 진입 | 2순위 의존 — 별도 brief 영역 |
 | 6 | 1순위 병렬 실 진입 시 PC-4 / AR-2 / AR-3 진입 | Backlog #1 + #2 + #3 분리 |
 | 7 | 1순위 병렬 실 진입 시 `src/adapters/llm/facade.py` real 본문 작성 | Backlog #4 분리 |
-| 8 | 1순위 병렬 실 진입 시 Hermes upstream Dockerfile 변경 | ADR-008 §2.6.2 R2-1 영구 답습 |
+| 8 | 1순위 병렬 실 진입 시 Hermes upstream Dockerfile 변경 | ADR-008 차단조건 #6 + 부록 B 영구 답습 |
 | 9 | 1순위 병렬 실 진입 시 ADR 본문 자동 갱신 | cross-reference 답습 한정 |
 | 10 | 1순위 병렬 실 진입 시 event enum 정식 등록 | Backlog #5 분리 |
 | 11 | 1순위 병렬 실 진입 시 `pull_request_target` workflow 도입 | T2/T3 별도 합의 |

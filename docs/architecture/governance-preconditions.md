@@ -103,7 +103,7 @@
 |---|------|---------|--------------|----------|
 | **P1** | **DB INSERT 평문 secret 누적** | Worker Agent 가 LLM 응답·환경변수 echo·tool output 을 SessionDB / Memory DB / Skill DB 에 INSERT 시 평문 secret 영구 저장 | 8조 #1 (하드코딩 차단) + 8조 #2 (비밀 관리) | **G1b PASS 로 차단** (SQLCipher trigger + Tier-1 42 catalog) |
 | **P2** | **로그/LLM 송신 경로 평문 노출** | Hermes / Worker 가 secret 을 stdout / stderr / log file / LLM API request body 에 노출 | 8조 #2 | Hermes native redaction 보조 (ADR-011 §2.3 운영 함의 #2) |
-| **P3** | **Credential / OAuth 파일 권한 노출** | API 키 파일 / OAuth credentials 파일이 world-readable / docker socket mount / inotify 미감시 | 8조 #2 | ADR-008 §2.6.4 R1-2 + entrypoint stat 검증 |
+| **P3** | **Credential / OAuth 파일 권한 노출** | API 키 파일 / OAuth credentials 파일이 world-readable / docker socket mount / inotify 미감시 | 8조 #2 | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + entrypoint stat 검증 (35번째 entry R-S1 정정 답습) |
 | **P4** | **비밀값 하드코딩** | secret 이 git commit 본문 / 환경변수 default / docker-compose.yml 평문 / Skill 정의 평문 등에 영구 기록 | 8조 #1 (직접) | gitleaks / detect-secrets / pre-commit hook |
 | **P5** | **외부 입력 미검증/이스케이프** | Worker Agent 또는 Hermes 출력이 *내부* 처럼 취급되어 SQL injection / command injection / path traversal 등 발생 | 8조 #3 (직접) | **헌법 8조 #4 — 보안 변경은 3+1 합의** + 헌법 5조 #4 (외부 입력 검증) |
 
@@ -340,7 +340,7 @@ P11 정식 등록 = Gate Enforcement Layer 보호 보강 (2026-05-12, commits `3
 |----|------|---------|----------------|-------------|
 | **GP-1** | DB-level Secret Persistence 차단 | P1 | SQLCipher BEFORE INSERT trigger + REGEXP UDF + Tier-1 42 catalog | G1b PASS (이미 충족) + ADR-011 §2.1 |
 | **GP-2** | Egress Redaction (로그/LLM 송신) | P2 | Hermes native redaction (보조 — ADR-011 §2.3 #2) + LLM facade redaction filter (P1) | ADR-008 차단조건 #1 보조 + ADR-011 §2.3 |
-| **GP-3** | Credential / Secret Hygiene (저장 + 코드) | P3, P4 | (저장) docker secret + chmod 600 + entrypoint stat + inotify, (코드) gitleaks / detect-secrets pre-commit hook + CI step | ADR-008 §2.6.4 R1-2 + R2-1 + 헌법 8조 #1 |
+| **GP-3** | Credential / Secret Hygiene (저장 + 코드) | P3, P4 | (저장) docker secret + chmod 600 + entrypoint stat + inotify, (코드) gitleaks / detect-secrets pre-commit hook + CI step | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + 헌법 8조 #1 (35번째 entry R-S1 정정 답습) |
 | **GP-4** | 외부 입력 검증 (Hermes/Worker 출력 포함) | P5 | Hermes / Worker Agent 출력을 *외부 입력*으로 분류 + 검증 layer 강제 (헌법 5조 #4 + 8조 #3) | ADR-011 §2.3 운영 함의 #1 (Tools verify Hermes 출력) |
 | **GP-5** | Provider Adapter 강제 (코드 레벨 lock-in 차단) | P6, P7 | depcruise 룰 정적 차단 + P1 facade 단일 진입점 + 분기 코드 PR 자동 reject | ADR-008 차단조건 #4 + P1 v2 |
 | **GP-6** | Memory / Skill Migration 가능성 (학습 자산 lock-in 차단) | P8 | JSONL append-only 표준 + 변환 스크립트 (Hermes ↔ Claude / GPT) 1회 시연 (R2-5 답습) | ADR-008 차단조건 #2 + **G4** (depend) |
@@ -485,7 +485,7 @@ API 키 / OAuth credentials 의 *저장 경로* (런타임) 와 *코드 본문* 
 
 | 분류 | 메커니즘 | 위치 |
 |-----|---------|-----|
-| 계산적 | docker secret 정의 (R2-1) | `docker-compose.yml` (ADR-008 §2.6.2) |
+| 계산적 | docker secret 정의 | `docker-compose.yml` (ADR-008 차단조건 #6 답습, 35번째 entry R-S1 정정 답습) |
 | 계산적 | chmod 600 강제 + entrypoint stat 검증 (R1-2) | Hermes Dockerfile entrypoint |
 | 계산적 | inotify 런타임 감시 (mtime/perm 변경 → 컨테이너 정지) | Hermes runtime |
 | 계산적 | gitleaks / detect-secrets pre-commit hook | git pre-commit |
@@ -495,7 +495,7 @@ API 키 / OAuth credentials 의 *저장 경로* (런타임) 와 *코드 본문* 
 
 ### 5.4 Entry 기준
 
-- ✅ ADR-008 §2.6.4 R1-2 (OAuth credentials 처리 강화) 명시 (충족됨)
+- ✅ ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 (OAuth credentials 처리 강화) 명시 (충족됨, 35번째 entry R-S1 정정 답습)
 - ✅ 헌법 8조 #1 (하드코딩 금지) 권위 (충족됨)
 - ⏳ 사용자 명시 GP-3 작업 진입 결정
 
@@ -505,7 +505,7 @@ API 키 / OAuth credentials 의 *저장 경로* (런타임) 와 *코드 본문* 
 |---|------|---------|
 | (a) | 동등 이상의 보안 결과 | (저장) docker secret + chmod 600 + inotify 동작 확인, (코드) gitleaks / detect-secrets 회귀 0건 |
 | (b) | 격리 환경 PoC 실증 | (저장) docker secret 누락 / chmod 644 / mtime 변경 → 컨테이너 정지 시연, (코드) 의도적 secret hardcode → pre-commit reject 시연 |
-| (c) | ADR / SDD 권위 명시 | ADR-008 §2.6.4 R1-2 + 헌법 8조 #1 + 본 §5 |
+| (c) | ADR / SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + 헌법 8조 #1 + 본 §5 (35번째 entry R-S1 정정 답습) |
 | (d) | 자동 회귀 검증 경로 확보 | CI step 추가 (gitleaks --no-git in PR) + entrypoint stat 검증 매 컨테이너 시작 시 강제 |
 | (e) | 합의 APPROVE | 단축 또는 풀 3+1 합의 (G2 GP-3 한정 또는 G2 통합) |
 
@@ -520,7 +520,7 @@ API 키 / OAuth credentials 의 *저장 경로* (런타임) 와 *코드 본문* 
 
 ### 5.7 의존 ADR / 갱신 후보
 
-- ADR-008 §2.6.4 R1-2: 본문 변경 없음, GP-3 cross-reference 추가
+- ADR-008 cross-reference (차단조건 #1 + #6 + 부록 B): 본문 변경 없음, GP-3 cross-reference 추가 (35번째 entry R-S1 정정 답습)
 - 헌법 8조: 본문 변경 없음 (T3 — ADR Amendment 절차 영역, 본 G2 범위 외)
 
 ---

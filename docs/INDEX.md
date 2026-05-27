@@ -2,7 +2,320 @@
 
 > **프로젝트 문서 전체 구조 및 읽는 순서**
 
-**최종 업데이트**: **2026-05-25 세션 — ⭐⭐⭐ (g1-N-3') HIGH 통합 cycle (10번째 entry, 5 후속 cycle 통합 결합 cycle, Reviewer 권한 한계 (8) 예외 자격 발효 시점, brief v1 `cc9c0a0` → 합의 `fea84bf` BLOCKING 14 + R-S1~R-S6 → brief v1.1 (`2633539`) + 5 명문 정정 (γ-2) chain commit (`0d72799` hermes + `ab96e30` pamsd + `717ab00` gov + `394e4ec` adr-009-010) + 본 정리 commit). 실 정정 = 10 위치 + 2 cross-ref block (5 파일). Reviewer 권한 한계 (10) 신규 격상 11 sub-boundary 확장. 1회 한정 + 영구화 0건. (g1-N-3-adr-008+sip+adr-012') HIGH 신규 carry-over. ⭐⭐⭐ **본 후속 세션 (g1-N-3-adr-008+sip+adr-012') HIGH cycle 11번째 entry chain 영구 종결 완료** (MEMORY.md cleanup 38KB → 1.3KB → brief v1 `b55e0c9` → 합의 `209f04d` BLOCKING 11 + R-S1 CRITICAL hermes-not-root 추가 source (gov §1.1 line 78 명문 4 source 외 *유일* 추가 동형) → brief v1.1 `c9493c0` → 4 source cross-ref block 1 commit `f20fce3` ((f) cross-ref block 만 채택, (g1-N-3-pamsd) ab96e30 동형 패턴) + 본 정리 commit). (g1-N-3) chain 영구 종결 명문 의무 + Reviewer 권한 한계 (11) sub-boundary 신설 *기각* + §10.6 7→9 조건 확장**. ▼ 이전 세션 — Phase 2 EXECUTED(`c66756b`) + M3·M4 단독 미충족 합의(`d2d7bf9`) + Phase 3 entry brief v1(`cc145fd`)/v1.1(`25eb008`) + 풀 3+1 합의(`e76acc8`) + 1차 정리(`3729997`) + ⭐ Phase 3 실 빌드 cycle EXECUTED(`7209743`) + ⭐ Provider Liquidity deep-dive 합의 cycle (`9ed376a` → `a9e1e88` → `8ae1ab6`) + 3차 정리(`2b456f8`) + ⭐ format 가족별 분류 cycle (`f305174` → `d75dceb` → `eca4cf5`) + 4차 정리(`7bbc2e3`) + ⭐ (g1-A) 채택 cycle (`fc6731e` → `d0f516d` → `bdcc3a6`) + 5차 정리(`2ff09d6`) + ⭐ (g1-N) 헌법 5조-2 신설 자격 평가 cycle (6차 entry, `6f64491` → `1ec9c5e` BLOCKING 22 + Reviewer 격상 5 → `58e06d5`) + 6차 정리(`7a4b574`) + ⭐⭐⭐ (g1-N-1) 헌법 5조-2 본문 변경 commit cycle (7차 entry, `5b0c0ab` → `77f36cf` BLOCKING 14 + Reviewer 격상 4 → `148fbbe` = 본 세션 + 본 프로젝트 최초 + 유일 헌법 본문 변경 commit) + ⭐⭐⭐ (g1-N-2) ADR-011 line 6/245 매핑 정정 cycle (8차 entry, `8207f55` → `07cd3f4` BLOCKING 10 + Reviewer 격상 3 → `3bdb1be` = 본 세션 + 본 프로젝트 최초 + 유일 ADR-011 §6 본문 정정 commit) + 7-8차 통합 정리(`3f84c26`) + ⭐⭐ **(g1-N-3) CLAUDE.md / roadmap.md 정합 정정 자격 평가 cycle (9차 entry, `19b0f76` brief v1 → `386c552` 합의 BLOCKING 12 + Reviewer 격상 4 R-S1~R-S4 → `afd1a65` brief v1.1 + CLAUDE.md line 244 + roadmap.md line 64/65 (i) 최소 정정 단일 atomic commit, R-19 단계 (4) 직접 적용, Reviewer 권한 한계 8 → 9 격상 + (9) 신규 CLAUDE.md/roadmap.md 본문 정정 자격 boundary + (9-a)~(9-d) sub-boundary 발효)**. HEAD = 본 9차 정리 commit (commit 별도 사용자 명시 의무).
+**최종 업데이트**: **2026-05-27 세션 — 43번째 entry: ⭐⭐⭐ (b1-PC1-D6-contexts) main branch protection contexts 7 → 8 (`bypass-detect` 추가) admin scope 적용 (1-agent 직접, gh api PUT 성공, owner repo scope 자격, 다른 정책 보존: enforce_admins true + strict + force push/delete false + required_approving_review_count 0, develop branch 부재 carry-over). **(b1-PC1-D6) full cycle 완전 종결** ✅ (40 D-6 신규 + 41 permissions 정합 + 42 false-positives + 43 contexts 갱신). 42번째 entry: ⭐⭐⭐⭐ (b1-PC1-D6-false-positives) secret-scanner T1-041/T1-042 alternation false positives 정정 sub-cycle 완료 — 풀 3+1 + 외부 LLM 1+ cross-vendor (codex gpt-5.5) APPROVE WITH CONDITIONS 발효 + R-1 BLOCKING (a+) `(?:^|[?&\s'\"])` 흡수 + (V) layer1.py:237 tuple sort 회피 추가 = 10/10 FP 모두 해소 ✅. brief v1→v1.1((c)결함정정)→v1.2(R-1흡수) 3 in-place 보강 + Agent A/B/C 3 병렬 독립 (Agent A 8 risk + Agent B R-B-1/2 + Agent C `\b` reject live verify) + codex BLOCKING 발견 + Reviewer 통합 (5/5 자기진단, R-MVP1-PASS-{1~10} 0건 발화). verify 5/5 모두 PASS (re engine 9 시나리오 + scan-source src+`.github` violations=0 + jarvis pytest 144/144 + T1-041 canary fixture BLOCK 보존). 신규 carry-over (b1-PC1-D6-fp-edge-extensions)+(b1-PC1-D6-ast-context). 41번째 entry: ⭐ (b1-PC1-D6-fix) 본 workflow 정합 결함 정정 (1-agent 직접) + (b1-PC1-D6-false-positives) 신규 carry-over (`pre-commit-bypass-detection.yml` 첫 발화 결과 audit 시 FAIL 17초 x2 발견 → 2 종류 violation: (1) `workflow-permissions-check` 1건 = brief §4.1 정합 결함 [R-MVP1-G3-7 (v) R-6 default-deny 누락] = 1 line 정정 즉시 + (2) `secret-scanner` 10건 = `src/jarvis/{layer1,worker}.py` Python keyword arg/exit code 참조 false positives = pre-existing, **(b1-PC1-D6-false-positives) 신규 carry-over** [풀 3+1 권고, secret-scanner 패턴 변경 G3 Tier-1 catalog 영향 R-7(b) 차등]. 본 D-6 workflow가 R-6 BLOCKING 의도한 *결과 차이 검출* 메커니즘 정확 작동 검증 ✅. dev 환경 hook bypass 의심 아님 = changed files vs all-files 검사 범위 차이 = 정상 detect 효과). 40번째 entry: ⭐⭐ (b1-PC1-D6) bypass detection CI 통합 sub-cycle (Reviewer-only 단축 합의 APPROVE + 신규 workflow `pre-commit-bypass-detection.yml` 1 file 발효 — job `bypass-detect` + trigger 4종 [push+PR+nightly schedule cron `0 3 * * *` KST 12:00+workflow_dispatch] + `pre-commit==4.0.1` + `pre-commit run --all-files --show-diff-on-failure`. 5/5 풀 3+1 승격 trigger 0건 발화 + 사용자 결정 3/3 답습 ((A) 신규 workflow + Reviewer-only + contexts carry-over) + 변경 0건 9/9 + R-6/D-6/R-7(b) 흡수 3/3 + ADR-011 §2.1 (a)(c)(e) 3/5 본 합의 시점 충족 → 실 구현 완료 시 5/5 (PC-1-T3 (b)(d) 회귀 자격 보강). 26번째 entry PC-1-T3 brief §10 D-6 carry-over 해소. 신규 carry-over: (b1-PC1-D6-contexts) branch protection contexts 갱신 = admin scope 사용자 영역). 🎉 본 세션 종료 (25 → 39 entry chain, 15 entry 발효, ⭐⭐⭐⭐ MVP-1 PASS 완전 발효 milestone + R-S1 cascade 영원 종결 누적) — ⭐⭐ 39번째 entry: (iii) Markdown evidence 통합 sub-cycle (g2-gp3-mvp1-evidence + g2-gp5-mvp1-evidence 신규, 28번째 D-3 carry-over 해소) + 세션 종료 안내 (다음 세션 = facade real / MVP-2 / 프라이데이 등 큰 cycle) + ⭐⭐⭐ 38번째 entry: (b2-massive) 50 file × 160 위치 sed 일괄 R-S1 정정 (자동화, R-S1 cascade 영원 종결 ✅) — 60 file × 209 위치 audit → 자기언급 13 file + ADR-008/hermes-adoption-design 제외 → 50 file × 160 위치 sed 일괄 (3 substring multi-source 재기술) → 잔여 0건 verify ✅ + git diff stat 160/160 균형. **R-S1 cascade 누적 정정 198 위치 (35 + 36 + 37 + 38 = 10+9+19+160) 완료 ✅** + ⭐⭐ 37번째 entry: (b2-others) 합의 historical + CONTEXT.md R-S1 정정 sub-cycle (1-agent 직접, 19 위치 정정 = 36 명시 10 + cycle 안 확장 9 = st2-c5a-satisfaction 3 + alpha-123-parallel-implementation 1 + backlog3-groupgamma2-st4-vault-hsm 1 + backlog6-implementation-entry 2 + CONTEXT.md 3 + st2-inotify-sidecar-entry 9, ADR-008 본문 변경 0건 R-MVP1-PASS-2 영구 금지 답습, 신규 carry-over (b2-massive) 47 file 발견 = 대규모 정정 별도 sub-cycle 답습) + ⭐⭐ 36번째 entry: (b2-roadmap) roadmap-mvp1 본문 자체 R-S1 정정 sub-cycle (1-agent 직접, 34번째 paths-aware + 35번째 (b2)+(b3) pattern 답습, 9 위치 정정 = roadmap-mvp1 7 + mvp-1-to-6 1 + 2026-05-13-mvp1-pass 1, ADR-008 본문 변경 0건 R-MVP1-PASS-2 영구 금지 답습, hermes-adoption-design 자체 §X source-of-truth 답습 ✅, 신규 carry-over (b2-others) 10 위치 발견 = 합의 보고서 historical 7 + CONTEXT.md 3) + ⭐⭐ 35번째 entry: (b2) R-S1 cross-reference 정정 + (b3) roadmap-mvp1 §3.6.3 framing 정정 병렬 sub-cycle (단축 합의 + 사용자 명시, 10 위치 정정 = governance-preconditions 6 + backlog1 3 + roadmap §3.6.3 line 290 framing 1, R-3 multi-source 재기술 답습, ADR-008 본문 변경 0건 R-MVP1-PASS-2 영구 금지 답습, ST-2 별도 row 분리 framing 정정, roadmap-mvp1 본문 자체 R-S1 8+ 위치 추가 발견 = 별도 sub-cycle carry-over) + ⭐ 34번째 entry: (vi) paths-aware workflow audit sub-cycle (1-agent 직접, 11 workflow audit 결과 추가 risk 0건 발견 = r2-canary 단독 paths 필터 + 이미 31번째 entry contexts 제거 완료, 다른 10 workflow 모두 필터 0건 = 매 PR 발화 보장, 7 contexts 매핑 verify ✅, 31번째 entry §4.3 + 33번째 entry R-6 carry-over 해소 명문, R-MVP1-PASS-8 trigger 발화 0건, 변경 0건 = evidence file 1건 신규 + SESSION + INDEX) + ⭐⭐⭐⭐ 33번째 entry: MVP-1 Implementation Evidence PASS *완전 발효* (α) — 본 프로젝트 최초 + 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS (Agent A/B/C 3 병렬 + codex via tmux cross-vendor / BLOCKING 6 (R-1~R-6) + 권고 5 1pass 흡수 / GP-3 5/5 + GP-5 5/5 + 17/20 완전 + 3/20 부분 = Defense in depth cross-cover + 자율 영역 + cross-reference 정정 한정 / roadmap-mvp1.md §2.2 + §3.6.3 + §4.7.3 + §5.1 + §9 갱신 / brief v1.1 in-place 보강 / R-MVP1-PASS-{1~10} 10 trigger / 다음 = paths-aware audit → (b2)+(b3) 병렬 → Markdown evidence → ...) + ⭐⭐ 32번째 entry: 프라이데이 (Friday) 별도 자가진화 툴 진입 자격 평가 entry brief 작성 (1-agent 직접, brief 단계 한정, 자비스 4 invariant 영구 보존 + 5 layer 격리 + Rollback Trigger 5건 + D-1~D-8 사용자 결정 carry-over, 자비스 MVP-1 완료 후 합의 cycle 진입 자격 충족) + ⭐⭐⭐ 31번째 entry: MVP-1 AR-3 첫 PR evidence 수집 (PR #2 draft, 첫 발화 1 FAIL + 1 미발화 → aws_key.py fixture 정정 + contexts v2 7 unique → 재발화 11/11 SUCCESS + mergeable CLEAN + 중복 동작 race 0 확정 + paths-aware risk 발견, ADR-011 (a)~(e) 5/5 완전 충족 AR-3 영역, (c) MVP-1 Implementation Evidence PASS 발효 합의 진입 자격 자격) + ⭐⭐⭐ 30번째 entry: MVP-1 AR-3 사용자 admin scope 단계 7 실 적용 + R-MVP1-1.5-AR3-2a catalog 정정 (main branch protection rule 활성화 gh api PUT 발효, GitHub 실 check_run name mismatch 발견 = brief v1 "workflow + job" → 실 "job only 8 unique" 정정, scan x2 + enforce x3 중복 첫 PR verify carry-over, develop branch 부재 carry-over, 외부 effect = repo 영구 정책, ADR-011 (a)(c)(e) 3/5 완전 + (b)(d) 부분 충족 첫 PR evidence 의무) + ⭐⭐⭐ 29번째 entry: MVP-1 AR-3 통합 PR auto-reject 실 구현 sub-cycle ((b1) 4/4 마지막 sub-cycle 완료, Reviewer-only 단축 합의 APPROVE) + ⭐⭐ 28번째 entry: MVP-1 ST-2 inotify sidecar 실 구현 sub-cycle ((b1) 세번째) + ⭐⭐⭐ 27번째 entry: MVP-1 S-3 detect-secrets 부분 통합 실 구현 sub-cycle ((b1) 두번째, Defense in depth S-1+S-3) + ⭐⭐⭐ 26번째 entry: MVP-1 PC-1-T3 mandatory enforcement 실 구현 sub-cycle ((b1) 첫) + ⭐ 25번째 entry: untracked dashboard 3 파일 정리 (chore) + ⭐⭐⭐ 24번째 entry: MVP-1 1.5차 보강 entry brief 풀 3+1 + 외부 LLM 1+ APPROVE w/ COND + ⭐⭐ 22번째 entry: Layer 2 설계 cycle + ⭐⭐ 23번째 entry: MVP-1 GP-3/GP-5 현 상태 audit + roadmap-mvp1 DRAFT → APPROVED 권위 발효. **(b1) 4 sub-cycle 모두 완료 + AR-3 사용자 admin scope 적용 발효 = MVP-1 1.5차 보강 4 sub-수단 실 구현 + branch protection 발효 — (c) MVP-1 Implementation Evidence PASS 발효 합의 진입 자격 자격 (첫 PR evidence 후 완전 충족)**.** 23번째 entry: audit brief (21 도구 + 11 workflow + .pre-commit + .importlinter + adapters/llm placeholder 실 구현 완료 확인) → (a) Reviewer-only 단축 합의 (5/5 풀 3+1 승격 trigger 0건 발화) → roadmap-mvp1 line 826/827 갱신 (본문 §1~§8 변경 0건). 권위 표시 격상 + audit 한정. 실 코드 0 / CI 0 / hook 0 / PASS 발효 0 / ADR 본문 갱신 0 / 수단 결정 0 / threshold 고정 0 / Tier-2/3 자동 확장 0. carry-over: (b) 1.5차 보강 풀 3+1 + 외부 LLM 1+ / (c) MVP-1 Implementation Evidence PASS 발효 합의 / (d) facade real 본문 TR-1 별도 trajectory. 22번째 entry: Layer 0(관찰 누적) + Layer 1(패턴 마이닝, 보고만) 다음 단계 = "제안 생성". `PatternReport` → `Proposal`/`ProposalSet`. 본 cycle = **설계만, 코드 0 / 테스트 0 / 발효 DEFER**. brief v1 → 풀 3+1 합의 (Agent A REVISE / Agent B COND / Agent C COND + Reviewer **APPROVE w/ COND**) → brief v1.1 보강 (13 항목 1pass 흡수, 별도 v2 cycle 0). 합의 보고서 의사록 작성. 원칙 8/8 유지 (코드 0 / 테스트 0 / 발효 DEFER / threshold 고정 0 / 자동 적용 0 / Layer 0/1 수정 0 / 외부 호출 0 / ceremony-inflation 회피). 보조: jarvis_hud TTS team-lucid/F5-TTS-ko (1.34GB, NFD jamo) + KSS ref 발효 — "여성 한국어 인식, 음색 추후 확장 가능성 deferred". HEAD = 본 22번째 entry 정리 commit. ▼ 이전 세션 — ⭐⭐⭐ (g1-N-3') HIGH 통합 cycle (10번째 entry, 5 후속 cycle 통합 결합 cycle, Reviewer 권한 한계 (8) 예외 자격 발효 시점, brief v1 `cc9c0a0` → 합의 `fea84bf` BLOCKING 14 + R-S1~R-S6 → brief v1.1 (`2633539`) + 5 명문 정정 (γ-2) chain commit (`0d72799` hermes + `ab96e30` pamsd + `717ab00` gov + `394e4ec` adr-009-010) + 본 정리 commit). 실 정정 = 10 위치 + 2 cross-ref block (5 파일). Reviewer 권한 한계 (10) 신규 격상 11 sub-boundary 확장. 1회 한정 + 영구화 0건. (g1-N-3-adr-008+sip+adr-012') HIGH 신규 carry-over. ⭐⭐⭐ **본 후속 세션 (g1-N-3-adr-008+sip+adr-012') HIGH cycle 11번째 entry chain 영구 종결 완료** (MEMORY.md cleanup 38KB → 1.3KB → brief v1 `b55e0c9` → 합의 `209f04d` BLOCKING 11 + R-S1 CRITICAL hermes-not-root 추가 source (gov §1.1 line 78 명문 4 source 외 *유일* 추가 동형) → brief v1.1 `c9493c0` → 4 source cross-ref block 1 commit `f20fce3` ((f) cross-ref block 만 채택, (g1-N-3-pamsd) ab96e30 동형 패턴) + 본 정리 commit). (g1-N-3) chain 영구 종결 명문 의무 + Reviewer 권한 한계 (11) sub-boundary 신설 *기각* + §10.6 7→9 조건 확장**. ▼ 이전 세션 — Phase 2 EXECUTED(`c66756b`) + M3·M4 단독 미충족 합의(`d2d7bf9`) + Phase 3 entry brief v1(`cc145fd`)/v1.1(`25eb008`) + 풀 3+1 합의(`e76acc8`) + 1차 정리(`3729997`) + ⭐ Phase 3 실 빌드 cycle EXECUTED(`7209743`) + ⭐ Provider Liquidity deep-dive 합의 cycle (`9ed376a` → `a9e1e88` → `8ae1ab6`) + 3차 정리(`2b456f8`) + ⭐ format 가족별 분류 cycle (`f305174` → `d75dceb` → `eca4cf5`) + 4차 정리(`7bbc2e3`) + ⭐ (g1-A) 채택 cycle (`fc6731e` → `d0f516d` → `bdcc3a6`) + 5차 정리(`2ff09d6`) + ⭐ (g1-N) 헌법 5조-2 신설 자격 평가 cycle (6차 entry, `6f64491` → `1ec9c5e` BLOCKING 22 + Reviewer 격상 5 → `58e06d5`) + 6차 정리(`7a4b574`) + ⭐⭐⭐ (g1-N-1) 헌법 5조-2 본문 변경 commit cycle (7차 entry, `5b0c0ab` → `77f36cf` BLOCKING 14 + Reviewer 격상 4 → `148fbbe` = 본 세션 + 본 프로젝트 최초 + 유일 헌법 본문 변경 commit) + ⭐⭐⭐ (g1-N-2) ADR-011 line 6/245 매핑 정정 cycle (8차 entry, `8207f55` → `07cd3f4` BLOCKING 10 + Reviewer 격상 3 → `3bdb1be` = 본 세션 + 본 프로젝트 최초 + 유일 ADR-011 §6 본문 정정 commit) + 7-8차 통합 정리(`3f84c26`) + ⭐⭐ **(g1-N-3) CLAUDE.md / roadmap.md 정합 정정 자격 평가 cycle (9차 entry, `19b0f76` brief v1 → `386c552` 합의 BLOCKING 12 + Reviewer 격상 4 R-S1~R-S4 → `afd1a65` brief v1.1 + CLAUDE.md line 244 + roadmap.md line 64/65 (i) 최소 정정 단일 atomic commit, R-19 단계 (4) 직접 적용, Reviewer 권한 한계 8 → 9 격상 + (9) 신규 CLAUDE.md/roadmap.md 본문 정정 자격 boundary + (9-a)~(9-d) sub-boundary 발효)**. HEAD = 본 9차 정리 commit (commit 별도 사용자 명시 의무).
+
+**2026-05-27 세션 (43번째 entry: ⭐⭐⭐ (b1-PC1-D6-contexts) main branch protection contexts 7 → 8 admin scope 적용 — 1-agent 직접, **(b1-PC1-D6) full cycle 완전 종결** ✅) 신규 등록 문서 0건 + 외부 effect 1건**:
+
+- (외부 effect) GitHub main branch protection rule: contexts 7 → 8 (`+ bypass-detect`) + 다른 정책 보존 (enforce_admins true + strict + force push/delete false + required_approving_review_count 0). `gh api -X PUT repos/jokwangwon/AI_development_tool/branches/main/protection` 실행 성공 — gh CLI `repo` scope = branch protection 권한 포함 (owner 자격, 별도 admin scope 부재에도 적용 가능 확정)
+
+**carry-over (43번째 entry — 해소 + 유지)**:
+- ✅ 42번째 entry (b1-PC1-D6-contexts) carry-over 해소
+- ✅ **(b1-PC1-D6) full cycle 완전 종결** (40 D-6 신규 + 41 permissions 정합 + 42 false-positives + 43 contexts 갱신, 4 entry chain)
+- (유지) (b1-PC1-D6-evidence) E-D6-1/2/3 evidence file 신규 (자율 영역)
+- (유지) (b1-AR3 develop) develop branch 생성 시점 8 contexts 적용 (사용자 영역)
+- (유지) (b1-PC1-D6-fp-edge-extensions) + (b1-PC1-D6-ast-context) — 42번째 entry 신규 carry-over
+
+---
+
+**2026-05-27 세션 (42번째 entry: ⭐⭐⭐⭐ (b1-PC1-D6-false-positives) sub-cycle 완료 — 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS + R-1 (a+) 흡수 + (V) 코드 회피 + 10/10 FP 해소) 신규 등록 문서 6건 + 변경 2건 (src/tools)**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-pc1-d6-false-positives-correction-brief.md`** (10장, 자기진단 8/8) — brief v1→v1.1((c)결함정정)→v1.2(R-1 BLOCKING (a+) `(?:^|[?&\s'\"])` 흡수) 3 in-place 보강. scope/답습 출처 7/검출 raw 10건/후보 5 (a)~(e) trade-off/R-7(b) 차등/ADR-011 매트릭스/D-FP-1~4/carry-over 5
+- ⭐⭐⭐ **`docs/external-review/2026-05-27-mvp1-pc1-d6-false-positives-codex-response.md`** (6017줄 full capture) — codex gpt-5.5 OpenAI vendor cross-validation 응답. REVISE 판정 + R-1 BLOCKING (quoted form body literal FN risk) 발견 + (a+) `'"` 추가 권고
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-d6-false-positives-agent-a.md`** (289줄, 자기진단 5/5) — Agent A 구현 분석가. 7 항목 매트릭스 + 8 risk (semicolon/fragment/paren/quote/comma/non-ASCII 등 추가 boundary) + APPROVE w/ REVISE
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-d6-false-positives-agent-b.md`** (282줄, 자기진단 5/5) — Agent B 안전 검증가. 9 항목 매트릭스 + R-B-1 multiline body + R-B-2 cookie no-space + APPROVE w/ REVISE 2 권고
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-d6-false-positives-agent-c.md`** (자기진단 5/5) — Agent C 대안 탐색가. 8 항목 매트릭스 + `\b` Python regex reject live verify + variable-width lookbehind 불가능 verify + `(?:^|[?&\s])` 유일 fixed-width 해법 확정 + (d) AST SAFE_CONTEXT 30~50줄 prototype design + APPROVE
+- ⭐⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-d6-false-positives.md`** (자기진단 5/5) — Reviewer 통합 합의 보고서 **APPROVE WITH CONDITIONS**. 4 source 도착 (Agent A/B/C 3 + codex 4) + R-1 BLOCKING 1 (3-way + cross-vendor 일치) 흡수 의무 + 권고 2 신규 carry-over + R-MVP1-PASS-{1~10} trigger 0건 발화 + 변경 0건 의무 9/9 cross-check
+- (변경) **`tools/secret_scanner.py`** line 155~158 (a+) 정정 (`(?:^|[?&\s'\"])` prefix 추가) + 답습 주석 4줄. Hermes upstream 답습 본질 유지 (키 목록 보존, prefix 만 확장)
+- (변경) **`src/jarvis/layer1.py`** line 235~240 tuple default sort 회피 (multiline `key=lambda` FP 해소, semantic equivalent verify 통과 `(cnt desc, flag asc)` 결과 보존)
+
+**carry-over (42번째 entry — 해소 + 신규)**:
+- ✅ 41번째 entry (b1-PC1-D6-false-positives) carry-over 해소
+- ✅ 10/10 FP 해소 → CI GREEN 자격 발효 (본 push 후 verify 의무)
+- ⭐ **신규 (b1-PC1-D6-fp-edge-extensions)** semicolon `;` + fragment `#` 추가 delimiter 확장 (Agent A 8 risk + codex N-1+2 답습) — 별도 cycle
+- ⭐ **신규 (b1-PC1-D6-ast-context)** (d) AST SAFE_CONTEXT 영구 정밀화 prototype (Agent C 30~50줄 design 답습) — 별도 풀 3+1 cycle
+- (유지) **(b1-PC1-D6-contexts)** branch protection contexts 갱신 (admin scope, 사용자 영역) — false-positives 해소 ✅ = 진입 자격 발효
+- (유지) (b1-PC1-D6-evidence) E-D6-1/2/3 evidence capture (자율 영역)
+
+---
+
+**2026-05-27 세션 (41번째 entry: ⭐ (b1-PC1-D6-fix) 본 workflow 정합 결함 정정 1-agent 직접 + (b1-PC1-D6-false-positives) 신규 carry-over) 변경 1건**:
+
+- ⭐ **`.github/workflows/pre-commit-bypass-detection.yml`** (2 line 추가) — line 3~4 `permissions:\n  contents: read` 추가. brief §4.1 YAML 작성 시 R-MVP1-G3-7 (v) R-6 default-deny 의무 답습 누락 정합 결함 정정. ceremony-inflation 차단 메모리 답습 = 1-agent 직접
+
+**carry-over (41번째 entry — 해소 + 신규)**:
+- ✅ 40번째 entry workflow permissions 정합 결함 정정 (1-agent 직접)
+- ✅ R-MVP1-G3-7 (v) R-6 default-deny 의무 12 workflow 모두 발효
+- ⭐ **신규 (b1-PC1-D6-false-positives)** secret-scanner T1-041/T1-042 alternation 패턴 false positives 정정 sub-cycle (검출: `src/jarvis/{layer1.py:187/237, worker.py:61/70/178/193/202/324}` Python keyword arg/exit code 참조 10건). **풀 3+1 권고 + 우선순위 1** (본 CI 영구 RED 상태)
+- (유지) (b1-PC1-D6-contexts) branch protection contexts 갱신 (admin scope, 사용자 영역) — false-positives 해소 후 진입
+- (유지) (b1-PC1-D6-evidence) E-D6-1/2/3 evidence capture (자율 영역)
+
+---
+
+**2026-05-27 세션 (40번째 entry: ⭐⭐ (b1-PC1-D6) bypass detection CI 통합 sub-cycle — Reviewer-only 단축 합의 APPROVE + 신규 workflow 발효) 신규 등록 문서 3건**:
+
+- ⭐⭐ **`docs/phase0/mvp1-pc1-d6-bypass-detection-ci-brief.md`** (190줄, 10장, 자기진단 8/8) — D-6 sub-cycle brief (scope/답습 출처 6/R-6+D-6+R-7(b) 흡수 매트릭스/ADR-011 매트릭스/실 구현 1 항목 [`pre-commit-bypass-detection.yml`]/Rollback 2/Evidence 3/합의 형태 권고/carry-over 3)
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-d6-bypass-detection-ci.md`** (175줄, 10장, 자기진단 5/5) — Reviewer-only 단축 합의 보고서. 5/5 풀 3+1 승격 trigger 0건 + cross-check 9/9 통과 → APPROVE
+- ⭐⭐ **`.github/workflows/pre-commit-bypass-detection.yml`** (신규 workflow) — job `bypass-detect` + trigger 4종 + `pre-commit==4.0.1` + `--show-diff-on-failure`. R-6 BLOCKING PC1-1 탐지 경로 (ii) 완전 발효
+
+**carry-over (40번째 entry — 해소 + 신규)**:
+- ✅ 26번째 entry PC-1-T3 brief §10 D-6 carry-over 해소
+- ✅ 39번째 entry "다음 세션 진입 후보 1번 (b1-PC1-D6)" 진입 + 발효
+- ⭐ **신규 (b1-PC1-D6-contexts)** branch protection contexts 갱신 (7 → 8, `bypass-detect` 추가) = admin scope, **사용자 영역 carry-over**
+- (b1-PC1-D6-evidence) E-D6-1/2/3 capture 후 evidence file 신규 (자율 영역)
+
+---
+
+**2026-05-27 세션 (39번째 entry: 🎉 (iii) Markdown evidence 통합 sub-cycle + 본 세션 종료) 신규 등록 문서 2건**:
+
+- ⭐⭐ **`docs/phase0/g2-gp3-mvp1-evidence.md`** (~150줄, 6장, 자기진단 5/5) — GP-3 ADR-011 §2.1 (a)~(e) 5/5 충족 evidence 통합 (S-1 + S-3 + ST-2 + PC-1 Defense in depth + 31번째 entry 첫 PR PASS + multi-source 재기술 답습 + 자동 회귀 secret-hygiene-egress-redaction.yml nightly + (b1) 4 sub-cycle 통합 + R-S1 cascade 답습 + carry-over)
+- ⭐⭐ **`docs/phase0/g2-gp5-mvp1-evidence.md`** (~110줄, 6장, 자기진단 5/5) — GP-5 ADR-011 §2.1 (a)~(e) 5/5 충족 evidence 통합 (Provider Liquidity 5-way + import-linter + provider scanner + AR-3 통합 + 첫 PR enforce x3 + scan(provider-url) PASS + multi-source 재기술 답습 + R-2 BLOCKING 답습)
+
+**carry-over (39번째 entry — 본 세션 종료, 다음 세션 진입 가이드)**:
+- ✅ 28번째 entry D-3 carry-over 해소
+- **다음 세션 진입 후보**:
+  - 큰 cycle (풀 3+1 + 외부 LLM 1+): (d) facade real / MVP-2 진입 자격 / 32번째 entry 프라이데이 D-1~D-8
+  - 중간 cycle (단축 합의): (b1-PC1-D6) bypass detection CI 통합
+  - 자율 영역: PR #2 merge / PoC evidence 수집 / develop branch + 7 contexts 적용
+
+---
+
+**2026-05-27 세션 (38번째 entry: ⭐⭐⭐ (b2-massive) 50 file × 160 위치 sed 일괄 R-S1 정정 — 자동화 + R-S1 cascade 영원 종결) 신규 등록 문서 1건 + 변경 50 file (sed 일괄)**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-r-s1-b2-massive-correction-evidence.md`** (4장, 자기진단 5/5) — sed 자동화 method + 자기언급 13 file 명시 제외 (R-S1 explanation 보존) + 50 file × 160 위치 정정 결과 + R-S1 cascade 영원 종결 명문 + 다음 cycle 우선순위 답습
+- (변경) 50 file sed 일괄 정정 (160 위치, multi-source 재기술 답습): `ADR-008 §A.2 R1-2 / §2.6.4 R1-2 / §2.6.2 R2-1` → `ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011` (GP-3 + GP-5 OAuth) / `ADR-008 차단조건 #6 + 부록 B` (docker secret)
+- 자기언급 13 file 제외 (explanation 보존): 35/36/37/38 evidence/brief + 33/24 brief + 합의 보고서 + SESSION_2026-05-27 + INDEX + ADR-008 + hermes-adoption-design
+
+**carry-over (38번째 entry — R-S1 cascade 영원 종결 ✅)**:
+- ✅ R-S1 cascade 영원 종결: 35 (10 위치) + 36 (9 위치) + 37 (19 위치) + 38 (160 위치) = **198 위치 cross-reference 정정 완료**
+- 다음 cycle: (iii) Markdown evidence 통합 → (b1-PC1-D6) → PR #2 merge → (d) facade → MVP-2 → 32번째 프라이데이
+
+---
+
+**2026-05-27 세션 (37번째 entry: ⭐⭐ (b2-others) 합의 historical + CONTEXT.md R-S1 정정 sub-cycle — 1-agent 직접, 19 위치 정정 + 신규 carry-over (b2-massive) 47 file) 신규 등록 문서 1건 + 변경 7건**:
+
+- ⭐⭐ **`docs/phase0/mvp1-r-s1-b2-others-correction-evidence.md`** (5장, 자기진단 5/5) — (b2-others) 19 위치 정정 evidence + 신규 carry-over (b2-massive) 47 file 식별 + 1-agent 직접 cycle 자격 + multi-source 재기술 답습 (R-3) + R-MVP1-PASS-2 / R-MVP1-PASS-10 답습
+- (변경) 6 file cross-reference 정정: `3plus1-consensus-2026-05-13-st2-c5a-satisfaction.md` 3 + `3plus1-consensus-2026-05-16-phase-alpha-123-parallel-implementation.md` 1 + `3plus1-consensus-2026-05-20-backlog3-groupgamma2-st4-vault-hsm.md` 1 + `3plus1-consensus-2026-05-12-backlog6-implementation-entry.md` 2 + `3plus1-consensus-2026-05-13-st2-inotify-sidecar-entry.md` 9 (cycle 안 확장) + `docs/CONTEXT.md` 3 = **19 위치 multi-source 재기술 답습**
+
+**carry-over (37번째 entry — 해소 + 신규)**:
+- ✅ 36번째 entry (b2-others) carry-over 해소
+- ⭐ **(b2-massive) 신규 carry-over**: 47 file 본격 R-S1 정정 sub-cycle (review/consensus 20+ + phase0/brief 20+ + SESSION 3 + INDEX 1, 대규모 정정 + 자동화 검토)
+- 다음 cycle: (b2-massive) → (iii) Markdown evidence → (b1-PC1-D6) → PR #2 merge → (d) facade → MVP-2 → 32번째 프라이데이
+
+---
+
+**2026-05-27 세션 (36번째 entry: ⭐⭐ (b2-roadmap) roadmap-mvp1 본문 자체 R-S1 정정 sub-cycle — 1-agent 직접, 9 위치 정정 + 신규 carry-over (b2-others) 10 위치) 신규 등록 문서 1건 + 변경 3건**:
+
+- ⭐⭐ **`docs/phase0/mvp1-r-s1-roadmap-correction-evidence.md`** (5장, 자기진단 5/5) — (b2-roadmap) 정정 evidence. 35번째 entry (b2)+(b3) 답습 후 발견된 roadmap-mvp1 본문 자체 R-S1 7 위치 + 추가 2 위치 = 9 위치 정정 매트릭스 + multi-source 재기술 답습 (R-3 BLOCKING 답습) + 정정 후 verify (grep 0 매치 ✅) + hermes-adoption-design.md 자체 §X source-of-truth 답습 ✅ + 신규 carry-over (b2-others) 10 위치 식별 + 1-agent 직접 cycle 자격 명문
+- (변경) **`docs/architecture/implementation-runtime-roadmap-mvp1.md`** — 7 위치 cross-reference 정정 (line 137 §5.1 (c) cell GP-3+GP-5 + 205 ST-1 + 206 ST-2 + 207 ST-3 + 209 ST-5 + 283 carry-over status + 660 ST-3 9 sub-수단 매트릭스). 정정 형태: `ADR-008 §A.2 R1-2 / §2.6.4 R1-2 / §2.6.2 R2-1` → `ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011` multi-source 재기술. 기존 §2.2 + §3.5 (carry-over status 외) + §4.5 + §4.7.3 + §5.1 (35+36 정정 cell 외) + §9 본문 변경 0건
+- (변경) **`docs/architecture/mvp-1-to-6-entry-conditions-brief.md`** — line 93 §ADR-011 (a)~(e) 매트릭스 (c) cell GP-3 + GP-5 cross-reference 정정 (동일 multi-source 재기술)
+- (변경) **`docs/review/3plus1-consensus-2026-05-13-mvp1-pass-c1-k2-satisfaction.md`** — line 86 cross-reference 정정
+
+**carry-over (36번째 entry — 해소 + 신규 + 다음 진입)**:
+- ✅ 35번째 entry (b2-roadmap) carry-over 해소
+- ⭐ **(b2-others) 신규 carry-over**: 합의 보고서 historical 5 file 7 위치 (`3plus1-consensus-2026-05-13-st2-c5a-satisfaction.md` 3 + `3plus1-consensus-2026-05-16-phase-alpha-123-parallel-implementation.md` 1 + `3plus1-consensus-2026-05-20-backlog3-groupgamma2-st4-vault-hsm.md` 1 + `3plus1-consensus-2026-05-12-backlog6-implementation-entry.md` 2) + `docs/CONTEXT.md` 3 위치 = **총 10 위치** (별도 단축 합의 + 사용자 명시, 동형 답습)
+- 다음 cycle: (b2-others) → (iii) Markdown evidence → (b1-PC1-D6) → PR #2 merge → (d) facade → MVP-2 → 32번째 프라이데이
+
+---
+
+**2026-05-27 세션 (35번째 entry: ⭐⭐ (b2) R-S1 cross-reference 정정 + (b3) roadmap-mvp1 §3.6.3 framing 정정 병렬 sub-cycle — 단축 합의 + 사용자 명시, R-3 multi-source 재기술 답습) 신규 등록 문서 1건 + 변경 3건**:
+
+- ⭐⭐ **`docs/phase0/mvp1-r-s1-framing-correction-brief.md`** (~210줄, 6장, 자기진단 8/8) — (b2) R-S1 + (b3) framing 병렬 sub-cycle brief. R-S1 raw verify 답습 (33번째 Reviewer + Agent B + codex 일치) + R-3 BLOCKING multi-source 재기술 답습 + governance-preconditions 6 위치 + backlog1 합의 3 위치 + roadmap §3.6.3 line 290 framing 정정 매트릭스 + ADR-008 본문 변경 0건 R-MVP1-PASS-2 영구 금지 답습 + D-1~D-4 사용자 결정 + 합의 형태 권고 (단축 합의 + 사용자 명시)
+- (변경) **`docs/architecture/governance-preconditions.md`** — 6 위치 cross-reference 정정 (line 106 / 343 / 488 / 498 / 508 / 523). `ADR-008 §A.2 R1-2 / §2.6.4 R1-2 / §2.6.2 R2-1` → `ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011` multi-source 재기술 답습 (R-3 흡수)
+- (변경) **`docs/review/3plus1-consensus-2026-05-13-backlog1-gp3-1.5-deepening.md`** — 3 위치 cross-reference 정정 (line 12 / 84 / 390). 동일 multi-source 재기술
+- (변경) **`docs/architecture/implementation-runtime-roadmap-mvp1.md`** — §3.6.3 line 290 framing 정정 (ST-2 별도 row 분리, "Hermes upstream 변경 ❌ 불필요" 명시 + 풀 3+1 + 외부 LLM 1+ + 사용자 명시 합의 형태 + R-MVP1-1.5-ST2-2 영구 금지 답습). 기존 §2.2 + §3.5 + §4.5 + §4.7.3 + §5.1 + §9 본문 변경 0건
+
+**carry-over (35번째 entry — 해소 + 신규 + 다음 진입)**:
+- ✅ 24번째 entry brief (b2) + (b3) carry-over 해소
+- ⭐ **(b2-roadmap) 신규 carry-over**: roadmap-mvp1 본문 자체 R-S1 8+ 위치 (line 137 / 205 / 206 / 207 / 209 / 283 / 660 등) 정정 sub-cycle (별도 단축 합의 + 사용자 명시)
+- 다음 cycle: (b2-roadmap) → (iii) Markdown evidence → (b1-PC1-D6) → PR #2 merge → (d) facade → MVP-2 → 32번째 프라이데이
+
+---
+
+**2026-05-27 세션 (34번째 entry: ⭐ (vi) paths-aware workflow audit sub-cycle — 1-agent 직접, 추가 risk 0건, 31번째 §4.3 + 33번째 R-6 carry-over 해소) 신규 등록 문서 1건**:
+
+- ⭐ **`docs/phase0/mvp1-paths-aware-workflow-audit-evidence.md`** (6장, 자기진단 5/5) — 11 workflow on.pull_request.paths 필터 audit (python yaml.safe_load 직접 parse) + 7 contexts 매핑 verify + carry-over 해소 명문 + 다음 cycle 우선순위 답습. **결과**: r2-canary.yml 단독 paths 필터 답습 (이미 31번째 entry contexts 제거 완료) + 다른 10 workflow 모두 필터 0건 = 매 PR 발화 보장 ✅. **추가 paths-aware risk 0건 발견** + R-MVP1-PASS-8 trigger 발화 0건 + 변경 0건 의무 답습
+
+**carry-over (34번째 entry — 해소 + 다음 진입)**:
+- ✅ 31번째 entry §4.3 + 33번째 entry R-6 carry-over 해소
+- 다음 cycle: (b2) R-S1 + (b3) framing 병렬 → (iii) Markdown evidence → (b1-PC1-D6) → PR #2 merge → (d) facade → MVP-2 → 32번째 프라이데이 carry-over
+
+---
+
+**2026-05-27 세션 (33번째 entry: ⭐⭐⭐⭐ MVP-1 Implementation Evidence PASS *완전 발효* (α) — 본 프로젝트 최초 + 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS) 신규 등록 문서 2건 + 변경 1건 (in-place 보강) + 변경 1건 (roadmap-mvp1.md 5 § 갱신)**:
+
+- ⭐⭐⭐⭐ **`docs/phase0/mvp1-implementation-evidence-pass-activation-brief.md`** (v1 267줄 → v1.1 in-place 보강) — 24번째 entry carry-over (c) verbatim + (b1) 4 sub-cycle ADR-011 (a)~(e) 매트릭스 (17/20 완전 + 3/20 부분 + Defense in depth cross-cover 답습 R-5 흡수) + GP-3 5/5 + GP-5 5/5 매트릭스 (multi-source 답습 R-3 흡수 + R-S1 cross-reference 정정 carry-over (b2) 명문) + PASS 발효 형태 (α/α′/β/γ + 권고 (α)) + Rollback Trigger 10건 (R-MVP1-PASS-{1~5} v1 + {6~10} v1.1 신규 R-4 흡수) + D-1~D-5 사용자 결정 + 합의 형태 권고 (풀 3+1 + 외부 LLM 1+) + 자기진단 10/10. **v1.1 보강 = BLOCKING 6 + 권고 5 1pass 흡수 (R-1 § 정정 + R-2 GP-5 (c) R-S1 제거 + R-3 multi-source 재기술 + R-4 Trigger 5건 추가 + R-5 partial carry-over 명문 + R-6 D-5 paths-aware 우선 추가 + N-1 α′ 후보 + N-2 cross-reference + N-4 head SHA 9837298 명시)**
+- ⭐⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md`** (풀 3+1 + 외부 LLM 1+ 합의 보고서, Reviewer 통합) — ✅ **APPROVE WITH CONDITIONS** (BLOCKING 6 + 권고 5 + NOTE 다수). 4 source 도착 (Agent A APPROVE w/ COND A-BLOCK-1 + 10 NOTE / Agent B APPROVE w/ COND B-BLOCK-1 raw line-level R-S1 verify / Agent C APPROVE w/ COND C-BLOCK-1 D-5 paths-aware + α′ 신설 / codex via tmux gpt-5.5 REVISE v1.1 후 α 가능 + BLOCKING 4건). **3-way + cross-vendor 일치 ⭐⭐ BLOCKING**: R-1 (roadmap § 번호 정정, Agent A + codex). **2-way + cross-vendor 부분 일치 ⭐**: R-2 / R-3 / R-6. Reviewer 단독 격상 = R-S1 raw line-level verify (24번째 entry pattern 답습). 자기진단 10/10
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation-agent-b.md`** (336줄, Agent B 단독 raw verify 보고서) — Agent B 가 별도 file 작성. ADR-008 §A.2 raw line-level verify (line 136 = "Hermes JSONL Export 검증", R1-2 식별자 본문 0건) + GP-3 (c) multi-source 답습 정합 + brief "PASS 효과 영향 0건" 보안 효과 한정 정확성 + Provider Liquidity 충돌 0건 + 변경 0건 의무 14항 모두 답습 정합. B-BLOCK-1 = GP-5 (c) R-S1 표기 부정확 정정 (Reviewer 통합 R-2 흡수)
+- (변경) **`docs/architecture/implementation-runtime-roadmap-mvp1.md`** — **§2.2 (line 141 영역) + §3.6.3 (GP-3 합의 형태 권고 표) + §4.7.3 (GP-5 합의 형태 권고 표) + §5.1 (통합 PASS 권고) + §9 변경 이력 1줄 + 상태 line 다음 단계 재조정** 5 § 갱신 (R-1 BLOCKING 정정 답습 — brief v1 §3.5/§4.5 → §3.6.3/§4.7.3/§5.1). 본문 §3 GP-3 / §4 GP-5 / §5.2~§5.5 / §6 / §7 본문 변경 0건
+
+**carry-over (33번째 entry — D-5 재조정 답습 R-6 BLOCKING)**:
+1. ⭐ (vi) paths-aware workflow audit sub-cycle (운영 risk 즉시성, R-MVP1-PASS-8 답습) — **다음 cycle 우선 후보**
+2. (b2) R-S1 권위 chain 정정 + (b3) framing 정정 (병렬 sub-cycle, cross-reference 정정 영역 유사)
+3. (iii) Markdown evidence 통합 (D-3 carry-over)
+4. (b1-PC1-D6) bypass detection CI 통합
+5. PR #2 merge 결정 (사용자 자율)
+6. (d) facade real (TR-1 별도 trajectory)
+7. MVP-2 진입 자격 검토 (별도 합의 영역)
+
+**자율 영역 evidence 수집** (PASS 효과 영향 0건): PC-1-T3 PoC + ST-2 nightly + (b1-AR3 develop)
+
+**Rollback Trigger 모니터링**: R-MVP1-PASS-2 (ADR-008 본문 변경 영구 금지) / R-MVP1-PASS-5 (MVP-2 자동 발효 영구 금지) / R-MVP1-PASS-9 (Provider Liquidity bypass 영구 금지)
+
+---
+
+**2026-05-27 세션 (32번째 entry: 프라이데이 (Friday) 별도 자가진화 툴 진입 자격 평가 entry brief — 1-agent 직접, brief 단계 한정, 자비스 4 invariant 영구 보존 + 5 layer 격리, 자비스 MVP-1 완료 후 합의 cycle 진입 자격) 신규 등록 문서 1건 + 변경 0건 + 외부 effect 0건**:
+
+- ⭐⭐ **`docs/phase0/friday-separate-evolution-tool-entry-brief.md`** (~280줄, 13장, 자기진단 8/8) — Hermes 식 자가진화 깊이 ↔ 자비스 4 invariant (헌법 8조 + ADR-011 §2.4 T3 + Boss = root of trust 아님 + Provider Liquidity 5조-2) 보존 양립 경로 = (D) 별도 툴 격리 채택. 4 경로 (A/B/C/D) 비교 매트릭스 + 형태 후보 2 ((P) 자체 코드 vs (Q) Hermes 도입) + 5 layer 격리 메커니즘 사전 정의 (filesystem ACL + workdir + endpoint + 메모리 + commit) + 진입 시점 stage gate (자비스 MVP-1 완료 후) + Rollback Trigger 5건 (R-Friday-1 ~ R-Friday-5: 격리 침범 / HW 영향 / invariant 침범 / R1 학습루프 폭주 / cycle 비용 자비스 본업 정지) + Evidence 의무 5건 + ADR-011 (a)~(e) 매트릭스 (2/5 본 brief 시점 충족 + 3/5 별도 cycle) + 사용자 결정 항목 D-1 ~ D-8 + 합의 형태 권고 (풀 3+1 + 외부 LLM 1+, 5/5 trigger 中 3/5 발화 = Reviewer-only 단축 불가) + Marvel narrative 정합 (Jarvis 안전 + Friday 실험) + 자기진단 8/8
+- **(메모리 신규, git tracked 0)** `~/.claude/.../memory/project_friday_separate_evolution_direction.md` — 2026-05-27 사용자 명시 방향 결정 보존 (project type, 다음 세션 컨텍스트 복원 자격). MEMORY.md 인덱스 1 line 추가
+
+**carry-over (32번째 entry — 본 brief 후속, 자동 진입 0건 영구)**:
+1. **(Friday-Entry)** 자비스 MVP-1 단계 완료 후 = 프라이데이 진입 자격 충족 (사용자 framing 답습) — 자비스 carry-over 우선: (b1-AR3 첫 PR evidence 완료 / develop branch protection / (c) MVP-1 PASS 발효 합의 / Layer 2 발효 결정 / (b2) R-S1 / (b3) framing)
+2. **(Friday-Consensus)** 본 brief 합의 cycle = 풀 3+1 + 외부 LLM 1+ 의무 (자비스 MVP-1 완료 후 사용자 명시 진입)
+3. **(Friday-Decisions)** D-1 ~ D-8 사용자 명시 결정 의무 (합의 후): 진입 시점 / 형태 (P)/(Q) / 코드 격리 / 메모리 격리 / HW 자원 / 비례성 메모리 처리 / 합의 형태 / commit 시점
+4. **(Friday-MVP-0)** 프라이데이 MVP-0 설계 brief (D-1~D-8 결정 후 별도 cycle)
+5. **자비스 영역 답습**: MVP-2+ / (d) facade real / deferred 모두 본 brief scope 외
+
+---
+
+**2026-05-27 세션 (31번째 entry: MVP-1 AR-3 첫 PR evidence 수집 — PR #2 draft, ADR-011 5/5 완전 충족 AR-3 영역, 중복 동작 race 0 확정, paths-aware risk 발견) 신규 등록 문서 1건 + 변경 1건 (fix commit `73ed20d` 별도) + 외부 effect 2건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-ar3-first-pr-evidence.md`** (6장) — 첫 PR evidence carry-over 수집 완료 결과. 시점 (2026-05-27, `7c294bb` 직후) + PR #2 draft (https://github.com/jokwangwon/AI_development_tool/pull/2) + 첫 발화 (head `7c294bb`, 10 check_runs, 1 FAIL scan = secret-hygiene S-3 step + 1 미발화 R-4.1 paths 필터) + 원인 audit (AWSKeyDetector regex 19자 vs 20자 + r2-canary paths 매치 0) + 조치 2건 (사용자 결정: fixture 정정 + contexts 제거) + 재발화 (head `73ed20d`, **11/11 SUCCESS + mergeable CLEAN**) + R-MVP1-1.5-AR3 검증 매트릭스 (중복 동작 race 0 확정 — `enforce` x3 + `scan` x3 모두 분리 처리 + 모든 동명 PASS 의무 답습 / admin bypass 0 evidence / paths-aware risk 발견 carry-over) + ADR-011 (a)~(e) **5/5 완전 충족 AR-3 영역** + carry-over 6
+- (변경) **`tests/fixtures/secret_hygiene/mvp1_s3/fail/aws_key.py`** (fix commit `73ed20d`, 8 insertions / 6 deletions) — v1 (4451716) 19자 fake canary (`AKIAFAKES3NOTREAL01` 19자 + ASIA prefix 미인식) → v2 (`73ed20d`) 20자 정확 format (`AKIAFAKES3NOTREAL01X` + `AKIATESTNOTREAL02XYZ`, AWSKeyDetector regex `AKIA[0-9A-Z]{16}` 매치 verify) + ASIA 제거. 본 entry 와 별도 commit 답습
+- **(외부 effect 1)** **PR #2 draft 생성** — `gh pr create --draft --base main --head feature/jarvis-mvp0`. https://github.com/jokwangwon/AI_development_tool/pull/2. 18 commit (17 + fix 1) / 56 file (+ fix +8/-6) / +9686/-12 + 8/-6
+- **(외부 effect 2)** **branch protection contexts v2 갱신** — `gh api -X PUT branches/main/protection` 8→7 unique (R-4.1 Tier-1 42 canary regression 제거). 유지: `guard / verify / feasibility / scan / enforce / defense / validate`
+
+**carry-over (31번째 entry — (b1-AR3) 완료 후속 + (c) 진입 자격)**:
+1. PR #2 merge 결정 (별도 시점 사용자 영역, draft 답습)
+2. paths-aware workflow audit sub-cycle (다른 10 workflow 중 동형 risk 발견 시)
+3. r2-canary 정상 발화 evidence (paths 매치 PR 발생 시점 별도)
+4. (b1-AR3 develop) develop 신규 생성 시점 동일 7 contexts body PUT
+5. **(c) MVP-1 Implementation Evidence PASS 발효 합의** = (b1) 4 sub-cycle + 본 evidence (AR-3 (a)~(e) 5/5 완전 충족) + 사용자 명시 별도 합의 **진입 자격 자격 자격 충족**
+6. fix commit `73ed20d` ad-hoc 영역 명문 답습 (향후 fixture regex 정확 verify ceremony)
+- (b1) 완료 후 권고: Markdown evidence 통합 sub-cycle (D-3) / (b1-PC1-D6) / (b2) / (b3) / (d) / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (30번째 entry: MVP-1 AR-3 사용자 admin scope 단계 7 실 적용 + R-MVP1-1.5-AR3-2a catalog 정정) 신규 등록 문서 1건 + 변경 1건 + 외부 effect 1건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-ar3-branch-protection-applied-evidence.md`** (5장) — (b1-AR3) 사용자 admin scope 단계 7 적용 evidence. 적용 시점 (2026-05-27) + method (`gh api -X PUT branches/main/protection`) + 권한 (admin=True + owner=True) + R-MVP1-1.5-AR3-2a catalog 정정 매트릭스 (11 후보 = "workflow name + job name" 형식 → 실 GitHub check_run = "job name 만 8 unique", scan x2 + enforce x3 중복) + 적용 응답 body (8 contexts + strict + enforce_admins + approval 0 + allow_force_pushes false + allow_deletions false) + ADR-011 (a)(c)(e) 3/5 완전 + (b)(d) 부분 충족 + develop carry-over + 다음 단계 4 (첫 PR evidence / 중복 검증 / develop 적용 / brief 정정 본 commit 답습)
+- (변경) **`docs/phase0/mvp1-ar3-pr-auto-reject-brief.md`** — §3.2 in-place 정정 (R-MVP1-1.5-AR3-2a 답습): brief v1 후보 11 = historical 보존 (strikethrough) + §3.2.1 신규 = 적용 정확 catalog 8 unique 본문 채택. §3.2 외 본문 변경 0건 (단축 합의 + 사용자 명시 답습, ceremony 최소화)
+- **(외부 effect — git 변경 0건)** GitHub `main` branch protection rule 활성화 — repo 영구 정책 변경 (8 contexts: `guard` / `verify` / `feasibility` / `scan` / `enforce` / `R-4.1 Tier-1 42 canary regression` / `defense` / `validate` + `strict: true` + `enforce_admins: true` + `required_approving_review_count: 0` + `allow_force_pushes: false` + `allow_deletions: false`)
+
+**carry-over (30번째 entry — 첫 PR evidence + develop)**:
+- (b1-AR3 첫 PR evidence): 첫 PR open 시 11 workflow 모두 status check 발화 + 모든 PASS 의무 + admin bypass 0 시도 evidence = ADR-011 (b)(d) 완전 충족
+- (b1-AR3 중복 검증): `scan` x2 / `enforce` x3 동일 name 처리 동작 검증 (안전 = 모든 동명 check PASS 의무, race = 마지막 보고만), mismatch 시 workflow job name unique 화 별도 sub-cycle
+- (b1-AR3 develop): develop branch 신규 생성 시점 본 evidence body 동일 답습 적용
+- (c) MVP-1 Implementation Evidence PASS 발효 합의 + (b1) 4 sub-cycle 완료 후 Markdown evidence 통합 sub-cycle + (b1-PC1-D6) bypass detection CI 통합 + (b2) R-S1 권위 chain 정정 + (b3) framing 정정 + (d) facade real / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (29번째 entry: MVP-1 AR-3 통합 PR auto-reject 실 구현 sub-cycle, (b1) 4/4 마지막 sub-cycle 완료, Reviewer-only 단축 합의 APPROVE) 신규 등록 문서 2건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-ar3-pr-auto-reject-brief.md`** (281줄, 10장) — AR-3 sub-cycle entry brief. R-3 BLOCKING 흡수 — 11 workflow 실 check name catalog 본문 채택 (workflow name + job name 조합, `Evidence / PASS Gate` workflow name `/` 포함 verify 의무 명문). R-7(c) 차등 분리 (R-MVP1-1.5-AR3-2a 도구 변경 = 단축 합의 / 2b T3 정책 신규 check = 풀 3+1 + 외부 LLM 1+). Claude scope vs 사용자 admin scope 명문 분리 (§1.1). 사용자 admin 적용 절차 (A) web UI + (B) gh CLI 안내 (§4.2). AR-1 + AR-2 통합 효과 + PC-1 + PC-3 + AR-3 결합 Defense in depth (§4.4). ADR-011 (a)~(e) 매트릭스 (3/5 합의 시점 + 2/5 사용자 admin 적용 시점). D-1~D-4 사용자 결정 + 7단계 cycle (6 + 사용자 admin 적용)
+- ⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-ar3-pr-auto-reject.md`** (Reviewer-only 단축 합의, 7장) — ✅ **APPROVE (Reviewer-only 단축 합의)**. 5/5 풀 3+1 승격 trigger 0건 발화 검증 + entry 합의 verbatim cross-check 5 source (line 290 / line 113 / §2.4 line 229 / R-3 / R-7(c)) + 인프라 발효 cross-check (AR-1 부분 발효 + main/develop unprotected HTTP 404) + R-3 BLOCKING 11 catalog 본문 채택 (§3 표) + 변경 0건 의무 12/12 + ADR-011 (a)(c)(e) 3/5 본 합의 발효 + (b)(d) 2/5 사용자 admin 적용 시점 발효 + 자기진단 8/8
+
+**carry-over (29번째 entry — (b1) 4/4 완료 + 사용자 admin 적용 carry-over)**:
+- (b1-AR3 사용자 admin scope 단계 7): web UI 또는 gh CLI — main + develop 각 branch protection rule 설정 (catalog 11 check + approval 0 + admin bypass 0). 적용 후 evidence: `gh api repos/.../branches/main/protection` 응답 + 첫 PR 11 workflow PASS evidence + R-3 verify (GitHub UI dropdown 실 표시 형식 검증)
+- (c) **MVP-1 Implementation Evidence PASS 발효 합의** — (b1) 4 sub-cycle 완료 = 진입 자격 자격 충족. **다음 cycle 후보** (ADR-011 §2.1 (a)~(d)+(e) 5/5 + conditions 해소 + 사용자 명시 별도 합의)
+- (b1) 4 sub-cycle 완료 후 권고 — Markdown evidence 통합 sub-cycle (D-3 답습): `g2-gp3-mvp1-evidence.md` + `g2-gp5-mvp1-evidence.md` 일관 보강
+- (b1-PC1-D6) bypass detection CI 통합 sub-cycle (PC-1 carry-over) — 답습
+- (b2) R-S1 권위 chain 정정 / (b3) framing 정정 / (d) facade real / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (28번째 entry: MVP-1 ST-2 inotify sidecar 실 구현 sub-cycle, (b1) 세번째 sub-cycle, Reviewer-only 단축 합의 APPROVE, audit 한정 패턴 답습) 신규 등록 문서 2건 + 변경 1건**:
+
+- ⭐⭐ **`docs/phase0/mvp1-st2-inotify-sidecar-brief.md`** (227줄, 10장) — ST-2 inotify sidecar 실 구현 sub-cycle brief. 23번째 entry audit 한정 패턴 답습 (인프라 8/8 발효 — docker-compose 137줄 + watch-secrets.sh 73줄 + Dockerfile + hermes-mock + 5 fixture + tool 258줄 + workflow ST-2 step line 663 + on.push.paths 필터 모두 Cycle 3+4 답습). R-5 BLOCKING 3 단계 evidence 발효 cross-check 명문 (3/3 단계 모두 이미 발효 자격 검증): (1) event 인지 = watch-secrets.sh inotifywait 6 event / (2) sidecar→메인 signal = status file + hermes-mock healthcheck / (3) 메인 fail-closed = tool line 199~212 docker inspect Health.Status 비교. R-7(a) framing 정정 entry brief v1.1 line 326 이미 흡수 답습 (본 sub-cycle 추가 정정 0건). R-MVP1-1.5-ST2-{1,2,3} Rollback Trigger 답습 유지. ADR-011 (a)~(e) 매트릭스 ((b)(c) 이미 발효 + (a)(e) 합의 시점 + (d) nightly schedule 추가). D-1~D-3 사용자 결정 (3/3 권고 채택)
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-st2-inotify-sidecar.md`** (Reviewer-only 단축 합의, 7장) — ✅ **APPROVE (Reviewer-only 단축 합의)**. 5/5 풀 3+1 승격 trigger 0건 발화 검증 + entry 합의 verbatim cross-check 5 source (line 290 / §1 line 36 / §6 R-5 / §13.2 line 534 / entry brief v1.1 line 326) + 인프라 8/8 발효 cross-check (23번째 entry audit 한정 패턴 답습) + R-5 BLOCKING 3 단계 evidence 발효 source 명문 본문 채택 + 변경 0건 의무 14/14 + ADR-011 (a)(b)(c)(e) 4/5 본 합의 발효 + (d) 1/5 실 구현 단계 발효 + 자기진단 8/8
+- (변경) **`.github/workflows/secret-hygiene-egress-redaction.yml`** — `on:` 에 `schedule: [{cron: "0 3 * * *"}]` 추가 (1항). UTC 03:00 = KST 12:00 (한국 업무 시간 = 사용자 인지 + 신속 대응 자격, GitHub Actions runner 한가 시간대). 기존 push + pull_request + permissions + 24 step (S-3 3 step + ST-2 step line 663 포함) 본문 변경 0건. ST-2 PoC + S-3 detect-secrets 일관 nightly 발화 자격
+
+**carry-over (28번째 entry — (b1) 진행 중, 3/4 완료)**:
+- (b1-ST2 후속) PoC evidence 수집 (사용자 자율): 첫 nightly schedule 발화 (UTC 03:00 = KST 12:00 익일) → `gh run list` 또는 GitHub Actions UI nightly run id 확인 → ADR-011 (d) 충족 evidence
+- (b1) 남은 sub-cycle 1개: (b1-AR3) AR-3 branch protection (GitHub admin 접근 필수, Claude 직접 변경 불가, R-3 BLOCKING check name mapping verify + AR-1 + AR-2 통합)
+- (b1-PC1-D6) bypass detection CI 통합 sub-cycle (PC-1 carry-over) — 답습
+- (b1) 4 sub-cycle 완료 후 권고 — Markdown evidence 통합 sub-cycle (D-3 답습): `docs/phase0/g2-gp3-mvp1-evidence.md` + `docs/phase0/g2-gp5-mvp1-evidence.md` 일관 보강
+- (b2) R-S1 권위 chain 정정 / (b3) framing 정정 / (c) PASS 발효 / (d) facade real / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (27번째 entry: MVP-1 S-3 detect-secrets 부분 통합 실 구현 sub-cycle, (b1) 두번째 sub-cycle, Reviewer-only 단축 합의 APPROVE) 신규 등록 문서 8건 + 변경 2건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-s3-detect-secrets-partial-integration-brief.md`** (303줄, 10장) — S-3 detect-secrets 부분 통합 실 구현 sub-cycle entry brief. 24번째 entry R-4 BLOCKING (plugin identifier 5종 정확 mapping + `--baseline` 미사용 CI assertion) 흡수 매트릭스 + 현 상태 audit (`tools/secret_scanner.py` S-1 발효 유지 + `detect-secrets` 0 패키지) + 실 구현 5 항목 + ADR-011 (a)~(e) 5/5 + R-MVP1-1.5-S3-{1,2,3} Rollback Trigger (Tier-2/3 확장 풀 3+1 / baseline 영구 금지 / S-1 답습 영구 의무) + Evidence + D-1~D-5 사용자 결정 + 합의 형태 권고 (단축 합의 Reviewer-only) + 자기진단 8/8. 사용자 결정 5/5 답습 (D-1~D-4 권고 채택 + D-5 default 답습). plugin allowlist Tier-1 답습 5종 hardcoded list (`AWSKeyDetector` / `KeywordDetector` / `Base64HighEntropyString` / `HexHighEntropyString` / `PrivateKeyDetector`) 본문 채택
+- ⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-s3-detect-secrets-partial-integration.md`** (Reviewer-only 단축 합의, 6장) — ✅ **APPROVE (Reviewer-only 단축 합의)**. 5/5 풀 3+1 승격 trigger 0건 발화 검증 (① 새 권위 결정 0 / ② Tier-2/3 자동 확장 0 / ③ PASS 자동 선언 0 / ④ 후속 합의 본문 변경 0 / ⑤ ADR-011 5조건 자동 충족 선언 0) + entry 합의 verbatim cross-check 5 source (line 290 / §1 line 36 / §6 R-4 line 73 / §5.1 line 323~325 / roadmap §3.6.3 line 289) + 변경 0건 의무 12/12 cross-check + ADR-011 (a)(c)(e) 3/5 본 합의 발효 + (b)(d) 2/5 실 구현 단계 발효 + 자기진단 8/8
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/pass/clean.py`** (신규) — false positive 0 evidence (평범 코드 + env getter, secret 0건)
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/fail/aws_key.py`** (신규) — AWSKeyDetector 검출 evidence (AKIA + ASIA fake canary)
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/fail/keyword.py`** (신규) — KeywordDetector 검출 evidence (api_key / password / token assignment)
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/fail/base64_entropy.py`** (신규) — Base64HighEntropyString 검출 evidence (high entropy Base64 string, 실 secret 0)
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/fail/hex_entropy.py`** (신규) — HexHighEntropyString 검출 evidence (high entropy Hex string, 실 secret 0)
+- ⭐⭐⭐ **`tests/fixtures/secret_hygiene/mvp1_s3/fail/private_key.py`** (신규) — PrivateKeyDetector 검출 evidence (fake RSA + OpenSSH `-----BEGIN... -----END` marker)
+- (변경) **`requirements-dev.txt`** — `detect-secrets==1.5.0` 추가 (Tier-1 답습 plugin 5종 한정 + baseline 영구 금지 + S-1 답습 유지 영구 의무 주석). 기존 6 패키지 본문 변경 0건
+- (변경) **`.github/workflows/secret-hygiene-egress-redaction.yml`** — `on.push.paths` 2 entry 추가 (`tests/fixtures/secret_hygiene/mvp1_s3/**` + `requirements-dev.txt`) + S-3 3 step 신규 (line 287 직후): `S-3 install detect-secrets` + `S-3 detect-secrets scan` (22 plugin disable + 5 enable hardcoded, R-4 BLOCKING 본문 채택) + `S-3 baseline file 미사용 assertion` (regex 자기참조 self-trigger 0건 검증 완료). 기존 22 step 본문 변경 0건
+
+**carry-over (27번째 entry — (b1) 진행 중, 2/4 완료)**:
+- (b1-S3 후속) PoC evidence 수집 (사용자 자율 영역): local `detect-secrets scan` 실행 + GitHub Actions actual run id (workflow push trigger 발화) → S-3 3 step 모두 PASS
+- (b1) 남은 sub-cycle 2개: (b1-ST2) ST-2 inotify sidecar (docker-compose sidecar + R-5 BLOCKING 3 단계 evidence) / (b1-AR3) AR-3 branch protection (GitHub admin 접근 필수) — 각 별도 단축 합의 + 사용자 명시
+- (b1-PC1-D6) bypass detection CI 통합 sub-cycle (PC-1 carry-over) — 답습
+- (b2) R-S1 권위 chain 정정 / (b3) framing 정정 / (c) PASS 발효 / (d) facade real / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (26번째 entry: MVP-1 PC-1-T3 mandatory enforcement 실 구현 sub-cycle, (b1) 4 sub-cycle 첫 진입, Reviewer-only 단축 합의 APPROVE) 신규 등록 문서 5건 + 변경 2건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-pc1-t3-mandatory-enforcement-brief.md`** (288줄, 10장) — PC-1-T3 mandatory enforcement 실 구현 sub-cycle entry brief. 24번째 entry BLOCKING R-2 (PC-1 (b)(d) 재분류) + R-6 (PC1-1 탐지 경로 (i)(ii)(iii)) + R-7(b) (PC1-2 차등) + N-1 (PC-1 단독 우회, 결합 효과 명문) + N-2 (T3 명칭) 흡수 매트릭스 + 현 상태 audit + 실 구현 5 항목 + ADR-011 (a)~(e) 5/5 + Rollback Trigger + Evidence + D-1~D-6 사용자 결정 + 합의 형태 권고 (단축 합의 Reviewer-only) + 자기진단 8/8. 사용자 결정 6/6 답습 (D-1~D-4 권고 채택 + D-5/D-6 default 답습)
+- ⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-t3-mandatory-enforcement.md`** (Reviewer-only 단축 합의, 175줄) — ✅ **APPROVE (Reviewer-only 단축 합의)**. 5/5 풀 3+1 승격 trigger 0건 발화 검증 (① 새 권위 결정 0 / ② Tier-2/3 자동 확장 0 / ③ PASS 자동 선언 0 / ④ 후속 합의 본문 변경 0 / ⑤ ADR-011 5조건 자동 충족 선언 0) + entry 합의 verbatim cross-check 7 source (line 292 / §1 line 38 / §6 R-2/R-6/R-7(b) / §10 N-1/N-2) + 변경 0건 의무 10/10 cross-check + ADR-011 (a)(c)(e) 3/5 본 합의 발효 + (b)(d) 2/5 실 구현 단계 발효 + 자기진단 8/8
+- ⭐⭐⭐ **`CONTRIBUTING.md`** (신규 134줄, 6장) — dev onboarding workflow + PC-1-T3 mandatory enforcement 명문 (의무 + 우회 차단 Defense in depth 3 계층 PC-1+PC-3+AR-3) + Rollback Trigger R-MVP1-1.5-PC1-1 명문 + PR workflow + `.pre-commit-config.yaml` 본문 변경 차등 R-7(b) + 합의 cycle 답습 + TDD 답습 + 참조 문서
+- ⭐⭐ **`bin/setup.sh`** (신규, chmod +x) — dev onboarding 통합 setup 스크립트 4단계: (1/4) Layer 3 (`.githooks/`) 활성화 + (2/4) dev 의존성 설치 + (3/4) Layer 2 pre-commit framework install 의무화 (T3) + (4/4) `.git/pre-commit-audit/install.log` 기록 (R-6 (iii) 답습). 외부 의존성 0 (bash + git + pip 만, Provider Liquidity 답습)
+- ⭐⭐ **`tools/pre_commit_install_audit.sh`** (신규, chmod +x) — PC-1-T3 bypass detection 3 탐지 경로 통합 verify (R-6 BLOCKING 흡수): (i) `.git/hooks/pre-commit` framework marker grep + (ii) `pre-commit` 명령 PATH 가용 + (iii) `.git/pre-commit-audit/install.log` 존재. Exit 0 = 3/3 PASS / Exit 1 = bypass 의심 (R-MVP1-1.5-PC1-1 발화 자격)
+- (변경) **`README.md`** — 하네스 인프라 표 4 행 추가 (`.pre-commit-config.yaml` / `bin/setup.sh` / `tools/pre_commit_install_audit.sh` / `CONTRIBUTING.md`) + 초기 설정 영역 `bin/setup.sh` 통합 안내 (4단계 자동 수행 + CONTRIBUTING.md 참조 안내). Phase 0~4 흐름 본문 변경 0건
+- (변경) **`requirements-dev.txt`** — `pre-commit==4.0.1` 추가 (PC-1-T3 PoC 자격 충족). 기존 import-linter / rfc8785 / jcs / pytest / pytest-cov 본문 변경 0건
+
+**carry-over (26번째 entry — (b1) 진행 중)**:
+- (b1-PC1 후속) PoC evidence 수집 (사용자 자율 영역, 개인 dev 환경 변경 동의 의무): `bash bin/setup.sh` 실행 + `bash tools/pre_commit_install_audit.sh` 실행 + `pre-commit run --all-files` 실행 evidence
+- (b1) 남은 sub-cycle 3개: (b1-S3) S-3 detect-secrets / (b1-ST2) ST-2 inotify sidecar / (b1-AR3) AR-3 branch protection (GitHub admin 접근 필수) — 각 별도 단축 합의 + 사용자 명시
+- (b1-PC1-D6) bypass detection CI 통합 sub-cycle — `tools/pre_commit_install_audit.sh` nightly workflow 또는 PR step 통합 (CI workflow 본문 변경 영역, 별도 단축 합의)
+- (b2) R-S1 권위 chain 정정 / (b3) framing 정정 / (c) MVP-1 Implementation Evidence PASS 발효 / (d) facade.py placeholder → real / 기타 deferred — 답습
+
+---
+
+**2026-05-27 세션 (25번째 entry: untracked dashboard 3 파일 정리 chore, 1-agent 직접, 합의 cycle 0) 신규 등록 문서 3건**:
+
+- ⭐ **`jarvis_hud/dashboards/jarvis_dashboard.py`** (CLI 4섹션 dashboard, stdlib only, `/tmp/jarvis-v00-*` read-only) — Ollama daemon + 모델 수 / Layer 0 최근 ts / Layer 1 advice_axis_stats 4축 / 최신 multi-model 측정 decode_tok_per_s ranking. 5/26 비공식 산출물 (SESSION 로그 0건 + commit 0건) → 본 cycle 정식 격리
+- ⭐ **`jarvis_hud/dashboards/streamlit_dashboard.py`** (web UI 4섹션 dashboard, streamlit + pandas 의존) — 동일 4섹션 web UI, 10초 auto-refresh meta tag. 5/26 비공식 산출물 → 본 cycle 정식 격리
+- ⭐ **`jarvis_hud/dashboards/jarvis_dashboard.html`** (정적 HTML dashboard) — Card 1 (Ollama fetch) 실제 동작 + Card 2/3/4 = **"(미구현)" 통일 자리표시자** (본 cycle v1.1 정리, 가짜 데이터 `emotions/intent/context score` + `Llama3-8B 85% / Phi-4 78% / Mistral-7B 91% / Gemma-2B 67%` bar chart 제거). CLI/streamlit dashboard 참조 안내
+
+**carry-over (25번째 entry — 0건, chore 종결)**:
+- 본 cycle 추가 carry-over 0건. 24번째 entry carry-over (b1~d) 그대로 유지, (b1) 사용자 명시 진입 대기
+
+---
+
+**2026-05-27 세션 (24번째 entry: MVP-1 1.5차 보강 진입 합의 entry brief 풀 3+1 + 외부 LLM 1+ cycle — S-3 + ST-2 + PC-1 + AR-3) 신규 등록 문서 7건**:
+
+- ⭐⭐⭐ **`docs/phase0/mvp1-1.5th-reinforcement-entry-brief.md`** (v1 506줄 → v1.1 보강 570줄, +64) — MVP-1 GP-3 + GP-5 1.5차 보강 4 sub-수단 (S-3 detect-secrets 부분 통합 + ST-2 inotify sidecar + PC-1-T3 mandatory enforcement + AR-3 통합 PR auto-reject) **진입 합의 entry brief**. 본 cycle 합의 발효 = 4 sub-수단 *채택 결정 발효 자격* + 실 구현 sub-cycle 4개 진입 권한 발효 자격. v1.1 = BLOCKING 7 + 권고 12 1pass 흡수 (ceremony-inflation 차단). 본 brief 자체 실 코드 0 / CI 0 / hook 0 / branch protection 0 / config 본문 변경 0 / ADR 본문 갱신 0 / 헌법 0 / roadmap 본문 변경 0 / Tier-2/3 catalog 확장 0 / threshold 고정 0
+- ⭐⭐ **`docs/external-review/2026-05-27-mvp1-1.5th-reinforcement-codex-response.md`** (270줄, OpenAI vendor cross-validation) — codex (gpt-5.5, OpenAI vendor) bypass sandbox 직접 호출 후 응답 capture. 판정 = **REVISE AS ENTRY BRIEF INPUT** + 3 필수 수정 + 5 권고. §7.3 자격 검증 7 기준 7/7 통과 (Reviewer 직접 평가). cross-vendor blind risk 차단 충실 (OpenAI ≠ Anthropic Claude)
+- ⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-1.5th-reinforcement-entry-agent-a.md`** (Agent A 구현 분석가, 313줄) — APPROVE WITH CONDITIONS (BLOCKING 4 + 권고 5). 4 sub-수단 실제 구현 자격 분석 + 의존성 매트릭스 + 성능/운영 부담 risk + codex finding 흡수
+- ⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-1.5th-reinforcement-entry-agent-b.md`** (Agent B 품질/안전성 검증가, 337줄) — REVISE (BLOCKING 5 + 권고 9). ⭐⭐⭐ **B-5 단독 — ADR-008 §A.2 R1-2 권위 chain 다중 source 손상 식별** (codex 미언급, Agent A/C 미언급, Agent B 직접 ADR-008 본문 read 후 식별 — Reviewer 격상 source)
+- ⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-1.5th-reinforcement-entry-agent-c.md`** (Agent C 대안 탐색가, 262줄) — REVISE (BLOCKING 5 + 권고 6). 4 sub-수단 대안 매트릭스 + 본 brief framing 외 대안 + AR-3/PC-1 영역 상승 대안 + codex finding cross-validation 답습 (BLOCKING 3 독립 식별)
+- ⭐⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-mvp1-1.5th-reinforcement-entry.md`** (Reviewer 통합 합의 305줄) — ✅ **APPROVE WITH CONDITIONS (BLOCKING 7 + 권고 12)**. 3-way 일치 BLOCKING 3 (R-1 ADR-011 (a)~(d)+(e) / R-2 PC-1 (b)(d) 재분류 / R-3 AR-3 check name mapping) + 2-way 격상 BLOCKING 2 (R-4 S-3 plugin identifier / R-5 ST-2 fail-closed) + ⭐⭐⭐ **Reviewer 단독 격상 R-S1 (B-5 + raw line-level verify — ADR-008 §A.2 = "Hermes JSONL Export 검증" + §2.6 sub-section 부재 + R1-2/§2.6.4 식별자 ADR-008 본문 0건, 다중 source 권위 chain 손상 확정)** + 1-Agent BLOCKING 2 (R-6 PC1-1 탐지 / R-7 Trigger 3 정정). cross-vendor 일치 매트릭스 (codex 14 finding 모두 흡수). 메타 자기진단 8/8 통과
+
+**carry-over (24번째 entry — 다음 세션 사용자 명시 의무, 자동 진입 0건)**:
+- (b1) MVP-1 1.5차 보강 실 구현 sub-cycle 4개 (S-3 / ST-2 / PC-1 / AR-3 각각 별도 단축 합의 + 사용자 명시, 진입 순서 자유)
+- (b2) R-S1 권위 chain 정정 sub-cycle (governance-preconditions 5 위치 + backlog1 합의 본문 + 정확 R1-2 source 일관 정정, cross-reference 별도 commit, N-9 권고)
+- (b3) roadmap-mvp1 §3.6.3 line 290 framing 정정 sub-cycle (N-8 권고)
+- (c) MVP-1 Implementation Evidence PASS 발효 합의 (4 sub-cycle 완료 + ADR-011 §2.1 (a)~(d)+(e) 5/5 + conditions 해소 + 사용자 명시 별도)
+- (d) `src/adapters/llm/facade.py` placeholder → real (TR-1 별도 trajectory)
+
+---
+
+**2026-05-27 세션 (23번째 entry: MVP-1 GP-3/GP-5 현 상태 audit + roadmap-mvp1 DRAFT → APPROVED 권위 발효) 신규 등록 문서 2건 + 변경 1건**:
+- ⭐⭐ **`docs/phase0/mvp1-gp3-gp5-current-state-audit-brief.md`** (audit brief, 1-agent 직접 ceremony-inflation 회피) — §1 진입 합의 3건 상태 (gp3 + gp5 + backlog#6, `f40423f` push 완료) + §2 실 구현 audit (21 도구 / 11 workflow / .pre-commit / .importlinter / adapters/llm placeholder) + §3 DRAFT 잔재 + deferred 영역 (1.5차 보강 / T3 / Tier-2/3) + §4 ADR-011 §2.1 (a)~(e) 5/5 매트릭스 (양 GP 5/5 충족, 단 conditions 미해소 = PASS 발효 미적격) + §5 4 진입점 후보 (a~d) 권고 + §6 권위 한계 (수단 결정 0 / threshold 고정 0 / 실 구현 0 / PASS 발효 0)
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-implementation-runtime-roadmap-mvp1-authority.md`** (Reviewer-only 단축 합의 보고서) — ✅ **APPROVE (단축 합의 — Reviewer-only)**. 5/5 풀 3+1 승격 트리거 0건 발화 (① 새 권위 결정 0 / ② Tier-2/3 catalog 자동 확장 0 / ③ Implementation Evidence PASS 자동 선언 0 / ④ 후속 합의 본문 변경 0 / ⑤ ADR-011 §2.1 5조건 자동 충족 선언 0) + 후속 3 합의 본문 흡수 cross-check (line 819~821) + cross-check verbatim 5/5 (line 826 / 287 / 477 / §5.5 / §8) + ADR-011 답습 정확. 발효 효과 = `roadmap-mvp1.md` DRAFT → APPROVED 권위 발효 (840줄 본문 변경 0건, line 826/827 + §9 변경 이력 한정)
+- (변경) **`docs/architecture/implementation-runtime-roadmap-mvp1.md`** — line 826/827 갱신 (작성일 + 상태 DRAFT → APPROVED) + §9 변경 이력 line 1줄 추가 (2026-05-27 row). **본문 §1~§8 변경 0건** (cross-reference 답습 한정)
+
+**2026-05-27 세션 (22번째 entry: Jarvis 자가진화 Layer 2 설계 cycle + 보조 jarvis_hud TTS 한국어 발효) 신규 등록 문서 3건 + 변경 1건 (보조)**:
+- ⭐⭐ **`docs/phase0/jarvis-layer2-proposal-generation-brief.md`** (v1 작성 → v1.1 in-place 보강) — Layer 2 = 제안 생성. scope (PatternReport → Proposal) + 안전 등급 표 (Layer 1 답습 "보고만 = 안전 행위" *확장 안 됨* 명시) + 제안 6종 (WORKER_RELIABILITY_LOW / FLAG_FREQUENCY_RISING / ADVICE_ENDPOINT_DEGRADED / RECENT_FAILURE_CLUSTER / ADVICE_AXIS_DEGRADED [v1.1 신규] / INPUT_DROUGHT) + threshold 후보 (N={5,10,20,50} / θ / K / 오래됨 / α, 값 고정 0 + 잠정 명시 + MVP-1 evidence 후 재조정) + API 설계 (frozen + tuple + sha256 canonical JSON signature + propose() 시그니처 7 인자 [v1.1 보강: risk_flags + advice_axis_threshold + severity_thresholds 3 인자 추가]) + 신규 §3.1 severity 5×3 매트릭스 + 정렬 결정성 (severity desc → kind asc → subject asc) + fail-soft (zero-state 거짓 양성 차단 + ValueError + threshold 동봉 출력) + 발효 정책 (DEFER, 재진입 = MVP-1 후 실 trigger) + carry-over 2건 (audit log / severity 인플레이션 unit test)
+- ⭐⭐ **`docs/review/3plus1-consensus-2026-05-27-jarvis-layer2-proposal-generation-entry.md`** (풀 3+1 합의 의사록) — **APPROVE w/ COND**. Agent A 구현 (**REVISE**, 시그니처 ↔ trigger 표 내부 일관성 결함 5건: risk_flags 인자 누락 / staleness ISO 파싱 / success_rate 0건 / signature 알고리즘 미정 / severity 매트릭스 부재) / Agent B 안전 (APPROVE w/ COND, 4건: severity 임계 인자화 / signature 알고리즘 / audit log carry-over / 결정성 명시) / Agent C 대안 (APPROVE w/ COND, ADVICE_AXIS_DEGRADED 추가 + N={5} 추가 + ranking/dedup 비-scope 명시) + Reviewer 통합 APPROVE w/ COND (13 항목 본 brief 내 1pass 흡수, 별도 v2 cycle 0, ceremony-inflation 회피)
+- **`docs/sessions/SESSION_2026-05-27.md`** (본 22번째 entry 세션 로그)
+- (보조 변경) **`jarvis_hud/server.py`** — F5-TTS 모델 한국어 발효 (team-lucid/F5-TTS-ko 1.34GB, checkpoint ema_model_state_dict wrapping, vocab.json → vocab.txt 245 jamo chars 변환, NFD 분해 `_to_jamo` helper, KSS row 1 ref 24kHz mono, `_ensure_tts(ckpt_file, vocab_file)` 갱신). 사용자 청취 = "여성 한국어 인식, 음색 추후 확장 가능성 deferred"
 
 **2026-05-25 본 후속 세션 ((g1-N-3-adr-008+sip+adr-012') HIGH cycle, 11번째 entry, chain 영구 종결) 신규 등록 문서 6건**:
 - ⭐⭐⭐ **`docs/phase0/jarvis-mvp1-g1-n-3-adr-008-sip-adr-012-prime-consensus-entry-brief.md`** (v1 `b55e0c9` 561줄 → **v1.1 `c9493c0` +337/-381**) — (g1-N-3-adr-008+sip+adr-012') HIGH cycle entry brief. (g1-N-3') 합의 §8.2 line 273 HIGH carry-over 직접 발효 + Reviewer 권한 한계 (10-e) 직접 발효. **v1.1 보강**: BLOCKING 11 + R-S1~R-S3 verbatim 100% + 권고 9 흡수 + NOTE 18 + 기각 4 + 결합 형식 (f) cross-ref block 만 채택 + ADR-011 line 245 형식 채택 (사용자 명시 직접 확인) + 4 source 확장 (R-S1 hermes-not-root 추가) + (P4)/(11)/(g1-N-4) 기각 + chain 영구 종결 의무 + §0/§10.1 13→15 항목 1:1 매핑 + §10.6 7→9 조건 확장 + §9 정직성 18→22

@@ -251,7 +251,7 @@ Layer C 발효 합의 — Implementation Evidence PASS                          
 | sub-수단 ID | 영역 | 본문 채택 권위 (답습 한정) | R-1 관계 |
 |----------|------|----------------------|----------|
 | S-1 | 코드 본문 secret 검출 (R-4.1 Tier-1 45 patterns) | Group D PoC 답습 | R-4 영역 (Phase α-1) — Stage 1 |
-| ST-3 | docker secret (저장 경로 isolation) | ADR-008 §2.6.2 R2-1 답습 | R-7 영역 (Phase α-3) — Stage 2 |
+| ST-3 | docker secret (저장 경로 isolation) | ADR-008 차단조건 #6 + 부록 B 답습 | R-7 영역 (Phase α-3) — Stage 2 |
 | **PC-3** | **CI-only enforcement (pre-commit)** | **T2 영역 답습 + 양 GP 공유 채택** | **R-1 본문 = PC-3 통합 (Stage 4 sub-step 4.1)** |
 | **AR-1** | **CI step fail-closed (PR auto-reject)** | **T2 영역 답습 + 양 GP 공유 채택** | **R-1 본문 = AR-1 통합 (Stage 4 sub-step 4.2)** |
 | T-2 + T-5 | provider scanner | Group A 1차+2차+3차 답습 | R-4 / R-5 영역 (Phase α-1 / α-2) |

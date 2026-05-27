@@ -553,7 +553,7 @@ brief 그대로 승인 합의 보고서 작성 (Reviewer-only 단축 적격 후�
 |------|--------------------|-----------|---------------|
 | **(α-1) R-4 도구 본문 (829줄)** | ✅ **답습 한정 완료** | Group D PoC + Group A 1차 + Group A 3차 합의 영구 보존 + Layer C 발효 evidence 답습 영구 | actual run 재실행 0건 / catalog 변경 0건 / S-2 gitleaks 진입 0건 (Backlog #1 분리) |
 | **(α-2) R-5 `.importlinter` 본문 (35줄)** | ✅ **답습 한정 완료** | Group A 2차 합의 영구 보존 + C-9 RA-9 사전 검증 PASS + 각주 1 google.generativeai 답습 + TR-1~TR-5 발화 0건 영구 | facade real 본문 0건 (Backlog #4 분리) / forbidden 4 모듈 변경 0건 |
-| **(α-3) R-7 docker secret block (328줄)** | ✅ **답습 한정 완료** | GP-3 Stage 2 합의 영구 보존 + ADR-008 §2.6.2 R2-1 답습 영구 + Hermes upstream Dockerfile 변경 0건 영구 | ST-1 / ST-2 / ST-4 / ST-5 진입 0건 (MVP-2 분리) |
+| **(α-3) R-7 docker secret block (328줄)** | ✅ **답습 한정 완료** | GP-3 Stage 2 합의 영구 보존 + ADR-008 차단조건 #6 + 부록 B 답습 영구 + Hermes upstream Dockerfile 변경 0건 영구 | ST-1 / ST-2 / ST-4 / ST-5 진입 0건 (MVP-2 분리) |
 | **(α-4) R-1 CI workflow 통합 (1593줄)** | ✅ **cycle 답습 + 본문 변경 0건 완료** (W-1 + W-2 + W-3 = 0-line passthrough + W-4 = trigger-deferred + (E) defer 영구 lockdown 발효) | Stage 4 entry + W-1 + W-2 + W-3 + W-4 lockdown + W-4 *실 trigger 발화 결정* + W-1 caveat 8 후속 관찰 합의 6 합의 영구 + trigger commit `d4a0107` 보존 영구 | sub-step 4.3 (PC-4) + 4.4 (AR-2) 진입 0건 (Backlog #1 + #2 + #3 분리) |
 | **통합 영역 (4 Phase + Layer C + Layer D)** | ✅ **답습 영구 완료 + lockdown 발효 단계** | Layer C 발효 (`eb01bc4`) + Layer D 권위 (`210c98f`) + 22 합의 628 조건 답습 영구 + 5 영구 핵심 제약 5/5 + Provider Liquidity 5-way 5/5 + F-금지 #1 영구 답습 | Layer E / Layer F 진입 0건 / MVP-2 ~ MVP-6 deepening 0건 |
 

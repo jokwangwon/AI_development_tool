@@ -289,7 +289,8 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | 본 문서 (GP-3 MVP-1 roadmap deepening) 자체 | **Reviewer-only 단축 합의** | `implementation-runtime-roadmap.md` (DRAFT 단축 합의 영역) + 17 항목 우선순위 답습 + 새 권위 결정 0건 |
 | MVP-1 진입 결정 (S-1 단독 채택) | **Reviewer-only 단축 합의** + PoC evidence | Group D PoC §2.1 답습 + Tier-2/3 자동 확장 0건 |
 | MVP-1 1.5차 (S-3 detect-secrets 부분 통합) | **풀 3+1 합의 + 외부 LLM 1+** | Tier-2/3 catalog 확장 영역 + 사용자 명시 풀 3+1 trigger #4 발화 (Group D §2.1 (D) 답습) |
-| ST-1 / ST-2 / ST-5 진입 (Hermes upstream 변경) | **풀 3+1 합의 + Hermes upstream PR 검토** | Hermes upstream 영역 진입 = 책무 경계 변경 |
+| ST-1 / ST-5 진입 (Hermes upstream 변경) | **풀 3+1 합의 + Hermes upstream PR 검토** | Hermes upstream 영역 진입 = 책무 경계 변경 |
+| ST-2 진입 (sidecar 분리, Hermes upstream 변경 ❌ 불필요) | **풀 3+1 합의 + 외부 LLM 1+ + 사용자 명시** | (b1) 4 sub-cycle 발효 답습 (28번째 entry sidecar 인프라 + R-MVP1-1.5-ST2-2 Hermes upstream 변경 영구 금지) — 35번째 entry framing 정정 답습 |
 | ST-4 (Vault HSM) 진입 | **ADR-010 §X 진입 합의 + 외부 LLM 1+** | T3 영역 + Multi-host 인프라 |
 | Implementation Evidence PASS 발효 (GP-3 한정) | **별도 합의 + 사용자 명시 결정** + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | 본 문서 §2.2 답습 |
 | ⭐⭐⭐ **Implementation Evidence PASS *발효 완료* (GP-3 한정)** | **2026-05-27 (32번째 entry, commit `(본 commit)`)** — 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS + 사용자 명시 결정 + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | (b1) 4 sub-cycle + 31번째 entry 첫 PR (head SHA `9837298`) 11/11 SUCCESS + 본 cycle 합의 `docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md` |

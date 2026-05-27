@@ -9,7 +9,7 @@
 - §C-1 충족 갱신 합의 = `docs/review/3plus1-consensus-2026-05-13-mvp1-pass-c1-k2-satisfaction.md` (commit `1dd1036`, K-2 fix 2단계 영역 — A-1 §C-1 상태 표기만 갱신)
 - MVP-1 deepening roadmap = `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3.3 (ST-1~ST-5 매트릭스) + §3.5 (R-MVP1-G3-7) + §4.3 (PC-1~PC-4 매트릭스) + §4.7.3 (합의 형태 권고)
 - Governance preconditions = `docs/architecture/governance-preconditions.md` §5.3 (강제 메커니즘) + §5.4 (Evidence (a)~(e))
-- ADR-008 §A.2 R1-2 + §2.6.2 R2-1 (저장 경로 secret 보호 권위)
+- ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 (저장 경로 secret 보호 권위, 35번째 entry R-S1 정정 답습)
 - ADR-011 §2.4 T1/T2/T3 3-tier 분류 (영역 분류 권위)
 
 **검토 목적**: Backlog #1 *진입 직전* 사전 정비 brief 의 **영역 분류 (ST-1=T3 / ST-2=T2 / PC-4=T2+T3 혼합) + 항목별 합의 형태 권고 + ST-1 Backlog #3 병합 검토 + ST-2 우선 진입 후보 + PC-4 sub-영역 분리 + 4 금지 답습** 의 적절성 확정. **Backlog #1 자체의 구현 승인 ≠ 본 합의 범위**.
@@ -81,7 +81,7 @@
 | ADR 본문 *자동 갱신* | ❌ (ADR-008 / ADR-010 / ADR-011 / ADR-012 본문 변경 0건) |
 | 다른 backlog (#2/#3/#4/#7) *자동 진입* | ❌ (사용자 명시 답습) |
 | Runtime code / CI workflow / hook 추가 | ❌ (사용자 명시 답습) |
-| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 §2.6.2 R2-1 답습) |
+| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 차단조건 #6 답습 + ADR-011 답습, 35번째 entry R-S1 정정 답습) |
 | Tier-2/3 catalog 자동 확장 | ❌ (R-4.1 Tier-1 45 patterns 답습) |
 
 ---
@@ -387,7 +387,7 @@ Layer F : Hermes PMO 격상                              — 아직 아님 (C-4,
 | C-1~C-8 상태 답습 | ✅ (C-1+C-2 Satisfied / C-3~C-8 Deferred/Requires separate — 변경 0건) |
 | MVP-1 PASS Layer D 본문 답습 | ✅ (`210c98f` APPROVE WITH CONDITIONS 그대로 유지) |
 | ADR-011 §2.4 T1/T2/T3 분류 답습 | ✅ (T3 영역 자동 진입 0건 / T2 영역 단축 합의 적격 명시) |
-| ADR-008 §A.2 R1-2 + §2.6.2 R2-1 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건) |
+| ADR-008 차단조건 #1 + #6 + 부록 B 답습 | ✅ (cross-reference 답습 한정 — 본문 변경 0건, 35번째 entry R-S1 정정 답습) |
 | 5 영구 핵심 제약 보존 | ✅ (Provider Liquidity 5-way / Hermes ≠ root of trust / 메타포 강제 금지 / T3 분리 / 수단/목적 분리 모두 답습) |
 | 7 backlog 분리 매트릭스 답습 | ✅ (Backlog #2/#3/#4/#5/#7 자동 진입 0건 — Backlog #5 Satisfied 답습) |
 | 자동 진입 0건 | ✅ (Backlog #1 자체 구현 / ST-2 진입 / 다른 backlog / T3 영역 모두 자동 진입 0건) |

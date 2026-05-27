@@ -108,7 +108,7 @@
 - ❌ **`.importlinter` forbidden 4 모듈 / `include_external_packages` / `root_packages` / `ignore_imports` 변경 (0건)** — TR-1 ~ TR-5 미발화
 - ❌ **R-7 docker-compose secret block / image layer check / restart recovery 본문 변경 (0건)**
 - ❌ **3 MVP-1 workflow 외 G2/G3/G4 PoC 8 workflow 흡수 (0건)**
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 영구 답습
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 영구 답습
 - ❌ **Production `docker-compose.yml` 신설 / 변경 (0건)** — PoC 격리 디렉토리 한정 답습
 - ❌ **실 secret material commit (0건)** — FAKE_TEST_SECRET marker 답습
 - ❌ **Layer A / B / C / D / E / F 재발효 / 재선언 / 발효 (0건)** — Stage 4 entry brief §1.5 답습

@@ -100,7 +100,7 @@
 - ❌ **`pull_request_target` workflow 도입 (0건)** — T2/T3 별도 합의 영역
 - ❌ **commit signing 도입 (0건)** — MVP-6 영역 답습
 - ❌ **GitHub Actions secrets 사용 도입 (0건)** — F-금지 #1 영구 답습 (G3-7 (i))
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 답습 = upstream 변경 회피 영구 보존
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 회피 영구 보존
 - ❌ **Production `docker-compose.yml` 신설 / 변경 (0건)** — PoC 격리 디렉토리 (`docker/gp3-st3-poc/`) 한정
 - ❌ **실 secret material commit (0건)** — `secrets/api_key.placeholder` = FAKE_TEST_SECRET marker 답습 (Group D F-금지 #1 marker 정책 답습)
 - ❌ **Tier-2 / Tier-3 catalog 자동 확장 (0건)**
@@ -257,7 +257,7 @@ brief 그대로 승인 합의 보고서 작성 (Reviewer-only 단축 적격 후�
 |-------|----|----------|---------|---------|--------------|
 | **α-1 (R-4)** | 3 도구 본문 | 3 file | **829** | Group D PoC + Group A 1차 + Group A 3차 | S-1 (`secret_scanner.py` 368) + T-2 (`provider_import_scanner.py` 178) + T-5 (`provider_url_scanner.py` 283) |
 | **α-2 (R-5)** | `.importlinter` 본문 | 1 file | **35** | Group A 2차 합의 (`a6e82f1`) + C-9 RA-9 사전 검증 PASS (2026-05-10) + 각주 1 google.generativeai | T-6 (T-2 + T-5 병행 中 T-2 import-linter 측면) |
-| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 (Reviewer-only APPROVE) + ADR-008 §2.6.2 R2-1 | ST-3 (Hermes upstream 변경 0건 보존) |
+| **α-3 (R-7)** | docker secret block | 9 file | **328** | GP-3 Stage 2 합의 (Reviewer-only APPROVE) + ADR-008 차단조건 #6 + 부록 B | ST-3 (Hermes upstream 변경 0건 보존) |
 | **α-4 (R-1)** | CI workflow 통합 | 7 file | **1593** | Stage 4 합의 (Reviewer-only APPROVE) + Layer B §5.5.1 PC-3 + AR-1 | PC-3 + AR-1 (양 GP 공유) |
 | **합산** | **4 영역** | **20 file** | **2785** | — | **5 sub-수단** (S-1 + T-2 + T-5 + ST-3 + PC-3 + AR-1) |
 
@@ -551,7 +551,7 @@ Phase α-4 R-1 entry brief §3 답습 한정:
 | 13 | S-2 gitleaks | Backlog #1 1.5차 보강 분리 |
 | 14 | R-4.1 Tier-1 45 patterns / URL Tier-1 10 / Model Tier-1 19 catalog 변경 | Group α 합의 5.1 #8 + Backlog #3 분리 |
 | 15 | Tier-2 / Tier-3 catalog 자동 확장 | 동상 |
-| 16 | Hermes upstream Dockerfile 변경 | ADR-008 §2.6.2 R2-1 영구 답습 |
+| 16 | Hermes upstream Dockerfile 변경 | ADR-008 차단조건 #6 + 부록 B 영구 답습 |
 | 17 | Production `docker-compose.yml` 신설 / 변경 | PoC 격리 디렉토리 한정 (R-7 답습) |
 | 18 | 실 secret material commit | F-금지 #1 영구 답습 (Group D §1.2 #1 답습) |
 | 19 | GitHub Actions secrets 사용 도입 | F-금지 #1 영구 답습 (G3-7 (i)) |
@@ -764,7 +764,7 @@ Phase α-4 R-1 entry brief §3 답습 한정:
 | 4 | 통합 실 진입 시 R-7 docker secret 본문 *재설계* | GP-3 Stage 2 합의 답습 + 실 사용자 명시 결정 영역 |
 | 5 | 통합 실 진입 시 sub-step 4.3 (PC-4) / 4.4 (AR-2) 진입 | Backlog #1 + #2 + #3 분리 영구 답습 |
 | 6 | 통합 실 진입 시 `src/adapters/llm/facade.py` real 본문 작성 | Backlog #4 영역 분리 (Layer D C-8 답습) |
-| 7 | 통합 실 진입 시 Hermes upstream Dockerfile 변경 | Backlog #1 1.5차 보강 영역 분리 + ADR-008 §2.6.2 R2-1 영구 답습 |
+| 7 | 통합 실 진입 시 Hermes upstream Dockerfile 변경 | Backlog #1 1.5차 보강 영역 분리 + ADR-008 차단조건 #6 + 부록 B 영구 답습 |
 | 8 | 통합 실 진입 시 ADR 본문 자동 갱신 | cross-reference 답습 한정 |
 | 9 | 통합 실 진입 시 event enum 정식 등록 (`event:` field) | Backlog #5 ADR-012 §2.2 분리 |
 | 10 | 통합 실 진입 시 `pull_request_target` workflow 도입 | T2/T3 별도 합의 영역 |

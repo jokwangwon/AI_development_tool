@@ -73,7 +73,7 @@
 | 기존 11 workflow 본문 답습 변경 (MVP-1 entry / Stage 2 step / Stage 4 step / 기존 PoC step) | ❌ (답습 변경 0건 보존 — 신규 Stage 5 step 4개 추가 한정) |
 | 기존 tool 본문 답습 변경 (`secret_scanner.py` / `provider_*_scanner.py` / `docker_secret_*.sh` / `mvp1_pc3_ar1_integration_check.py`) | ❌ (답습 변경 0건 보존) |
 | 기존 fixture 답습 변경 | ❌ (답습 변경 0건 보존 — 신규 `tests/fixtures/stage5_g3_7/` 추가 한정) |
-| Hermes upstream 변경 | ❌ (ADR-008 §2.6.2 R2-1 답습 = upstream 변경 0건) |
+| Hermes upstream 변경 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 0건) |
 | ADR 본문 자동 갱신 | ❌ (cross-reference 답습 한정) |
 | Tier-2/3 catalog 자동 확장 | ❌ (R-4.1 45 patterns / URL 10 / Model 19 답습 한정) |
 | 외부 LLM 자동 호출 | ❌ (cross-vendor blind 의뢰 4건 누적 답습 한정) |
@@ -155,7 +155,7 @@
 |-----|------------|------|
 | Hermes runtime code | 0건 (Stage 5 = workflow 정적 verifier 한정) | ✅ |
 | Hermes config | 0건 | ✅ |
-| ADR-008 §2.6.2 R2-1 답습 (upstream 변경 회피) | 본 cycle 영역 = upstream 미진입 | ✅ |
+| ADR-008 차단조건 #6 + 부록 B 답습 (upstream 변경 회피) | 본 cycle 영역 = upstream 미진입 | ✅ |
 | GP-3/GP-5 ADR 본문 갱신 | 0건 (cross-reference 답습 한정) | ✅ |
 
 → Hermes upstream 변경 0건 = **충족**.

@@ -85,7 +85,7 @@
 | ST-4 Vault HSM 진입 | ❌ (Backlog #7) |
 | Tier-2 / Tier-3 catalog 자동 확장 | ❌ (R-4.1 45 patterns / URL 10 / Model 19 답습 한정) |
 | ADR 본문 자동 갱신 | ❌ (cross-reference 답습 한정) |
-| Hermes upstream 변경 | ❌ (ADR-008 §2.6.2 R2-1 답습 = upstream 변경 0건) |
+| Hermes upstream 변경 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 0건) |
 | 외부 LLM 자동 호출 | ❌ (cross-vendor blind 의뢰 4건 누적 답습 한정) |
 | 실 GitHub API / branch protection / repo settings 호출 | ❌ (CI step 정적 검증 한정) |
 
@@ -123,7 +123,7 @@ ADR-011 §2.1 본문 답습:
 |------|------|------------------------------|------|
 | **(a)** 동등 이상의 보안 결과 (명시적 비교표) | 기존 수단 (Hermes redaction in-process) ↔ 대체 수단 (S-1 custom scanner D-1 모드 + ST-3 docker secret + PC-3 CI-only enforcement + AR-1 CI step fail-closed) 패턴 cover + isolation 비교 | `docs/architecture/redaction-pattern-equivalence.md` (R-4 — Hermes redact pattern ↔ P1_REDACTOR 패턴 동등성 비교 + gap 식별 + 보충 권고) + `docs/phase0/r4-1-trigger-extension-evidence.md` (R-4.1 — Tier-1 42 catalog + baseline 5 = 45 patterns 직접 답습) + `tools/secret_scanner.py` (368줄, 45 patterns: BL 5 + T1 40) + Stage 1 `mvp1_entry_scan=PASS` (regex H-C/H-F/H-G/H-K + Tier-1 prefix 10 ID cover) | ✅ |
 | **(b)** 격리 환경 PoC 실증 (Docker isolation + 자동 검증) | Docker network_mode=none + read_only + cap_drop=ALL 환경에서 secret 차단 자동 검증 + image layer leak 검증 + restart recovery 검증 | Stage 2 ST-3 PoC (`docker/gp3-st3-poc/docker-compose.gp3-st3.yml` top-level `secrets:` block + `file:` source + `/run/secrets/api_key` mount mode 0400 + defense-in-depth `network_mode=none` + `read_only` + `cap_drop=ALL` + `no-new-privileges`) + `tools/docker_secret_image_layer_check.sh` (99줄, docker save tar canary grep) + `tools/docker_secret_restart_recovery.sh` (118줄, 2회 sha256 일치 + isolation marker 2회 강제) + Stage 2 actual run `25731846625` `stage2_image_layer=PASS` + `stage2_restart_recovery=PASS` + Stage 1 D-1 mode PoC PASS (R-4.1 격리 환경 답습) | ✅ |
-| **(c)** ADR 권위 명시 | 본 ADR 또는 후속 ADR 에 GP-3 명시 권위 | ADR-011 §2.1 모법 (수단/목적 분리) + ADR-008 §2.6.2 R2-1 (Hermes upstream 변경 회피) + ADR-012 §2.2 (Evidence Ledger Protection enum 후보) + `docs/architecture/governance-preconditions.md` §5 GP-3 (Entry/Exit 5 조건 매트릭스) + `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3 GP-3 + §3.5 (8 Rollback Trigger) + GP-3 진입 합의 `6dc5bdc` (APPROVE WITH CONDITIONS — 4 Conditions) + Backlog #6 Layer A `f1e0b23` + Layer B `f40423f` | ✅ |
+| **(c)** ADR 권위 명시 | 본 ADR 또는 후속 ADR 에 GP-3 명시 권위 | ADR-011 §2.1 모법 (수단/목적 분리) + ADR-008 차단조건 #6 + 부록 B (Hermes upstream 변경 회피) + ADR-012 §2.2 (Evidence Ledger Protection enum 후보) + `docs/architecture/governance-preconditions.md` §5 GP-3 (Entry/Exit 5 조건 매트릭스) + `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3 GP-3 + §3.5 (8 Rollback Trigger) + GP-3 진입 합의 `6dc5bdc` (APPROVE WITH CONDITIONS — 4 Conditions) + Backlog #6 Layer A `f1e0b23` + Layer B `f40423f` | ✅ |
 | **(d)** 자동 회귀 검증 경로 (CI/nightly 재실행) | GitHub Actions push trigger 자동 회귀 + paths trigger 정확성 + 5 runs 누적 PASS | `.github/workflows/secret-hygiene-egress-redaction.yml` (20 step — Stage 1 + Stage 2 + Stage 4 + Stage 5 통합 + paths trigger: `tools/secret_scanner.py` + `tools/docker_secret_*.sh` + `tools/mvp1_pc3_ar1_integration_check.py` + `tools/workflow_*_check.py` + `tests/fixtures/secret_hygiene/**` + `tests/fixtures/gp3_st3/**` + `tests/fixtures/mvp1_pc3_ar1_integration/**` + `tests/fixtures/stage5_g3_7/**` + `docker/gp3-st3-poc/**` + workflow 자체) + 5 runs 누적 PASS evidence (Stage 1 `25728590939` + Stage 2 `25731846625` + Stage 4 `25738531295` + Stage 5 `25744711391`) | ✅ |
 | **(e)** 합의 APPROVE | 권위 발효 합의 누적 | GP-3 진입 합의 `6dc5bdc` (APPROVE WITH CONDITIONS) + MVP-1 Implementation Entry 합의 `1eab814` (APPROVE READY) + Layer A `f1e0b23` (APPROVE) + Layer B `f40423f` (APPROVE) + 구현 진입 계획 `c50e6a0` (APPROVE) + Stage 1+3 진입 (`72622409` 발효) + Stage 2 진입 `09edd9d` (APPROVE) + Stage 4 진입 `416a008` (APPROVE) + Stage 5 진입 `c098924` (APPROVE) — 누적 9 합의 APPROVE | ✅ |
 
@@ -220,7 +220,7 @@ ADR-011 §2.1 본문 답습:
 
 **Hermes upstream 변경 0건 보존 검증**:
 - 본 합의 영역 = CI step / 정적 검증 한정 — Hermes runtime code / config 미진입
-- ADR-008 §2.6.2 R2-1 답습 (upstream 변경 회피)
+- ADR-008 차단조건 #6 + 부록 B 답습 (upstream 변경 회피)
 - Stage 1~5 변경 통계 = 신규 17 + workflow step 신규 4 + 기존 도구 / fixture / 16 기존 step / Hermes upstream / `provider-adapter-enforcement.yml` 모두 변경 0건
 - Layer F (Hermes PMO 격상) 자동 진입 0건 — 사용자 명시 결정 영역 보존
 
@@ -303,7 +303,7 @@ ADR-011 §2.1 본문 답습:
 ❌ ST-4 Vault HSM 자동 진입 (Backlog #7)
 ❌ Tier-2 / Tier-3 catalog 자동 확장 (R-4.1 45 patterns / URL 10 / Model 19 답습 한정)
 ❌ ADR 본문 자동 갱신 (cross-reference 답습 한정)
-❌ Hermes upstream 변경 (ADR-008 §2.6.2 R2-1 답습)
+❌ Hermes upstream 변경 (ADR-008 차단조건 #6 + 부록 B 답습)
 ❌ 외부 LLM 자동 호출 (cross-vendor blind 의뢰 4건 누적 답습 한정)
 ❌ 실 GitHub API / branch protection / repo settings 호출 (정적 검증 한정)
 ❌ 9 sub-수단 *본문 채택 commit 추가 격상* (PC-3 / AR-1 / S-1 / S-2 / ST-3 / T-2 / T-5 / T-6 = Layer B `f40423f` 권고 한정 유지)
@@ -397,7 +397,7 @@ Layer F : Hermes PMO 격상                          — 아직 아님 (MVP-6 �
 | 7 | 다른 backlog *자동 진입* | ❌ 본 §0.4 + §3.2 + §5 명시 — 모두 별도 합의 |
 | 8 | Tier-2 / Tier-3 catalog *자동 확장* | ❌ 본 §0.4 + §3.2 명시 — R-4.1 45 patterns / URL 10 / Model 19 답습 한정 |
 | 9 | ADR 본문 *자동 갱신* | ❌ 본 §0.4 + §3.2 명시 — cross-reference 답습 한정 |
-| 10 | Hermes upstream *변경* | ❌ 본 §0.4 + §1.7 + §3.2 명시 — ADR-008 §2.6.2 R2-1 답습 |
+| 10 | Hermes upstream *변경* | ❌ 본 §0.4 + §1.7 + §3.2 명시 — ADR-008 차단조건 #6 + 부록 B 답습 |
 | 11 | 외부 LLM *자동 호출* | ❌ 본 §0.4 + §3.2 + §4 명시 — cross-vendor blind 의뢰 4건 누적 답습 한정 |
 
 → 11/11 금지 0건 위반 = **충족**.

@@ -15,7 +15,7 @@
 - MVP-1 roadmap deepening = `cddd22f` + `bbc05ca` + `5939c93` (mvp1.md §3.3 ST-1~ST-5 + §4.4 AR-1~AR-3 + §4.6 R-MVP1-G3-7~8 + R-MVP1-G5-7~9 + §5.5)
 - ADR-010 (Vault HSM 권위 본문) — 진입 시점 = Operational Readiness 영역 / Multi-host 환경 권고
 - ADR-011 §2.4 T3 영역 분리 (정책 / branch protection / Vault HSM / Tier-2/3 catalog 확장 = T3 영역 답습)
-- ADR-008 §A.2 R1-2 (entrypoint stat) + §2.6.2 R2-1 (docker secret) + R-4 catalog (R-4.1 Tier-1 42 patterns)
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (entrypoint stat) + §2.6.2 R2-1 (docker secret) + R-4 catalog (R-4.1 Tier-1 42 patterns)
 - 5 영구 핵심 제약 (Hermes ≠ root of trust / 수단-목적 분리 / 메타포 강제 금지 / 단일 source-of-truth / Provider Liquidity)
 
 ---
@@ -106,7 +106,7 @@
 | **(1) AR-3** (AR-1 + AR-2 통합) | §4.4 row AR-3 + §4.7.3 line 480 ("AR-2 / AR-3 진입 = 풀 3+1 + 외부 LLM 1+ + 사용자 명시") | branch protection rule 변경 (T3) | §2.1 |
 | **(2) T-5 (β)** (provider URL/model name Tier-2/3 catalog 확장) | §4.3 row T-5 + §4.6 R-MVP1-G5-7 + R-MVP1-G5-8 (URL/Model Tier-2/Tier-3 추가 결정 = 풀 3+1 + Tier-2/3 catalog 확장 결정) | catalog 본문 확장 (T3) — `78483c5` 답습 (catalog 자동 확장 0건) | §2.2 |
 | **(3) PC-4 T3 sub** (`pre-commit install` 의무화 + dev 환경 강제) | §4.3 row PC-4 + §4.4.2 권고 (PC-4 MVP-1 1.5차 보강 영역) + ADR-011 §2.4 (dev 환경 강제 = T3) | dev 환경 정책 / `default_install_hook_types` / `fail_fast` (T3) | §2.3 |
-| **(4) C-5b ST-1** (Hermes upstream Dockerfile entrypoint stat chmod 600 강제) | §3.3 row ST-1 + §3.5 R-MVP1-G3-7 (Hermes upstream Dockerfile 변경 = 풀 3+1 + Hermes upstream PR 검토) + ADR-008 §A.2 R1-2 답습 | Hermes upstream Dockerfile (T3) — repo 책무 경계 변경 | §2.4 |
+| **(4) C-5b ST-1** (Hermes upstream Dockerfile entrypoint stat chmod 600 강제) | §3.3 row ST-1 + §3.5 R-MVP1-G3-7 (Hermes upstream Dockerfile 변경 = 풀 3+1 + Hermes upstream PR 검토) + ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 답습 | Hermes upstream Dockerfile (T3) — repo 책무 경계 변경 | §2.4 |
 | **(5) Vault HSM ST-4** (ADR-010 통합) | §3.3 row ST-4 + §3.5 R-MVP1-G3-8 (Vault HSM 도입 = ADR-010 §X 진입 + Multi-host 인프라) + line 291 ("ST-4 진입 = ADR-010 §X + 외부 LLM 1+ + T3 영역 + Multi-host") | ADR-010 §X 진입 + Multi-host 인프라 (T3) | §2.5 |
 | **(6) Tier-2/3 catalog 자동 확장 *가능성* 일반** | GP-3 R-4.1 Tier-1 42 + GP-5 URL Tier-1 10 + Model Tier-1 19 → Tier-2/3 일반 정책 | catalog *정책* 변경 (T3) — Group D §2.1 (D) 답습 (catalog 변경 = 풀 3+1 trigger #4) | §2.6 |
 
@@ -254,10 +254,10 @@
 |------|------|
 | 정의 | Hermes upstream Dockerfile entrypoint 시점에 `~/.hermes/auth.json` (또는 동등) 의 `stat` 검증 (chmod 600 강제) — 644 등 위반 시 컨테이너 정지 |
 | `78483c5` 답습 | "C-5b (ST-1) = ⏳ Deferred — Backlog #3 T3 영역" |
-| mvp1.md §3.3.1 row ST-1 | "Hermes Dockerfile entrypoint stat 검증 (chmod 600 강제) — 컨테이너 시작 시 — ✅ Hermes upstream Dockerfile 수정 필요 — 비용 低 — ADR-008 §A.2 R1-2 + GP-3 §5.3 답습" |
+| mvp1.md §3.3.1 row ST-1 | "Hermes Dockerfile entrypoint stat 검증 (chmod 600 강제) — 컨테이너 시작 시 — ✅ Hermes upstream Dockerfile 수정 필요 — 비용 低 — ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + GP-3 §5.3 답습" |
 | mvp1.md §3.5 R-MVP1-G3-7 | "Hermes upstream Dockerfile 변경 결정 (ST-1 / ST-5 진입 시) = 풀 3+1 합의 + Hermes upstream PR 검토" |
 | mvp1.md §3.6.3 line 290 | "ST-1 / ST-2 / ST-5 진입 (Hermes upstream 변경) = 풀 3+1 합의 + Hermes upstream PR 검토 — Hermes upstream 영역 진입 = 책무 경계 변경" |
-| ADR-008 §A.2 R1-2 답습 | "entrypoint stat 검증 (chmod 600 강제) — Hermes upstream Dockerfile 본문 영역" |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 답습 | "entrypoint stat 검증 (chmod 600 강제) — Hermes upstream Dockerfile 본문 영역" |
 
 #### 2.4.2 T3 진입 속성 매트릭스
 
@@ -388,7 +388,7 @@
 | (1) AR-3 | ✅ HIGH (T3) | ❌ | ⚠️ MEDIUM (PC-4 T3 sub 통합 시) | ❌ | ❌ | ❌ | (ADR-008 cross-reference) |
 | (2) T-5 (β) | ❌ (catalog ⊂ enforcement) | ✅ HIGH (T3) | ❌ | ❌ | ❌ | ❌ | ❌ |
 | (3) PC-4 T3 sub | ⚠️ MEDIUM (AR-3 통합 시) | ❌ | ✅ HIGH (T3) | ❌ | ❌ | ❌ | (ADR-011 cross-reference) |
-| (4) C-5b ST-1 | ❌ | ❌ | ❌ | ✅ HIGH (T3) | ⚠️ MEDIUM (file perm) | ❌ | (ADR-008 §A.2 R1-2 cross-reference) |
+| (4) C-5b ST-1 | ❌ | ❌ | ❌ | ✅ HIGH (T3) | ⚠️ MEDIUM (file perm) | ❌ | (ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 cross-reference) |
 | (5) Vault HSM ST-4 | ❌ | ❌ | ❌ | ❌ (Hermes client 한정) | ✅ HIGH (외부 HSM) | ✅ HIGH | ✅ ADR-010 §X 진입 |
 | (6) Tier-2/3 자동 확장 일반 | ❌ | ✅ HIGH (T3) | ❌ | ❌ | ❌ | ❌ | (ADR-011 §2.4 cross-reference) |
 
@@ -508,7 +508,7 @@
 | Agent | 핵심 분석 영역 |
 |------|----------|
 | Agent A | Hermes upstream Dockerfile PR 절차 기술 검토 + Vault SDK 통합 형태 (Hermes 직접 호출 / sidecar / Vault Agent injector) + Multi-host 인프라 구성 + ADR-010 §X 본문 형태 (신규 §X vs 갱신 vs ADR-015 신설) |
-| Agent B | 보안 (Hermes ≠ root of trust 보존 검증 / Vault HSM 보안 평가 / HSM key 관리 / Vault transit / Vault audit log 통합) + 엣지케이스 (Hermes upstream maintainer 거부 / Vault inaccessible 시 fallback / HSM SPOF) + 문서 정합성 (ADR-008 §A.2 R1-2 + ADR-010 §2 + ADR-011 §2.4 + 5 영구 핵심 제약 #1 답습) |
+| Agent B | 보안 (Hermes ≠ root of trust 보존 검증 / Vault HSM 보안 평가 / HSM key 관리 / Vault transit / Vault audit log 통합) + 엣지케이스 (Hermes upstream maintainer 거부 / Vault inaccessible 시 fallback / HSM SPOF) + 문서 정합성 (ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + ADR-010 §2 + ADR-011 §2.4 + 5 영구 핵심 제약 #1 답습) |
 | Agent C | 대안 (ST-1 entrypoint stat vs ST-2 inotify sidecar 책무 분담 / Vault HSM vs 클라우드 KMS vs PKCS#11 self-hosted / fork+downstream patch vs upstream PR) + 트레이드오프 (Hermes upstream 변경 vs sidecar / Vault 운영 비용 vs 보안 강도) |
 
 ### 5.5 Reviewer 검토 의무 영역 (3 그룹 공통)
@@ -735,7 +735,7 @@
 | Provider Liquidity 5-way 약화 0건 | ✅ |
 | 사용자 명시 3 결정 (α/ii/(가)) 재변경 0건 | ✅ |
 | ADR-011 §2.1 (a)~(e) / §2.4 답습 | ✅ |
-| ADR-008 §A.2 R1-2 / §2.6.2 R2-1 / R-4.1 답습 | ✅ |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 / §2.6.2 R2-1 / R-4.1 답습 | ✅ |
 | ADR-010 §2 답습 + §X 진입 의무 명시 (본문 변경 0건) | ✅ |
 | mvp1.md §3.3 + §3.5 + §3.6 + §4.3 + §4.4 + §4.6 + §4.7 답습 | ✅ |
 | Layer B `f40423f` Backlog #3 T3 영역 분리 명시 답습 | ✅ |

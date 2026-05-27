@@ -71,7 +71,7 @@
 | 실 production docker-compose 변경 | ❌ (PoC 격리 디렉토리 `docker/gp3-st3-poc/` 한정) |
 | 실 secret material commit | ❌ (`secrets/` dir = .gitignore + 더미 placeholder 한정) |
 | 기존 `tools/secret_scanner.py` / `tools/provider_*_scanner.py` 변경 | ❌ (답습 변경 0건 보존) |
-| Hermes upstream 변경 | ❌ (ADR-008 §2.6.2 R2-1 답습 = upstream 변경 0건) |
+| Hermes upstream 변경 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 0건) |
 | ADR 본문 자동 갱신 | ❌ (cross-reference 답습 한정) |
 
 ---
@@ -104,7 +104,7 @@
 
 | sub-step | 산출 | mvp1.md / brief 답습 | 충족 |
 |---------|------|---------------------|------|
-| 2.1 docker-compose secret block | `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` (secrets: block + file: source) + `Dockerfile` + `secrets/.gitignore` | ADR-008 §2.6.2 R2-1 답습 + Hermes upstream 변경 0건 | ✅ |
+| 2.1 docker-compose secret block | `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` (secrets: block + file: source) + `Dockerfile` + `secrets/.gitignore` | ADR-008 차단조건 #6 + 부록 B 답습 + Hermes upstream 변경 0건 | ✅ |
 | 2.2 image layer 검증 fixture | `tools/docker_secret_image_layer_check.sh` (build → docker history / docker save tar → secret material grep → 0 leak 강제) + `tests/fixtures/gp3_st3/{fail,pass}/` | mvp1.md §3.4.2 `docker_secret_isolation_check` (0건 leak 강제) 답습 | ✅ |
 | 2.3 container restart 재주입 fixture | `tools/docker_secret_restart_recovery.sh` (compose up → secret 마운트 확인 → restart → 재주입 100% 통과 강제) | mvp1.md §3.4.2 `container_restart_recovery` (100% 강제) 답습 | ✅ |
 | 2.4 CI Stage 2 entry step + Evidence | `secret-hygiene-egress-redaction.yml` Stage 2 entry step 2개 추가 + `summary.json` 필드 (`stage2_image_layer`, `stage2_restart_recovery`, `mvp1_entry_ledger_event_candidate=docker_secret_isolation_layer1_implementation`, `mvp1_entry_evidence_form`) | Stage 1 + Stage 3 CI entry step 패턴 답습 (`54a6dfa` / `c3c54ef`) | ✅ |
@@ -127,8 +127,8 @@
 
 | 답습 항목 | 본 검토 | 충족 |
 |---------|--------|------|
-| ADR-008 §2.6.2 R2-1 (file system secret isolation — docker secret) | ✅ sub-step 2.1 + 2.2 답습 (image layer 검증 = R2-1 본질) | ✅ |
-| ADR-008 §A.2 R1-2 (저장 경로 isolation) | ✅ 답습 (PoC 격리 디렉토리 `docker/gp3-st3-poc/` 분리) | ✅ |
+| ADR-008 차단조건 #6 + 부록 B (file system secret isolation — docker secret) | ✅ sub-step 2.1 + 2.2 답습 (image layer 검증 = R2-1 본질) | ✅ |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (저장 경로 isolation) | ✅ 답습 (PoC 격리 디렉토리 `docker/gp3-st3-poc/` 분리) | ✅ |
 | ADR-011 §2.1 (a)~(e) 5 조건 패턴 | ✅ (a) 수단 식별 / (b) 목적 분리 / (c) evidence 분리 / (d) rollback trigger 분리 / (e) 합의 APPROVE — 본 합의 = (e) 단계 직전 + (a)~(d) 답습 충실 | ✅ |
 | ADR-011 §2.4 T2 분류 (CI step Entry 적격성) | ✅ 본 합의 = T2 영역 (CI step entry — runtime enforcement / hook 강제 = T3 별도 영역) | ✅ |
 
@@ -144,7 +144,7 @@
 | `.importlinter` 변경 | 0건 | ✅ |
 | 기존 fixture 변경 | 0건 (Stage 2 fixture = 신규 디렉토리) | ✅ |
 | 기존 CI workflow step 변경 | 0건 (Stage 2 step = 신규 추가 한정) | ✅ |
-| Hermes upstream 모듈 변경 | 0건 (ADR-008 §2.6.2 R2-1 답습 = upstream 변경 회피) | ✅ |
+| Hermes upstream 모듈 변경 | 0건 (ADR-008 차단조건 #6 + 부록 B 답습 = upstream 변경 회피) | ✅ |
 
 → Hermes upstream 변경 0건 = **충족**.
 
@@ -165,11 +165,11 @@
 
 | 트리거 | 본 검토 | 발화 |
 |--------|--------|------|
-| 1. secret handling 방식이 기존 정책을 바꾸는 경우 | 본 합의 = ADR-008 §2.6.2 R2-1 답습 변경 0건 + Hermes upstream 변경 0건 + S-1 / provider scanner 답습 변경 0건. 기존 정책 변경 0건 | ❌ 0 |
+| 1. secret handling 방식이 기존 정책을 바꾸는 경우 | 본 합의 = ADR-008 차단조건 #6 + 부록 B 답습 변경 0건 + Hermes upstream 변경 0건 + S-1 / provider scanner 답습 변경 0건. 기존 정책 변경 0건 | ❌ 0 |
 | 2. Hermes upstream root of trust 변경하는 경우 | 본 합의 = docker secret = upstream 분리 영역 (ADR-011 §2.1 (b) 수단/목적 분리 답습). upstream 변경 0건 | ❌ 0 |
 | 3. Docker secret / local config / CI secret 경계가 불명확한 경우 | 본 합의 = ST-3 (Docker secret) + S-1 (local config + 코드 본문 secret) + G3-7 (CI secret — Stage 5 분리) 경계 명확 (§1.4 + §3 답습) | ❌ 0 |
 | 4. 자동 학습 / 자동 정책 변경 영역에 닿는 경우 | 본 합의 = T2 (CI step Entry) 한정 — 자동 학습 0건 + 자동 정책 변경 0건 | ❌ 0 |
-| 5. ADR-011 T3 영역에 닿는 경우 | 본 합의 = ST-3 (ADR-008 §2.6.2 R2-1 답습 변경 0건) + AR-1 (Stage 4 분리) + Vault HSM ST-4 (Backlog #7 분리) 모두 T2 영역. T3 영역 (AR-2 branch protection / Vault HSM ST-4 / Tier-2/3 catalog) = 별도 풀 3+1 분리 명시 | ❌ 0 |
+| 5. ADR-011 T3 영역에 닿는 경우 | 본 합의 = ST-3 (ADR-008 차단조건 #6 + 부록 B 답습 변경 0건) + AR-1 (Stage 4 분리) + Vault HSM ST-4 (Backlog #7 분리) 모두 T2 영역. T3 영역 (AR-2 branch protection / Vault HSM ST-4 / Tier-2/3 catalog) = 별도 풀 3+1 분리 명시 | ❌ 0 |
 
 **합산**: 0/5 발화 → **단축 합의 (Reviewer-only) 적격 확정**.
 
@@ -223,7 +223,7 @@ push 시점 = 사용자 명시 결정 영역 (Stage 1 + Stage 3 패턴 답습 �
 
 - ✅ Stage 2 (ST-3 docker secret) 단독 구현 진입 *적격성* 권위 권고 (sub-step 2.1 ~ 2.4)
 - ✅ 4 cycle commit chain 구조 권위 권고 (2.1 docker-compose secret block / 2.2 image layer 검증 / 2.3 restart recovery / 2.4 CI entry step + Evidence)
-- ✅ ST-3 = Hermes upstream 변경 0건 보존 (ADR-008 §2.6.2 R2-1 답습)
+- ✅ ST-3 = Hermes upstream 변경 0건 보존 (ADR-008 차단조건 #6 + 부록 B 답습)
 - ✅ Stage 1 + Stage 3 actual run PASS 선행 evidence 검증 (§1.1 답습)
 - ✅ 단축 합의 (Reviewer-only) 형태 채택 권위 (5 트리거 0/5 발화 확정)
 

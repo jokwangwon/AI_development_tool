@@ -10,7 +10,7 @@
 - Backlog #1 진입 *직전* 사전 정비 합의 = `docs/review/3plus1-consensus-2026-05-13-backlog1-gp3-1.5-deepening.md` (commit `43b898c`, APPROVE AS BRIEF — ST-2 = T2 + 단독 우선 진입 후보 권위 확정)
 - Backlog #1 brief 본문 = `docs/phase0/backlog1-gp3-1.5-deepening-brief.md` (commit `6b15070`, §2.2 + §2.4 답습)
 - MVP-1 deepening roadmap = `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3.3 (ST-1~ST-5) + §3.4.2 (저장 경로 metric) + §3.5 R-MVP1-G3-3 + §3.6.3 (합의 형태 권고)
-- ADR-008 §A.2 R1-2 (저장 경로 secret 보호) + §2.6.2 R2-1 (docker secret)
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (저장 경로 secret 보호) + §2.6.2 R2-1 (docker secret)
 - Governance preconditions = `docs/architecture/governance-preconditions.md` §5.3 (강제 메커니즘 — "inotify 런타임 감시 — Hermes runtime")
 - ADR-011 §2.4 T1/T2/T3 분류
 
@@ -75,7 +75,7 @@
 1. ST-2 (inotify sidecar) **단독** 진입 *적격성* 권위 권고 확정
 2. fail-closed 메커니즘 = **F-B 우선** 채택 권위 권고 (F-C 보조 / F-A 비채택)
 3. Multi-host parity = **미요구** 권위 권고 (이번 ST-2 단독 진입 범위 한정)
-4. inotify 감시 경로 = **`/run/secrets/*`** 권위 권고 (ADR-008 §2.6.2 R2-1 docker secret 답습)
+4. inotify 감시 경로 = **`/run/secrets/*`** 권위 권고 (ADR-008 차단조건 #6 + 부록 B docker secret 답습)
 5. secret rotation 정책 = **별도 합의 영역 분리** 권위 권고
 6. sidecar 분리 구조 + inotify 감시 대상 + mtime/perm 감지 기준 + evidence 기준 + Rollback Trigger 권위 권고
 7. 합의 형태 = **Reviewer-only 단축 합의** 적격 확정 (4 결정 충족 시)
@@ -102,7 +102,7 @@ ST-2 = sidecar container 추가 = **새 도구 등록 영역** (Hermes upstream 
 | Hermes upstream 변경 | **❌** (sidecar 분리 가능) |
 | sidecar 가능성 | **✅** |
 | 운영 부담 | 中 (sidecar process 운영) |
-| 권위 출처 | ADR-008 §A.2 R1-2 + GP-3 §5.3 답습 |
+| 권위 출처 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + GP-3 §5.3 답습 |
 
 ### 2.3 T3 영역 침범 0건 검증
 
@@ -225,7 +225,7 @@ ST-2 = sidecar container 추가 = **새 도구 등록 영역** (Hermes upstream 
 |------|------|
 | 경로 | **`/run/secrets/*`** |
 | 사유 | docker secret 표준 mount 경로 + ST-3 docker secret 흐름과 정합 + Hermes upstream 변경 없이 sidecar 에서 감시 가능 |
-| 권위 출처 | ADR-008 §2.6.2 R2-1 (docker secret) + mvp1.md §5.5.1 (ST-3 본문 채택 답습) |
+| 권위 출처 | ADR-008 차단조건 #6 + 부록 B (docker secret) + mvp1.md §5.5.1 (ST-3 본문 채택 답습) |
 
 ### 5.2 감시 *제외* 영역
 
@@ -354,7 +354,7 @@ secret rotation 정책 = 별도 합의 영역
 |---|------|--------------|
 | (a) | 동등 이상의 보안 결과 | docker secret (ST-3) + chmod 600 + **inotify 감시 (sidecar)** 동작 확인 + 통합 결과 R1-2 답습 동등 이상 + F-B status file write → Hermes unhealthy 시연 |
 | (b) | 격리 환경 PoC 실증 | docker-compose isolation + chmod 644 시뮬레이션 → sidecar 감지 → F-B status file write → Hermes healthcheck unhealthy 시연 + mtime 변경 시뮬레이션 → 동상 + `IN_MODIFY` / `IN_ATTRIB` / `IN_MOVE_SELF` / `IN_DELETE_SELF` 4 event cover |
-| (c) | ADR / SDD 권위 명시 | ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + Backlog #1 brief §2.2 + 본 brief §2~§7 답습 |
+| (c) | ADR / SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + Backlog #1 brief §2.2 + 본 brief §2~§7 답습 |
 | (d) | 자동 회귀 검증 경로 확보 | 신규 CI step (sidecar fixture 시뮬레이션) + actual run SUCCESS + nightly 권고 + `secret-hygiene-egress-redaction.yml` 확장 (또는 신규 workflow) |
 | (e) | 합의 APPROVE | 본 합의 형태 (§10 답습) — **Reviewer-only 단축 합의 적격 확정** (4 결정 충족 시) |
 
@@ -449,7 +449,7 @@ Q3. 다른 6 trigger (#1/#2/#3/#4) 발화 ?
 |------|-------|
 | (a) fail-closed = F-B 우선 채택 (F-A 비채택) | ✅ **사용자 #1 결정 답습** |
 | (b) Multi-host parity 미요구 (MVP-1 단일 host 답습) | ✅ **사용자 #2 결정 답습** |
-| (c) inotify 감시 경로 = `/run/secrets/*` (ADR-008 §2.6.2 R2-1 답습) | ✅ **사용자 #3 결정 답습** |
+| (c) inotify 감시 경로 = `/run/secrets/*` (ADR-008 차단조건 #6 + 부록 B 답습) | ✅ **사용자 #3 결정 답습** |
 | (d) secret rotation 정책 = 별도 합의 영역 분리 | ✅ **사용자 #4 결정 답습** |
 | (e) 6 trigger #1~#4 모두 0건 발화 | ✅ §10.1 답습 |
 | (f) ST-2 단독 진입 (ST-1 / PC-4 / ST-4 결합 0건) | ✅ §1.2 + §10.1 #2/#3 답습 |
@@ -488,7 +488,7 @@ Q3. 다른 6 trigger (#1/#2/#3/#4) 발화 ?
 
 ## 12. 본 brief 요약 (한 단락)
 
-본 brief 는 **ST-2 (inotify sidecar) *단독 우선* 진입 합의 *준비안* (DRAFT)** 이다. Backlog #1 진입 *직전* 사전 정비 합의 (`43b898c`) 발효 후속, 사용자 명시 4 결정 답습 *문서상 확정* — (1) fail-closed = **F-B 우선** (sidecar → status file → Hermes healthcheck unhealthy) / F-C 보조 / **F-A 비채택** (docker socket 권한 영역 회피) / (2) **Multi-host parity 미요구** (MVP-1 단일 host 한정) / (3) inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 §2.6.2 R2-1 docker secret 답습) / (4) **runtime secret 변경 = fail-closed + secret rotation 정책 = 별도 합의 영역 분리**. 본 brief 12 섹션 (합의 범위 / T2 사유 / Hermes upstream 변경 0건 검증 / sidecar 분리 구조 / inotify 감시 대상 / mtime·permission 감지 기준 + secret rotation 정책 분리 / fail-closed 동작 (F-B 우선 / F-C 보조 / F-A 비채택) / evidence 기준 (ADR-011 §2.1 (a)~(e) 5조건) / Rollback Trigger 8 후보 / 합의 형태 권고) 정비. **6 escalation trigger 6/6 0건 발화** (4 결정 답습 결과 — Hermes upstream 변경 / ST-1 결합 / ST-4 결합 / Tier-2-3 catalog / 컨테이너 정지 방식 / Operational Readiness 모두 0건). **최종 권고 = Reviewer-only 단축 합의 적격 확정**. **본 brief 는 ST-2 *실 구현* / docker-compose 변경 / CI workflow / hook / ST-1 / PC-4 / ST-4 / Multi-host parity 자동 진입 / T3 자동 진입 / MVP-1 PASS 재선언 / Operational Readiness PASS / Hermes PMO 격상 / §C-5 Satisfied 자동 갱신 / 합의 보고서 권위 / CONTEXT-INDEX-SESSION 갱신 모두 0건** (사용자 명시 답습). 다음 단계 = 합의 보고서 작성 (별도 commit) — 본 brief commit 후속.
+본 brief 는 **ST-2 (inotify sidecar) *단독 우선* 진입 합의 *준비안* (DRAFT)** 이다. Backlog #1 진입 *직전* 사전 정비 합의 (`43b898c`) 발효 후속, 사용자 명시 4 결정 답습 *문서상 확정* — (1) fail-closed = **F-B 우선** (sidecar → status file → Hermes healthcheck unhealthy) / F-C 보조 / **F-A 비채택** (docker socket 권한 영역 회피) / (2) **Multi-host parity 미요구** (MVP-1 단일 host 한정) / (3) inotify 감시 경로 = **`/run/secrets/*`** (ADR-008 차단조건 #6 + 부록 B docker secret 답습) / (4) **runtime secret 변경 = fail-closed + secret rotation 정책 = 별도 합의 영역 분리**. 본 brief 12 섹션 (합의 범위 / T2 사유 / Hermes upstream 변경 0건 검증 / sidecar 분리 구조 / inotify 감시 대상 / mtime·permission 감지 기준 + secret rotation 정책 분리 / fail-closed 동작 (F-B 우선 / F-C 보조 / F-A 비채택) / evidence 기준 (ADR-011 §2.1 (a)~(e) 5조건) / Rollback Trigger 8 후보 / 합의 형태 권고) 정비. **6 escalation trigger 6/6 0건 발화** (4 결정 답습 결과 — Hermes upstream 변경 / ST-1 결합 / ST-4 결합 / Tier-2-3 catalog / 컨테이너 정지 방식 / Operational Readiness 모두 0건). **최종 권고 = Reviewer-only 단축 합의 적격 확정**. **본 brief 는 ST-2 *실 구현* / docker-compose 변경 / CI workflow / hook / ST-1 / PC-4 / ST-4 / Multi-host parity 자동 진입 / T3 자동 진입 / MVP-1 PASS 재선언 / Operational Readiness PASS / Hermes PMO 격상 / §C-5 Satisfied 자동 갱신 / 합의 보고서 권위 / CONTEXT-INDEX-SESSION 갱신 모두 0건** (사용자 명시 답습). 다음 단계 = 합의 보고서 작성 (별도 commit) — 본 brief commit 후속.
 
 ---
 

@@ -13,7 +13,7 @@
 - Group β 합의 = `docs/review/3plus1-consensus-2026-05-20-backlog3-groupbeta-catalog-policy.md` (`aa8a29a`, 잔여 진입 단위 분리 + 풀 3+1 형식 답습)
 - Group α 합의 = `docs/review/3plus1-consensus-2026-05-14-backlog3-enforcement-defense.md` (3/3 만장일치 형식 + γ-1/γ-2 분리 표기)
 - 외부 LLM 응답 = `docs/external-review/2026-05-13-backlog3-t3-zone-review-response-gemini.md` (Q13/Q15/Q17) + `...-gpt.md` (Q13/Q15/Q17) — 양 vendor 종합 (C) PARTIAL (γ-1 = downstream 형태 진입 가능 수렴)
-- ADR-008 §A.2 R1-2 (entrypoint stat) + P3 (Credential/OAuth 파일 권한 노출, governance §104) + line 128 (`~/.hermes/auth.json`) / ADR-012 §원칙 9 + §2.8 (single-host SPOF 면책) / ADR-011 §2.1 (a)~(e) + §2.3 권위 위계 (Hermes ≠ root of trust) + §2.4 T3 영역 / governance-preconditions §1.2.7 P11 (Supply-chain Compromise)
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 (entrypoint stat) + P3 (Credential/OAuth 파일 권한 노출, governance §104) + line 128 (`~/.hermes/auth.json`) / ADR-012 §원칙 9 + §2.8 (single-host SPOF 면책) / ADR-011 §2.1 (a)~(e) + §2.3 권위 위계 (Hermes ≠ root of trust) + §2.4 T3 영역 / governance-preconditions §1.2.7 P11 (Supply-chain Compromise)
 - 5 영구 핵심 제약 (특히 #1 Hermes ≠ root of trust) + Provider Liquidity 5-way
 
 ---
@@ -116,7 +116,7 @@
 | 5 영구 핵심 제약 | **① Hermes ≠ root of trust HIGH (blocking)** — 외부 harness 가 container behavior 검증 (Hermes = 검증 *대상*) + image build↔runtime 분리 + Hermes 자기 검증 금지 / ② 수단-목적 분리 HIGH (ST-1=수단, ADR-008 P3 secret 평문 노출 차단=목적) / ④ 단일 source-of-truth MEDIUM (환경별 canonical secret source) / ③⑤ 영향 없음 |
 | 위험 9 영역 | HIGH 5 (R-γ1-1 upstream 본문 변경 root 침범 / R-γ1-2 PMO 자동 연결 / R-γ1-3 fail-closed dev 차단 / R-γ1-4 upstream PR 부담 / R-γ1-5 ST-1+ST-4 책무 중첩) — **완화 불가 HIGH = 0** (upstream 본문 직접 변경만 분리 차단) |
 | 엣지케이스 | E-γ1-1 644 위반 / **E-γ1-2 symlink 우회 (lstat vs stat 명시 — 신규 발굴)** / E-γ1-3 volume mount override / E-γ1-5 read-only fs chmod 불가 / E-γ1-7 fail-closed dev 차단 / **E-γ1-9 P11 image 변조 ↔ Hermes≠root 보존책 = 동일 외부 harness 메커니즘 (신규 발굴)** |
-| ADR 정합 | ADR-008 §A.2 R1-2 + P3 (entrypoint stat = P3 enforcement, downstream 명시 보강) / ADR-012 §원칙 9 (자동 복구 금지 → chmod 강제(b)보다 stat 검증(a) 우선) / ADR-011 §2.1 (a)~(e) 조건부 (수단 최종 결정 = downstream PoC Evidence 후) + §2.3 + §2.4 |
+| ADR 정합 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + P3 (entrypoint stat = P3 enforcement, downstream 명시 보강) / ADR-012 §원칙 9 (자동 복구 금지 → chmod 강제(b)보다 stat 검증(a) 우선) / ADR-011 §2.1 (a)~(e) 조건부 (수단 최종 결정 = downstream PoC Evidence 후) + §2.3 + §2.4 |
 | 진입 조건 | C-B-1~7 (blocking = C-B-1 downstream 형태 / C-B-2 Hermes≠root / C-B-6 PMO 자동 연결 금지) |
 
 ### 2.3 Agent C (대안 탐색가) — APPROVE WITH CONDITIONS
@@ -270,7 +270,7 @@
 
 | 영역 | 답습 |
 |------|----|
-| **ADR-008 §A.2 R1-2 + P3** (Credential/OAuth 파일 권한 노출) | ST-1 = P3 enforcement 직접 구현 후보 — entrypoint stat 가 *downstream wrapper* 인지 명시 보강 (C-Gγ1-1) |
+| **ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + P3** (Credential/OAuth 파일 권한 노출) | ST-1 = P3 enforcement 직접 구현 후보 — entrypoint stat 가 *downstream wrapper* 인지 명시 보강 (C-Gγ1-1) |
 | **ADR-012 §원칙 9 (자동 복구/revert 금지) + §2.8 (single-host SPOF 면책)** | chmod 강제(b)보다 stat 검증(a) 우선 (C-Gγ1-3) + ST-1 위협모델 한계 (C-Gγ1-11) |
 | **ADR-011 §2.1 (a)~(e)** | 정책/downstream preflight = 충족 가능 / 수단 *최종 결정* = downstream PoC Implementation Evidence (실 container 측정) 후 별도 합의 |
 | **governance-preconditions §1.2.7 P11** (Supply-chain Compromise) | image digest 고정 + 외부 harness 재검증 = Enforcement Tool Self-protection (C-Gγ1-9) |

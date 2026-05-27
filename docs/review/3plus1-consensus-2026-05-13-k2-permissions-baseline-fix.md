@@ -88,7 +88,7 @@
 | `workflow_permissions_check.py` 본문 변경 | ❌ (현 도구 그대로 답습) |
 | 다른 workflow `permissions:` 세분화 (`pull-requests: write` 등) | ❌ (별도 합의 영역) |
 | `permissions-contents-broader` 검출 규칙 변경 | ❌ (별도 합의 영역) |
-| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 §2.6.2 R2-1 답습) |
+| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습) |
 | Tier-2/3 catalog 자동 확장 | ❌ (별도 풀 3+1 의무) |
 
 ---

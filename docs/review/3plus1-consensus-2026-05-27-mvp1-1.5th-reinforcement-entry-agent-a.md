@@ -190,7 +190,7 @@ T3 영역 진입 + 풀 3+1 + 외부 LLM 1+ + 사용자 명시 = 합의 형태 �
 |------|-----|------|------|------|
 | **(a) 동등 이상 보안** | ✅ 단 plugin 명시 + baseline 금지 조건 강제 시 | ✅ ST-3 위 런타임 지속 보강 | ✅ 단 PC-3 + AR-3 결합 시 (단독 ≈ 0) | ✅ AR-1 fail-closed 위 branch protection 강제 |
 | **(b) 격리 환경 PoC** | ⏳ detect-secrets 설치 + plugin list + baseline 미사용 + fixture evidence 의무 | ⏳ `tools/docker_secret_inotify_sidecar_check.sh` 답습 + docker-compose sidecar 통합 PoC 의무 | ⏳ **재분류**: T2 opt-in PoC ≠ T3 mandatory PoC. onboarding / install enforcement / bypass detection evidence 의무 | ⏳ GitHub branch protection rule 시뮬레이션 또는 actual evidence 의무 |
-| **(c) ADR / SDD 권위** | ✅ roadmap §3.2 / §3.6.3 + Group D + ADR-011 | ✅ ADR-008 §A.2 R1-2 + roadmap §3.3 + backlog1 | ✅ roadmap §4.3 / §4.7.3 + ADR-011 §2.4 | ✅ roadmap §4.4 / §4.7.3 + backlog2 |
+| **(c) ADR / SDD 권위** | ✅ roadmap §3.2 / §3.6.3 + Group D + ADR-011 | ✅ ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + roadmap §3.3 + backlog1 | ✅ roadmap §4.3 / §4.7.3 + ADR-011 §2.4 | ✅ roadmap §4.4 / §4.7.3 + backlog2 |
 | **(d) 자동 회귀 검증 경로** | ⏳ workflow step 통합 + nightly + no-baseline assertion 의무 | ⏳ sidecar nightly run + event detection assertion 의무 | ⏳ pre-commit CI step + install enforcement audit 의무 | ⏳ required check 실 mapping evidence (workflow file ≠ check name) 의무 |
 | **(e) 합의 APPROVE** | ⏳ 본 cycle 발효 시점 | ⏳ 본 cycle 발효 시점 | ⏳ 본 cycle 발효 시점 | ⏳ 본 cycle 발효 시점 |
 

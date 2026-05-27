@@ -11,7 +11,7 @@
 - ST-2 단독 진입 적격성 brief = `docs/phase0/backlog1-st2-inotify-sidecar-brief.md` (commit `d9ae98b`, 12 섹션)
 - Backlog #6 구현 진입 brief 패턴 답습 = `docs/phase0/backlog6-implementation-step-brief.md` (commit `c50e6a0`)
 - MVP-1 deepening roadmap = `implementation-runtime-roadmap-mvp1.md` §3.3 + §3.4.2 + §3.6.1
-- ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + ADR-011 §2.1 (a)~(e) + §2.4
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + GP-3 §5.3 + ADR-011 §2.1 (a)~(e) + §2.4
 
 ---
 
@@ -417,9 +417,9 @@ Cycle 1 (디렉토리 + README) ──► Cycle 2 (fixture) ──► Cycle 3 (s
 
 | # | 조건 | ST-2 evidence |
 |---|------|--------------|
-| (a) | 동등 이상의 보안 결과 | docker secret (ST-3) + chmod 600 + inotify 감시 (sidecar) + F-B fail-closed (5초 interval) + 통합 결과 ADR-008 §A.2 R1-2 답습 동등 이상 |
+| (a) | 동등 이상의 보안 결과 | docker secret (ST-3) + chmod 600 + inotify 감시 (sidecar) + F-B fail-closed (5초 interval) + 통합 결과 ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 답습 동등 이상 |
 | (b) | 격리 환경 PoC 실증 | `docker/gp3-st2-poc/docker-compose.gp3-st2.yml` + Cycle 2 의 3 fail fixture 모두 fail-closed action 시연 + 2 pass fixture 정상 운영 시연 |
-| (c) | ADR / SDD 권위 명시 | ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `d9ae98b` + 본 brief 답습 |
+| (c) | ADR / SDD 권위 명시 | ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + GP-3 §5.3 + mvp1.md §3.3 + `0e99a56` + `d9ae98b` + 본 brief 답습 |
 | (d) | 자동 회귀 검증 경로 확보 | `secret-hygiene-egress-redaction.yml` 확장 + actual run SUCCESS + nightly 권고 + paths trigger 확장 |
 | (e) | 합의 APPROVE | `0e99a56` (진입 적격성) + Cycle 6 후속 §C-5a 갱신 합의 (별도 단계) |
 

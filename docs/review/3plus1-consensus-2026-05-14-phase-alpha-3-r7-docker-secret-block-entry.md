@@ -17,7 +17,7 @@
 - `docs/review/3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` (GP-3 MVP-1 진입 합의 — ST-3 단독 채택 권위 권고, commit `6dc5bdc`)
 - `docs/review/3plus1-consensus-2026-05-12-gp3-stage2-implementation-entry.md` (**GP-3 Stage 2 (ST-3 docker secret) 단독 구현 진입 합의 APPROVE — sub-step 2.1 ~ 2.4 4 cycle**)
 - `docs/architecture/implementation-runtime-roadmap-mvp1.md` §3.4.2 + §5.3 + §5.5.1 ST-3 본문 채택 (commit `55c5b4b`)
-- ADR-008 §2.6.2 R2-1 + §A.2 R1-2 (file system secret isolation — docker secret 답습)
+- ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 (file system secret isolation — docker secret 답습)
 - ADR-011 §2.1 (a)~(e) 5조건 패턴 + §2.4 T2 영역 (CI step Entry)
 
 ---
@@ -58,7 +58,7 @@
 - ❌ R-7 영역 9 artifacts × 328줄 어느 줄도 변경 0건 (`docker/gp3-st3-poc/docker-compose.gp3-st3.yml` / `Dockerfile` / `app.py` / `secrets/api_key.placeholder` / `tools/docker_secret_image_layer_check.sh` / `tools/docker_secret_restart_recovery.sh` / `tests/fixtures/gp3_st3/{pass,fail}/`)
 - ❌ `secret-hygiene-egress-redaction.yml` Stage 2 entry step 본문 변경 0건 (R-1 영역 = Phase α-4)
 - ❌ Production `docker-compose.yml` 신설 / 변경 0건 (PoC 격리 디렉토리 한정 답습)
-- ❌ Hermes upstream Dockerfile 변경 0건 (ADR-008 §2.6.2 R2-1 답습 보존)
+- ❌ Hermes upstream Dockerfile 변경 0건 (ADR-008 차단조건 #6 + 부록 B 답습 보존)
 - ❌ R-4 도구 (`secret_scanner.py` / `provider_import_scanner.py` / `provider_url_scanner.py`) 변경 0건
 - ❌ R-5 `.importlinter` 본문 변경 0건
 - ❌ R-1 CI workflow 신설 / 본문 변경 0건
@@ -122,7 +122,7 @@
 |------|---------|----------------------|----------|
 | 책무 (ST-3 영역) | GP-3 저장 경로 secret 검출 (G3-1) — file system secret isolation | Layer B §5.5.1 ST-3 본문 채택 답습 | ✅ 답습 채택 |
 | 도구 | docker-compose secret block + image layer 검증 + container restart recovery | GP-3 Stage 2 합의 4 sub-step 답습 | ✅ 답습 채택 |
-| 권위 | ADR-008 §2.6.2 R2-1 + §A.2 R1-2 | upstream 변경 회피 답습 | ✅ 답습 채택 |
+| 권위 | ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 | upstream 변경 회피 답습 | ✅ 답습 채택 |
 | 책무 분리 (ST-3 단독) | Vault HSM ST-4 미진입 (Backlog #7) / entrypoint stat ST-1 / inotify sidecar ST-2 미진입 (Backlog #1 1.5차 보강) / ST-5 Defense in depth (MVP-2 이후) | GP-3 진입 합의 답습 | ✅ 답습 채택 |
 
 ### 1.2 R-7 본문 9 artifacts 답습 채택 (실 본문 변경 0건 — enumerate 한정)
@@ -146,7 +146,7 @@
 | sub-수단 ID | 영역 | 본문 채택 권위 (답습 한정) | R-7 관계 | 본 합의 채택 |
 |----------|------|----------------------|----------|----------|
 | S-1 | 코드 본문 secret 검출 (R-4.1 Tier-1 45 patterns) | Group D PoC 답습 | R-4 영역 (Phase α-1) — Stage 1 | ✅ 영역 분리 답습 |
-| **ST-3** | **docker secret (저장 경로 isolation)** | **ADR-008 §2.6.2 R2-1 답습 + Layer A §1.2 + Layer B §1.1 답습** | **R-7 본문 = ST-3 본문 (Stage 2)** | ✅ **답습 채택** |
+| **ST-3** | **docker secret (저장 경로 isolation)** | **ADR-008 차단조건 #6 + 부록 B 답습 + Layer A §1.2 + Layer B §1.1 답습** | **R-7 본문 = ST-3 본문 (Stage 2)** | ✅ **답습 채택** |
 | PC-3 | CI-only enforcement (pre-commit) | T2 영역 답습 | Stage 4 영역 (양 GP 공유) | ✅ 영역 분리 답습 |
 | AR-1 | CI step fail-closed (PR auto-reject) | T2 영역 답습 | Stage 4 영역 (양 GP 공유) | ✅ 영역 분리 답습 |
 
@@ -172,7 +172,7 @@
 
 | 영역 | PoC 답습 | 현 상태 | 본 합의 변경 |
 |------|--------|----------|---------|
-| `docker/gp3-st3-poc/` (93줄, 4 파일) | ADR-008 §2.6.2 R2-1 + mvp1.md §3.4.2 + §5.3 답습 | 4 파일 답습 (compose + Dockerfile + app + placeholder) | 0건 |
+| `docker/gp3-st3-poc/` (93줄, 4 파일) | ADR-008 차단조건 #6 + 부록 B + mvp1.md §3.4.2 + §5.3 답습 | 4 파일 답습 (compose + Dockerfile + app + placeholder) | 0건 |
 | `tools/docker_secret_image_layer_check.sh` (99줄) | mvp1.md §3.4.2 `docker_secret_isolation_check` 답습 | 99줄 답습 | 0건 |
 | `tools/docker_secret_restart_recovery.sh` (118줄) | mvp1.md §3.4.2 `container_restart_recovery` 답습 | 118줄 답습 | 0건 |
 | `tests/fixtures/gp3_st3/{pass,fail}/` (18줄, 3 파일) | Stage 2 합의 §1.3 답습 | 3 파일 답습 (PASS + FAIL Dockerfile + baked_secret.txt) | 0건 |
@@ -187,7 +187,7 @@
 | GP-3 MVP-1 진입 합의 (`6dc5bdc`) — ST-3 단독 채택 권위 권고 | ✅ 답습 변경 0건 | ✅ |
 | GP-3 Stage 2 합의 (Reviewer-only APPROVE) — sub-step 2.1 ~ 2.4 4 cycle 발효 | ✅ 답습 변경 0건 | ✅ |
 | Stage 2 actual run PASS (run_id `25728590939` 후속) | ✅ 선행 evidence 답습 | ✅ |
-| ADR-008 §2.6.2 R2-1 + §A.2 R1-2 답습 | ✅ 답습 변경 0건 (Hermes upstream 변경 회피 보존) | ✅ |
+| ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 답습 | ✅ 답습 변경 0건 (Hermes upstream 변경 회피 보존) | ✅ |
 
 **합산**: 5/5 답습 검증 *확정 채택*.
 
@@ -195,7 +195,7 @@
 
 | sub-step | 영역 | 답습 출처 | 본 합의 채택 |
 |---------|------|---------|----------|
-| 2.1 | docker-compose secret block 본문 답습 검증 (34줄) | ADR-008 §2.6.2 R2-1 + mvp1.md §3.4.2 답습 | ✅ 답습 enumerate 한정 |
+| 2.1 | docker-compose secret block 본문 답습 검증 (34줄) | ADR-008 차단조건 #6 + 부록 B + mvp1.md §3.4.2 답습 | ✅ 답습 enumerate 한정 |
 | 2.1.a | Dockerfile + app.py + placeholder 답습 검증 (59줄) | PoC 격리 영역 답습 | ✅ 답습 enumerate 한정 |
 | 2.1.b | `secrets/.gitignore` + placeholder 답습 검증 | F-금지 #1 marker 답습 | ✅ 답습 enumerate 한정 |
 | 2.2 | image layer 검증 도구 답습 (99줄) | mvp1.md §3.4.2 `docker_secret_isolation_check` 답습 | ✅ 답습 enumerate 한정 |
@@ -228,7 +228,7 @@
 1. **MVP-1 1차 답습** — mvp1.md §5.3 (ST-3 = MVP-1 1차 docker secret 단독, Hermes upstream 변경 회피)
 2. **GP-3 진입 합의 답습** — ST-3 단독 채택 권위 권고 (`6dc5bdc`)
 3. **GP-3 Stage 2 합의 답습** — Stage 2 (ST-3) 단독 구현 진입 APPROVE
-4. **Hermes upstream 변경 회피 보존** — ADR-008 §2.6.2 R2-1 답습
+4. **Hermes upstream 변경 회피 보존** — ADR-008 차단조건 #6 + 부록 B 답습
 
 ---
 
@@ -239,7 +239,7 @@
 | 조건 # | 조건 | 본 합의 검증 결과 | 판정 |
 |------|------|--------------|----|
 | **C-α3-1** | **사용자 명시 7 금지 영역 충돌 0** | R-7 docker secret block = file-system 격리 영역 — 7 금지 영역 모두 직교 또는 영역 분리 (충돌 0). 금지 #1 (실 R-7 수정) / #2 (CI workflow 변경) = Phase α-3 *실 진입* 시점 적용 — 본 합의 = 검토 한정 (충돌 0). | ✅ **0/7 충돌** |
-| **C-α3-2** | **PoC 답습 변경 0** | R-7 영역 9 artifacts × 328줄 답습 + GP-3 Stage 2 합의 §1.3 4 sub-step 답습 + ADR-008 §2.6.2 R2-1 답습 + ST-3 단독 채택 답습 + Layer B §5.5.1 ST-3 본문 채택 답습 모두 변경 0건 | ✅ **답습 100% 보존** |
+| **C-α3-2** | **PoC 답습 변경 0** | R-7 영역 9 artifacts × 328줄 답습 + GP-3 Stage 2 합의 §1.3 4 sub-step 답습 + ADR-008 차단조건 #6 + 부록 B 답습 + ST-3 단독 채택 답습 + Layer B §5.5.1 ST-3 본문 채택 답습 모두 변경 0건 | ✅ **답습 100% 보존** |
 | **C-α3-3** | **의존성 0 (Phase α-1 / α-2 / α-3 병렬 진입 적격)** | R-7 ↔ R-4 = 영역 분리 (S-1 코드 본문 vs ST-3 저장 경로 — 의존 0) + R-7 ↔ R-5 = 영역 분리 (provider import vs file-system isolation — 의존 0) + R-7 ↔ R-1 = Phase α-4 영역 + Stage 2 actual run PASS 검증 답습 (run_id `25728590939` 후속) — 의존성 해소됨 | ✅ **의존성 0 (병렬 진입 적격)** |
 | **C-α3-4** | **Provider Liquidity 5-way 100% 보존** | R-7 = file-system secret isolation Layer (R2-1) — catalog / provider 영역과 직교 + docker secret = vendor-agnostic 표준 (Docker BuildKit / Docker Compose) + secret material = placeholder 답습 | ✅ **5/5 100% 보존** |
 | **C-α3-5** | **5 영구 핵심 제약 보존** | Hermes ≠ root of trust 보존 (R-7 = file-system isolation, Hermes upstream 변경 0건) / 단일 source-of-truth 보존 (PoC 답습 변경 0건) / 수단/목적 분리 보존 (R-7 = 수단, 목적 = 저장 경로 secret isolation) / T1/T2/T3 분리 보존 (R-7 = T2 영역, ST-4 Vault HSM = T3 영역 분리) / SPOF 의도적 수용 보존 | ✅ **5/5 보존** |
@@ -259,7 +259,7 @@
 | 5 | 5 영구 핵심 제약 中 1+ 약화 | ❌ 0건 — 5/5 보존 답습 |
 | 6 | T3 영역 진입 권고 | ❌ 0건 — R-7 = T2 영역 (ST-4 Vault HSM = T3 영역 분리) |
 | 7 | ADR-008 부록 C Hermes PMO Activation 12 조건 中 1+ 충족 발생 | ❌ 0건 — Hermes PMO 격상 분리 명시 한정 |
-| 8 | secret handling 방식이 기존 정책 변경 권고 (GP-3 Stage 2 §1.8 #1 답습) | ❌ 0건 — ADR-008 §2.6.2 R2-1 답습 변경 0건 + Hermes upstream 변경 0건 |
+| 8 | secret handling 방식이 기존 정책 변경 권고 (GP-3 Stage 2 §1.8 #1 답습) | ❌ 0건 — ADR-008 차단조건 #6 + 부록 B 답습 변경 0건 + Hermes upstream 변경 0건 |
 | 9 | Hermes upstream root of trust 변경 권고 (GP-3 Stage 2 §1.8 #2 답습) | ❌ 0건 — docker secret = upstream 분리 영역 (ADR-011 §2.1 (b) 수단/목적 분리 답습) |
 | 10 | Docker secret / local config / CI secret 경계 불명확 (GP-3 Stage 2 §1.8 #3 답습) | ❌ 0건 — ST-3 + S-1 + G3-7 경계 명확 |
 | 11 | ST-3 = ST-1/2/4/5 흡수 시도 권고 | ❌ 0건 — ST-3 단독 답습 한정 (mvp1.md §5.3 답습) |
@@ -395,7 +395,7 @@
 | C-δ-8 | Phase α-3 실 진입 = **Backlog #6 + 사용자 명시 결정 영역** (자동 진입 0건) | 본 합의 §7.1 답습 |
 | C-δ-9 | R-7 영역 9 artifacts × 328줄 본문 어느 줄도 *변경 0건* | 본 합의 §2.1 답습 |
 | C-δ-10 | ST-3 단독 답습 *변경 0건* — ST-1 / ST-2 / ST-4 / ST-5 흡수 0건 | 본 합의 §3 답습 |
-| C-δ-11 | ADR-008 §2.6.2 R2-1 + §A.2 R1-2 답습 — Hermes upstream Dockerfile 변경 *0건* | 본 합의 §1.1 답습 |
+| C-δ-11 | ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 답습 — Hermes upstream Dockerfile 변경 *0건* | 본 합의 §1.1 답습 |
 | C-δ-12 | Production `docker-compose.yml` 신설 / 변경 *0건* (PoC 격리 디렉토리 한정 답습) | 본 합의 §0.3 답습 |
 | C-δ-13 | `secret-hygiene-egress-redaction.yml` Stage 2 entry step 본문 *변경 0건* (R-1 영역 = Phase α-4) | 본 합의 §0.3 답습 |
 | C-δ-14 | 실 secret material commit *0건* + `secrets/.gitignore` *변경 0건* + secret marker 위반 *0건* (FAKE_TEST_SECRET marker 답습) | 본 합의 §0.3 답습 |
@@ -436,7 +436,7 @@
 | `tests/fixtures/gp3_st3/fail/baked_secret.txt` (1줄) | 0건 |
 | `secret-hygiene-egress-redaction.yml` Stage 2 entry step | 0건 |
 | Production `docker-compose.yml` | 0건 (PoC 격리 디렉토리 한정 답습) |
-| Hermes upstream Dockerfile | 0건 (ADR-008 §2.6.2 R2-1 답습) |
+| Hermes upstream Dockerfile | 0건 (ADR-008 차단조건 #6 + 부록 B 답습) |
 | `secrets/.gitignore` (placeholder 한정) | 0건 |
 | R-4 도구 (`secret_scanner.py` 368 / `provider_import_scanner.py` 178 / `provider_url_scanner.py` 283) | 0건 |
 | `/.importlinter` 본문 (35줄) | 0건 |
@@ -500,7 +500,7 @@
 
 ## 10. 본 합의 요약 (한 단락)
 
-본 합의는 **`docs/phase0/phase-alpha-3-r7-docker-secret-block-entry-brief.md` (DRAFT, commit `8da3273`, 748줄) 의 Reviewer-only 단축 합의 보고서** 다. 사용자 명시 진입 명령 ("옵션 A로 진행해주세요") + Phase α-1 / α-2 패턴 답습 (brief commit → Reviewer-only 단축 합의 보고서 작성 → 메타 갱신 → push. 실 R-7 docker secret block 수정은 아직 하지 않음). **판정 = APPROVE AS BRIEF** (Reviewer-only 단축 합의 적격 — **12/12 풀 3+1 트리거 0건 발화** 확인). 본 합의 = **Backlog #6 우선 진입 합의 §6.1 1순위 (Phase α-1 + α-2 + α-3 병렬) 中 Phase α-3 답습** + **R-7 = docker secret block 본문 정의 채택 권고** (9 artifacts × 328줄 답습 — `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` 34줄 + `Dockerfile` 12줄 + `app.py` 46줄 + `secrets/api_key.placeholder` 1줄 = sub-step 2.1 / `tools/docker_secret_image_layer_check.sh` 99줄 = sub-step 2.2 / `tools/docker_secret_restart_recovery.sh` 118줄 = sub-step 2.3 / `tests/fixtures/gp3_st3/pass/Dockerfile` 9줄 + `fail/Dockerfile` 8줄 + `fail/baked_secret.txt` 1줄 = sub-step 2.2 — 본문 변경 0건) + **ST-3 단독 답습 채택** (ST-1 entrypoint stat / ST-2 inotify sidecar 258줄 = Backlog #1 분리 / ST-4 Vault HSM = Backlog #7 + MVP-6 이후 분리 / ST-5 Defense in depth = MVP-2 이후 분리) + **Layer B §5.5.1 GP-3 4 sub-수단 中 ST-3 답습** (S-1 = R-4 영역 / PC-3 + AR-1 = Stage 4 영역 분리) + **9 sub-step 분할 매트릭스 채택 권고** + **5/5 진입 적격성 5 조건 (C-α3-1 ~ C-α3-5) 충족 검증** + **12/12 풀 3+1 트리거 0건 발화 검증** + **18 + 4 Rollback Trigger 분류 채택** (R-7 직접 영향 2 + 간접 영향 1 + 영향 0 15 + ST-1/2/4/5 별도 backlog 4 trigger 분리) + **28 합의 조건 (C-δ-1 ~ C-δ-28)** 답습. **사용자 명시 7 금지 7/7 답습** (실 R-7 docker secret block 수정 0건 / CI workflow 변경 0건 / branch protection 변경 0건 / dev 환경 강제 0건 / `pre-commit install` 의무화 0건 / Operational Readiness PASS 0건 / Hermes PMO 격상 0건) + **5 영구 핵심 제약 5/5 보존** + **Provider Liquidity 5-way 100% 보존** (R-7 = file-system secret isolation Layer = catalog / provider 영역과 직교, docker secret = vendor-agnostic 표준) + **ADR-008 §2.6.2 R2-1 + §A.2 R1-2 답습 — Hermes upstream Dockerfile 변경 0건** + **Group α 합의 본문 변경 0건** + **Backlog #6 우선 진입 합의 본문 변경 0건** + **Phase α-1 합의 본문 변경 0건** + **Phase α-2 합의 본문 변경 0건** + **GP-3 Stage 2 합의 본문 변경 0건** + **GP-3 MVP-1 진입 합의 본문 변경 0건** + **Layer A / Layer B / §5.5.1 ST-3 본문 채택 변경 0건** + **R-7 영역 9 artifacts × 328줄 어느 줄도 변경 0건** (PoC 답습 100% 보존) + **Production `docker-compose.yml` / `secrets/.gitignore` / R-4 도구 / R-5 `.importlinter` / R-1 CI workflow / `.pre-commit-config.yaml` 변경 0건** + **ST-3 = ST-1 / ST-2 / ST-4 / ST-5 흡수 0건** + **inotify sidecar (258줄) 본 영역 흡수 0건** + **실 secret material commit 0건** + **R-MVP1-G3-3 자동 발화 0건** + **G3-7 자동 흡수 0건** + **외부 LLM 자동 호출 0건** + **외부 LLM 응답 결론 강제 채택 0건** + **Phase α-3 실 진입 0건** + **Phase α-1 / α-2 / α-4 / β / γ 자동 진입 0건** + **7 금지 영역 *해소* 0건** + **Layer C / D / E / F 발효 0건** + **Group I / β / γ-1 / γ-2 자동 진입 0건** + **자동 진입 모두 0건**. 다음 단계 = **사용자 결정 영역** (자동 진입 0건): (1) Phase α-4 R-1 CI workflow 통합 brief / (2) Phase α 4 단계 통합 진입 brief / (3) Phase α-3 실 R-7 운영 단계 분할 brief / (4) Phase α-1 ~ α-3 병렬 실제 구현 계획 brief / (5) Phase α-1 R-4 / Phase α-2 R-5 실 진입 step 분할 brief / (6) Group α 조건 재평가 / (7) Group I 별도 합의 / (8) token rotation 정책 별도 합의 / (9) GitHub plan 가용성 확인 / (10) 세션 종료.
+본 합의는 **`docs/phase0/phase-alpha-3-r7-docker-secret-block-entry-brief.md` (DRAFT, commit `8da3273`, 748줄) 의 Reviewer-only 단축 합의 보고서** 다. 사용자 명시 진입 명령 ("옵션 A로 진행해주세요") + Phase α-1 / α-2 패턴 답습 (brief commit → Reviewer-only 단축 합의 보고서 작성 → 메타 갱신 → push. 실 R-7 docker secret block 수정은 아직 하지 않음). **판정 = APPROVE AS BRIEF** (Reviewer-only 단축 합의 적격 — **12/12 풀 3+1 트리거 0건 발화** 확인). 본 합의 = **Backlog #6 우선 진입 합의 §6.1 1순위 (Phase α-1 + α-2 + α-3 병렬) 中 Phase α-3 답습** + **R-7 = docker secret block 본문 정의 채택 권고** (9 artifacts × 328줄 답습 — `docker/gp3-st3-poc/docker-compose.gp3-st3.yml` 34줄 + `Dockerfile` 12줄 + `app.py` 46줄 + `secrets/api_key.placeholder` 1줄 = sub-step 2.1 / `tools/docker_secret_image_layer_check.sh` 99줄 = sub-step 2.2 / `tools/docker_secret_restart_recovery.sh` 118줄 = sub-step 2.3 / `tests/fixtures/gp3_st3/pass/Dockerfile` 9줄 + `fail/Dockerfile` 8줄 + `fail/baked_secret.txt` 1줄 = sub-step 2.2 — 본문 변경 0건) + **ST-3 단독 답습 채택** (ST-1 entrypoint stat / ST-2 inotify sidecar 258줄 = Backlog #1 분리 / ST-4 Vault HSM = Backlog #7 + MVP-6 이후 분리 / ST-5 Defense in depth = MVP-2 이후 분리) + **Layer B §5.5.1 GP-3 4 sub-수단 中 ST-3 답습** (S-1 = R-4 영역 / PC-3 + AR-1 = Stage 4 영역 분리) + **9 sub-step 분할 매트릭스 채택 권고** + **5/5 진입 적격성 5 조건 (C-α3-1 ~ C-α3-5) 충족 검증** + **12/12 풀 3+1 트리거 0건 발화 검증** + **18 + 4 Rollback Trigger 분류 채택** (R-7 직접 영향 2 + 간접 영향 1 + 영향 0 15 + ST-1/2/4/5 별도 backlog 4 trigger 분리) + **28 합의 조건 (C-δ-1 ~ C-δ-28)** 답습. **사용자 명시 7 금지 7/7 답습** (실 R-7 docker secret block 수정 0건 / CI workflow 변경 0건 / branch protection 변경 0건 / dev 환경 강제 0건 / `pre-commit install` 의무화 0건 / Operational Readiness PASS 0건 / Hermes PMO 격상 0건) + **5 영구 핵심 제약 5/5 보존** + **Provider Liquidity 5-way 100% 보존** (R-7 = file-system secret isolation Layer = catalog / provider 영역과 직교, docker secret = vendor-agnostic 표준) + **ADR-008 차단조건 #6 + 부록 B + §A.2 R1-2 답습 — Hermes upstream Dockerfile 변경 0건** + **Group α 합의 본문 변경 0건** + **Backlog #6 우선 진입 합의 본문 변경 0건** + **Phase α-1 합의 본문 변경 0건** + **Phase α-2 합의 본문 변경 0건** + **GP-3 Stage 2 합의 본문 변경 0건** + **GP-3 MVP-1 진입 합의 본문 변경 0건** + **Layer A / Layer B / §5.5.1 ST-3 본문 채택 변경 0건** + **R-7 영역 9 artifacts × 328줄 어느 줄도 변경 0건** (PoC 답습 100% 보존) + **Production `docker-compose.yml` / `secrets/.gitignore` / R-4 도구 / R-5 `.importlinter` / R-1 CI workflow / `.pre-commit-config.yaml` 변경 0건** + **ST-3 = ST-1 / ST-2 / ST-4 / ST-5 흡수 0건** + **inotify sidecar (258줄) 본 영역 흡수 0건** + **실 secret material commit 0건** + **R-MVP1-G3-3 자동 발화 0건** + **G3-7 자동 흡수 0건** + **외부 LLM 자동 호출 0건** + **외부 LLM 응답 결론 강제 채택 0건** + **Phase α-3 실 진입 0건** + **Phase α-1 / α-2 / α-4 / β / γ 자동 진입 0건** + **7 금지 영역 *해소* 0건** + **Layer C / D / E / F 발효 0건** + **Group I / β / γ-1 / γ-2 자동 진입 0건** + **자동 진입 모두 0건**. 다음 단계 = **사용자 결정 영역** (자동 진입 0건): (1) Phase α-4 R-1 CI workflow 통합 brief / (2) Phase α 4 단계 통합 진입 brief / (3) Phase α-3 실 R-7 운영 단계 분할 brief / (4) Phase α-1 ~ α-3 병렬 실제 구현 계획 brief / (5) Phase α-1 R-4 / Phase α-2 R-5 실 진입 step 분할 brief / (6) Group α 조건 재평가 / (7) Group I 별도 합의 / (8) token rotation 정책 별도 합의 / (9) GitHub plan 가용성 확인 / (10) 세션 종료.
 
 ---
 
@@ -517,7 +517,7 @@
 - ❌ **Hermes PMO 격상 (Layer F)** (사용자 명시 7 금지 #7)
 - ❌ R-7 영역 9 artifacts × 328줄 어느 줄도 변경
 - ❌ Production `docker-compose.yml` 신설 / 변경 (PoC 격리 디렉토리 한정 답습)
-- ❌ Hermes upstream Dockerfile 변경 (ADR-008 §2.6.2 R2-1 답습)
+- ❌ Hermes upstream Dockerfile 변경 (ADR-008 차단조건 #6 + 부록 B 답습)
 - ❌ 실 secret material commit (FAKE_TEST_SECRET marker 답습)
 - ❌ `secrets/.gitignore` 변경 (placeholder 한정 영구 답습)
 - ❌ secret material marker 위반 (실 vendor prefix 사용 금지)

@@ -122,7 +122,7 @@
 |---|------|------------------------------|------|
 | P1 | DB INSERT 평문 secret | 8조 #1 #2 | ✅ R-1 FAIL evidence 직접 대응 |
 | P2 | 로그/송신 평문 노출 | 8조 #2 | ✅ Hermes redaction docstring "for logs and tool output" 직접 대응 |
-| P3 | Credential 파일 권한 노출 | 8조 #2 | ✅ ADR-008 §2.6.4 R1-2 직접 대응 |
+| P3 | Credential 파일 권한 노출 | 8조 #2 | ✅ ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 직접 대응 |
 | P4 | 비밀값 하드코딩 | 8조 #1 (직접) | ✅ 헌법 8조 #1 직접 대응 |
 | P5 | 외부 입력 미검증 | 8조 #3 (직접) | ✅ 헌법 8조 #3 직접 대응 |
 | P6 | Hermes SDK 직접 import | Provider Liquidity | ✅ ADR-008 차단조건 #4 직접 대응 |

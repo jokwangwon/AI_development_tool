@@ -104,7 +104,7 @@
 - ❌ **신규 workflow 신설 (0건)** + **`pull_request_target` 도입 (0건)** — T2/T3 별도 합의 영역
 - ❌ **3 MVP-1 workflow 외 G2/G3/G4 PoC 8 workflow 흡수 (0건)**
 - ❌ **GitHub Actions secrets 사용 도입 (0건)** — F-금지 #1 영구 답습 (G3-7 (i))
-- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 §2.6.2 R2-1 영구 답습
+- ❌ **Hermes upstream Dockerfile 변경 (0건)** — ADR-008 차단조건 #6 + 부록 B 영구 답습
 - ❌ **Production `docker-compose.yml` 신설 / 변경 (0건)** — PoC 격리 디렉토리 한정 답습
 - ❌ **실 secret material commit (0건)** — FAKE_TEST_SECRET marker 답습
 - ❌ **Layer A / Layer B / Layer C (`eb01bc4`) / Layer D (`951a5b1`) / Group α (`4880e88`) / Backlog #6 (`c7ddfdd`) / Phase α-1 ~ α-3 / Phase α-4 직전 / α-1+2+3 evidence (`7b3d40a`) / α-4 진입 조건 점검 (`1c365e7`) / Step Division (`52a05cb`) / LVE (`b264580`) / Stage 3 실 진입 여부 (`d3f6d59`) 본문 변경 (0건)**
@@ -321,7 +321,7 @@
 | R-7 = `docker/gp3-st3-poc/docker-compose.yml` 등 (Phase α-3 영역) | docker block 답습 | **0건** | **0건 영구 답습** (Phase α-3 영역 분리) |
 | `src/` runtime code | 답습 | **0건** | **0건 영구 답습** (영구 5 금지 #2 영구 답습) |
 | `src/adapters/llm/facade.py` placeholder | 41줄 | **0건** | **0건 영구 답습** (Backlog #4 분리) |
-| Hermes upstream Dockerfile | 답습 | **0건** | **0건 영구 답습** (ADR-008 §2.6.2 R2-1 영구 답습) |
+| Hermes upstream Dockerfile | 답습 | **0건** | **0건 영구 답습** (ADR-008 차단조건 #6 + 부록 B 영구 답습) |
 | Production `docker-compose.yml` | 신설 0건 | **0건** | **0건 영구 답습** (PoC 격리 디렉토리 한정) |
 
 ### 3.6 수정 파일 영역 ↔ 사용자 명시 3 금지 분리 매트릭스

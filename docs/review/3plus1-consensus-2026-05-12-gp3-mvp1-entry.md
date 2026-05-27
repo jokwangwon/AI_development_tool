@@ -86,7 +86,7 @@
 
 | 평가 항목 | 본 검토 | 충족 |
 |----------|--------|------|
-| ADR 권위 답습 | ADR-008 §2.6.2 R2-1 직접 답습 (docker secret 정의) + GP-3 §5.3 답습 | ✅ |
+| ADR 권위 답습 | ADR-008 차단조건 #6 + 부록 B 직접 답습 (docker secret 정의) + GP-3 §5.3 답습 | ✅ |
 | Hermes upstream 변경 | 0건 (ST-1 chmod 600 entrypoint stat / ST-5 통합은 Hermes upstream 변경 필요, 본 검토 회피) | ✅ |
 | 운영 부담 | 低 (`docker-compose.yml` 갱신만, sidecar process 0건) | ✅ |
 | Defense in depth | ⚠️ 부분 (ST-1 / ST-2 inotify / ST-4 Vault HSM 미진입) — 본 영역 = 1.5차 보강 (ST-2 sidecar) + Operational Readiness PASS (ST-4 Vault HSM, ADR-010 답습) 분리 영역 |
@@ -203,11 +203,11 @@
 
 | # | 트리거 | 본 검토 | 발화 |
 |---|----|----|----|
-| 1 | **secret handling 방식이 기존 정책을 바꾸는 경우** | 본 합의 = S-1 (R-4.1 Tier-1 catalog 답습 변경 0건) + ST-3 (ADR-008 §2.6.2 R2-1 답습 변경 0건) + PC-3 / AR-1 (Group D PoC 답습 변경 0건). 기존 정책 변경 0건 | ❌ 0 |
+| 1 | **secret handling 방식이 기존 정책을 바꾸는 경우** | 본 합의 = S-1 (R-4.1 Tier-1 catalog 답습 변경 0건) + ST-3 (ADR-008 차단조건 #6 + 부록 B 답습 변경 0건) + PC-3 / AR-1 (Group D PoC 답습 변경 0건). 기존 정책 변경 0건 | ❌ 0 |
 | 2 | **GitHub Actions secret 사용 정책 변경이 필요한 경우** | 본 합의 = G3-7 (i)(iv) 답습 (현 시점 사용 0건 + fork PR default 정책 보존). 정책 변경 0건. 신규 `pull_request_target` workflow 도입 시 = 별도 합의 영역 분리 (§2.4 답습) | ❌ 0 |
 | 3 | **Docker secret / local config / CI secret 경계가 불명확한 경우** | 본 합의 = ST-3 (Docker secret) + S-1 (local config + 코드 본문 secret 검출) + G3-7 (CI secret 관리) 영역 분리 명시 — §1 + §2 + §6.3 답습. 경계 명확 | ❌ 0 |
 | 4 | **false positive / false negative risk 가 큰 경우** | S-1 = Group D PoC FP 0건 (D-1 PASS rc=0 violations=0) + FN 1건 (base64 evasion known limitation 분리 영역 명시). risk 측정 결과 = 본 PoC threshold 답습 (정량 측정 baseline = `secret_scanner --list-patterns` count=45). 신규 risk 0건 | ❌ 0 |
-| 5 | **ADR-011 T3 영역에 닿는 경우** | 본 합의 = AR-1 (T2 CI step) + PC-3 (T2 CI step) + ST-3 (ADR-008 §2.6.2 R2-1 답습 변경 0건) 모두 T2 영역. T3 영역 (AR-2 branch protection / Vault HSM ST-4 / Tier-2/3 catalog 확장) = 별도 풀 3+1 영역 분리 명시 (§0.4 + §6.3 = Condition C-3) | ❌ 0 |
+| 5 | **ADR-011 T3 영역에 닿는 경우** | 본 합의 = AR-1 (T2 CI step) + PC-3 (T2 CI step) + ST-3 (ADR-008 차단조건 #6 + 부록 B 답습 변경 0건) 모두 T2 영역. T3 영역 (AR-2 branch protection / Vault HSM ST-4 / Tier-2/3 catalog 확장) = 별도 풀 3+1 영역 분리 명시 (§0.4 + §6.3 = Condition C-3) | ❌ 0 |
 
 → **5/5 트리거 0건 발화** → **단축 합의 (Reviewer-only) 적격** 확정.
 
@@ -275,7 +275,7 @@
 
 - ✅ GP-3 MVP-1 진입 *적격성* 권위 권고 발행 (4 수단 조합 = S-1 + ST-3 + PC-3 + AR-1)
 - ✅ S-1 (Group D custom scanner R-4.1 Tier-1 45 patterns 답습) MVP-1 1차 영역 적격 권위 권고
-- ✅ ST-3 (docker secret 단독, ADR-008 §2.6.2 R2-1 답습) MVP-1 1차 영역 적격 권위 권고
+- ✅ ST-3 (docker secret 단독, ADR-008 차단조건 #6 + 부록 B 답습) MVP-1 1차 영역 적격 권위 권고
 - ✅ PC-3 (CI-only enforcement, T2 영역) MVP-1 1차 영역 적격 권위 권고
 - ✅ AR-1 (CI step fail-closed, T3 미진입) MVP-1 1차 영역 적격 권위 권고
 - ✅ **Observation O-1 흡수** = G3-7 CI secret management 신설 권위 권고 (6 항목 中 4 MVP-1 영역 + 2 분리 영역)

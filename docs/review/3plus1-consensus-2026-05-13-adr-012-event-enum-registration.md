@@ -87,7 +87,7 @@
 | Canonical JSON 규칙 변경 (RFC 8785 JCS / jq fallback) | ❌ (ADR-012 §2.5 본문 — 별도 합의) |
 | Hash chain 다층 강제 (Layer 1~5) 갱신 | ❌ (ADR-012 §2.3 본문 — 별도 합의) |
 | Round-trip 검증 절차 (T1/T2/T3) 갱신 | ❌ (ADR-012 §2.9 본문 — 별도 합의) |
-| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 §2.6.2 R2-1 답습) |
+| Hermes upstream 변경 / 외부 LLM 자동 호출 | ❌ (ADR-008 차단조건 #6 + 부록 B 답습) |
 
 ---
 

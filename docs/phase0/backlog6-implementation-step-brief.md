@@ -110,7 +110,7 @@ Layer C 발효 합의 — Implementation Evidence PASS      ← 본 brief 영역
 | GP | sub-수단 ID | 영역 | 본문 채택 권위 (답습 한정) |
 |----|----------|------|----------------------|
 | **GP-3** | **S-1** | 코드 본문 secret 검출 (custom regex, R-4.1 Tier-1 45 patterns) | Group D PoC `tools/secret_scanner.py` 261줄 답습 |
-| **GP-3** | **ST-3** | 저장 경로 (docker secret) | ADR-008 §2.6.2 R2-1 답습 |
+| **GP-3** | **ST-3** | 저장 경로 (docker secret) | ADR-008 차단조건 #6 + 부록 B 답습 |
 | **GP-3** | **G3-7 (i)** | GitHub Actions secrets 사용 0건 검증 (F-금지 grep step) | Layer A §1.2 답습 |
 | **GP-3** | **G3-7 (ii)** | `secrets.*` 참조 감지 (workflow grep step or S-1 확장) | 동상 |
 | **GP-3** | **G3-7 (iv)** | fork PR secret 접근 차단 default 정책 보존 | 동상 |
@@ -154,7 +154,7 @@ Layer C 발효 합의 — Implementation Evidence PASS      ← 본 brief 영역
 
 | sub-step | 영역 | 답습 출처 | 본 brief 권고 |
 |---------|------|---------|-----------|
-| 2.1 | `docker-compose.yml` (또는 동등 매니페스트) docker secret 정의 | ADR-008 §2.6.2 R2-1 답습 | docker secret block 추가 + Hermes upstream Dockerfile 변경 0건 |
+| 2.1 | `docker-compose.yml` (또는 동등 매니페스트) docker secret 정의 | ADR-008 차단조건 #6 + 부록 B 답습 | docker secret block 추가 + Hermes upstream Dockerfile 변경 0건 |
 | 2.2 | docker secret 파일 *image layer* 미포함 검증 | mvp1.md §3.4.2 `docker_secret_isolation_check` 답습 | image layer 검증 step 추가 (CI 또는 별도 docker build check) |
 | 2.3 | 컨테이너 재시작 시 secret 재주입 정상 검증 | mvp1.md §3.4.2 `container_restart_recovery` 답습 | restart fixture 추가 (PoC 격리 환경) |
 | 2.4 | Evidence — Docker isolation log | Layer B §1.8 (a) 답습 | chmod 644 / mtime 변경 시뮬레이션 + 컨테이너 정지 evidence (Layer C 시점) |
@@ -275,7 +275,7 @@ Stage 2 (ST-3) ──────────────→ Stage 5 (G3-7)
 | `.github/workflows/mvp1-secret-scan.yml` (또는 `secret-hygiene-egress-redaction.yml` 확장) | Stage 1 + Stage 4 | Stage 1/4 | Group D `secret-hygiene-egress-redaction.yml` 답습 | 0건 (본 brief 영역 외) |
 | `.github/workflows/mvp1-provider-enforcement.yml` (또는 `provider-adapter-enforcement.yml` 확장) | Stage 3 + Stage 4 | Stage 3/4 | Group A 2차 `provider-adapter-enforcement.yml` 답습 | 0건 |
 | `.github/workflows/mvp1-combined-check.yml` (또는 별도 통합 step) | Stage 4 | Stage 4 | mvp1.md §5.4 통합 위험 매트릭스 답습 | 0건 |
-| `docker-compose.yml` 또는 동등 매니페스트 docker secret block | Stage 2 | Stage 2 | ADR-008 §2.6.2 R2-1 답습 | 0건 |
+| `docker-compose.yml` 또는 동등 매니페스트 docker secret block | Stage 2 | Stage 2 | ADR-008 차단조건 #6 + 부록 B 답습 | 0건 |
 | `docs/phase0/g2-gp3-mvp1-evidence.md` (Evidence Artifact) | Evidence 통합 | Layer C 시점 | mvp1.md §3.6.1 답습 | 0건 (Layer C 시점) |
 | `docs/phase0/g2-gp5-mvp1-evidence.md` (Evidence Artifact) | Evidence 통합 | Layer C 시점 | mvp1.md §4.7.1 답습 | 0건 (Layer C 시점) |
 

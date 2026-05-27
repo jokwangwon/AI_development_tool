@@ -9,7 +9,7 @@
 - ST-2 단독 진입 적격성 brief = `docs/phase0/backlog1-st2-inotify-sidecar-brief.md` (commit `d9ae98b`)
 - Backlog #6 구현 진입 합의 패턴 답습 = `docs/review/3plus1-consensus-2026-05-12-runtime-ci-hook-implementation-entry.md` (commit `c50e6a0`)
 - MVP-1 PASS (Layer D) 합의 = `docs/review/3plus1-consensus-2026-05-13-mvp1-pass.md` (commit `210c98f`, APPROVE WITH CONDITIONS, §C-5 GP-3 1.5차 보강 Backlog #1 Deferred 정의)
-- ADR-008 §A.2 R1-2 + §2.6.2 R2-1 + GP-3 §5.3 + ADR-011 §2.1 (a)~(e) + §2.4 + mvp1.md §3.3 + §3.4.2 + §3.6.1
+- ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 + GP-3 §5.3 + ADR-011 §2.1 (a)~(e) + §2.4 + mvp1.md §3.3 + §3.4.2 + §3.6.1
 
 **검토 목적**: Backlog #1 ST-2 *실 구현* 진입 *계획 적격성* 권위 권고 + 신규 5 결정 답습 적절성 + Cycle 1 한정 진입 적격성 확정. **본 합의 = ST-2 실 구현 *계획 적격성* 권위 권고 한정 + Cycle 1 진입 *발효* 적격성 한정 ≠ Cycle 2~6 자동 진입 / ST-2 자체 실 구현 완료 발효 / §C-5a Satisfied 자동 갱신 / Layer D 본문 변경 / Layer E / Layer F 격상**.
 
@@ -278,7 +278,7 @@ Layer F : Hermes PMO 격상                                 — 아직 아님 (C
 | C-1~C-8 상태 답습 (§C-5 Deferred 그대로 유지) | ✅ |
 | Layer D 본문 변경 0건 (`210c98f` 그대로 유지) | ✅ |
 | ADR-011 §2.4 T1/T2/T3 분류 답습 (T3 침범 10/10 0건) | ✅ |
-| ADR-008 §A.2 R1-2 + §2.6.2 R2-1 답습 | ✅ |
+| ADR-008 차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011 + §2.6.2 R2-1 답습 | ✅ |
 | 5 영구 핵심 제약 보존 | ✅ |
 | 7 backlog 분리 매트릭스 답습 | ✅ |
 | Cycle 1 한정 진입 + Cycle 2~6 자동 진입 0건 | ✅ |

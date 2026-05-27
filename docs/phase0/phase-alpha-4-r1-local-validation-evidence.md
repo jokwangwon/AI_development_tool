@@ -70,7 +70,7 @@
 - ❌ **MVP-1 PASS 재선언 0건** — Layer D 권위 답습 한정
 - ❌ **Layer C 재발효 0건** — `eb01bc4` 답습 한정
 - ❌ **GitHub Actions secrets 사용 도입 0건** — F-금지 #1 영구 답습
-- ❌ **Hermes upstream Dockerfile 변경 0건** — ADR-008 §2.6.2 R2-1 영구 답습
+- ❌ **Hermes upstream Dockerfile 변경 0건** — ADR-008 차단조건 #6 + 부록 B 영구 답습
 - ❌ **Production `docker-compose.yml` 신설 / 변경 0건** — PoC 격리 디렉토리 한정
 - ❌ **실 secret material commit 0건** — FAKE_TEST_SECRET marker 답습
 - ❌ **외부 LLM 자동 호출 0건** — Group α 합의 C-11 답습
@@ -365,7 +365,7 @@ $ wc -l .github/workflows/secret-hygiene-egress-redaction.yml \
 | branch protection rule API 호출 | ✅ 0건 (AR-2 분리 = Backlog #3 T3 영역) |
 | 신규 workflow 신설 / `pull_request_target` 도입 | ✅ 0건 |
 | GitHub Actions secrets 사용 도입 | ✅ 0건 (F-금지 #1 영구 답습) |
-| Hermes upstream Dockerfile 변경 | ✅ 0건 (ADR-008 §2.6.2 R2-1 영구 답습) |
+| Hermes upstream Dockerfile 변경 | ✅ 0건 (ADR-008 차단조건 #6 + 부록 B 영구 답습) |
 | Production `docker-compose.yml` 신설 / 변경 | ✅ 0건 (PoC 격리 디렉토리 한정) |
 | 실 secret material commit | ✅ 0건 (FAKE_TEST_SECRET marker 답습) |
 | TR-1 ~ TR-5 발화 | ✅ 0/5 발화 |
@@ -564,7 +564,7 @@ $ wc -l .github/workflows/secret-hygiene-egress-redaction.yml \
 - ❌ branch protection 변경 / dev 환경 강제 / `pre-commit install` 의무화 도입 0건
 - ❌ 신규 workflow 신설 / `pull_request_target` 도입 0건
 - ❌ GitHub Actions secrets 사용 도입 0건 (F-금지 #1 영구 답습)
-- ❌ Hermes upstream Dockerfile 변경 0건 (ADR-008 §2.6.2 R2-1 영구 답습)
+- ❌ Hermes upstream Dockerfile 변경 0건 (ADR-008 차단조건 #6 + 부록 B 영구 답습)
 - ❌ Production `docker-compose.yml` 신설 / 변경 0건 (PoC 격리 디렉토리 한정)
 - ❌ 실 secret material commit 0건 (FAKE_TEST_SECRET marker 답습)
 - ❌ Tier-2 / Tier-3 catalog 자동 확장 0건

@@ -27,3 +27,11 @@ jcs==0.2.1
 # runtime application 의존성 0건 유지 (test-only).
 pytest==9.0.3
 pytest-cov==7.1.0
+
+# PC-1-T3 mandatory enforcement (MVP-1 1.5차 보강 sub-cycle)
+# 답습 출처:
+#   - docs/phase0/mvp1-pc1-t3-mandatory-enforcement-brief.md
+#   - docs/review/3plus1-consensus-2026-05-27-mvp1-pc1-t3-mandatory-enforcement.md (Reviewer-only APPROVE)
+# `.pre-commit-config.yaml` framework hook 6 (T2 opt-in 발효 `3c0a1c1`) → T3 dev 환경 mandatory enforcement
+# bin/setup.sh 가 `pre-commit install` 자동 실행 (Layer 2 framework hook 활성화)
+pre-commit==4.0.1

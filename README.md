@@ -92,8 +92,12 @@ Phase 4: 통합 테스트 + 배포
 | 파일 | 설명 |
 |------|------|
 | `.claude/settings.json` | Claude Code Hook 설정 |
-| `.githooks/pre-commit` | 시크릿/디버그 코드 감지 |
-| `.githooks/setup.sh` | Git hooks 초기 설정 |
+| `.githooks/pre-commit` | Layer 3 자체 hook — 시크릿/디버그 코드 grep 감지 |
+| `.githooks/setup.sh` | Layer 3 Git hooks 초기 설정 |
+| `.pre-commit-config.yaml` | Layer 2 pre-commit framework — PC-1-T3 mandatory enforcement (6 hook, secret/workflow/import 검증) |
+| `bin/setup.sh` | dev onboarding 통합 스크립트 — Layer 3 + Layer 2 + audit log 모두 활성화 |
+| `tools/pre_commit_install_audit.sh` | PC-1-T3 bypass detection (3 탐지 경로 통합 verify) |
+| `CONTRIBUTING.md` | dev onboarding workflow + PC-1-T3 mandatory enforcement 명문 |
 | `.gitignore` | 표준 무시 규칙 |
 
 ---
@@ -115,9 +119,17 @@ cp AI_development_tool/.gitignore /path/to/new-project/
 ```bash
 cd /path/to/new-project
 git init
-bash .githooks/setup.sh     # Git hooks 활성화
+bash bin/setup.sh            # dev 환경 통합 setup (Layer 3 + Layer 2 + audit log)
 cp .env.example .env         # 환경 변수 생성 (API 키 설정)
 ```
+
+> `bin/setup.sh` 가 다음을 자동 수행:
+> - `.githooks/setup.sh` 실행 (Layer 3 자체 hook 활성화)
+> - `pip install -r requirements-dev.txt` (dev 의존성 + pre-commit framework 설치)
+> - `pre-commit install` (Layer 2 framework hook 활성화, **PC-1-T3 mandatory enforcement**)
+> - `.git/pre-commit-audit/install.log` 기록 (audit log)
+>
+> 자세한 dev workflow + PC-1-T3 의무화 명문 = `CONTRIBUTING.md` 참조
 
 ### 3. 아이디어 제시
 

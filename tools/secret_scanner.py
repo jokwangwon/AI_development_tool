@@ -185,6 +185,12 @@ REDACTION_MARKER_RE: re.Pattern[str] = re.compile(
 )
 
 # Scan 대상 file extension (사양 §4.1~§4.2 답습)
+#
+# scope 정책 (49 entry 발효): docs/architecture/secret-scanner-scope-policy.md
+#   - hook entry scope: src + .github 한정 (.pre-commit-config.yaml 답습)
+#   - docs/ 영역 영구 금지 (~800+ 잠재 false positive 답습 — fake canary / redaction 예시 / codex 응답 sample)
+#   - scope 확장 의무 절차: 정책 §2 답습 (별도 sub-cycle + 풀 3+1 + R-7(b) 차등)
+#   - 본 SCAN_SOURCE_EXTENSIONS 변경 = catalog 본문 변경 = R-7(b) 차등 자격
 SCAN_SOURCE_EXTENSIONS: tuple[str, ...] = (
     ".py", ".json", ".yaml", ".yml", ".toml", ".sh", ".bash",
     ".env", ".ini", ".cfg", ".pem", ".key", ".txt", ".md",

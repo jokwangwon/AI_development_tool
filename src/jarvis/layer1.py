@@ -233,10 +233,12 @@ def format_report(report: PatternReport) -> str:
     lines.append("")
     lines.append("Verdict flag 빈도:")
     if report.flag_frequency:
-        for flag, cnt in sorted(
-            report.flag_frequency.items(), key=lambda kv: (-kv[1], kv[0])
-        ):
-            lines.append(f"  {flag:<24} {cnt}")
+        # (b1-PC1-D6-false-positives) FP 회피 (multiline `key=lambda` 매칭) — tuple default sort
+        ordered = sorted(
+            (-cnt, flag) for flag, cnt in report.flag_frequency.items()
+        )
+        for neg_cnt, flag in ordered:
+            lines.append(f"  {flag:<24} {-neg_cnt}")
     else:
         lines.append("  (없음)")
 

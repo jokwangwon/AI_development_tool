@@ -35,3 +35,13 @@ pytest-cov==7.1.0
 # `.pre-commit-config.yaml` framework hook 6 (T2 opt-in 발효 `3c0a1c1`) → T3 dev 환경 mandatory enforcement
 # bin/setup.sh 가 `pre-commit install` 자동 실행 (Layer 2 framework hook 활성화)
 pre-commit==4.0.1
+
+# S-3 detect-secrets 부분 통합 (MVP-1 1.5차 보강 sub-cycle)
+# 답습 출처:
+#   - docs/phase0/mvp1-s3-detect-secrets-partial-integration-brief.md
+#   - docs/review/3plus1-consensus-2026-05-27-mvp1-s3-detect-secrets-partial-integration.md (Reviewer-only APPROVE)
+# Tier-1 답습 plugin 5종 한정 (AWSKeyDetector / KeywordDetector / Base64HighEntropyString
+#   / HexHighEntropyString / PrivateKeyDetector) — Tier-2/3 확장 = R-MVP1-1.5-S3-1 풀 3+1 trigger
+# --baseline 영구 금지 (R-MVP1-1.5-S3-2 silenceable risk)
+# S-1 (tools/secret_scanner.py) 답습 유지 영구 의무 (R-MVP1-1.5-S3-3 Defense in depth)
+detect-secrets==1.5.0

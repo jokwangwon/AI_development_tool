@@ -153,13 +153,14 @@ REGEX_PATTERNS: list[tuple[str, str, str, str, str]] = [
 # Tier-1 alternation 2 (H-J / H-L sensitive key 기반 변환, R-4.1 §4.1 답습)
 ALTERNATION_PATTERNS: list[tuple[str, str, str, str, str]] = [
     # (b1-PC1-D6-false-positives) 합의 2026-05-27 APPROVE WITH CONDITIONS (R-1 BLOCKING 흡수)
-    # word boundary `(?:^|[?&\s'\"])` prefix 추가 — Python keyword arg FP 해소 + quoted body literal cover 보존
-    # `(` paren delimiter 추가 0 = `sort(key=...)` / `WorkerResult(exit_code=...)` FP 재발 회피
-    # carry-over: (b1-PC1-D6-fp-edge-extensions) [;#] / (b1-PC1-D6-ast-context) AST SAFE_CONTEXT
+    # (b1-PC1-D6-fp-edge-extensions) 합의 2026-05-27 APPROVE (단축 + codex cross-vendor, semicolon + fragment 확장)
+    # word boundary `(?:^|[?&\s'\";#])` prefix — Python keyword arg FP 해소 + quoted body literal cover + Cookie semicolon + OAuth fragment cover
+    # `(` paren delimiter 추가 0 = `sort(key=...)` / `WorkerResult(exit_code=...)` FP 재발 회피 (codex N-4 답습)
+    # carry-over: (b1-PC1-D6-ast-context) AST SAFE_CONTEXT
     ("T1-041", "Hermes _SENSITIVE_QUERY_PARAMS", "alternation", "URL query sensitive keys (16)",
-     r"(?i)(?:^|[?&\s'\"])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|session|secret|key|code|signature|x-amz-signature)=[^&\s]+"),
+     r"(?i)(?:^|[?&\s'\";#])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|session|secret|key|code|signature|x-amz-signature)=[^&\s]+"),
     ("T1-042", "Hermes _SENSITIVE_BODY_KEYS", "alternation", "Body/form sensitive keys (14)",
-     r"(?i)(?:^|[?&\s'\"])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|secret|private_key|authorization|key)=[^&\s]+"),
+     r"(?i)(?:^|[?&\s'\";#])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|secret|private_key|authorization|key)=[^&\s]+"),
 ]
 
 ALL_PATTERNS: list[tuple[str, str, str, str, str]] = (

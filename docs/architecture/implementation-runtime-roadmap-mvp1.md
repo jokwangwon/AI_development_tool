@@ -816,6 +816,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 | 일자 | 변경 | 비고 |
 |------|------|------|
+| 2026-05-27 | 본 문서 DRAFT → APPROVED 권위 발효 (Reviewer-only 단축 합의) | `docs/review/3plus1-consensus-2026-05-27-implementation-runtime-roadmap-mvp1-authority.md` APPROVE (단축 합의 — Reviewer-only). 입력 = `docs/phase0/mvp1-gp3-gp5-current-state-audit-brief.md` (2026-05-27 audit). **5/5 풀 3+1 승격 트리거 0건 발화 검증** (① 새 권위 결정 0 / ② Tier-2/3 catalog 자동 확장 0 / ③ Implementation Evidence PASS 자동 선언 0 / ④ 후속 합의 본문 변경 0 / ⑤ ADR-011 §2.1 5조건 자동 충족 선언 0). 후속 3 합의 본문 흡수 완료 cross-check (line 819~821 = gp3 + gp5 + backlog #6) + ADR-011 §2.1 (a)~(e) 답습 정확. **본 합의 = 권위 표시 격상 한정 — line 826/827 상태 표시 + §9 변경 이력 line 1건 추가 한정 — 본문 §1~§8 변경 0건 (cross-reference 답습 한정). 실 runtime code / CI / hook 변경 0건 / Implementation Evidence PASS / Operational Readiness PASS / ADR 본문 갱신 / 수단 결정 / threshold 고정 / Tier-2/3 자동 확장 모두 본 합의 영역 외 (사용자 명시 결정 의무 영역)**. |
 | 2026-05-12 후속 4 | §5.5 9 sub-수단 본문 채택 매트릭스 신설 — Layer B `f40423f` 발효 결과 행사 | Backlog #6 Layer B Implementation Entry 합의 (`docs/review/3plus1-consensus-2026-05-12-backlog6-implementation-entry.md` APPROVE, commit `f40423f` push 완료) §1.1 + §1.2 + §1.7 답습 + 사용자 명시 진입 명령 (2026-05-12 열한 번째 — "9 sub-수단 본문 채택 commit 진입"). §5.5 신설 = §5.5.0 본문 채택 의미 명시 (본문 채택 ≠ runtime code 구현 / CI workflow 구현 / hook 구현 / Implementation Evidence PASS) + §5.5.1 GP-3 4 sub-수단 (S-1 + ST-3 + PC-3 + AR-1) + G3-7 row 4 항목 + §5.5.2 GP-5 3 sub-수단 (T-6 = T-2 + T-5 / PC-3 + AR-1) + Group A 1차/2차/3차 답습 + §5.5.3 합산 매트릭스 (9 = 7 unique + 2 일관성 중복) + §5.5.4 18 Rollback Trigger 본문 확정 답습 + §5.5.5 *범위 한계* (runtime code / CI workflow / hook 실 구현 0건 / Layer C 발효 0건 / 7 backlog 자동 진입 0건 / ADR 본문 갱신 0건 / Tier-2/3 자동 확장 0건 / threshold 고정 0건 / event enum 정식 등록 0건). **본 흡수 = §5.5 신설 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.2 / §5.3 / §5.4 / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. **본문 채택 = 문서상 확정 한정 — runtime code 실 구현 / CI workflow 실 신설 / hook 실 구현 모두 본 흡수 영역 외 (사용자 명시 결정 의무 영역)**. |
 | 2026-05-12 후속 2 | §5.4 GP-3 + GP-5 Integrated Risk Matrix 신설 — Observation O-2 흡수 (GP-5 진입 합의 Condition C-4) | GP-5 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp5-mvp1-entry.md` APPROVE WITH CONDITIONS) §6.3 + §7.4 답습 + 사용자 명시 진입 명령 (2026-05-12 여섯 번째). §5.4 신설 = 3 통합 위험 (IR-1 Provider key adapter bypass / IR-2 Direct SDK + secret leakage 결합 / IR-3 Local-CI-Docker mismatch) + 3 신규 evidence enum 후보 (`provider_key_adapter_bypass_risk_detected` / `direct_sdk_with_secret_leakage_detected` / `secret_handling_environment_mismatch_detected`) + MVP-1 handling vs Deferred handling 분리 + §5.4.4 *범위 한계* (실 combined check 도구 구현 0건 / enum 정식 등록 0건 / Runtime enforcement 0건 / Operational parity 0건 / Provider key auto revoke 0건 / Combined fail PR auto-reject 0건). §5.2 cross-reference 갱신 — 4 enum → 7 enum 후보 합산. **본 흡수 = §5.4 신설 + §5.2 cross-reference 갱신 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.3 / §6 / §7 본문 변경 0건**. |
 | 2026-05-12 후속 | §3.1.2 G3-7 row 추가 (CI secret 관리) — Condition C-1 흡수 | GP-3 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` APPROVE WITH CONDITIONS) §2 (Observation O-1 흡수) + §6.1 + §7.1 답습. G3-7 = 6 항목 中 (i)(ii)(iv)(v)(vi) = MVP-1 영역 4 항목 + (iii) = MVP-2 (GP-2 영역) + (`pull_request_target` 도입) = 별도 합의 영역 분리. 핵심 요약 (line 169) 갱신 — "G3-1 + G3-2 + G3-3 + G3-7" 영역 명시. **본 흡수 = §3.1.2 본문 갱신 + 핵심 요약 갱신 한정 — §3.5 Rollback / §3.6 Evidence / §5 통합 PASS / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. |
@@ -823,9 +824,9 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 ---
 
-**작성일**: 2026-05-12 (DRAFT)
-**상태**: DRAFT — Reviewer-only 단축 합의 진행 예정
-**다음 단계**: 본 문서 Reviewer-only 단축 합의 보고서 작성 (`docs/review/3plus1-consensus-2026-05-12-implementation-runtime-roadmap-mvp1.md`)
+**작성일**: 2026-05-12 (DRAFT) — 2026-05-27 APPROVED
+**상태**: ✅ **APPROVED** (2026-05-27 Reviewer-only 단축 합의 — `docs/review/3plus1-consensus-2026-05-27-implementation-runtime-roadmap-mvp1-authority.md`, 5/5 풀 3+1 승격 트리거 0건 발화, 후속 3 합의 본문 흡수 완료)
+**다음 단계**: §8 권고 순서 (b) MVP-1 1.5차 보강 합의 → (c) Implementation Evidence PASS 발효 합의 (사용자 결정 영역)
 **금지 (사용자 명시 답습 — 2026-05-12 진입 명령, 변동 없음)**:
 - ❌ 실제 runtime code 구현
 - ❌ CI/hook 구현

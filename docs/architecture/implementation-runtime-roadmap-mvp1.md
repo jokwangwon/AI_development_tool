@@ -134,7 +134,7 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 |---|------|------|------|
 | (a) | 동등 이상의 보안 결과 | gitleaks/detect-secrets/custom scanner 결과 R-4.1 Tier-1 42 catalog 답습 동등 이상 | depcruise/import-linter 결과 §9.3 답습 동등 이상 |
 | (b) | 격리 환경 PoC 실증 | docker secret + chmod 600 + inotify (저장) PoC + gitleaks PR auto-reject (코드) PoC | depcruise/import-linter PR auto-reject + facade single entry point PoC |
-| (c) | ADR / SDD 권위 명시 | ADR-008 §A.2 R1-2 + ADR-010 + R-4 + 본 §3 | ADR-008 차단조건 #4 + ADR-009 C-N §5 + P1 v2 + 본 §4 |
+| (c) | ADR / SDD 권위 명시 | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + ADR-010 + ADR-011 + R-4 + 본 §3 (36번째 entry R-S1 정정 답습) | ADR-008 차단조건 #4 + 부록 B + ADR-009 C-N §5 + ADR-011 + P1 v2 + 본 §4 (36번째 entry R-S1 정정 답습) |
 | (d) | 자동 회귀 검증 경로 확보 | `.github/workflows/secret-scan.yml` (또는 R-6 통합) + nightly | `.github/workflows/provider-adapter-enforcement.yml` 기존 + depcruise/import-linter step 추가 + 매 PR + nightly |
 | (e) | 합의 APPROVE | 단축 또는 풀 3+1 (수단 결정 시 풀 3+1 권고 — §3.6 답습) | 단축 또는 풀 3+1 (T-1 vs T-2 vs T-9 결정 시 풀 3+1 권고 — §4.6 답습) |
 
@@ -202,11 +202,11 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 
 | # | 수단 | 검증 시점 | Hermes upstream 변경 | sidecar 가능성 | 운영 부담 | 현 ADR 권위 |
 |---|------|---------|---------------------|--------------|---------|-----------|
-| **ST-1** | **Hermes Dockerfile entrypoint stat 검증** (chmod 600 강제) | 컨테이너 시작 시 | ✅ 필요 (Hermes upstream Dockerfile 수정) | ❌ | 低 | ADR-008 §A.2 R1-2 + GP-3 §5.3 답습 |
-| **ST-2** | **inotify sidecar** (mtime/perm 변경 → 컨테이너 정지) | 런타임 지속 | ❌ (sidecar 분리 가능) | ✅ | 中 (sidecar process 운영) | ADR-008 §A.2 R1-2 + GP-3 §5.3 답습 |
-| **ST-3** | **docker secret 직접 사용** | 런타임 (file system 통한 노출 회피) | 부분 (docker-compose.yml 갱신) | ❌ | 低 | ADR-008 §2.6.2 R2-1 + GP-3 §5.3 답습 |
+| **ST-1** | **Hermes Dockerfile entrypoint stat 검증** (chmod 600 강제) | 컨테이너 시작 시 | ✅ 필요 (Hermes upstream Dockerfile 수정) | ❌ | 低 | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + GP-3 §5.3 답습 (36번째 entry R-S1 정정 답습) |
+| **ST-2** | **inotify sidecar** (mtime/perm 변경 → 컨테이너 정지) | 런타임 지속 | ❌ (sidecar 분리 가능) | ✅ | 中 (sidecar process 운영) | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + GP-3 §5.3 답습 (36번째 entry R-S1 정정 답습) |
+| **ST-3** | **docker secret 직접 사용** | 런타임 (file system 통한 노출 회피) | 부분 (docker-compose.yml 갱신) | ❌ | 低 | ADR-008 차단조건 #6 (Docker 격리) + GP-3 §5.3 답습 (36번째 entry R-S1 정정 답습) |
 | **ST-4** | **Vault HSM 통합** (ADR-010) | 런타임 (외부 HSM) | ❌ (Hermes 가 Vault 클라이언트 호출, Hermes upstream 변경 없음) | 부분 (Vault 자체가 외부 service) | **高** (Vault 인프라 운영 비용) | ADR-010 §2 답습 — Multi-host 환경 권고 |
-| **ST-5** | **ST-1 + ST-2 + ST-3 통합** (Defense in depth) | 시작 + 런타임 + file system | ✅ 필요 | ✅ | 中-高 | ADR-008 §A.2 R1-2 + ADR-008 §2.6.2 + GP-3 §5.3 통합 답습 |
+| **ST-5** | **ST-1 + ST-2 + ST-3 통합** (Defense in depth) | 시작 + 런타임 + file system | ✅ 필요 | ✅ | 中-高 | ADR-008 차단조건 #1 (SQLCipher) + #6 (Docker 격리) + 부록 B + GP-3 §5.3 통합 답습 (36번째 entry R-S1 정정 답습) |
 
 #### 3.3.2 권고
 
@@ -280,7 +280,7 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | `implementation-runtime-roadmap.md` Order 4 (GP-3) 권고 답습 | 본 roadmap 답습 | ✅ |
 | GP-5 MVP-1 진입 (Order 1, 그룹 A 완료 후 그룹 D) | 본 문서 §4 + roadmap 답습 | ⏳ 본 문서 동시 진입 |
 | ADR-010 (Vault HSM) | ADR-010 본문 답습 (ST-4 진입 시점에만) | ⏳ MVP-2 이후 또는 Operational Readiness 영역 |
-| ADR-008 §A.2 R1-2 cross-reference 갱신 | ADR-008 본문 답습 (cross-reference 한정) | ⏳ MVP-1 PASS 후 별도 commit (본 문서 범위 외) |
+| ADR-008 cross-reference 갱신 (차단조건 #1 + #6 + 부록 B + ADR-010 + ADR-011) | ADR-008 본문 답습 (cross-reference 한정, R-MVP1-PASS-2 영구 금지 답습) | ✅ 35번째 entry (b2) gov + backlog1 + 36번째 entry (b2-roadmap) roadmap-mvp1 본문 R-S1 정정 완료 답습 |
 
 #### 3.6.3 합의 형태 권고
 
@@ -657,7 +657,7 @@ Docker: docker secret 사용 (ST-3 답습)
 | ID | 수단 | 영역 | 본문 채택 권위 | 본문 채택 *범위 한계* |
 |----|------|------|----------|--------------|
 | **S-1** | custom regex secret scanner (R-4.1 Tier-1 45 patterns) | GP-3 코드 본문 secret 검출 (G3-2) | Group D PoC `tools/secret_scanner.py` 261줄 답습 + actual run `25623028888` SUCCESS + Layer A §1.2 + Layer B §1.1 답습 | Tier-2/3 catalog 확장 0건 / 외부 의존 도입 0건 / runtime code *실 구현* 0건 (별도 단계) |
-| **ST-3** | docker secret (저장 경로 isolation) | GP-3 저장 경로 secret 검출 (G3-1) | ADR-008 §2.6.2 R2-1 답습 + Layer A §1.2 + Layer B §1.1 답습 | Vault HSM ST-4 미진입 (Backlog #7 분리) / entrypoint stat ST-1 / inotify ST-2 미진입 (Backlog #1 1.5차 보강 분리) |
+| **ST-3** | docker secret (저장 경로 isolation) | GP-3 저장 경로 secret 검출 (G3-1) | ADR-008 차단조건 #6 (Docker 격리) 답습 + Layer A §1.2 + Layer B §1.1 답습 (36번째 entry R-S1 정정 답습) | Vault HSM ST-4 미진입 (Backlog #7 분리) / entrypoint stat ST-1 / inotify ST-2 미진입 (Backlog #1 1.5차 보강 분리) |
 | **PC-3** | CI-only enforcement (pre-commit) | GP-3 pre-commit hook 통합 (G3-2 부분 / G5-2 부분 공유) | T2 영역 답습 + Group D actual run SUCCESS 답습 + Layer A §1.2 + Layer B §1.1 답습 | local pre-commit framework PC-4 미진입 (Backlog #1 1.5차 보강 분리) |
 | **AR-1** | CI step fail-closed (PR auto-reject) | GP-3 PR auto-reject layer (G3-3 부분 / G5-3 부분 공유) | T2 영역 답습 + Layer A §1.2 + Layer B §1.1 답습 | branch protection AR-2 미진입 (Backlog #3 T3 영역 별도 풀 3+1 분리) |
 

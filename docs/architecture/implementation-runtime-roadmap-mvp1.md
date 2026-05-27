@@ -140,6 +140,8 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 
 **MVP-1 exit = (GP-3 5/5 + GP-5 5/5) 두 GP 모두 충족 + 사용자 명시 결정**. 어느 한쪽이라도 미충족 시 MVP-1 부분 PASS 처리 (Implementation Evidence PASS *부분 발효* — 별도 합의 영역).
 
+> ⭐⭐⭐ **2026-05-27 발효 (32번째 entry)**: **GP-3 5/5 + GP-5 5/5 모두 충족 자격 자격 인정 + 사용자 명시 결정 = MVP-1 Implementation Evidence PASS *완전 발효* (α)**. 본 발효 = (b1) 4 sub-cycle 완료 (PC-1-T3 `3a63a5b` + S-3 `4451716` + ST-2 `1edc5bb` + AR-3 `7f57323`/`7c294bb`/`73ed20d`/`9837298`) + 31번째 entry 첫 PR (head SHA `9837298befdeda6c7e170879cc9f15e331c52bce`) 11/11 SUCCESS + mergeable CLEAN + main branch protection 7 contexts 발효 evidence + 본 cycle 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS 답습 (`docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md`). carry-over (PASS 효과 영향 0건): (b2) R-S1 cross-reference 정정 + PC-1-T3 PoC evidence 자율 수집 + ST-2 nightly actual run id 자율 수집 + paths-aware workflow audit (R-6 답습).
+
 ---
 
 ## 3. GP-3 — Credential / Secret Hygiene MVP-1 Deepening
@@ -290,6 +292,7 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | ST-1 / ST-2 / ST-5 진입 (Hermes upstream 변경) | **풀 3+1 합의 + Hermes upstream PR 검토** | Hermes upstream 영역 진입 = 책무 경계 변경 |
 | ST-4 (Vault HSM) 진입 | **ADR-010 §X 진입 합의 + 외부 LLM 1+** | T3 영역 + Multi-host 인프라 |
 | Implementation Evidence PASS 발효 (GP-3 한정) | **별도 합의 + 사용자 명시 결정** + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | 본 문서 §2.2 답습 |
+| ⭐⭐⭐ **Implementation Evidence PASS *발효 완료* (GP-3 한정)** | **2026-05-27 (32번째 entry, commit `(본 commit)`)** — 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS + 사용자 명시 결정 + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | (b1) 4 sub-cycle + 31번째 entry 첫 PR (head SHA `9837298`) 11/11 SUCCESS + 본 cycle 합의 `docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md` |
 
 ---
 
@@ -481,6 +484,7 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | T-1 / T-3 / T-4 / T-5 단독 진입 결정 | **풀 3+1 합의 + 도구 변경 영향 분석** | Group A 2차 §8 TR-3 답습 |
 | URL / 모델 Tier-2 / Tier-3 vendor 추가 결정 | **풀 3+1 합의 + Tier-2/3 catalog 확장 결정** | R-MVP1-G5-7 / R-MVP1-G5-8 답습 |
 | Implementation Evidence PASS 발효 (GP-5 한정) | **별도 합의 + 사용자 명시 결정** + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | 본 문서 §2.2 답습 |
+| ⭐⭐⭐ **Implementation Evidence PASS *발효 완료* (GP-5 한정)** | **2026-05-27 (32번째 entry, commit `(본 commit)`)** — 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS + 사용자 명시 결정 + ADR-011 §2.1 (a)~(e) 5/5 충족 evidence | (b1) 4 sub-cycle (AR-3 = GP-3+GP-5 통합) + 31번째 entry 첫 PR (head SHA `9837298`) `enforce` x3 + `scan` (provider-url) SUCCESS + 본 cycle 합의 `docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md` |
 
 ---
 
@@ -497,6 +501,8 @@ MVP-1 exit = GP-3 + GP-5 두 GP 의 **Implementation Evidence PASS** 발효. 본
 | (e) | 합의 APPROVE | 단축 또는 풀 3+1 (수단 결정 시 풀 3+1 권고) | 단축 또는 풀 3+1 (T-1 vs T-2 vs T-9 결정 시 풀 3+1) |
 
 **MVP-1 PASS = (GP-3 5/5 + GP-5 5/5) 두 GP 모두 충족 + 사용자 명시 결정 + Implementation Evidence PASS 발효 합의**.
+
+> ⭐⭐⭐ **2026-05-27 발효 완료 (32번째 entry, commit `(본 commit)`)**: 본 5/5 매트릭스 양 GP 모두 충족 자격 자격 인정 + 사용자 명시 결정 + 본 cycle 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS 답습 = **MVP-1 Implementation Evidence PASS *완전 발효 (α)***. 답습 source: (b1) 4 sub-cycle (PC-1-T3 + S-3 + ST-2 + AR-3) + 31번째 entry 첫 PR (head SHA `9837298befdeda6c7e170879cc9f15e331c52bce`) 11/11 SUCCESS + mergeable CLEAN + 본 cycle 합의 (`docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md`, BLOCKING 6 + 권고 5 1pass 흡수). carry-over (PASS 효과 영향 0건): (b2) R-S1 cross-reference 정정 (별도 sub-cycle, ADR-008 본문 변경 0건 영구 의무 R-MVP1-PASS-2 답습) + PC-1-T3 PoC evidence 자율 수집 + ST-2 nightly actual run id 자율 수집 + paths-aware workflow audit (R-MVP1-PASS-8 답습 + R-6 BLOCKING 답습 = 다음 cycle 우선순위).
 
 ### 5.2 통합 Evidence Ledger entry 형식 (ADR-012 §2.2 답습)
 
@@ -817,6 +823,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 | 일자 | 변경 | 비고 |
 |------|------|------|
 | 2026-05-27 | 본 문서 DRAFT → APPROVED 권위 발효 (Reviewer-only 단축 합의) | `docs/review/3plus1-consensus-2026-05-27-implementation-runtime-roadmap-mvp1-authority.md` APPROVE (단축 합의 — Reviewer-only). 입력 = `docs/phase0/mvp1-gp3-gp5-current-state-audit-brief.md` (2026-05-27 audit). **5/5 풀 3+1 승격 트리거 0건 발화 검증** (① 새 권위 결정 0 / ② Tier-2/3 catalog 자동 확장 0 / ③ Implementation Evidence PASS 자동 선언 0 / ④ 후속 합의 본문 변경 0 / ⑤ ADR-011 §2.1 5조건 자동 충족 선언 0). 후속 3 합의 본문 흡수 완료 cross-check (line 819~821 = gp3 + gp5 + backlog #6) + ADR-011 §2.1 (a)~(e) 답습 정확. **본 합의 = 권위 표시 격상 한정 — line 826/827 상태 표시 + §9 변경 이력 line 1건 추가 한정 — 본문 §1~§8 변경 0건 (cross-reference 답습 한정). 실 runtime code / CI / hook 변경 0건 / Implementation Evidence PASS / Operational Readiness PASS / ADR 본문 갱신 / 수단 결정 / threshold 고정 / Tier-2/3 자동 확장 모두 본 합의 영역 외 (사용자 명시 결정 의무 영역)**. |
+| 2026-05-27 (32번째 entry) | ⭐⭐⭐ **MVP-1 Implementation Evidence PASS 완전 발효 (α)** — §2.2 (line 141 영역) + §3.6.3 (GP-3 합의 형태 권고 표) + §4.7.3 (GP-5 합의 형태 권고 표) + §5.1 (통합 PASS 권고) 각 영역에 "2026-05-27 발효 완료" 행 추가 | (b1) 4 sub-cycle 완료 (PC-1-T3 `3a63a5b` + S-3 `4451716` + ST-2 `1edc5bb` + AR-3 chain `7f57323`/`7c294bb`/`73ed20d`/`9837298`) + 31번째 entry 첫 PR (head SHA `9837298befdeda6c7e170879cc9f15e331c52bce`) 11/11 SUCCESS + mergeable CLEAN + main branch protection 7 contexts 발효 evidence + 본 cycle 풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS (`docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md`, BLOCKING 6 + 권고 5 1pass 흡수). 본 흡수 = §2.2 + §3.6.3 + §4.7.3 + §5.1 + §9 갱신 한정 — §3 GP-3 / §4 GP-5 / §5.2~§5.5 / §6 / §7 본문 변경 0건. carry-over (PASS 효과 영향 0건): (b2) R-S1 + PC-1-T3 PoC 자율 + ST-2 nightly 자율 + paths-aware audit (R-6 BLOCKING 답습) |
 | 2026-05-12 후속 4 | §5.5 9 sub-수단 본문 채택 매트릭스 신설 — Layer B `f40423f` 발효 결과 행사 | Backlog #6 Layer B Implementation Entry 합의 (`docs/review/3plus1-consensus-2026-05-12-backlog6-implementation-entry.md` APPROVE, commit `f40423f` push 완료) §1.1 + §1.2 + §1.7 답습 + 사용자 명시 진입 명령 (2026-05-12 열한 번째 — "9 sub-수단 본문 채택 commit 진입"). §5.5 신설 = §5.5.0 본문 채택 의미 명시 (본문 채택 ≠ runtime code 구현 / CI workflow 구현 / hook 구현 / Implementation Evidence PASS) + §5.5.1 GP-3 4 sub-수단 (S-1 + ST-3 + PC-3 + AR-1) + G3-7 row 4 항목 + §5.5.2 GP-5 3 sub-수단 (T-6 = T-2 + T-5 / PC-3 + AR-1) + Group A 1차/2차/3차 답습 + §5.5.3 합산 매트릭스 (9 = 7 unique + 2 일관성 중복) + §5.5.4 18 Rollback Trigger 본문 확정 답습 + §5.5.5 *범위 한계* (runtime code / CI workflow / hook 실 구현 0건 / Layer C 발효 0건 / 7 backlog 자동 진입 0건 / ADR 본문 갱신 0건 / Tier-2/3 자동 확장 0건 / threshold 고정 0건 / event enum 정식 등록 0건). **본 흡수 = §5.5 신설 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.2 / §5.3 / §5.4 / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. **본문 채택 = 문서상 확정 한정 — runtime code 실 구현 / CI workflow 실 신설 / hook 실 구현 모두 본 흡수 영역 외 (사용자 명시 결정 의무 영역)**. |
 | 2026-05-12 후속 2 | §5.4 GP-3 + GP-5 Integrated Risk Matrix 신설 — Observation O-2 흡수 (GP-5 진입 합의 Condition C-4) | GP-5 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp5-mvp1-entry.md` APPROVE WITH CONDITIONS) §6.3 + §7.4 답습 + 사용자 명시 진입 명령 (2026-05-12 여섯 번째). §5.4 신설 = 3 통합 위험 (IR-1 Provider key adapter bypass / IR-2 Direct SDK + secret leakage 결합 / IR-3 Local-CI-Docker mismatch) + 3 신규 evidence enum 후보 (`provider_key_adapter_bypass_risk_detected` / `direct_sdk_with_secret_leakage_detected` / `secret_handling_environment_mismatch_detected`) + MVP-1 handling vs Deferred handling 분리 + §5.4.4 *범위 한계* (실 combined check 도구 구현 0건 / enum 정식 등록 0건 / Runtime enforcement 0건 / Operational parity 0건 / Provider key auto revoke 0건 / Combined fail PR auto-reject 0건). §5.2 cross-reference 갱신 — 4 enum → 7 enum 후보 합산. **본 흡수 = §5.4 신설 + §5.2 cross-reference 갱신 + 변경 이력 추가 한정 — §3 GP-3 / §4 GP-5 / §5.1 / §5.3 / §6 / §7 본문 변경 0건**. |
 | 2026-05-12 후속 | §3.1.2 G3-7 row 추가 (CI secret 관리) — Condition C-1 흡수 | GP-3 MVP-1 진입 합의 (`3plus1-consensus-2026-05-12-gp3-mvp1-entry.md` APPROVE WITH CONDITIONS) §2 (Observation O-1 흡수) + §6.1 + §7.1 답습. G3-7 = 6 항목 中 (i)(ii)(iv)(v)(vi) = MVP-1 영역 4 항목 + (iii) = MVP-2 (GP-2 영역) + (`pull_request_target` 도입) = 별도 합의 영역 분리. 핵심 요약 (line 169) 갱신 — "G3-1 + G3-2 + G3-3 + G3-7" 영역 명시. **본 흡수 = §3.1.2 본문 갱신 + 핵심 요약 갱신 한정 — §3.5 Rollback / §3.6 Evidence / §5 통합 PASS / §6 / §7 본문 변경 0건 (cross-reference 답습 한정)**. |
@@ -826,7 +833,7 @@ C-7 line 379 답습 — MVP-2 = G2 GP-2 + G4 §4.4 Layer 4 (log canary + canonic
 
 **작성일**: 2026-05-12 (DRAFT) — 2026-05-27 APPROVED
 **상태**: ✅ **APPROVED** (2026-05-27 Reviewer-only 단축 합의 — `docs/review/3plus1-consensus-2026-05-27-implementation-runtime-roadmap-mvp1-authority.md`, 5/5 풀 3+1 승격 트리거 0건 발화, 후속 3 합의 본문 흡수 완료)
-**다음 단계**: §8 권고 순서 (b) MVP-1 1.5차 보강 합의 → (c) Implementation Evidence PASS 발효 합의 (사용자 결정 영역)
+**다음 단계** (2026-05-27 32번째 entry 후): ✅ (b) MVP-1 1.5차 보강 합의 완료 (24번째 entry) → ✅ (b1) 4 sub-cycle 완료 (PC-1-T3 + S-3 + ST-2 + AR-3) → ✅ (c) **Implementation Evidence PASS 완전 발효 완료** (32번째 entry, 본 commit) → ⏳ (D-5 재조정 R-6 BLOCKING 답습): paths-aware workflow audit (R-MVP1-PASS-8 답습) → (b2) R-S1 cross-reference 정정 + (b3) framing 정정 (병렬) → Markdown evidence 통합 (D-3 carry-over) → (b1-PC1-D6) bypass detection CI 통합 → PR #2 merge 결정 (사용자 자율) → (d) facade real → MVP-2 진입 자격 검토 (별도 합의 영역)
 **금지 (사용자 명시 답습 — 2026-05-12 진입 명령, 변동 없음)**:
 - ❌ 실제 runtime code 구현
 - ❌ CI/hook 구현

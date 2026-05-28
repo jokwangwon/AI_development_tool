@@ -41,141 +41,26 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-# ============================================================================
-# Tier-1 패턴 카탈로그 (45종) — R-4.1 §4.1 직접 답습
-#
-# 형식: (id, source, category, vendor, regex)
-#   - id: BL-N (baseline) 또는 T1-NNN (Tier-1)
-#   - source: Hermes 측 출처 식별자
-#   - category: prefix-baseline / prefix / regex / alternation
-#   - vendor: 사람이 읽을 수 있는 vendor/유형 라벨
-#   - regex: scanner 등록용 정규식 문자열
-# ============================================================================
+# SC-1 (65 entry, 합의 B-1 (ii)): Tier-1 catalog single source = src/adapters/llm/redaction_patterns.py
+# (detection ↔ prevention drift 0). 본 scanner 는 `python3 tools/secret_scanner.py` 직접 실행 →
+# sys.path[0]=tools/ 이므로 repo root 보강 후 import. 패턴 *내용* 변경 0건 (R-4.1 답습).
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
-# Baseline 5 prefix (R-2 PoC 보존 — R-4.1 §4.1)
-BASELINE_PREFIX: list[tuple[str, str, str, str, str]] = [
-    ("BL-1", "Hermes #1 (sk-ant-)", "prefix-baseline", "Anthropic",
-     r"sk-ant-[A-Za-z0-9_-]{10,}"),
-    ("BL-2", "Hermes #1 (sk-)", "prefix-baseline", "OpenAI/Anthropic/etc",
-     r"sk-[A-Za-z0-9_-]{10,}"),
-    ("BL-3", "Hermes #2", "prefix-baseline", "GitHub PAT classic",
-     r"ghp_[A-Za-z0-9]{10,}"),
-    ("BL-4", "Hermes #15", "prefix-baseline", "AWS Access Key ID",
-     r"AKIA[A-Z0-9]{16}"),
-    ("BL-5", "Hermes #8", "prefix-baseline", "Slack tokens",
-     r"xox[baprs]-[A-Za-z0-9-]{10,}"),
-]
-
-# Tier-1 prefix 31 (Hermes #3..#7, #9..#14, #16..#35) — R-4.1 §4.1 직접 답습
-PREFIX_PATTERNS: list[tuple[str, str, str, str, str]] = [
-    ("T1-001", "Hermes #3", "prefix", "GitHub PAT (fine-grained)",
-     r"github_pat_[A-Za-z0-9_]{10,}"),
-    ("T1-002", "Hermes #4", "prefix", "GitHub OAuth access token",
-     r"gho_[A-Za-z0-9]{10,}"),
-    ("T1-003", "Hermes #5", "prefix", "GitHub user-to-server",
-     r"ghu_[A-Za-z0-9]{10,}"),
-    ("T1-004", "Hermes #6", "prefix", "GitHub server-to-server",
-     r"ghs_[A-Za-z0-9]{10,}"),
-    ("T1-005", "Hermes #7", "prefix", "GitHub refresh token",
-     r"ghr_[A-Za-z0-9]{10,}"),
-    ("T1-006", "Hermes #9", "prefix", "Google API keys",
-     r"AIza[A-Za-z0-9_-]{30,}"),
-    ("T1-007", "Hermes #10", "prefix", "Perplexity",
-     r"pplx-[A-Za-z0-9]{10,}"),
-    ("T1-008", "Hermes #11", "prefix", "Fal.ai",
-     r"fal_[A-Za-z0-9_-]{10,}"),
-    ("T1-009", "Hermes #12", "prefix", "Firecrawl",
-     r"fc-[A-Za-z0-9]{10,}"),
-    ("T1-010", "Hermes #13", "prefix", "BrowserBase",
-     r"bb_live_[A-Za-z0-9_-]{10,}"),
-    ("T1-011", "Hermes #14", "prefix", "Codex encrypted tokens",
-     r"gAAAA[A-Za-z0-9_=-]{20,}"),
-    ("T1-012", "Hermes #16", "prefix", "Stripe secret key (live)",
-     r"sk_live_[A-Za-z0-9]{10,}"),
-    ("T1-013", "Hermes #17", "prefix", "Stripe secret key (test)",
-     r"sk_test_[A-Za-z0-9]{10,}"),
-    ("T1-014", "Hermes #18", "prefix", "Stripe restricted key",
-     r"rk_live_[A-Za-z0-9]{10,}"),
-    ("T1-015", "Hermes #19", "prefix", "SendGrid API key",
-     r"SG\.[A-Za-z0-9_-]{10,}"),
-    ("T1-016", "Hermes #20", "prefix", "HuggingFace token",
-     r"hf_[A-Za-z0-9]{10,}"),
-    ("T1-017", "Hermes #21", "prefix", "Replicate API token",
-     r"r8_[A-Za-z0-9]{10,}"),
-    ("T1-018", "Hermes #22", "prefix", "npm access token",
-     r"npm_[A-Za-z0-9]{10,}"),
-    ("T1-019", "Hermes #23", "prefix", "PyPI API token",
-     r"pypi-[A-Za-z0-9_-]{10,}"),
-    ("T1-020", "Hermes #24", "prefix", "DigitalOcean PAT",
-     r"dop_v1_[A-Za-z0-9]{10,}"),
-    ("T1-021", "Hermes #25", "prefix", "DigitalOcean OAuth",
-     r"doo_v1_[A-Za-z0-9]{10,}"),
-    ("T1-022", "Hermes #26", "prefix", "AgentMail API key",
-     r"am_[A-Za-z0-9_-]{10,}"),
-    ("T1-023", "Hermes #27", "prefix", "ElevenLabs TTS key",
-     r"sk_[A-Za-z0-9_]{10,}"),
-    ("T1-024", "Hermes #28", "prefix", "Tavily search API",
-     r"tvly-[A-Za-z0-9]{10,}"),
-    ("T1-025", "Hermes #29", "prefix", "Exa search API",
-     r"exa_[A-Za-z0-9]{10,}"),
-    ("T1-026", "Hermes #30", "prefix", "Groq Cloud API key",
-     r"gsk_[A-Za-z0-9]{10,}"),
-    ("T1-027", "Hermes #31", "prefix", "Matrix access token",
-     r"syt_[A-Za-z0-9]{10,}"),
-    ("T1-028", "Hermes #32", "prefix", "RetainDB API key",
-     r"retaindb_[A-Za-z0-9]{10,}"),
-    ("T1-029", "Hermes #33", "prefix", "Hindsight API key",
-     r"hsk-[A-Za-z0-9]{10,}"),
-    ("T1-030", "Hermes #34", "prefix", "Mem0 Platform API key",
-     r"mem0_[A-Za-z0-9]{10,}"),
-    ("T1-031", "Hermes #35", "prefix", "ByteRover API key",
-     r"brv_[A-Za-z0-9]{10,}"),
-]
-
-# Tier-1 추가 regex 7 (H-A, H-B, H-C, H-E, H-F, H-G, H-K — H-J/H-L 제외, R-4.1 §4.2 답습)
-REGEX_PATTERNS: list[tuple[str, str, str, str, str]] = [
-    ("T1-032", "Hermes H-A", "regex", "ENV assignment",
-     r"([A-Z0-9_]{0,50}(?:API_?KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]{0,50})\s*=\s*(['\"]?)(\S+)\2"),
-    ("T1-033", "Hermes H-B", "regex", "JSON field with secret keys",
-     r'(?i)("(?:api_?[Kk]ey|token|secret|password|access_token|refresh_token|auth_token|bearer|secret_value|raw_secret|secret_input|key_material)")\s*:\s*"([^"]+)"'),
-    ("T1-034", "Hermes H-C", "regex", "Authorization header (Bearer)",
-     r"(?i)(Authorization:\s*Bearer\s+)(\S+)"),
-    ("T1-035", "Hermes H-E", "regex", "Private key block",
-     r"-----BEGIN[A-Z ]*PRIVATE KEY-----[\s\S]*?-----END[A-Z ]*PRIVATE KEY-----"),
-    ("T1-036", "Hermes H-F", "regex", "DB connstr password",
-     r"(?i)((?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp)://[^:]+:)([^@]+)(@)"),
-    ("T1-037", "Hermes H-G", "regex", "JWT token",
-     r"eyJ[A-Za-z0-9_-]{10,}(?:\.[A-Za-z0-9_=-]{4,}){0,2}"),
-    ("T1-039", "Hermes H-K", "regex", "URL userinfo (non-DB)",
-     r"(https?|wss?|ftp)://([^/\s:@]+):([^/\s@]+)@"),
-]
-
-# Tier-1 alternation 2 (H-J / H-L sensitive key 기반 변환, R-4.1 §4.1 답습)
-ALTERNATION_PATTERNS: list[tuple[str, str, str, str, str]] = [
-    # (b1-PC1-D6-false-positives) 합의 2026-05-27 APPROVE WITH CONDITIONS (R-1 BLOCKING 흡수)
-    # (b1-PC1-D6-fp-edge-extensions) 합의 2026-05-27 APPROVE (단축 + codex cross-vendor, semicolon + fragment 확장)
-    # word boundary `(?:^|[?&\s'\";#])` prefix — Python keyword arg FP 해소 + quoted body literal cover + Cookie semicolon + OAuth fragment cover
-    # `(` paren delimiter 추가 0 = `sort(key=...)` / `WorkerResult(exit_code=...)` FP 재발 회피 (codex N-4 답습)
-    # carry-over: (b1-PC1-D6-ast-context) AST SAFE_CONTEXT
-    ("T1-041", "Hermes _SENSITIVE_QUERY_PARAMS", "alternation", "URL query sensitive keys (16)",
-     r"(?i)(?:^|[?&\s'\";#])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|session|secret|key|code|signature|x-amz-signature)=[^&\s]+"),
-    ("T1-042", "Hermes _SENSITIVE_BODY_KEYS", "alternation", "Body/form sensitive keys (14)",
-     r"(?i)(?:^|[?&\s'\";#])(?:access_token|refresh_token|id_token|token|api_key|apikey|client_secret|password|auth|jwt|secret|private_key|authorization|key)=[^&\s]+"),
-]
-
-ALL_PATTERNS: list[tuple[str, str, str, str, str]] = (
-    BASELINE_PREFIX + PREFIX_PATTERNS + REGEX_PATTERNS + ALTERNATION_PATTERNS
+from src.adapters.llm.redaction_patterns import (  # noqa: E402
+    ALL_PATTERNS,
+    ALTERNATION_PATTERNS,
+    BASELINE_PREFIX,
+    COMPILED_PATTERNS,
+    PREFIX_PATTERNS,
+    REGEX_PATTERNS,
+    SKIP_DIRECT_REGISTER,
 )
-"""All registered patterns — 5 baseline + 31 prefix + 7 regex + 2 alternation = 45 patterns."""
 
-# Compiled regex objects (모듈 import 시 1회 컴파일)
-COMPILED_PATTERNS: list[tuple[str, str, str, str, re.Pattern[str]]] = [
-    (pid, src, cat, vendor, re.compile(rgx))
-    for (pid, src, cat, vendor, rgx) in ALL_PATTERNS
-]
-
-# 본 PoC 직접 등록 제외 (R-4.1 §4.2 답습 — alternation 채택, H-J/H-L 직접 등록 false-positive 회피)
-SKIP_DIRECT_REGISTER: frozenset[str] = frozenset({"T1-038", "T1-040"})
+# Tier-1 패턴 카탈로그 (45종) = src/adapters/llm/redaction_patterns.py (SC-1 B-1 (ii) single source).
+# BASELINE_PREFIX(5) + PREFIX_PATTERNS(31) + REGEX_PATTERNS(7) + ALTERNATION_PATTERNS(2) = ALL_PATTERNS(45)
+# + COMPILED_PATTERNS + SKIP_DIRECT_REGISTER 모두 위 import (line 상단) — 패턴 내용 변경 0 (R-4.1 답습).
 
 # Redaction marker exclusion (scan-log mode 전용 — GP-2 D-2 contract 답습).
 # 사양 §0 — D-2 = "redaction 후 잔존 secret 검증". 본 marker 가 매칭 substring 전체를

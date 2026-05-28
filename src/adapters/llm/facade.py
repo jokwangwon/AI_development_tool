@@ -5,9 +5,15 @@
 함수 내부 lazy import — litellm 미설치 환경에서도 facade import + Router 주입 테스트가
 hermetic 하게 동작 (CB-8). import-linter `ignore_imports = facade -> *` 로 계약 PASS.
 
-SC-Provider Liquidity (69 entry): **facade `complete()` Router 위임 real (Core MVP, mock-verified)** —
+SC-Provider Liquidity (69 entry): **facade `complete()` Router 위임 real (Core MVP)** —
 65 SC-1 의 redaction layer real 위에 LiteLLM Router 위임을 실배선. RT-1: redaction 은
 Router 위임 *전* 위치 (송신 secret strip, 미부착 window 0).
+
+검증 상태 (71 entry, 2026-05-28): **실 ollama-verified** — 69 의 mock-verified 를 실 LLM
+end-to-end smoke 로 격상. litellm==1.86.2 설치 + 실 `litellm.Router` → ollama(Qwen3-30B)
+호출 1.6s "SMOKE_OK" 반환. 실 `ModelResponse`(pydantic) shape 가 `_normalize` 속성 접근
+(`raw.choices[0].message.content` / `usage.prompt_tokens` / `raw.id`) 과 정확 일치 →
+69 Agent C "mock 자기충족 위험" 해소. (실 호출 검증은 ollama 한정 — anthropic/openai 실 API 미검증.)
 
 답습 출처:
   - docs/architecture/llm-providers-design.md §3(registry) / §4(facade) / §5(Router 위임) / §6(Min 2)

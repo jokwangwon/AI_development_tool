@@ -15,7 +15,8 @@
   - Genesis hash = sha256("genesis:<scope>:<schema_version>") (ADR-012 §2.6 MVP)
   - hash 계산 = sha256(canonical_json(entry - "hash" field))
   - prev_hash 검증 실패 = BLOCK + chain_violation_detected entry 자동 작성
-  - violation_type 4종: prev_hash_mismatch / hash_recalculation / history_rewrite / genesis_mismatch
+  - violation_type 3종 (Layer 1): prev_hash_mismatch / hash_recalculation / genesis_mismatch
+    (history rewrite = Layer 2 history_anchor_verifier — 외부 anchor 비교 의무)
   - timestamp monotonicity: 본 entry ts >= prev_hash entry ts (ADR-012 §3.4)
   - T3 자동 정책 변경 금지 (ADR-011 §2.4) — 자동 revert 0건, BLOCK + manual
 
@@ -64,11 +65,15 @@ SUPPORTED_SCHEMA_VERSION: str = "0.1"
 
 
 class ViolationType(str, Enum):
-    """Chain violation 4종 (ADR-012 §2.7 답습)."""
+    """Layer 1 (hash chain) chain violation 3종 (ADR-012 §2.7 답습).
+
+    history rewrite 는 외부 anchor / base branch 비교 의무이므로 Layer 1 에서
+    검출 불가 — Layer 2 (history_anchor_verifier.py + rewrite_defense_check.py)
+    영역 (57 entry (β) sub-수단 결정 + 55 entry consensus B-1 답습).
+    """
 
     PREV_HASH_MISMATCH = "prev_hash_mismatch"
     HASH_RECALCULATION = "hash_recalculation"
-    HISTORY_REWRITE = "history_rewrite"
     GENESIS_MISMATCH = "genesis_mismatch"
 
 
@@ -251,8 +256,7 @@ def build_violation_entry(
     if not violations:
         return None
 
-    # 첫 violation 이 history_rewrite 가능성 ↔ 그 외 분류
-    first_vio = violations[0]
+    # chain violation (Layer 1 enum) 만 분류 — schema/monotonicity 위반 제외
     chain_violations = [
         v for v in violations
         if v.violation_type in {vt.value for vt in ViolationType}

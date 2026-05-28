@@ -13,6 +13,17 @@
 
 ---
 
+## ⭐ Implementation Evidence PASS 발효 milestone 이력
+
+| 단계 | 발효 | 범위 / 자격 | 근거 합의 |
+|------|------|-----------|---------|
+| **MVP-1** (G2 GP-3 + GP-5) | ✅ 2026-05-27 (32번째 entry) | MVP-1 Implementation Evidence PASS **완전 발효 (α)** — GP-3 5/5 + GP-5 5/5 | `docs/review/3plus1-consensus-2026-05-27-mvp1-implementation-evidence-pass-activation.md` (풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS) + roadmap-mvp1.md §9 |
+| **MVP-2** (G2 GP-2 + G4 §4.4 Layer 1+2+4) | ✅ 2026-05-28 (62번째 entry, commit `82e1ee6`) | MVP-2 Implementation Evidence PASS — **G4 ledger 무결성 *완전* (Layer 1+2+4) + GP-2 송신 redaction *detection-tier*, prevention(R-1/R-2)/Layer 3·5/2a denyNonFastForwards *deferred*** (⚠️ full GP-2 PASS 아님) | `docs/review/3plus1-consensus-2026-05-28-mvp2-final-pass.md` (풀 3+1 + 외부 LLM 1+ APPROVE WITH CONDITIONS, 4 source) — 의존: 59 Layer 통합 PASS (`0f49eb9`) + 60 GP-2 detection-layer PASS (`92e9078`) + 61 R-S1 정정 (`bb59342`) |
+
+> **MVP-2 PASS 후속 trajectory (deferred, 자동 진입 0)**: full GP-2 PASS (R-1 Hermes runtime redaction import / R-2 facade real TR-1 prevention) + Layer 3 (Signed commit) + Layer 5 (External anchor) + Layer 2a denyNonFastForwards (실 bare/server 배포 시점) — 별도 cycle 사용자 명시.
+
+---
+
 ## 0. 본 문서 범위
 
 ### 0.1 본 문서가 *하는* 것

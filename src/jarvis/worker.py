@@ -23,6 +23,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol, runtime_checkable
 
+from src.adapters.llm.redaction import RedactionFilter  # SDK 아님 — 송신 redaction (RT-1, 70 entry)
+
 from src.jarvis.isolation import IsolationBackend, PassthroughIsolation
 
 # runner(cmd, workdir) -> (exit_code, stdout, stderr). 주입으로 테스트 결정성 확보.
@@ -268,21 +270,28 @@ class OllamaWorker:
         output_filename: str | None = None,
         timeout_s: float = _OLLAMA_WORKER_DEFAULT_TIMEOUT_S,
         system_prompt: str | None = None,
+        redactor: RedactionFilter | None = None,
     ) -> None:
         self.alias = alias
         self._model = model
         self._output_filename = output_filename
         self._timeout = timeout_s
         self._system_prompt = system_prompt or _DEFAULT_SYSTEM_PROMPT
+        # 송신 redaction (RT-1, 70 entry (나)) — optional default 로 호환 보존.
+        self._redactor = redactor or RedactionFilter()
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
+        # RT-1: 송신 전 redaction (prompt 의 secret strip — GP-2 prevention).
+        messages = self._redactor.redact_messages(
+            [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": prompt},
+            ]
+        )
         body = {
             "model": self._model,
             "stream": False,
-            "messages": [
-                {"role": "system", "content": self._system_prompt},
-                {"role": "user", "content": prompt},
-            ],
+            "messages": messages,
         }
         data = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(

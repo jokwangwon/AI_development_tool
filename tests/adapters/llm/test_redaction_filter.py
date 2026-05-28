@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-from src.adapters.llm.facade import LLMFacade, LLMRequest
 from src.adapters.llm.redaction import RedactionFilter
 from src.adapters.llm.redaction_patterns import ALL_PATTERNS, REDACTION_MARK
 
@@ -88,25 +87,9 @@ def test_t5_scrub_dict_key_blacklist_and_structure(rf: RedactionFilter) -> None:
     assert set(out.keys()) == {"api_key", "user", "nested"}
 
 
-# ── T-6: facade complete() redaction 선행 (spy) + Router deferred ─────────────
-def test_t6_facade_redaction_before_router_deferred() -> None:
-    calls: list[str] = []
-
-    class SpyRedactor:
-        def redact_messages(self, messages):
-            calls.append("redact_messages")
-            return messages
-
-        def scrub(self, obj):
-            calls.append("scrub")
-            return obj
-
-    facade = LLMFacade(registry_path="dummy", redactor=SpyRedactor())
-    req = LLMRequest(alias="agent_a", messages=[{"role": "user", "content": "hi"}])
-    with pytest.raises(NotImplementedError):
-        facade.complete(req)
-    # redaction 이 Router deferred (NotImplementedError) *전* 호출됨
-    assert "redact_messages" in calls
+# ── T-6 (facade redaction 선행): SC-Provider Liquidity 에서 RT-1 동치 검증으로
+#    대체 (test_facade_router.py::test_a_rt1_*). CB-4 — spy "호출됨" trap +
+#    NotImplementedError 전제 폐기 (Router 위임 real). ───────────────────────────
 
 
 # ── T-7: 원본 불변성 — redact_messages in-place mutate 0 (R-1) ────────────────

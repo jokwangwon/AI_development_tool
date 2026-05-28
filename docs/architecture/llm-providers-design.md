@@ -2,8 +2,8 @@
 
 > **모든 LLM 호출이 LiteLLM facade를 거치며, provider/모델 교체가 코드 변경 없이 config 1줄로 가능한 구조**
 
-**최종 수정**: 2026-05-04 (Option β 채택, 3+1 합의 결과 반영)
-**상태**: 초안 v2 (Option β: LiteLLM facade 승격 + 12 보강 + 4 β-추가 적용. 재합의 대기)
+**최종 수정**: 2026-05-28 (SC-Provider Liquidity 풀 3+1 + 외부 LLM 합의 — §17 재합의 folding, CB-2 staged 조건부 승격)
+**상태**: **확정 v2 / Core MVP 구현분리 승인 (staged implementation 허용)** — 2026-05-04 Option β(12 보강 + 4 β-추가) 채택 + 2026-05-28 §17 재합의 통과(`docs/review/3plus1-consensus-2026-05-28-sc-provider-liquidity.md`, 4 source APPROVE WITH CONDITIONS). **Core MVP(`complete()` Router 위임 + Min 2 + 동일 type + redaction + 런타임 강등 감지) = 발효(69 entry, mock-verified)**. **streaming / OAuth single-flight / degraded 모드·R4 자동복구 / metrics callback / 폴백 race 완화 = 12 보강 단계화(deferred phase, 명세 존속 — 본 §15)**. ⚠️ "v1.0 전체 구현 완료" 아님(CB-2 over-claim 차단).
 **상위 문서**: `ADR-008-hermes-adoption-decision.md` (차단조건 #4·#5 충족 메커니즘)
 **관련 ADR**: ADR-004 (생성 AI 확장성, **외부 SDK 우선 원칙 일치**), ADR-006 (환경 변수 + Docker), ADR-009 (자체 Adapter v2.0 진입조건)
 **관련 메모리**: `feedback_provider_liquidity.md` (영구 기억)
@@ -768,9 +768,12 @@ ADR-004 핵심 원칙: **"자체 어댑터 불필요 — 외부 SDK 활용. 자�
 
 ## 15. Phase 로드맵
 
+> **⚠️ v1.0 단계화 (CB-2, 2026-05-28 SC-Provider Liquidity 합의)**: v1.0 은 "12 보강 *모두* 동시 구현"이 아니라 **Core MVP 발효 + 나머지 보강 deferred phase 단계화**로 분리 승인됨. deferred 항목은 *삭제 아님 — 설계 명세 존속*, 사용자 명시 별도 sub-cycle 로만 진입.
+
 | Phase | 내용 | 상태 | 진입 조건 |
 |-------|------|------|----------|
-| **MVP (v1.0)** | LiteLLM facade + `llm-providers.yaml` + Min 2 fail-fast + 동일 type 강제 + redaction + dry probe + 12 보강 모두 | **구현 대상** | 본 설계 재합의 통과 |
+| **v1.0 Core MVP** | `complete()` LiteLLM Router 위임(model=alias) + `llm-providers.yaml` + Min 2 fail-fast + 동일 type 강제 + redaction(RT-1 송신) + 런타임 강등 감지(fail-loud) + 응답 정규화(LLMMetadata 화이트리스트) | **✅ 발효 (69 entry, mock-verified)** | §17 재합의 통과 (2026-05-28) |
+| **v1.0 보강 단계화 (deferred phase)** | streaming(StreamEvent) + OAuth single-flight + degraded *모드*·R4 자동복구·UI/timer + DomainMetricsCallback + 폴백 race 완화 + dry probe health 실배선 | 명세 존속·구현 deferred | 사용자 명시 별도 sub-cycle |
 | **v1.1** | LiteLLM Router 고급 기능 (cooldown 튜닝, custom retry strategy) + 의사결정 대시보드 | 필요 입증 후 | MVP 운영 1~2주 + 폴백/한도 이벤트 발생 |
 | **v1.2** | 자동 모델 추천 (성능/비용 학습 기반) + multi-modal 통합 | 필요 입증 후 | 사용 데이터 축적 |
 | **v2.0** | 자체 Adapter 작성 (LiteLLM 폐기) | **ADR-009 진입조건 충족 시에만** | LiteLLM이 신규 provider X를 N분기 내 미지원 + PR 거부 등 |
@@ -824,4 +827,4 @@ ADR-004 핵심 원칙: **"자체 어댑터 불필요 — 외부 SDK 활용. 자�
 
 ---
 
-**이 문서는 3+1 에이전트 재합의를 통과해야 확정됩니다.**
+**이 문서는 2026-05-28 SC-Provider Liquidity 풀 3+1 + 외부 LLM 1+(codex gpt-5.5 cross-vendor) §17 재합의를 통과하여 "확정 v2 / Core MVP 구현분리 승인(staged)" 으로 승격되었습니다** (`docs/review/3plus1-consensus-2026-05-28-sc-provider-liquidity.md`, 4 source APPROVE WITH CONDITIONS, BLOCKING 8 흡수). Core MVP 발효(69 entry), 12 보강 단계화(deferred phase 명세 존속, §15).

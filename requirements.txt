@@ -1,0 +1,25 @@
+# Runtime application 의존성 (SC-Provider Liquidity, 69 entry — 본 repo *첫* runtime dep)
+#
+# 답습 출처:
+#   - docs/phase0/sc-provider-liquidity-router-delegation-implementation-brief.md (v1.1) §4.2
+#   - docs/review/3plus1-consensus-2026-05-28-sc-provider-liquidity.md (CB-3, 4 source 수렴)
+#   - docs/architecture/llm-providers-design.md §1.2 (Option β — LiteLLM facade 승격, Apache 2.0)
+#   - ADR-008 차단조건 #3 (버전 정확 핀) / ADR-009 §2.1(c) (LiteLLM Apache 2.0)
+#   - governance-preconditions.md §1.2.7 P11 (supply-chain — dependency pinning integrity)
+#
+# ⚠️ R-RF2 gate lift (명시 결정 — 암묵 금지): requirements-dev.txt 의 "runtime application
+#   의존성 0건 / pyproject.toml 신설 별도 합의" gate 를 본 합의(CB-3 (a)(d))로 lift.
+#   manifest 형식 = requirements.txt (pyproject 기각 — 기존 핀 컨벤션 + --require-hashes native,
+#   R-RF2 추가 합의 부담 회피). 개인 단일 사용자 툴 비례성 ([[feedback_proportionate_security_personal_tool]]).
+#
+# ⚠️ P11 위상 정직 (CB-3 (c) — over-claim 차단): 본 manifest 는 P11 (i)(ii) 의 *일부* 조기 발효.
+#   - 충족 (비협상): litellm 직접 핀 exact version + sha256 wheel hash (아래) + lock diff 회귀(git diff)
+#   - transitive 전체 hash (--require-hashes 전 의존성): 비례성 평가 후 결정 (best-effort, 본 cycle 미적용)
+#   - P11 전체 enforcement (SBOM / Action SHA pin / Docker digest / auto-recheck): governance §1.2.7
+#     Implementation Pending **영구 존속** (본 cycle 충족 주장 0).
+#
+# LiteLLM 직접 import = src/adapters/llm/facade.py 한 파일 한정 (ADR-009 §2.2 #1, import-linter).
+# 설치: pip install -r requirements.txt  (실 LLM 호출은 credential/네트워크 — 수동/별도; 본 cycle 검증 = Router mock).
+
+litellm==1.86.2 \
+    --hash=sha256:27096463be7add661513ada3d9039e8f1a6195859e604d30fde96c939efe0a03

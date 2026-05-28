@@ -59,6 +59,20 @@ def test_history_rewrite_never_emitted_by_layer1() -> None:
         assert "history_rewrite" not in vios, f"{path.name}: unexpected history_rewrite"
 
 
+def test_validate_chain_monotonicity_violation() -> None:
+    """timestamp monotonicity 위반 fixture = monotonicity_violation emit (ADR-012 §3.4).
+
+    chain (genesis + prev_hash + entry hash) 은 valid, ts 만 역행 → Layer 1
+    monotonicity_violation 단독 emit (E-PASS-10 CI 입증, 59 entry C-1 보강).
+    """
+    entries, parse_vios = jhc.parse_jsonl(_LEDGER / "fail/timestamp_monotonicity.jsonl")
+    assert parse_vios == []
+    chain_vios = [v.violation_type for v in jhc.validate_chain(entries)]
+    assert "monotonicity_violation" in chain_vios
+    # chain (hash/prev_hash/genesis) 은 valid — monotonicity 외 위반 0
+    assert set(chain_vios) == {"monotonicity_violation"}
+
+
 def test_build_violation_entry_uses_layer1_types_only() -> None:
     """build_violation_entry chain violation 필터 = Layer-1 enum 한정 (dead enum 0)."""
     entries, _ = jhc.parse_jsonl(_LEDGER / "fail/prev_hash_mismatch.jsonl")

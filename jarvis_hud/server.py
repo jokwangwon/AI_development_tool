@@ -18,6 +18,7 @@ if _ROOT not in sys.path:
 
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
+from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
 
 def _check_ollama_health_sync():
     try:
@@ -176,7 +177,8 @@ async def jarvis_self_analysis_handler(request):
         return JSONResponse({"error": str(e), "analysis": "자체 분석 일시 부재"}, status_code=500)
 
 
-CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2: JARVIS_DATA_DIR > XDG (대화 raw 저장, Q7). str — line 360 `+ ".tmp"` 호환.
+CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2: JARVIS_DATA_DIR > XDG (대화 raw 저장, Q7). str — repo 내부 `+ ".tmp"` 호환.
+_conversation_repo = ConversationRepo(CONVERSATIONS_PATH)  # §10-3: 대화 저장 단일 port (SQLite swap 시 이 1곳만 교체)
 
 NOTE_PROMPT_TEMPLATE = """다음 사용자 입력을 정리된 노트 형식의 JSON 으로만 출력하세요.
 출력 형식 (엄격, 다른 텍스트 0):
@@ -211,12 +213,8 @@ MODE_PROMPTS = {
 
 
 async def _save_conversation_entry(entry: dict) -> None:
-    """JSONL append (fail-soft)."""
-    try:
-        with open(CONVERSATIONS_PATH, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
+    """JSONL append (fail-soft) — ConversationRepo 위임(§10-3)."""
+    _conversation_repo.append(entry)
 
 
 async def respond_handler(request):
@@ -296,24 +294,14 @@ async def conversation_history_handler(request):
     """전체 conversation list 또는 query 검색."""
     try:
         q = request.query_params.get("q", "").lower()
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"entries": []})
         entries = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
+        for e in _conversation_repo.read_all():
+            if q:
+                blob = (e.get("content", "") + " " + e.get("title", "") + " "
+                        + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
+                if q not in blob:
                     continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    continue
-                if q:
-                    blob = (e.get("content", "") + " " + e.get("title", "") + " "
-                            + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
-                    if q not in blob:
-                        continue
-                entries.append(e)
+            entries.append(e)
         return JSONResponse({"entries": entries[-200:]})  # last 200
     except Exception as e:
         return JSONResponse({"error": str(e), "entries": []}, status_code=500)
@@ -322,11 +310,11 @@ async def conversation_history_handler(request):
 async def conversation_clear_handler(request):
     """전체 대화 JSONL 비움 (archive 폴더로 백업 후 새 파일 시작)."""
     try:
-        if os.path.exists(CONVERSATIONS_PATH):
+        if _conversation_repo.exists():
             ts = time.strftime("%Y%m%d_%H%M%S")
             archive_dir = paths.conversations_archive_dir()  # 생성 + 0700 보장
             archive_path = os.path.join(archive_dir, f"conversations_{ts}.jsonl")
-            os.rename(CONVERSATIONS_PATH, archive_path)
+            _conversation_repo.archive_to(archive_path)
             return JSONResponse({"ok": True, "archived": archive_path})
         return JSONResponse({"ok": True, "archived": None})
     except Exception as e:
@@ -339,29 +327,7 @@ async def conversation_delete_entry_handler(request):
         entry_id = request.path_params.get("entry_id")
         if not entry_id:
             return JSONResponse({"error": "missing entry_id"}, status_code=400)
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"ok": True, "removed": 0})
-        kept = []
-        removed = 0
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    kept.append(line)
-                    continue
-                if e.get("id") == entry_id:
-                    removed += 1
-                else:
-                    kept.append(json.dumps(e, ensure_ascii=False))
-        tmp_path = CONVERSATIONS_PATH + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            for line in kept:
-                fh.write(line + "\n")
-        os.replace(tmp_path, CONVERSATIONS_PATH)
+        removed = _conversation_repo.delete_entry(entry_id)
         return JSONResponse({"ok": True, "removed": removed})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -371,19 +337,10 @@ async def conversation_export_handler(request):
     """대화 내보내기 — markdown 또는 json."""
     try:
         fmt = request.query_params.get("format", "md").lower()
-        if not os.path.exists(CONVERSATIONS_PATH):
+        if not _conversation_repo.exists():
             content = "(대화 없음)" if fmt == "md" else "[]"
             return JSONResponse({"content": content, "format": fmt})
-        entries = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entries.append(json.loads(line))
-                except Exception:
-                    continue
+        entries = _conversation_repo.read_all()
         if fmt == "json":
             return JSONResponse({"content": json.dumps(entries, ensure_ascii=False, indent=2), "format": "json"})
         # markdown
@@ -493,20 +450,7 @@ async def tts_handler(request):
 async def conversation_canvas_handler(request):
     """Canvas 카드 list — type=note 또는 svg 만."""
     try:
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"cards": []})
-        cards = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    continue
-                if e.get("type") in ("note", "svg"):
-                    cards.append(e)
+        cards = [e for e in _conversation_repo.read_all() if e.get("type") in ("note", "svg")]
         return JSONResponse({"cards": cards[-100:]})  # last 100
     except Exception as e:
         return JSONResponse({"error": str(e), "cards": []}, status_code=500)

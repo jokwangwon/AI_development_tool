@@ -2,7 +2,7 @@
 
 > **본 brief = 설계 정리 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·DB 설치·마이그레이션 실행·엔진 선택 고정** 을 발생시키지 않는다. staged: brief v1 → 사용자 승인 → **3+1 합의(+codex cross-vendor)** → (합의 흡수) → 구현. 코드 전 문서 먼저(SDD). 실 변경 0건.
 
-**Status**: **DRAFT v1.1 — 3+1 합의 REVISE 흡수 완료 (BLOCKING 6 + 권고 5)**. 4 source(codex+A/B/C) → [[3plus1-consensus-2026-05-29-data-layer]]. 격상: APPROVE WITH CONDITIONS. **Q7 해소(raw 저장 확정) + Q4 해소(XDG=`~/.local/share/jarvis`) — 둘 다 2026-05-29 사용자 결정, §8/§11**. **§10-2 구현 완료(2026-05-29, `src/jarvis/paths.py`, §10)**. 잔여 구현 진입 = 사용자 명시 + 엔진 결정 후 (자동 진입 0). v1.1 흡수 매트릭스 = §12.
+**Status**: **DRAFT v1.1 — 3+1 합의 REVISE 흡수 완료 (BLOCKING 6 + 권고 5)**. 4 source(codex+A/B/C) → [[3plus1-consensus-2026-05-29-data-layer]]. 격상: APPROVE WITH CONDITIONS. **Q7 해소(raw 저장 확정) + Q4 해소(XDG=`~/.local/share/jarvis`) — 둘 다 2026-05-29 사용자 결정, §8/§11**. **§10-2(`paths.py`) + §10-3(`conversation_repo.py`) 구현 완료(2026-05-29, §10)**. 잔여 구현 진입(§10-4 다중대화 SQLite 등) = 사용자 명시 + 엔진/Q5 결정 후 (자동 진입 0). v1.1 흡수 매트릭스 = §12.
 
 **계기**: dogfooding 중 "대화창 관리(새 대화/이전 대화 기억)" 질문 → 사용자가 관점 격상: *"앞으로 모델 작업 데이터(JSON)·모델별 비교·관리, 단순 대화 기록뿐 아니라 시스템 전반 데이터 관리가 필요"*. → 대화 저장 결정이 아니라 **시스템 데이터 레이어 아키텍처** 결정으로 재정의.
 
@@ -103,7 +103,7 @@
 
 1. brief v1 → 승인 → **3+1 합의** → v1.1 흡수 ← **완료**
 2. ✅ **완료(2026-05-29)** — 영속 위치 이동 + `JARVIS_DATA_DIR`(RR-2). `src/jarvis/paths.py` 신설 = 모든 영속 경로 single source of truth (precedence `JARVIS_DATA_DIR` > `$XDG_DATA_HOME/jarvis` > `~/.local/share/jarvis`, 디렉터리 0700 / 파일 0600). server.py(6곳) + dashboards(2) + examples(9) 데이터 경로 일원화 — `/tmp` 데이터 잔존 0 (스크린샷 png는 휘발 디버그 산출물이라 의도적 제외). TDD 11 + 전체 261 passed, grimp 경계 위반 0. **기존 `/tmp` 데이터 마이그레이션(복사)은 §10-4(RB-3) 영역** — 본 단계는 위치 전환만.
-3. **0.5단계(RR-1, U-1)**: server.py 인라인 conversation 핸들러 6곳 → **sync `ConversationRepo` 추출(동작 불변 refactor)**. 안 하면 swap 시 6곳 변경.
+3. ✅ **완료(2026-05-29)** — 0.5단계(RR-1, U-1): server.py 인라인 conversation 핸들러 6곳 → **sync `ConversationRepo` 추출(동작 불변 refactor)**. `src/jarvis/conversation_repo.py` 신설(append/read_all/exists/delete_entry/archive_to, JSONL 직접·stdlib only). 동작 불변 디테일 보존(delete bad-line raw / export 파일부재 특수반환 / clear archive 지연생성). repo 12 + 라우트 통합 9(동작 불변 증명) + 전체 282 passed, grimp 경계 0. **§10-4 SQLite swap 시 이 repo 내부 1곳만 교체**(핸들러 6곳 불변).
 4. **다중 대화** = `ConversationRepo` 를 `sqlite3` **직접** 구현(Backing 추상화 없이, `:memory:` 테스트) + RB-1 threading 계약 + RB-3 마이그레이션 importer + RB-2 = **raw 저장**(Q7 해소, 저장 redaction 없음 — 외부 노출 방어는 워커 egress 별도 cycle).
 5. 모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대, 스키마 = Q5 별도).
 6. 계열 A(레저·관찰) JSONL 유지(RR-5) — SQLite 이관은 선택·점진(강제 아님).

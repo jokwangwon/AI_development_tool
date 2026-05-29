@@ -14,6 +14,8 @@ import tempfile
 
 os.environ.setdefault("JARVIS_DATA_DIR", tempfile.mkdtemp(prefix="jarvis-meas-reader-"))
 
+from starlette.testclient import TestClient  # noqa: E402
+
 from jarvis_hud import server  # noqa: E402
 from src.jarvis import paths  # noqa: E402
 
@@ -84,3 +86,49 @@ def test_get_top_measured_models_empty_when_all_skipped(monkeypatch, tmp_path):
         [],
     )
     assert asyncio.run(server.get_top_measured_models()) == []
+
+
+# --- §10-5 모델 관리 화면 overview 라우트 ---
+def test_measurements_overview_returns_latest_and_history(monkeypatch, tmp_path):
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    _write_multi(
+        [
+            {"model": "fast:1", "warmup_s": 1.0, "runs": [], "stats": _stats(9.0),
+             "n_valid": 1, "n_total": 1},
+            {"model": "skip:1", "skipped": True, "reason": "미설치"},
+        ],
+        ["fast:1"],
+    )
+    r = TestClient(server.app).get("/api/measurements/overview")
+    assert r.status_code == 200
+    data = r.json()
+    # 최신 multi 세션 + skipped 포함 모델 보존
+    assert [m["model"] for m in data["latest_multi"]["models"]] == ["fast:1", "skip:1"]
+    # 세션 히스토리 + 추세(skipped 제외)
+    assert len(data["sessions"]) == 1
+    assert [h["model"] for h in data["history"]] == ["fast:1"]
+    assert data["metric"] == "decode"
+
+
+def test_measurements_overview_empty_when_no_data(monkeypatch, tmp_path):
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    r = TestClient(server.app).get("/api/measurements/overview")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["latest_multi"] is None
+    assert data["sessions"] == []
+    assert data["history"] == []
+
+
+def test_measurements_overview_metric_param(monkeypatch, tmp_path):
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    _write_multi(
+        [{"model": "m1", "warmup_s": 1.0, "runs": [], "stats": _stats(9.0),
+          "n_valid": 1, "n_total": 1}],
+        ["m1"],
+    )
+    r = TestClient(server.app).get("/api/measurements/overview?metric=latency")
+    assert r.json()["metric"] == "latency"
+    # 잘못된 metric → decode fallback
+    r2 = TestClient(server.app).get("/api/measurements/overview?metric=bogus")
+    assert r2.json()["metric"] == "decode"

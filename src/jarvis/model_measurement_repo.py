@@ -339,18 +339,23 @@ class ModelMeasurementRepo:
         return [{"model": r[0], "measured_ts": r[1], "mean": r[2]} for r in rows]
 
     def list_sessions(self, *, kind: str | None = None, limit: int = 50) -> list[dict]:
-        """세션 목록(measured_ts DESC)."""
-        sql = "SELECT id, kind, measured_ts, created_ts FROM measurement_session"
+        """세션 목록(measured_ts DESC) + 세션별 모델 수(n_models, skipped 포함)."""
+        sql = (
+            "SELECT s.id, s.kind, s.measured_ts, s.created_ts, "
+            "(SELECT COUNT(*) FROM measurement_model mm WHERE mm.session_id = s.id) "
+            "FROM measurement_session s"
+        )
         params: list = []
         if kind is not None:
-            sql += " WHERE kind = ?"
+            sql += " WHERE s.kind = ?"
             params.append(kind)
-        sql += " ORDER BY measured_ts DESC, id DESC LIMIT ?"
+        sql += " ORDER BY s.measured_ts DESC, s.id DESC LIMIT ?"
         params.append(limit)
         with closing(self._connect()) as conn:
             rows = conn.execute(sql, params).fetchall()
         return [
-            {"id": r[0], "kind": r[1], "measured_ts": r[2], "created_ts": r[3]} for r in rows
+            {"id": r[0], "kind": r[1], "measured_ts": r[2], "created_ts": r[3], "n_models": r[4]}
+            for r in rows
         ]
 
     # --- 마이그레이션 (RB-3, §6) ---

@@ -138,6 +138,30 @@ def test_fold_preserves_first_seen_order(tmp_path: Path) -> None:
     assert list(log.fold()) == ["z", "a"]
 
 
+# --- dismissed (UI 제거 — append-only 존중, fold 제외) ---
+
+def test_fold_excludes_dismissed_task(tmp_path: Path) -> None:
+    """dismissed 이벤트 = fold 결과에서 task 완전 제외(레저엔 기록 보존)."""
+    log = LedgerLog(path=tmp_path / "ledger.jsonl")
+    log.record("t", "created", status="running")
+    log.record("t", "resolved", status="applied")
+    log.record("t", "dismissed")
+    assert "t" not in log.fold()                 # fold 제외
+    # 레저 원본엔 기록 보존(append-only)
+    assert any(e["event"] == "dismissed" for e in log.read())
+
+
+def test_fold_dismissed_only_target_excluded(tmp_path: Path) -> None:
+    log = LedgerLog(path=tmp_path / "ledger.jsonl")
+    log.record("keep", "created", status="running")
+    log.record("keep", "resolved", status="applied")
+    log.record("gone", "created", status="running")
+    log.record("gone", "resolved", status="failed")
+    log.record("gone", "dismissed")
+    cards = log.fold()
+    assert set(cards) == {"keep"}
+
+
 # --- append-only API (modify/delete 없음) ---
 
 def test_ledger_has_no_modify_or_delete_methods() -> None:

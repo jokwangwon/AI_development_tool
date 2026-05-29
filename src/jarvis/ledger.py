@@ -32,6 +32,9 @@ _INTERRUPTED = "interrupted"
 # event/메타 외 fold 카드에 병합하지 않는 예약 키.
 _RESERVED = frozenset({"task_id", "event", "ts"})
 
+# UI 제거 — fold 결과에서 task 완전 제외(레저 원본엔 append-only 로 기록 보존).
+_DISMISSED = "dismissed"
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
@@ -97,13 +100,18 @@ class LedgerLog:
         """이벤트 → task_id 별 재구성 카드. 공유 맥락 read API (디딤돌0).
 
         각 이벤트의 (event/ts/task_id 제외) 필드를 카드에 순서대로 병합 →
-        마지막 값 승리. 모든 이벤트 fold 후 status 가 비완결이면 interrupted 로
-        마킹(재시작 고아, 자동 복구 없음). 첫 등장 순서 보존(dict 삽입 순서).
+        마지막 값 승리. `dismissed` 이벤트가 있으면 그 task 는 결과에서 완전 제외
+        (UI 제거 — 레저 원본엔 기록 보존). 모든 이벤트 fold 후 status 가 비완결이면
+        interrupted 로 마킹(재시작 고아, 자동 복구 없음). 첫 등장 순서 보존.
         """
         cards: dict[str, dict[str, Any]] = {}
+        dismissed: set[str] = set()
         for ev in self.read():
             task_id = ev.get("task_id")
             if not isinstance(task_id, str):
+                continue
+            if ev.get("event") == _DISMISSED:
+                dismissed.add(task_id)
                 continue
             card = cards.get(task_id)
             if card is None:
@@ -113,6 +121,9 @@ class LedgerLog:
                 if key in _RESERVED:
                     continue
                 card[key] = value
+        # UI 제거된 task 제외.
+        for task_id in dismissed:
+            cards.pop(task_id, None)
         # 재시작 고아 마킹 — 비완결 상태 = interrupted.
         for card in cards.values():
             if card.get("status") not in _TERMINAL:

@@ -187,6 +187,71 @@ def test_cancel_terminal_is_noop(tmp_path: Path) -> None:
         assert next(c for c in cards if c["id"] == tid)["status"] == "applied"
 
 
+# ── 제거 (dismissed — append-only 존중, fold 제외) ──────────────────────────────
+def test_dismiss_terminal_removes_from_board_and_ledger(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    with _client(_board(path)) as client:
+        tid = _submit(client)
+        _wait_status(client, tid, "awaiting")
+        client.post(f"/api/jarvis/task/{tid}/decision", json={"decision": "accept"}, headers=_SAME_ORIGIN)
+        _wait_status(client, tid, "applied")
+        r = client.post(f"/api/jarvis/task/{tid}/dismiss", json={}, headers=_SAME_ORIGIN)
+        assert r.status_code == 200 and r.json()["ok"] is True
+        cards = client.get("/api/jarvis/tasks").json()["tasks"]
+        assert all(c["id"] != tid for c in cards)        # 보드에서 제거
+    assert tid not in LedgerLog(path).fold()             # fold 제외
+    assert any(e["event"] == "dismissed" for e in LedgerLog(path).read())  # 기록 보존
+
+
+def test_dismiss_running_protected(tmp_path: Path) -> None:
+    """진행중/승인대기 = 제거 불가(보호) — 완결만 제거."""
+    with _client(_board(tmp_path / "l.jsonl")) as client:
+        tid = _submit(client)
+        _wait_status(client, tid, "awaiting")
+        r = client.post(f"/api/jarvis/task/{tid}/dismiss", json={}, headers=_SAME_ORIGIN)
+        assert r.status_code == 404 and r.json()["ok"] is False
+        cards = client.get("/api/jarvis/tasks").json()["tasks"]
+        assert any(c["id"] == tid for c in cards)         # 카드 유지
+
+
+def test_dismiss_route_csrf_rejected(tmp_path: Path) -> None:
+    with _client(_board(tmp_path / "l.jsonl")) as client:
+        r = client.post("/api/jarvis/task/x/dismiss", json={},
+                        headers={"origin": "http://evil.example", "host": "localhost:8765"})
+        assert r.status_code == 403
+
+
+def test_dismiss_completed_bulk(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    with _client(_board(path)) as client:
+        # 2 완결(applied) + 1 미완(awaiting)
+        done = []
+        for _ in range(2):
+            t = _submit(client)
+            _wait_status(client, t, "awaiting")
+            client.post(f"/api/jarvis/task/{t}/decision", json={"decision": "accept"}, headers=_SAME_ORIGIN)
+            _wait_status(client, t, "applied")
+            done.append(t)
+        live = _submit(client)
+        _wait_status(client, live, "awaiting")
+        r = client.post("/api/jarvis/tasks/dismiss-completed", json={}, headers=_SAME_ORIGIN)
+        assert r.status_code == 200 and r.json()["count"] == 2
+        ids = {c["id"] for c in client.get("/api/jarvis/tasks").json()["tasks"]}
+        assert ids == {live}                              # 완결만 제거, 미완 유지
+
+
+def test_dismissed_not_restored_on_restart(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    with _client(_board(path)) as client:
+        tid = _submit(client)
+        _wait_status(client, tid, "awaiting")
+        client.post(f"/api/jarvis/task/{tid}/decision", json={"decision": "accept"}, headers=_SAME_ORIGIN)
+        _wait_status(client, tid, "applied")
+        client.post(f"/api/jarvis/task/{tid}/dismiss", json={}, headers=_SAME_ORIGIN)
+    board2 = _board(path)                                 # 재시작
+    assert all(c["id"] != tid for c in board2.snapshot())  # 제거 영속
+
+
 def test_cancel_kills_tmux_session(tmp_path: Path) -> None:
     """tmux 세션 보유 task 취소 → 실 kill-session(자원 회수)."""
     path = tmp_path / "ledger.jsonl"

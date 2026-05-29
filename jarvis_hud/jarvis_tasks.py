@@ -328,6 +328,31 @@ class JarvisTaskBoard:
             self._update(task_id, status="failed", error=err)
             self._record(task_id, "resolved", status="failed", error=err)
 
+    # ── 제거 (UI dismiss — append-only 존중) ─────────────────────────────────
+    def dismiss(self, task_id: str) -> bool:
+        """완결(terminal) 카드를 보드에서 제거 + `dismissed` 이벤트 기록.
+
+        진행중/승인대기 = 제거 불가(False, 보호 — 라이브 작업 유실 방지). 레저는
+        append-only 라 *삭제* 안 함 — `dismissed` 이벤트로 fold 제외(재시작해도 안 돌아옴).
+        """
+        with self._lock:
+            card = self._cards.get(task_id)
+            if card is None or card["status"] not in _TERMINAL:
+                return False
+            self._cards.pop(task_id, None)
+            self._events.pop(task_id, None)
+            self._cancels.pop(task_id, None)
+            self._sessions.pop(task_id, None)
+            self._decisions.pop(task_id, None)
+        self._record(task_id, "dismissed")
+        return True
+
+    def dismiss_completed(self) -> int:
+        """완결 카드 일괄 제거. 제거 개수 반환(진행중/승인대기는 유지)."""
+        with self._lock:
+            targets = [tid for tid, c in self._cards.items() if c["status"] in _TERMINAL]
+        return sum(1 for tid in targets if self.dismiss(tid))
+
     # ── 조회 (UI) ─────────────────────────────────────────────────────────────
     def snapshot(self) -> list[dict[str, Any]]:
         with self._lock:
@@ -342,7 +367,7 @@ class JarvisTaskBoard:
             session = self._sessions.get(task_id)
         if not session:
             return None
-        runner = tmux_runner or _capture_runner
+        runner = tmux_runner or self._tmux_runner  # cancel() 과 동일 injection seam(기본=_capture_runner)
         try:
             _, out, _ = runner(["tmux", "capture-pane", "-p", "-t", session])
         except Exception:
@@ -420,6 +445,19 @@ def make_jarvis_routes(board: JarvisTaskBoard) -> list:
         ok = await asyncio.to_thread(board.cancel, task_id)
         return JSONResponse({"ok": ok}, status_code=200 if ok else 404)
 
+    async def dismiss(request):
+        if not same_origin(request):
+            return JSONResponse({"error": "cross-origin forbidden"}, status_code=403)
+        task_id = request.path_params.get("task_id")
+        ok = board.dismiss(task_id)
+        return JSONResponse({"ok": ok}, status_code=200 if ok else 404)
+
+    async def dismiss_completed(request):
+        if not same_origin(request):
+            return JSONResponse({"error": "cross-origin forbidden"}, status_code=403)
+        count = board.dismiss_completed()
+        return JSONResponse({"count": count})
+
     async def pane(request):
         task_id = request.path_params.get("task_id")
         pane_text = await asyncio.to_thread(board.pane, task_id)
@@ -428,7 +466,9 @@ def make_jarvis_routes(board: JarvisTaskBoard) -> list:
     return [
         Route("/api/jarvis/task", submit, methods=["POST"]),
         Route("/api/jarvis/tasks", tasks, methods=["GET"]),
+        Route("/api/jarvis/tasks/dismiss-completed", dismiss_completed, methods=["POST"]),
         Route("/api/jarvis/task/{task_id}/decision", decision, methods=["POST"]),
         Route("/api/jarvis/task/{task_id}/cancel", cancel, methods=["POST"]),
+        Route("/api/jarvis/task/{task_id}/dismiss", dismiss, methods=["POST"]),
         Route("/api/jarvis/task/{task_id}/pane", pane, methods=["GET"]),
     ]

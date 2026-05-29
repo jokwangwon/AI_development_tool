@@ -80,15 +80,32 @@ class PlanSubtask:
 
 
 @dataclass(frozen=True)
+class Contract:
+    """워커 간 산출물 전달 계약 — 디딤돌1b (boss 의 산출 *선언*, 권위 0).
+
+    답습: jarvis-stone1b-artifact-contract-design-brief.md (v1.1) §2 (Q8 대안1).
+    - name: artifact 식별자(주입 라벨). controller 가 regex 검증 + 고정 prefix 부여.
+    - produced_by: 산출 subtask 인덱스. **consumed_by 는 *유추*(depends_on 역방향)** —
+      consume subtask = produced_by 를 transitive depends_on 하는 subtask(controller
+      결정적 유추). boss 출력 표면↓ + depends_on/contract 정합 불일치 구조적 제거.
+    - means 틀 필드 부재(PLAN-INV) — 추출 방법·argv·경로 *없음*(means = controller).
+    """
+
+    name: str
+    produced_by: int
+
+
+@dataclass(frozen=True)
 class BossPlan:
     """boss 가 1회 제안하는 작업그래프 — proposal, 권위 0 (controller 검증 전).
 
     PLAN-INV: (a) means 틀 필드 부재 (b) controller 결정적 검증을 거쳐야만 소비
-    (c) non-adaptive(워커 결과가 plan 을 갱신하는 경로 없음). subtasks 만 보유 —
-    실행·승인 권위는 controller + 사람 게이트(§3·§4).
+    (c) non-adaptive(워커 결과가 plan 을 갱신하는 경로 없음). 실행·승인 권위는
+    controller + 사람 게이트(§3·§4).
     """
 
     subtasks: tuple[PlanSubtask, ...]
+    contracts: tuple[Contract, ...] = ()  # 디딤돌1b 산출물 전달. 1a 하위호환=빈 tuple
 
 
 @runtime_checkable
@@ -269,6 +286,19 @@ _PLAN_JSON_SCHEMA: dict = {
                 "additionalProperties": False,
             },
         },
+        # 디딤돌1b: 산출물 전달 계약(선택 — 없으면 전달 0, 1a 동작). consumed_by 유추(Q8).
+        "contracts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "produced_by": {"type": "integer"},
+                },
+                "required": ["name", "produced_by"],
+                "additionalProperties": False,
+            },
+        },
     },
     "required": ["subtasks"],
     "additionalProperties": False,
@@ -435,7 +465,20 @@ def _parse_bossplan(content: str) -> BossPlan:
         if not isinstance(dep, list) or not all(isinstance(d, int) for d in dep):
             raise RuntimeError("subtask depends_on 은 정수 배열이어야 함")
         subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep)))
-    return BossPlan(subtasks=tuple(subtasks))
+    # 디딤돌1b contracts(선택) — 없으면 빈 tuple(전달 0, 1a 동작).
+    contracts: list[Contract] = []
+    raw_contracts = obj.get("contracts", [])
+    if not isinstance(raw_contracts, list):
+        raise RuntimeError("contracts 는 배열이어야 함")
+    for item in raw_contracts:
+        if not isinstance(item, dict):
+            raise RuntimeError("contract 항목이 object 아님")
+        cname = item.get("name")
+        cpb = item.get("produced_by")
+        if not isinstance(cname, str) or not isinstance(cpb, int) or isinstance(cpb, bool):
+            raise RuntimeError("contract name/produced_by 타입 위반")
+        contracts.append(Contract(name=cname, produced_by=cpb))
+    return BossPlan(subtasks=tuple(subtasks), contracts=tuple(contracts))
 
 
 def merge_flags(deterministic: list[str], extra: list[str]) -> list[str]:

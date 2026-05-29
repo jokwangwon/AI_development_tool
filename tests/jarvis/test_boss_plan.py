@@ -47,9 +47,12 @@ def test_plan_subtask_has_no_means_frame_fields() -> None:
     assert fields & forbidden == set()
 
 
-def test_bossplan_only_holds_subtasks() -> None:
+def test_bossplan_holds_subtasks_and_contracts() -> None:
+    # 디딤돌1b: contracts 추가(1a 하위호환 기본 ()). means 틀 필드는 여전히 부재.
     fields = {f.name for f in dataclasses.fields(BossPlan)}
-    assert fields == {"subtasks"}
+    assert fields == {"subtasks", "contracts"}
+    forbidden = {"argv", "cmd", "command", "path", "workdir", "alias", "isolation"}
+    assert fields & forbidden == set()
 
 
 # --- IN-2: BossPlanner Protocol, StubBoss 구현 ---
@@ -140,3 +143,40 @@ def test_ollama_boss_plan_malformed_content_raises() -> None:
                return_value=_fake_resp({"message": {"content": "not json at all"}})):
         with pytest.raises(RuntimeError):
             boss.plan("x")
+
+
+def test_ollama_boss_plan_parses_contracts() -> None:
+    """디딤돌1b: plan 응답의 contracts(선택) 파싱 → BossPlan.contracts."""
+    import json as _json
+    from unittest.mock import patch
+
+    from src.jarvis.boss import Contract, OllamaBoss
+
+    boss = OllamaBoss(model="m1")
+    content = _json.dumps({
+        "subtasks": [
+            {"desc": "백엔드", "worker_kind": "file", "depends_on": []},
+            {"desc": "프론트", "worker_kind": "file", "depends_on": [0]},
+        ],
+        "contracts": [{"name": "api_schema", "produced_by": 0}],
+    })
+    with patch("urllib.request.urlopen",
+               return_value=_fake_resp({"message": {"content": content}})):
+        out = boss.plan("앱")
+    assert out.contracts == (Contract(name="api_schema", produced_by=0),)
+
+
+def test_ollama_boss_plan_no_contracts_is_empty() -> None:
+    """1a 하위호환: contracts 없으면 빈 tuple(전달 0)."""
+    import json as _json
+    from unittest.mock import patch
+
+    from src.jarvis.boss import OllamaBoss
+
+    boss = OllamaBoss(model="m1")
+    content = _json.dumps({"subtasks": [
+        {"desc": "a", "worker_kind": "file", "depends_on": []}]})
+    with patch("urllib.request.urlopen",
+               return_value=_fake_resp({"message": {"content": content}})):
+        out = boss.plan("x")
+    assert out.contracts == ()

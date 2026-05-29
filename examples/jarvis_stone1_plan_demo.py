@@ -40,6 +40,8 @@ def main() -> int:
     ap.add_argument("--yes", action="store_true", help="계획 자동 승인(비대화형)")
     ap.add_argument("--boss-model", default=_DEFAULT_BOSS)
     ap.add_argument("--worker-model", default=_DEFAULT_WORKER)
+    ap.add_argument("--planner", default="ollama", choices=["ollama", "codex"],
+                    help="plan 공급원: ollama(약한 로컬 boss) | codex(frontier CLI, 디딤돌1d)")
     ap.add_argument(
         "--prompt",
         default="작은 작업 2개로 나눠줘: (1) 'add(a,b)' 파이썬 함수 한 줄 작성, "
@@ -47,7 +49,35 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    boss = OllamaBoss(model=args.boss_model, plan_kinds=("file",))
+    # plan 공급원(IN-2): ollama(약한 로컬) 또는 codex(frontier CLI, 디딤돌1d)
+    if args.planner == "codex":
+        import tempfile
+
+        from src.jarvis.planner import CliPlanner
+        # BL-4 실측: codex stdout=추론 로그 혼재 → --output-last-message 파일 추출이 정답.
+        # 실측 결과 positional prompt + EOF stdin 이 안정(schema flag/stdin-mode 는 exit 1).
+        _codex_out = tempfile.mktemp(suffix=".json", prefix="codex-plan-")
+        _codex_prompt = (
+            "작업을 실행 가능한 subtask 목록으로 분해해 JSON 으로만 출력하라"
+            "(설명·코드블록·마크다운 없이 순수 JSON). worker_kind 는 'file'. "
+            "depends_on 은 선행 subtask 인덱스 배열. 한 subtask 산출물을 다른 "
+            "subtask 가 쓰면 contracts 에 {name, produced_by} 추가."
+        )
+        # ⚠️ codex 자동 통합은 *실험적*(dogfooding 발견): codex CLI 출력 형태·schema
+        # flag·stdin 모드·sandbox·파일 생성이 prompt/플래그 조합마다 변동 → 안정 미달.
+        # probe(직접 실측)에서 codex 가 contract 포함 valid plan JSON 생성 확인(IN-2 실증)
+        # 했으나 데모 자동 파이프라인은 후속 안정화 필요. claude 경로(from_cli envelope)는
+        # 결정적 검증됨(test_cli_planner.py). 약한 boss 대비는 --planner ollama 로.
+        planner = CliPlanner(
+            ["codex", "exec",
+             "--output-last-message", _codex_out,  # BL-4 파일 추출
+             "-s", "read-only"],                   # BL-2 native RO sandbox
+            output_file=_codex_out,
+            plan_prompt=_codex_prompt,              # positional + EOF stdin(probe 동형)
+            timeout_s=300.0,
+        )
+    else:
+        planner = OllamaBoss(model=args.boss_model, plan_kinds=("file",))
     worker = OllamaWorker(alias="ollama-file", model=args.worker_model)
     registry = WorkerRegistry()
     registry.register(worker)
@@ -81,13 +111,15 @@ def main() -> int:
         allow_code_consume=False,  # Q7 능력 경계 — file consume 만(기본)
     )
 
-    print("=== 디딤돌1 plan-then-execute E2E (실 ollama) ===")
-    print(f"boss(planner): {args.boss_model}")
+    planner_desc = (f"codex (frontier CLI, 디딤돌1d)" if args.planner == "codex"
+                    else f"ollama {args.boss_model} (약한 로컬 boss)")
+    print("=== 디딤돌1 plan-then-execute E2E (실 LLM) ===")
+    print(f"planner      : {planner_desc}")
     print(f"worker(file) : {args.worker_model}")
     print(f"작업         : {args.prompt}")
-    print("boss.plan() 호출 중 (실 ollama format grammar) …")
+    print(f"plan() 호출 중 ({args.planner}) …")
 
-    out = ctrl.run_from_planner(boss, args.prompt, "stone1-demo")
+    out = ctrl.run_from_planner(planner, args.prompt, "stone1-demo")
 
     print("\n=== PlanOutcome ===")
     print(f"  status : {out.status.value}")

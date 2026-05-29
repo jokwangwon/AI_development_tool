@@ -59,3 +59,14 @@ controller 가 produced 출력에서 평문 bounded text 를 추출(redact secre
 - 한 produced 가 여러 의존 subtask 중 일부에만 흐르는 세밀 제어 불가(consumed_by 유추, Q8) — 과주입은 능력 경계 + bounded + 게이트로 흡수(YAGNI).
 - 구조화 JSON schema artifact·exfil 경로 catalog 는 후속(평문·secret-only 시작).
 - 답습 교차: `ADR-011` §2.1 / CLAUDE.md §2·§3 / `feedback_pass_scope_overclaim` / `feedback_boss_role_not_smartest` / 합의 보고서.
+
+---
+
+## 6. 디딤돌1c·1d 보강 (2026-05-30)
+
+### 6.1 디딤돌1c — depends_on 암묵 contract (능력 경계 정밀화 소급)
+controller 가 `depends_on` 에서 데이터 전달을 추론(암묵 contract) — 약한 boss 가 Contract 미생성(94 dogfooding)이어도 전달 발동(하네스 흡수). 능력 경계 동일 적용(file consume 기본). **§2.2 능력 경계 정밀화**(위 정밀화 블록): OllamaWorker 는 `output_filename` 설정 시 workdir 단일 파일 write 잔여 → "임의 명령/경로 실행 0 + workdir escape 0" 으로 정정. consume-safe = writer 없는 OllamaWorker harness 불변식.
+
+### 6.2 디딤돌1d — frontier CLI planner (plan 생성 실행면)
+`BossPlanner` 의 frontier 구현(CliPlanner) — plan 공급원 유연(IN-2). **plan *데이터* 신뢰 경로는 기존 controller 검증+승인 재사용(전파면 0)** — frontier 도 untrusted(똑똑함≠신뢰). **단 plan *생성* 단계 frontier CLI subprocess = 신규 실행면**(claude/codex 는 fs 쓰기·명령 실행 능력) → **RO 격리 필수**(CLI native read-only sandbox, codex `--sandbox read-only`). net egress 는 plan API 호출에 필수라 미차단 잔여(detection≠prevention, MVP-1+ 후속). dogfooding: codex(frontier)가 contract 생성(약한 boss 대조 — IN-2 실증), 단 codex CLI 자동 통합은 per-CLI 출력 변동 gotcha(claude=from_cli envelope 결정적, codex 후속).
+- 답습: `jarvis-stone1c-...` · `jarvis-stone1d-...` 합의 보고서 / `feedback_boss_role_not_smartest`(IN-2).

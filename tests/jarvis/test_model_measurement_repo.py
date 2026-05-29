@@ -16,7 +16,8 @@ import stat
 
 import pytest
 
-from src.jarvis.model_measurement_repo import ModelMeasurementRepo
+from src.jarvis import paths
+from src.jarvis.model_measurement_repo import ModelMeasurementRepo, append_measurement
 
 
 # --- 샘플 데이터 빌더 (실측 형태 §2 모사) ---
@@ -330,3 +331,20 @@ def test_list_sessions_desc_by_measured_ts(tmp_path):
     sessions = repo.list_sessions()
     assert [s["measured_ts"] for s in sessions] == [200.0, 100.0]  # DESC
     assert {s["kind"] for s in sessions} == {"boss", "multi"}
+
+
+# --- §10-5b-writer: append_measurement (기본 DB 경로, 히스토리 누적) ---
+def test_append_measurement_default_path_roundtrip(monkeypatch, tmp_path):
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    sid = append_measurement(_boss_measurement(), kind="boss")
+    assert isinstance(sid, int)
+    repo = ModelMeasurementRepo(paths.measurement_db_path())
+    assert repo.latest_session("boss") == _boss_measurement()
+
+
+def test_append_measurement_accrues_history(monkeypatch, tmp_path):
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    append_measurement(_multi_measurement(), kind="multi")
+    append_measurement(_multi_measurement(), kind="multi")
+    repo = ModelMeasurementRepo(paths.measurement_db_path())
+    assert len(repo.list_sessions(kind="multi")) == 2  # append-only 히스토리

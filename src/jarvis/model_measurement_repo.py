@@ -406,3 +406,15 @@ def open_reader_repo() -> ModelMeasurementRepo:
         legacy_multi=paths.multi_model_measurement_path(),
         legacy_boss=paths.boss_measurement_path(),
     )
+
+
+def append_measurement(measurement: dict, *, kind: str) -> int:
+    """live writer 용 — 기본 DB 에 새 세션 append (§10-5b-writer, append-only 히스토리).
+
+    source_id=None → 매 측정이 새 세션(C5). 측정 산출물(JSON)이 본체이므로 호출부는
+    이 호출을 fail-soft 로 감쌀 것(DB append 실패가 측정을 깨지 않도록).
+    """
+    from src.jarvis import paths
+
+    repo = ModelMeasurementRepo(paths.measurement_db_path())
+    return repo.append_session(measurement, kind=kind)

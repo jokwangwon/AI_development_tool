@@ -201,6 +201,14 @@ def main() -> int:
         json.dump(evidence, fh, ensure_ascii=False, indent=2)
     print(f"\n[evidence] raw JSON → {EVIDENCE_PATH}")
 
+    # §10-5b-writer: DB 병기 append(append-only 히스토리). JSON 이 본체 → fail-soft.
+    try:
+        from src.jarvis.model_measurement_repo import append_measurement
+        sid = append_measurement(evidence, kind="boss")
+        print(f"[evidence] DB append → session {sid} ({paths.measurement_db_path()})")
+    except Exception as e:
+        print(f"[warn] 측정 DB append 실패(무시): {e}")
+
     # 합격 조건
     checks = {
         "precheck PASS":     True,

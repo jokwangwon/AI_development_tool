@@ -27,7 +27,12 @@ from __future__ import annotations
 import subprocess
 from typing import Callable
 
-from src.jarvis.boss import BossPlan, _parse_bossplan, boss_plan_prompt
+from src.jarvis.boss import (
+    _PLAN_JSON_SCHEMA,
+    BossPlan,
+    _parse_bossplan,
+    boss_plan_prompt,
+)
 from src.jarvis.worker import WorkerResult, _strip_code_fences
 
 # runner(cmd, timeout_s, stdin) -> (exit_code, stdout, stderr). 주입으로 테스트 결정성.
@@ -134,3 +139,45 @@ class CliPlanner:
         # BL-3 방어 2층: schema flag 가 1차 강제, _parse_bossplan 이 구조 재검증.
         # grammar 미강제 CLI 의 fence 흡수(_strip_code_fences) 후 파싱.
         return _parse_bossplan(_strip_code_fences(text))
+
+
+# 임시 schema/output 파일 경로 생성기 — Date/random 미사용(결정성 무관, OS 제공).
+def _mktemp(prefix: str) -> str:
+    import tempfile
+    return tempfile.mktemp(suffix=".json", prefix=prefix)
+
+
+def codex_planner(
+    *,
+    timeout_s: float = 300.0,
+    sandbox: str = "read-only",
+    plan_prompt: str | None = None,
+) -> CliPlanner:
+    """codex CLI 를 plan 공급원으로 구성하는 팩토리(디딤돌1d 안정화).
+
+    dogfooding 실측: codex 는 `--output-schema` 로 `_PLAN_JSON_SCHEMA` 를 *강제*해야
+    정확한 형식({subtasks:[{desc,worker_kind,depends_on}], contracts:[]})을 낸다.
+    schema 없이 prompt 만 주면 자기 식 형식(배열 직접·task 키)으로 흘러 파싱 실패.
+    (OpenAI strict schema: required 에 모든 properties 포함 — boss.py _PLAN_JSON_SCHEMA
+    가 contracts 도 required, 빈 배열 허용 → 1c 암묵 contract 가 흡수.)
+
+    - `--output-schema <file>`: strict 형식 강제(BL-3).
+    - `--output-last-message <file>`: 최종 메시지 파일 추출(BL-4 — stdout 은 추론 로그).
+    - `-s read-only`: plan 생성 단계 fs 쓰기 차단(BL-2 native RO sandbox).
+    - positional prompt + EOF stdin(codex gotcha 방어, [[reference_codex_verify_tooling]]).
+    """
+    import json
+
+    schema_path = _mktemp("plan-schema-")
+    with open(schema_path, "w", encoding="utf-8") as fh:
+        json.dump(_PLAN_JSON_SCHEMA, fh, ensure_ascii=False)
+    out_path = _mktemp("codex-plan-")
+    argv = [
+        "codex", "exec",
+        "--output-schema", schema_path,
+        "--output-last-message", out_path,
+        "-s", sandbox,
+    ]
+    return CliPlanner(
+        argv, output_file=out_path, timeout_s=timeout_s, plan_prompt=plan_prompt
+    )

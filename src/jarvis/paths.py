@@ -23,6 +23,7 @@ _FILE_MODE = 0o600
 
 # --- 파일명 상수 (기존 /tmp 파일명 그대로 유지 — base 만 이동) ---
 CONVERSATIONS = "jarvis-conversations.jsonl"
+CONVERSATIONS_DB = "jarvis-conversations.db"  # §10-4a SQLite backing
 CONVERSATIONS_ARCHIVE = "jarvis-conversations-archive"
 TASKS_LEDGER = "jarvis-stone0-tasks.jsonl"
 LAYER0_MEMORY = "jarvis-v00-layer0-memory.jsonl"
@@ -81,6 +82,11 @@ def conversations_path() -> Path:
 
 def conversations_archive_dir() -> Path:
     return data_subdir(CONVERSATIONS_ARCHIVE)
+
+
+def conversations_db_path() -> Path:
+    """§10-4a 대화 SQLite backing. legacy jarvis-conversations.jsonl 은 마이그레이션 원본으로 보존."""
+    return data_file(CONVERSATIONS_DB)
 
 
 def tasks_ledger_path() -> Path:

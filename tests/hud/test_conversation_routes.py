@@ -22,7 +22,7 @@ from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402
 
 
 def _repo_with(tmp_path, entries):
-    repo = ConversationRepo(tmp_path / "c.jsonl")
+    repo = ConversationRepo(tmp_path / "c.db")  # §10-4a SQLite backing (인터페이스 동일 → 라우트 동작 불변)
     for e in entries:
         repo.append(e)
     return repo
@@ -45,7 +45,7 @@ def test_history_query_filter(monkeypatch, tmp_path):
 
 
 def test_history_absent_empty(monkeypatch, tmp_path):
-    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.jsonl"))
+    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.db"))
     r = TestClient(server.app).get("/api/conversation/history")
     assert r.json()["entries"] == []
 
@@ -61,7 +61,7 @@ def test_canvas_only_note_svg(monkeypatch, tmp_path):
 
 
 def test_export_absent_special(monkeypatch, tmp_path):
-    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.jsonl"))
+    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.db"))
     client = TestClient(server.app)
     assert client.get("/api/conversation/export?format=md").json()["content"] == "(대화 없음)"
     assert client.get("/api/conversation/export?format=json").json()["content"] == "[]"
@@ -94,6 +94,6 @@ def test_clear_route_archives(monkeypatch, tmp_path):
 
 
 def test_clear_route_noop_when_absent(monkeypatch, tmp_path):
-    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.jsonl"))
+    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.db"))
     r = TestClient(server.app).post("/api/conversation/clear")
     assert r.json() == {"ok": True, "archived": None}

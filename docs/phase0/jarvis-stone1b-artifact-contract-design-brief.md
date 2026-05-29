@@ -120,8 +120,8 @@ class BossPlan:
 ## §6 means/ends + ADR 등록 (Q6)
 
 - boss = contract *선언*(name·produced_by = ends). 추출·주입·검사·능력 경계(means) = controller.
-- **Q6 — ADR 등록**: 1b 는 *새 injection 전파면을 신설*하는 보안 변경(1a 와 격 다름) → **후속 ADR(예: ADR-012)로 등록** — ADR-011 §2.1 (a)~(d) 적용 사례 + 능력 경계(Q7) 결정 권위화. ADR 작성은 구현 완료 후.
-- (a)~(d) acceptance criteria: (a) "능력 경계 + typed value 주입이 raw 직접 전달 대비 *실 부작용을 결정적 차단*"을 비교표로 (b) PoC: code consume 기본 reject / LLM-only consume 통과 / redact→truncate 순서 / raw value 레저 미영속 / 짧은 injection 통과(한계 실증, 공허참 금지) (c) ADR-012 (d) 회귀 + grimp 단방향.
+- **Q6 — ADR 등록**: 1b 는 *새 injection 전파면을 신설*하는 보안 변경(1a 와 격 다름) → **후속 ADR(예: ADR-013)로 등록** — ADR-011 §2.1 (a)~(d) 적용 사례 + 능력 경계(Q7) 결정 권위화. ADR 작성은 구현 완료 후.
+- (a)~(d) acceptance criteria: (a) "능력 경계 + typed value 주입이 raw 직접 전달 대비 *실 부작용을 결정적 차단*"을 비교표로 (b) PoC: code consume 기본 reject / LLM-only consume 통과 / redact→truncate 순서 / raw value 레저 미영속 / 짧은 injection 통과(한계 실증, 공허참 금지) (c) ADR-013 (d) 회귀 + grimp 단방향.
 
 ---
 
@@ -144,7 +144,7 @@ class BossPlan:
 ### 다음 단계
 1. brief v1 → 3+1 합의(AWC) → **brief v1.1**(본 문서) + §9 Q 결정 ← 완료
 2. **디딤돌1b TDD 구현**(별도 브랜치)
-3. 구현 후 → **ADR-012 작성**(Q6) + CONTEXT/SESSION/INDEX 반영
+3. 구현 후 → **ADR-013 작성**(Q6) + CONTEXT/SESSION/INDEX 반영
 
 ---
 
@@ -157,7 +157,7 @@ class BossPlan:
 | Q3 | 주입 형식 | ✅ **desc 말미 블록 + name regex + "데이터≠지시" 라벨 + 고정 prefix** | 4/4 |
 | Q4 | exfil catalog | ✅ **secret-only 시작 + 경로/URL 후속**(detection≠prevention) | 3/4 |
 | Q5 | contract 정합 | ✅ **transitive depends_on 강제(BFS)** | 4/4 |
-| Q6 | ADR 등록 | ✅ **후속 ADR-012 등록**(구현 후) | 3:1 |
+| Q6 | ADR 등록 | ✅ **후속 ADR-013 등록**(구현 후) | 3:1 |
 | **Q7** ⭐ | consume 워커 능력 | ✅ **LLM-only(file) 기본 + code opt-in**(대안 3 — 결정적 능력 경계) | C + 사용자 |
 | **Q8** | Contract 모델 | ✅ **`{name, produced_by}`, consumed_by 유추**(대안 1 — 단순화) | C + 사용자 |
 

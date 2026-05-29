@@ -1588,6 +1588,7 @@
     const jarvisPaneEl = $('jarvis-pane');
     let jarvisPollTimer = null;
     let livePaneTaskId = null;
+    let lastTasksSig = null;   // 폴링 깜빡임 차단 — 변경 없으면 DOM 재구성 생략
 
     const STATUS_BADGE = { '진행중': '▶', '승인대기': '⏳', '수락': '✅', '거절': '✖', '실패': '⚠', '취소': '⛔', '중단됨': '⏸' };
 
@@ -1652,8 +1653,14 @@
       try {
         const res = await fetch('/api/jarvis/tasks');
         const data = await res.json();
+        const tasks = data.tasks || [];
+        // 변경 없으면 DOM 재구성 생략(매초 replaceChildren 깜빡임 차단).
+        // livePaneTaskId 포함 → 라이브 보기 토글도 즉시 반영.
+        const sig = JSON.stringify(tasks) + '|' + (livePaneTaskId || '');
+        if (sig === lastTasksSig) return;
+        lastTasksSig = sig;
         jarvisTaskList.replaceChildren();
-        (data.tasks || []).forEach(t => jarvisTaskList.appendChild(renderJarvisCard(t)));
+        tasks.forEach(t => jarvisTaskList.appendChild(renderJarvisCard(t)));
       } catch (e) { /* fail-soft */ }
     };
 

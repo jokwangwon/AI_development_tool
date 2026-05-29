@@ -568,6 +568,12 @@ from src.jarvis.ledger import LedgerLog  # noqa: E402
 _jarvis_board = JarvisTaskBoard(ledger=LedgerLog(paths.tasks_ledger_path()))
 routes += make_jarvis_routes(_jarvis_board)
 
+# HUD 계획 승인 보드(디딤돌1a~1d plan-then-execute) — plan_approver HUD 통합.
+from jarvis_hud.jarvis_plan import JarvisPlanBoard, make_jarvis_plan_routes  # noqa: E402
+
+_plan_board = JarvisPlanBoard(ledger=LedgerLog(paths.plans_ledger_path()))
+routes += make_jarvis_plan_routes(_plan_board)
+
 app = Starlette(debug=False, routes=routes)
 
 if __name__ == "__main__":

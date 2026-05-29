@@ -910,6 +910,20 @@
     </div>
 
     <!-- 모델 관리 모달 (§10-5) -->
+    <!-- 계획 승인 모달(디딤돌1a~1d, 전용 차단 모달 — default-deny). CB-5: textContent/createElement 전용 -->
+    <div class="measure-overlay" id="plan-overlay">
+      <div class="measure-modal" id="plan-modal">
+        <div class="measure-head">
+          <h2>📋 계획 승인 게이트 (default-deny)</h2>
+        </div>
+        <div id="plan-body" style="font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button id="plan-approve" class="measure-close" style="border:1px solid var(--border-strong);border-radius:8px;padding:7px 14px;color:var(--accent)">✅ 전체 승인</button>
+          <button id="plan-reject" class="measure-close" style="border:1px solid var(--border-strong);border-radius:8px;padding:7px 14px">✕ 거부 (ESC)</button>
+        </div>
+      </div>
+    </div>
+
     <div class="measure-overlay" id="measure-overlay">
       <div class="measure-modal" id="measure-modal">
         <div class="measure-head">
@@ -1674,6 +1688,68 @@
     measureClose.addEventListener('click', closeMeasurements);
     measureOverlay.addEventListener('click', (e) => { if (e.target === measureOverlay) closeMeasurements(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeasurements(); });
+
+    // ── 계획 승인 게이트(디딤돌1a~1d) — 폴링 + 자동 차단 모달. CB-5: textContent/createElement 전용 ──
+    const planOverlay = $('plan-overlay');
+    const planBody = $('plan-body');
+    let _currentPlanId = null;
+    const _decidedPlans = new Set();  // 결정한 plan — 폴링 재오픈 race 방지(서버 status 변경 지연)
+
+    function _planLine(text) { const d = document.createElement('div'); d.textContent = text; return d; }
+
+    function renderPlanModal(card) {
+      planBody.replaceChildren();  // 초기화(innerHTML 금지 — CB-5)
+      const v = card.plan || {};
+      planBody.appendChild(_planLine(`작업: ${card.prompt}`));
+      planBody.appendChild(_planLine(`실행 순서(위상정렬): [${(v.order || []).join(', ')}]`));
+      planBody.appendChild(_planLine('─ subtasks ─'));
+      (v.subtasks || []).forEach((st, i) => {
+        const dep = (st.depends_on && st.depends_on.length) ? ` ←[${st.depends_on.join(',')}]` : '';
+        planBody.appendChild(_planLine(`[${i}] (${st.worker_kind}→${st.alias})${dep}: ${st.desc}`));
+      });
+      if (v.contracts && v.contracts.length) {
+        planBody.appendChild(_planLine('─ 명시 contracts (boss 선언) ─'));
+        v.contracts.forEach(c => planBody.appendChild(_planLine(`  · ${c.name} (produced_by ${c.produced_by})`)));
+      }
+      if (v.implicit_contracts && v.implicit_contracts.length) {
+        planBody.appendChild(_planLine('─ 암묵 contracts (controller 합성 — 디딤돌1c) ─'));
+        v.implicit_contracts.forEach(c => planBody.appendChild(_planLine(`  · ${c.name} (produced_by ${c.produced_by})`)));
+      }
+      planBody.appendChild(_planLine(`능력 경계: code consume ${v.allow_code_consume ? 'ON(opt-in)' : 'OFF(file-only)'}`));
+    }
+
+    async function loadJarvisPlans() {
+      try {
+        const d = await (await fetch('/api/jarvis/plans')).json();
+        const awaiting = (d.plans || []).find(p => p.status === 'awaiting' && !_decidedPlans.has(p.id));
+        if (awaiting) {
+          if (_currentPlanId !== awaiting.id) { _currentPlanId = awaiting.id; renderPlanModal(awaiting); }
+          planOverlay.classList.add('open');
+        } else if (_currentPlanId) {
+          _currentPlanId = null; planOverlay.classList.remove('open');
+        }
+      } catch (e) { /* fail-soft */ }
+    }
+
+    async function decidePlan(accept) {
+      if (!_currentPlanId) return;
+      const id = _currentPlanId; _currentPlanId = null;
+      _decidedPlans.add(id);  // 폴링 재오픈 방지(서버 awaiting→running 지연 race)
+      planOverlay.classList.remove('open');
+      try {
+        await fetch(`/api/jarvis/plan/${id}/decision`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision: accept ? 'accept' : 'reject' }),
+        });
+      } catch (e) { /* fail-soft */ }
+    }
+
+    $('plan-approve').addEventListener('click', () => decidePlan(true));
+    $('plan-reject').addEventListener('click', () => decidePlan(false));
+    // ESC=거부(default-deny 강제). 배경 클릭은 차단 모달이라 무시(승인/거부 명시만).
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && _currentPlanId) decidePlan(false); });
+    setInterval(loadJarvisPlans, 1000);
+    loadJarvisPlans();
 
     ttsToggle.addEventListener('click', () => {
       settings.ttsOn = !settings.ttsOn;

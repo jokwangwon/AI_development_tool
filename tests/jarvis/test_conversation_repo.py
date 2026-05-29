@@ -146,3 +146,73 @@ def test_migration_skipped_when_db_non_empty(tmp_path):
 def test_migration_absent_legacy_is_noop(tmp_path):
     repo = ConversationRepo(tmp_path / "c.db", legacy_jsonl=str(tmp_path / "nope.jsonl"))
     assert repo.read_all() == []  # legacy 없으면 빈 채로 정상
+
+
+# === §10-4b 다중 대화 (conversation_id) ===
+def test_create_conversation_returns_id(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    assert isinstance(cid, str) and cid
+    assert any(c["id"] == cid for c in repo.list_conversations())
+
+
+def test_append_to_conversation_and_read_filtered(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    c1 = repo.create_conversation()
+    c2 = repo.create_conversation()
+    repo.append({"id": "a", "role": "user", "content": "in c1"}, conversation_id=c1)
+    repo.append({"id": "b", "role": "user", "content": "in c2"}, conversation_id=c2)
+    assert [e["id"] for e in repo.read_all(conversation_id=c1)] == ["a"]
+    assert [e["id"] for e in repo.read_all(conversation_id=c2)] == ["b"]
+
+
+def test_auto_title_from_first_user_message(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a", "role": "user", "content": "데이터 레이어 구현하자"}, conversation_id=cid)
+    conv = next(c for c in repo.list_conversations() if c["id"] == cid)
+    assert "데이터" in conv["title"]
+
+
+def test_auto_title_only_first_message(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a", "role": "user", "content": "첫 메시지"}, conversation_id=cid)
+    repo.append({"id": "b", "role": "user", "content": "둘째 메시지"}, conversation_id=cid)
+    conv = next(c for c in repo.list_conversations() if c["id"] == cid)
+    assert "첫" in conv["title"] and "둘째" not in conv["title"]
+
+
+def test_list_conversations_recent_updated_first(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    c1 = repo.create_conversation()
+    c2 = repo.create_conversation()
+    repo.append({"id": "a", "role": "user", "content": "x"}, conversation_id=c1)  # c1 마지막 갱신
+    convs = repo.list_conversations()
+    assert convs[0]["id"] == c1  # 최근 업데이트 먼저
+
+
+def test_delete_conversation_removes_conv_and_entries(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a"}, conversation_id=cid)
+    repo.delete_conversation(cid)
+    assert repo.read_all(conversation_id=cid) == []
+    assert not any(c["id"] == cid for c in repo.list_conversations())
+
+
+def test_default_conversation_backcompat(tmp_path):
+    # §10-4a 호환: conversation_id 없이 append/read_all → default 대화
+    repo = ConversationRepo(tmp_path / "c.db")
+    repo.append({"id": "a", "content": "x"})
+    repo.append({"id": "b", "content": "y"})
+    assert [e["id"] for e in repo.read_all()] == ["a", "b"]
+
+
+def test_delete_entry_within_conversation(tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a"}, conversation_id=cid)
+    repo.append({"id": "b"}, conversation_id=cid)
+    assert repo.delete_entry("a") == 1
+    assert [e["id"] for e in repo.read_all(conversation_id=cid)] == ["b"]

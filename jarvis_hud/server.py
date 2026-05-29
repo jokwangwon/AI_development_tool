@@ -213,9 +213,9 @@ MODE_PROMPTS = {
 }
 
 
-async def _save_conversation_entry(entry: dict) -> None:
-    """JSONL append (fail-soft) — ConversationRepo 위임(§10-3)."""
-    _conversation_repo.append(entry)
+async def _save_conversation_entry(entry: dict, conversation_id: str | None = None) -> None:
+    """ConversationRepo 위임(§10-3/§10-4b). conversation_id 미지정 시 default 대화."""
+    _conversation_repo.append(entry, conversation_id)
 
 
 async def respond_handler(request):
@@ -226,6 +226,7 @@ async def respond_handler(request):
         message = data.get("message", "")
         mode = data.get("mode", "chat")
         model = data.get("model", "qwen3-30b-a3b-instruct-2507-bartowski:latest")
+        conversation_id = data.get("conversation_id")  # §10-4b: 미지정 시 default 대화
         if mode not in MODE_PROMPTS:
             mode = "chat"
         if not message:
@@ -265,7 +266,7 @@ async def respond_handler(request):
         await _save_conversation_entry({
             "id": f"user-{ts}-{hash(message) & 0xfffff}",
             "role": "user", "content": message, "mode": mode, "ts": ts,
-        })
+        }, conversation_id)
 
         if mode == "chat":
             jarvis_entry = {
@@ -284,7 +285,7 @@ async def respond_handler(request):
                 "role": "jarvis", "type": "svg", "mode": "svg", "ts": ts,
                 **parsed,
             }
-        await _save_conversation_entry(jarvis_entry)
+        await _save_conversation_entry(jarvis_entry, conversation_id)
 
         return JSONResponse({"mode": mode, "entry": jarvis_entry})
     except Exception as e:
@@ -295,8 +296,9 @@ async def conversation_history_handler(request):
     """전체 conversation list 또는 query 검색."""
     try:
         q = request.query_params.get("q", "").lower()
+        conversation_id = request.query_params.get("conversation_id")  # §10-4b: 미지정 시 default
         entries = []
-        for e in _conversation_repo.read_all():
+        for e in _conversation_repo.read_all(conversation_id):
             if q:
                 blob = (e.get("content", "") + " " + e.get("title", "") + " "
                         + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
@@ -451,10 +453,41 @@ async def tts_handler(request):
 async def conversation_canvas_handler(request):
     """Canvas 카드 list — type=note 또는 svg 만."""
     try:
-        cards = [e for e in _conversation_repo.read_all() if e.get("type") in ("note", "svg")]
+        conversation_id = request.query_params.get("conversation_id")  # §10-4b
+        cards = [e for e in _conversation_repo.read_all(conversation_id) if e.get("type") in ("note", "svg")]
         return JSONResponse({"cards": cards[-100:]})  # last 100
     except Exception as e:
         return JSONResponse({"error": str(e), "cards": []}, status_code=500)
+
+
+# === §10-4b 다중 대화 ===
+async def conversations_list_handler(request):
+    """대화 목록 (최근 갱신 순)."""
+    try:
+        return JSONResponse({"conversations": _conversation_repo.list_conversations()})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "conversations": []}, status_code=500)
+
+
+async def conversation_new_handler(request):
+    """새 대화 생성 → conversation_id."""
+    try:
+        cid = _conversation_repo.create_conversation()
+        return JSONResponse({"conversation_id": cid})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+async def conversation_delete_handler(request):
+    """대화 + 해당 entries 삭제."""
+    try:
+        cid = request.path_params.get("conversation_id")
+        if not cid:
+            return JSONResponse({"error": "missing conversation_id"}, status_code=400)
+        _conversation_repo.delete_conversation(cid)
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 async def chat_handler(request):
@@ -505,6 +538,9 @@ routes = [
     Route("/api/conversation/clear", conversation_clear_handler, methods=["POST", "DELETE"]),
     Route("/api/conversation/entry/{entry_id}", conversation_delete_entry_handler, methods=["DELETE"]),
     Route("/api/conversation/export", conversation_export_handler, methods=["GET"]),
+    Route("/api/conversations", conversations_list_handler, methods=["GET"]),  # §10-4b
+    Route("/api/conversations/new", conversation_new_handler, methods=["POST"]),
+    Route("/api/conversations/{conversation_id}", conversation_delete_handler, methods=["DELETE"]),
     Route("/api/tts", tts_handler, methods=["POST"]),
 ]
 

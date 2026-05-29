@@ -97,3 +97,43 @@ def test_clear_route_noop_when_absent(monkeypatch, tmp_path):
     monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "absent.db"))
     r = TestClient(server.app).post("/api/conversation/clear")
     assert r.json() == {"ok": True, "archived": None}
+
+
+# === §10-4b 다중 대화 라우트 ===
+def test_conversations_list_route(monkeypatch, tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a", "role": "user", "content": "hello"}, conversation_id=cid)
+    monkeypatch.setattr(server, "_conversation_repo", repo)
+    r = TestClient(server.app).get("/api/conversations")
+    assert r.status_code == 200
+    convs = r.json()["conversations"]
+    assert any(c["id"] == cid for c in convs)
+
+
+def test_conversation_new_route(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "_conversation_repo", ConversationRepo(tmp_path / "c.db"))
+    r = TestClient(server.app).post("/api/conversations/new")
+    assert r.status_code == 200
+    assert r.json()["conversation_id"]
+
+
+def test_conversation_delete_route(monkeypatch, tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    cid = repo.create_conversation()
+    repo.append({"id": "a"}, conversation_id=cid)
+    monkeypatch.setattr(server, "_conversation_repo", repo)
+    r = TestClient(server.app).delete(f"/api/conversations/{cid}")
+    assert r.json()["ok"] is True
+    assert not any(c["id"] == cid for c in repo.list_conversations())
+
+
+def test_history_filters_by_conversation_id(monkeypatch, tmp_path):
+    repo = ConversationRepo(tmp_path / "c.db")
+    c1 = repo.create_conversation()
+    c2 = repo.create_conversation()
+    repo.append({"id": "a", "content": "x"}, conversation_id=c1)
+    repo.append({"id": "b", "content": "y"}, conversation_id=c2)
+    monkeypatch.setattr(server, "_conversation_repo", repo)
+    r = TestClient(server.app).get(f"/api/conversation/history?conversation_id={c1}")
+    assert [e["id"] for e in r.json()["entries"]] == ["a"]

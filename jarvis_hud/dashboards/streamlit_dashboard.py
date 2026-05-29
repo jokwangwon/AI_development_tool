@@ -5,6 +5,10 @@ import urllib.request
 import urllib.error
 import pandas as pd
 import datetime
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from src.jarvis import paths  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 
 st.set_page_config(page_title="Jarvis 자비스 상태", layout="wide")
 st.title("자비스 상태 dashboard")
@@ -30,7 +34,7 @@ with col1:
 
     st.subheader("[2] Layer 0 관찰")
     try:
-        file_path = "/tmp/jarvis-v00-layer0-memory.jsonl"
+        file_path = str(paths.layer0_memory_path())
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
                 lines = f.readlines()
@@ -48,7 +52,7 @@ with col1:
 with col2:
     st.subheader("[3] Layer 1 axis 자료")
     try:
-        file_path = "/tmp/jarvis-v00-layer1-report.json"
+        file_path = str(paths.layer1_report_path())
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
                 data = json.load(f)
@@ -65,7 +69,7 @@ with col2:
 
     st.subheader("[4] 최신 모델 측정")
     try:
-        file_path = "/tmp/jarvis-v00-multi-model-measurement.json"
+        file_path = str(paths.multi_model_measurement_path())
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
                 data = json.load(f)

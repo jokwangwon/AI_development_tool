@@ -38,6 +38,27 @@ def test_implements_worker_protocol(tmp_path: Path) -> None:
     assert w.alias == "glm"
 
 
+# ── T-RED-2 (70 entry, (나)): 송신 전 RedactionFilter 적용 — prompt 의 secret 이
+#    Ollama POST body 에 평문 노출 0 (GP-2 prevention 송신 한정).
+def test_ollama_worker_redacts_secret_in_request_before_post(tmp_path: Path) -> None:
+    from src.adapters.llm.redaction_patterns import REDACTION_MARK
+
+    w = OllamaWorker(alias="glm", model="m")
+    captured: dict[str, Any] = {}
+    secret = "sk-ant-WORKERLEAK1234567890"
+
+    def fake_urlopen(req, timeout=None):  # type: ignore[no-untyped-def]
+        captured["data"] = json.loads(req.data.decode("utf-8"))
+        return _fake_response(_chat("print('ok')"))
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        w.run(prompt=f"write code; my key is {secret}", workdir=str(tmp_path))
+
+    blob = json.dumps(captured["data"]["messages"], ensure_ascii=False)
+    assert secret not in blob            # 원본 secret 부재
+    assert REDACTION_MARK in blob         # REDACTION_MARK 존재 (양방향)
+
+
 # --- §2 정상 응답 → WorkerResult ---
 
 def test_returns_worker_result_with_response_text(tmp_path: Path) -> None:

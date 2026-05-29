@@ -29,12 +29,13 @@ from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import OllamaWorker
+from src.jarvis import paths
 
 BOSS_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 WORKER_MODEL = "glm-4.7-flash:latest"
-MEMORY_PATH = "/tmp/jarvis-v00-glm-worker-memory.jsonl"
-OLLAMA_RAW_PATH = "/tmp/jarvis-v00-glm-worker-ollama-raw.log"
-GLM_RAW_PATH = "/tmp/jarvis-v00-glm-worker-glm-raw.log"
+MEMORY_PATH = str(paths.data_file("jarvis-v00-glm-worker-memory.jsonl"))
+OLLAMA_RAW_PATH = str(paths.worker_raw_log_path("glm", "ollama"))
+GLM_RAW_PATH = str(paths.worker_raw_log_path("glm", "glm"))
 
 DEFAULT_PROMPT = (
     "Write ONLY the Python code (no markdown fences, no explanation, no comments) "

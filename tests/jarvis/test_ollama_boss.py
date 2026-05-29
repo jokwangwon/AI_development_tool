@@ -33,6 +33,29 @@ def test_ollama_boss_implements_protocol() -> None:
     assert boss.name == "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 
 
+# ── T-RED-1 (70 entry, (나)): 송신 전 RedactionFilter 적용 — untrusted worker
+#    output 의 secret 이 Ollama POST body 에 평문 노출 0 (GP-2 prevention 송신 한정).
+def test_ollama_boss_redacts_secret_in_request_before_post() -> None:
+    from src.adapters.llm.redaction_patterns import REDACTION_MARK
+
+    boss = OllamaBoss(model="m1")
+    captured: dict[str, Any] = {}
+    secret = "sk-ant-LEAKSECRET1234567890"
+
+    def fake_urlopen(req, timeout=None):  # type: ignore[no-untyped-def]
+        captured["data"] = json.loads(req.data.decode("utf-8"))
+        return _fake_response({"message": {"content": "검토 요약"}, "done": True})
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        boss.advise(AdviceRequest(prompt="작업 X", worker_alias="w",
+                                  output=f"my api key {secret} leaked", deterministic_flags=[]))
+
+    blob = json.dumps(captured["data"]["messages"], ensure_ascii=False)
+    assert secret not in blob           # 원본 secret 부재
+    assert REDACTION_MARK in blob        # REDACTION_MARK 존재 (양방향)
+    assert "작업 X" in blob              # benign 내용 보존 (무손상)
+
+
 def test_ollama_boss_advise_returns_text_only_advice() -> None:
     boss = OllamaBoss(model="m1")
     payload = {"message": {"role": "assistant", "content": "검토 요약 — 위험 없음."}, "done": True}

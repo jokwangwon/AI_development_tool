@@ -7,23 +7,54 @@ import asyncio
 import io
 import json
 import os
+import sys
 import urllib.request
 import time
 
-async def check_ollama_health():
+# repo root 를 sys.path 에 — `from src.jarvis` / `from jarvis_hud...` 가 실행 방식 무관 성립 (75 entry).
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
+from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
+from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
+
+def _check_ollama_health_sync():
     try:
         with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2) as response:
             data = json.loads(response.read().decode())
             return True, len(data.get("models", []))
-    except:
+    except Exception:
         return False, 0
+
+
+async def check_ollama_health():
+    # 76 entry: 동기 urllib → to_thread (이벤트 루프 비차단 — self-analysis/chat 블로킹으로 인한 무한 로딩 fix).
+    return await asyncio.to_thread(_check_ollama_health_sync)
+
+
+def _ollama_chat_sync(payload: dict, timeout: int = 180) -> dict:
+    """동기 ollama /api/chat — async 핸들러는 asyncio.to_thread 로 감싸 이벤트 루프 비차단 (76 entry).
+
+    기존: async 핸들러 안에서 동기 urllib(최대 180s) 직접 호출 → 단일 uvicorn 이벤트 루프 차단
+    → 그동안 모든 요청(새 페이지 로드 포함) 멈춤(무한 로딩, 실측 self-analysis 18s 중 GET / 16.5s).
+    """
+    req = urllib.request.Request(
+        "http://localhost:11434/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read().decode())
 
 async def get_layer0_entry_count():
     try:
-        if not os.path.exists("/tmp/jarvis-v00-layer0-memory.jsonl"):
+        p = paths.layer0_memory_path()
+        if not p.exists():
             return 0, None
-        mtime = os.path.getmtime("/tmp/jarvis-v00-layer0-memory.jsonl")
-        with open("/tmp/jarvis-v00-layer0-memory.jsonl", "r") as f:
+        mtime = os.path.getmtime(p)
+        with open(p, "r") as f:
             count = sum(1 for _ in f)
         return count, time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(mtime))
     except:
@@ -47,7 +78,7 @@ async def stream_status(websocket):
 async def get_layer1_axis_stats():
     """Layer 1 report 의 advice_axis_stats 읽기. 부재 시 빈 dict."""
     try:
-        path = "/tmp/jarvis-v00-layer1-report.json"
+        path = paths.layer1_report_path()
         if not os.path.exists(path):
             return {}
         with open(path, "r") as f:
@@ -60,7 +91,7 @@ async def get_layer1_axis_stats():
 async def get_top_measured_models(limit=3):
     """최신 측정 파일의 decode 순위 top-N."""
     try:
-        path = "/tmp/jarvis-v00-multi-model-measurement.json"
+        path = paths.multi_model_measurement_path()
         if not os.path.exists(path):
             return []
         with open(path, "r") as f:
@@ -130,13 +161,7 @@ async def jarvis_self_analysis_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": prompt}],
         }
-        req = urllib.request.Request(
-            "http://localhost:11434/api/chat",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         analysis = result.get("message", {}).get("content", "")
         return JSONResponse({
             "analysis": analysis,
@@ -152,7 +177,8 @@ async def jarvis_self_analysis_handler(request):
         return JSONResponse({"error": str(e), "analysis": "자체 분석 일시 부재"}, status_code=500)
 
 
-CONVERSATIONS_PATH = "/tmp/jarvis-conversations.jsonl"
+CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2: JARVIS_DATA_DIR > XDG (대화 raw 저장, Q7). str — repo 내부 `+ ".tmp"` 호환.
+_conversation_repo = ConversationRepo(CONVERSATIONS_PATH)  # §10-3: 대화 저장 단일 port (SQLite swap 시 이 1곳만 교체)
 
 NOTE_PROMPT_TEMPLATE = """다음 사용자 입력을 정리된 노트 형식의 JSON 으로만 출력하세요.
 출력 형식 (엄격, 다른 텍스트 0):
@@ -187,12 +213,8 @@ MODE_PROMPTS = {
 
 
 async def _save_conversation_entry(entry: dict) -> None:
-    """JSONL append (fail-soft)."""
-    try:
-        with open(CONVERSATIONS_PATH, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
+    """JSONL append (fail-soft) — ConversationRepo 위임(§10-3)."""
+    _conversation_repo.append(entry)
 
 
 async def respond_handler(request):
@@ -214,13 +236,7 @@ async def respond_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": prompt}],
         }
-        req = urllib.request.Request(
-            "http://localhost:11434/api/chat",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         raw_reply = result.get("message", {}).get("content", "")
 
         # mode 별 후처리
@@ -278,24 +294,14 @@ async def conversation_history_handler(request):
     """전체 conversation list 또는 query 검색."""
     try:
         q = request.query_params.get("q", "").lower()
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"entries": []})
         entries = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
+        for e in _conversation_repo.read_all():
+            if q:
+                blob = (e.get("content", "") + " " + e.get("title", "") + " "
+                        + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
+                if q not in blob:
                     continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    continue
-                if q:
-                    blob = (e.get("content", "") + " " + e.get("title", "") + " "
-                            + e.get("body", "") + " " + " ".join(e.get("tags", []))).lower()
-                    if q not in blob:
-                        continue
-                entries.append(e)
+            entries.append(e)
         return JSONResponse({"entries": entries[-200:]})  # last 200
     except Exception as e:
         return JSONResponse({"error": str(e), "entries": []}, status_code=500)
@@ -304,12 +310,11 @@ async def conversation_history_handler(request):
 async def conversation_clear_handler(request):
     """전체 대화 JSONL 비움 (archive 폴더로 백업 후 새 파일 시작)."""
     try:
-        if os.path.exists(CONVERSATIONS_PATH):
+        if _conversation_repo.exists():
             ts = time.strftime("%Y%m%d_%H%M%S")
-            archive_dir = "/tmp/jarvis-conversations-archive"
-            os.makedirs(archive_dir, exist_ok=True)
+            archive_dir = paths.conversations_archive_dir()  # 생성 + 0700 보장
             archive_path = os.path.join(archive_dir, f"conversations_{ts}.jsonl")
-            os.rename(CONVERSATIONS_PATH, archive_path)
+            _conversation_repo.archive_to(archive_path)
             return JSONResponse({"ok": True, "archived": archive_path})
         return JSONResponse({"ok": True, "archived": None})
     except Exception as e:
@@ -322,29 +327,7 @@ async def conversation_delete_entry_handler(request):
         entry_id = request.path_params.get("entry_id")
         if not entry_id:
             return JSONResponse({"error": "missing entry_id"}, status_code=400)
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"ok": True, "removed": 0})
-        kept = []
-        removed = 0
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    kept.append(line)
-                    continue
-                if e.get("id") == entry_id:
-                    removed += 1
-                else:
-                    kept.append(json.dumps(e, ensure_ascii=False))
-        tmp_path = CONVERSATIONS_PATH + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            for line in kept:
-                fh.write(line + "\n")
-        os.replace(tmp_path, CONVERSATIONS_PATH)
+        removed = _conversation_repo.delete_entry(entry_id)
         return JSONResponse({"ok": True, "removed": removed})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -354,19 +337,10 @@ async def conversation_export_handler(request):
     """대화 내보내기 — markdown 또는 json."""
     try:
         fmt = request.query_params.get("format", "md").lower()
-        if not os.path.exists(CONVERSATIONS_PATH):
+        if not _conversation_repo.exists():
             content = "(대화 없음)" if fmt == "md" else "[]"
             return JSONResponse({"content": content, "format": fmt})
-        entries = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entries.append(json.loads(line))
-                except Exception:
-                    continue
+        entries = _conversation_repo.read_all()
         if fmt == "json":
             return JSONResponse({"content": json.dumps(entries, ensure_ascii=False, indent=2), "format": "json"})
         # markdown
@@ -476,20 +450,7 @@ async def tts_handler(request):
 async def conversation_canvas_handler(request):
     """Canvas 카드 list — type=note 또는 svg 만."""
     try:
-        if not os.path.exists(CONVERSATIONS_PATH):
-            return JSONResponse({"cards": []})
-        cards = []
-        with open(CONVERSATIONS_PATH, "r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    e = json.loads(line)
-                except Exception:
-                    continue
-                if e.get("type") in ("note", "svg"):
-                    cards.append(e)
+        cards = [e for e in _conversation_repo.read_all() if e.get("type") in ("note", "svg")]
         return JSONResponse({"cards": cards[-100:]})  # last 100
     except Exception as e:
         return JSONResponse({"error": str(e), "cards": []}, status_code=500)
@@ -508,16 +469,14 @@ async def chat_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": message}]
         }
-        req = urllib.request.Request("http://localhost:11434/api/chat", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
-            reply = result.get("message", {}).get("content", "")
-            return JSONResponse({"reply": reply, "model": model})
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
+        reply = result.get("message", {}).get("content", "")
+        return JSONResponse({"reply": reply, "model": model})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
 async def index(request):
-    return FileResponse("jarvis_hud/index.html", media_type="text/html")
+    return FileResponse(os.path.join(_ROOT, "jarvis_hud", "index.html"), media_type="text/html")
 
 async def stream(websocket):
     await stream_status(websocket)
@@ -547,6 +506,15 @@ routes = [
     Route("/api/conversation/export", conversation_export_handler, methods=["GET"]),
     Route("/api/tts", tts_handler, methods=["POST"]),
 ]
+
+# jarvis 작업 카드보드 (75 entry) — src.jarvis 오케스트레이터 통합.
+# 디딤돌0: 영속 레저(LedgerLog) 주입 → 재시작 시 카드 복원 + 미완 작업 interrupted 마킹.
+#   경로 = /tmp (Layer0 memory 와 동형 컨벤션). 프로세스 재시작 유실 해소(brief §2).
+from src.jarvis.ledger import LedgerLog  # noqa: E402
+
+_jarvis_board = JarvisTaskBoard(ledger=LedgerLog(paths.tasks_ledger_path()))
+routes += make_jarvis_routes(_jarvis_board)
+
 app = Starlette(debug=False, routes=routes)
 
 if __name__ == "__main__":

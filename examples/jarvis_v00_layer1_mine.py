@@ -24,9 +24,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.jarvis.layer1 import format_report, mine
 from src.jarvis.memory import MemoryLog
+from src.jarvis import paths
 
-DEFAULT_MEMORY = "/tmp/jarvis-v00-layer0-memory.jsonl"
-REPORT_JSON_PATH = "/tmp/jarvis-v00-layer1-report.json"
+DEFAULT_MEMORY = str(paths.layer0_memory_path())
+REPORT_JSON_PATH = str(paths.layer1_report_path())
 
 
 def _report_to_dict(report) -> dict:

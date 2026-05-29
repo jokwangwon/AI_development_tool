@@ -29,6 +29,7 @@ from examples.jarvis_v00_boss_measurement import (  # type: ignore[import-not-fo
     _ollama_has_model, _summarize,
 )
 from src.jarvis.boss import boss_prompt_for
+from src.jarvis import paths
 
 DEFAULT_MODELS = [
     "qwen3-30b-a3b-instruct-2507-bartowski:latest",
@@ -36,7 +37,7 @@ DEFAULT_MODELS = [
     "exaone3.5:32b",
     "glm-4.7-flash:latest",
 ]
-EVIDENCE_PATH = "/tmp/jarvis-v00-multi-model-measurement.json"
+EVIDENCE_PATH = str(paths.multi_model_measurement_path())
 
 
 def measure_model(model: str, runs: int, system_prompt: str) -> dict:

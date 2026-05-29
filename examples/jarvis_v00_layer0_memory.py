@@ -24,8 +24,9 @@ from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import TmuxWorker
+from src.jarvis import paths
 
-MEMORY_PATH = "/tmp/jarvis-v00-layer0-memory.jsonl"
+MEMORY_PATH = str(paths.layer0_memory_path())
 MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 
 TASKS = [

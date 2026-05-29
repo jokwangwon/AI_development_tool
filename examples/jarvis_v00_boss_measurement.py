@@ -26,11 +26,12 @@ import urllib.error
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.jarvis.boss import boss_prompt_for
+from src.jarvis import paths
 
 DEFAULT_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
 OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
-EVIDENCE_PATH = "/tmp/jarvis-v00-boss-measurement.json"
+EVIDENCE_PATH = str(paths.boss_measurement_path())
 
 # 표준 advice prompt (실 운영 형태) — 동형 호출 N 회용 고정 input
 ADVICE_USER_BLOB = (

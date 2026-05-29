@@ -23,6 +23,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol, runtime_checkable
 
+from src.adapters.llm.redaction import RedactionFilter  # SDK 아님 — 송신 redaction (RT-1, 70 entry)
+
 from src.jarvis.isolation import IsolationBackend, PassthroughIsolation
 
 # runner(cmd, workdir) -> (exit_code, stdout, stderr). 주입으로 테스트 결정성 확보.
@@ -122,8 +124,6 @@ class CliWorker:
 # tmux subprocess runner = argv → (exit_code, stdout, stderr). 주입으로 테스트 결정성.
 TmuxRunner = Callable[[list[str]], "tuple[int, str, str]"]
 
-_SENTINEL_RE = re.compile(r"__JARVIS_DONE_(-?\d+)__")
-
 
 def _default_tmux_runner(argv: list[str]) -> tuple[int, str, str]:
     """기본 tmux runner — `tmux <subcommand> ...` subprocess 실행."""
@@ -154,6 +154,9 @@ class TmuxWorker:
         poll_attempts: int = 60,
         poll_interval_s: float = 1.0,
         session_prefix: str = "jarvis",
+        nonce_factory: Callable[[], str] | None = None,
+        on_session: Callable[[str], None] | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> None:
         self.alias = alias
         self._argv = list(argv)
@@ -162,13 +165,26 @@ class TmuxWorker:
         self._poll_attempts = max(1, poll_attempts)
         self._poll_interval = max(0.0, poll_interval_s)
         self._session_prefix = session_prefix
+        # 디딤돌0 취소 hook (brief §5 실행 중 취소): poll 루프가 매 회 확인 → True 면
+        # 조기 종료(finally kill-session = 실 자원 회수). 미주입(None)=하위 호환.
+        self._cancel_check = cancel_check
+        # 완료 sentinel = per-session 무작위 nonce (위조 표면 사전/외부 차단, 74 entry B-2).
+        # nonce = 비밀 아닌 per-run salt(사전 예측 불가) — 평문 노출 무관, 안전가치=예측불가만.
+        self._nonce_factory = nonce_factory or (lambda: uuid.uuid4().hex)
+        # 75 entry: new-session 성공 직후 session 명 통지(라이브 capture-pane 용). lifecycle 변경 0.
+        self._on_session = on_session
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
         inner = self._isolation.wrap([*self._argv, prompt], workdir)
         session = f"{self._session_prefix}-{uuid.uuid4().hex[:8]}"
+        # per-run nonce sentinel — 명령이 nonce 예측 불가 → 사전/외부 위조 차단(B-2).
+        nonce = self._nonce_factory()
+        if not nonce:
+            raise ValueError("nonce_factory 가 빈 nonce 반환 — sentinel 위조 방어 무력화 금지")
+        sentinel_re = re.compile(rf"__JARVIS_DONE_{re.escape(nonce)}_(-?\d+)__")
         # sentinel 포함 shell 한 줄 — exit code 보존(`$?`).
         inner_shell = shlex.join(inner)
-        full_cmd = f"cd {shlex.quote(workdir)} && {inner_shell}; echo __JARVIS_DONE_$?__"
+        full_cmd = f"cd {shlex.quote(workdir)} && {inner_shell}; echo __JARVIS_DONE_{nonce}_$?__"
 
         new_rc, _, new_err = self._tmux([
             "tmux", "new-session", "-d", "-s", session, "-x", "200", "-y", "50",
@@ -182,11 +198,28 @@ class TmuxWorker:
                 raw=None,
             )
 
+        # 75 entry: 세션 생성 성공 후 통지 (보드가 라이브 capture-pane 가능). fail-soft.
+        if self._on_session is not None:
+            try:
+                self._on_session(session)
+            except Exception:
+                pass
+
         try:
             self._tmux(["tmux", "send-keys", "-t", session, full_cmd, "Enter"])
-            pane_text, sentinel_code = self._poll_for_sentinel(session)
+            pane_text, sentinel_code = self._poll_for_sentinel(session, sentinel_re)
         finally:
             self._tmux(["tmux", "kill-session", "-t", session])
+
+        # 취소(brief §5): poll 가 cancel 로 조기 종료한 경우 timeout(124)과 구분(130).
+        if self._cancel_check is not None and self._cancel_check():
+            return WorkerResult(
+                exit_code=130,                            # 관행: 128+SIGINT(2) = 취소
+                output=sentinel_re.sub("", pane_text).rstrip(),
+                cost_usd=None,
+                is_error=True,                            # 미완 = 거짓 성공 금지
+                raw=None,
+            )
 
         if sentinel_code is None:
             return WorkerResult(
@@ -197,7 +230,7 @@ class TmuxWorker:
                 raw=None,
             )
 
-        cleaned = _SENTINEL_RE.sub("", pane_text).rstrip()
+        cleaned = sentinel_re.sub("", pane_text).rstrip()
         return WorkerResult(
             exit_code=sentinel_code,
             output=cleaned,
@@ -206,13 +239,21 @@ class TmuxWorker:
             raw=None,
         )
 
-    def _poll_for_sentinel(self, session: str) -> tuple[str, int | None]:
-        """capture-pane polling — sentinel 등장 시 즉시 반환."""
+    def _poll_for_sentinel(
+        self, session: str, sentinel_re: "re.Pattern[str]"
+    ) -> tuple[str, int | None]:
+        """capture-pane polling — per-run nonce sentinel 등장 시 즉시 반환.
+
+        매 회 *시작*에 cancel_check 확인 → 취소 시 capture-pane 호출 전 조기 종료
+        (sentinel_code=None 반환, run() 이 취소(130)로 식별). poll 폭주 방지.
+        """
         pane_text = ""
         for _ in range(self._poll_attempts):
+            if self._cancel_check is not None and self._cancel_check():
+                return pane_text, None
             _, out, _ = self._tmux(["tmux", "capture-pane", "-p", "-t", session])
             pane_text = out
-            m = _SENTINEL_RE.search(pane_text)
+            m = sentinel_re.search(pane_text)
             if m is not None:
                 return pane_text, int(m.group(1))
             if self._poll_interval > 0:
@@ -268,21 +309,28 @@ class OllamaWorker:
         output_filename: str | None = None,
         timeout_s: float = _OLLAMA_WORKER_DEFAULT_TIMEOUT_S,
         system_prompt: str | None = None,
+        redactor: RedactionFilter | None = None,
     ) -> None:
         self.alias = alias
         self._model = model
         self._output_filename = output_filename
         self._timeout = timeout_s
         self._system_prompt = system_prompt or _DEFAULT_SYSTEM_PROMPT
+        # 송신 redaction (RT-1, 70 entry (나)) — optional default 로 호환 보존.
+        self._redactor = redactor or RedactionFilter()
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
+        # RT-1: 송신 전 redaction (prompt 의 secret strip — GP-2 prevention).
+        messages = self._redactor.redact_messages(
+            [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": prompt},
+            ]
+        )
         body = {
             "model": self._model,
             "stream": False,
-            "messages": [
-                {"role": "system", "content": self._system_prompt},
-                {"role": "user", "content": prompt},
-            ],
+            "messages": messages,
         }
         data = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(

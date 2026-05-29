@@ -33,11 +33,15 @@ repos:
       # === GP-3 hook 후보 (3) ===
 
       # GP-3 #1 — secret-scanner (Layer B §5.5.1 S-1 본문 채택 답습)
+      # scope 정책: src + .github 한정 (docs/ 영역 영구 금지)
+      # 정책 source: docs/architecture/secret-scanner-scope-policy.md (49 entry Reviewer-only 단축 합의 APPROVE)
+      # scope 확장 의무 절차: 정책 문서 §2 답습 (별도 sub-cycle + 풀 3+1 + R-7(b) 차등)
       - id: secret-scanner
         name: Secret Scanner (R-4.1 Tier-1 45 patterns)
         description: |
           Secret 검출 (Group D PoC 답습, actual run 25623028888 SUCCESS).
           tools/secret_scanner.py 답습 — 본문 변경 0건.
+          scope 정책: docs/architecture/secret-scanner-scope-policy.md (49 entry)
         entry: bash -c 'for d in src .github; do python3 tools/secret_scanner.py --mode scan-source "$d" || exit 1; done'
         language: system
         pass_filenames: false

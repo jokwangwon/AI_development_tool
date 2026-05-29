@@ -990,8 +990,30 @@
 
     <!-- Canvas (right) -->
     <aside class="canvas">
-      <div class="canvas-title">정리 노트 · 도식</div>
+      <div class="canvas-title" style="display:flex; gap:14px; align-items:center;">
+        <span id="tab-notes" class="canvas-tab" style="cursor:pointer; opacity:1;">정리 노트 · 도식</span>
+        <span id="tab-jarvis" class="canvas-tab" style="cursor:pointer; opacity:0.45;">작업</span>
+      </div>
       <div id="canvas-list"></div>
+      <!-- jarvis 작업 카드보드 (75 entry) — 기본 숨김, 탭으로 토글 -->
+      <div id="jarvis-view" style="display:none;">
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+          <input id="jarvis-prompt" type="text" placeholder="작업 명령..." autocomplete="off"
+                 style="flex:1; min-width:0; padding:6px 10px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:inherit; font-size:13px; outline:none;" />
+          <select id="jarvis-worker" title="워커"
+                  style="background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; padding:0 4px;">
+            <option value="ollama">ollama</option>
+            <option value="tmux">tmux</option>
+          </select>
+          <button id="jarvis-submit"
+                  style="padding:6px 12px; background:var(--user-bg); border:1px solid var(--user-border); border-radius:8px; color:var(--text); cursor:pointer; white-space:nowrap;">실행</button>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+          <button id="jarvis-clear-done" title="완결(수락/거절/실패/취소/중단) 작업 모두 제거"
+                  style="padding:3px 10px; background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;">🗑 완료 지우기</button>
+        </div>
+        <div id="jarvis-task-list"></div>
+      </div>
     </aside>
   </div>
 
@@ -1213,7 +1235,10 @@
         statusEl.textContent = '연결 끊김';
       }
     }
-    loadInfo();
+    // 76: 초기 self-analysis(보스 30B, ~13s 생성)를 load 이후로 지연 호출. 로드 *중* 13s pending
+    // 요청이 탭 로딩 스피너를 점유해 "무한 로딩"으로 보이던 것 방지(서버 비차단화로 다른 요청은
+    // 이미 안 멈춤). 주기 갱신(60s)은 유지.
+    window.addEventListener('load', () => setTimeout(loadInfo, 300));
     setInterval(loadInfo, 60000);
 
     // === WebSocket ===
@@ -1557,6 +1582,202 @@
     // === 메시지 hover 삭제 === renderMsg 갱신 (action button 추가)
     const _origRenderMsg = renderMsg;
     // (renderMsg 는 이미 위에 정의됨; 메시지 삭제 버튼은 별도 wrap)
+
+    // === jarvis 작업 카드보드 (75 entry) — CB-5: textContent/createElement 전용 (innerHTML 금지, XSS 방어) ===
+    const jarvisView = $('jarvis-view');
+    const tabNotes = $('tab-notes');
+    const tabJarvis = $('tab-jarvis');
+    const jarvisTaskList = $('jarvis-task-list');
+    let jarvisPollTimer = null;
+    let livePaneTaskId = null;
+    let lastTasksSig = null;   // 폴링 깜빡임 차단 — 변경 없으면 DOM 재구성 생략
+
+    const STATUS_BADGE = { '진행중': '▶', '승인대기': '⏳', '수락': '✅', '거절': '✖', '실패': '⚠', '취소': '⛔', '중단됨': '⏸' };
+
+    const _line = (text) => { const d = document.createElement('div'); d.textContent = text; return d; };
+
+    const TERMINAL_STATUS = ['applied', 'denied', 'failed', 'cancelled', 'interrupted'];
+
+    const renderJarvisCard = (task) => {
+      const card = document.createElement('div');
+      card.className = 'canvas-card';
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.style.cssText = 'display:flex; align-items:center; gap:6px;';
+      const titleText = document.createElement('span');
+      titleText.style.cssText = 'flex:1; min-width:0;';
+      titleText.textContent = `${STATUS_BADGE[task.status_label] || ''} ${task.status_label} · ${task.prompt}`;  // CB-5: textContent
+      title.appendChild(titleText);
+      if (TERMINAL_STATUS.includes(task.status)) {
+        // 완결 카드 = ✕제거(보드+기록 dismissed 제외, 재시작해도 안 돌아옴).
+        const dis = document.createElement('button');
+        dis.textContent = '✕';
+        dis.title = '목록에서 제거 (재시작해도 안 돌아옴)';
+        dis.style.cssText = 'flex:none; padding:0 7px; background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px; line-height:1.7;';
+        dis.onclick = () => dismissTask(task.id);
+        title.appendChild(dis);
+      }
+      card.appendChild(title);
+      const body = document.createElement('div');
+      body.className = 'body';
+      if (task.flags && task.flags.length) body.appendChild(_line('⚠ 위험 flags: ' + task.flags.join(', ')));
+      if (task.advice) body.appendChild(_line('boss: ' + task.advice));
+      if (task.redacted_output_preview) {
+        const pre = document.createElement('pre');
+        pre.style.whiteSpace = 'pre-wrap';
+        pre.textContent = task.redacted_output_preview;   // CB-1: 이미 서버 scrub, CB-5: textContent
+        body.appendChild(pre);
+      }
+      if (task.error) body.appendChild(_line('오류: ' + task.error));
+      card.appendChild(body);
+      if (task.status === 'awaiting') {
+        const acts = document.createElement('div');
+        acts.style.cssText = 'display:flex; gap:8px; margin-top:8px;';
+        const acc = document.createElement('button');
+        acc.textContent = '수락';
+        acc.style.cssText = 'flex:1; padding:5px; background:rgba(127,184,146,0.15); border:1px solid var(--success); border-radius:6px; color:var(--text); cursor:pointer;';
+        acc.onclick = () => decideTask(task.id, 'accept');
+        const rej = document.createElement('button');
+        rej.textContent = '거절';
+        rej.style.cssText = 'flex:1; padding:5px; background:rgba(217,122,133,0.15); border:1px solid var(--danger); border-radius:6px; color:var(--text); cursor:pointer;';
+        rej.onclick = () => decideTask(task.id, 'reject');
+        acts.append(acc, rej);
+        card.appendChild(acts);
+      }
+      if (task.status === 'running') {
+        // 진행중 = 취소 가능(실행 abort + tmux 실 kill). tmux 는 라이브 보기도 병행.
+        const acts = document.createElement('div');
+        acts.style.cssText = 'display:flex; gap:8px; margin-top:8px; align-items:center;';
+        if (task.worker_type === 'tmux') {
+          const live = document.createElement('button');
+          live.textContent = livePaneTaskId === task.id ? '👁 라이브 닫기' : '👁 라이브 보기';
+          live.style.cssText = 'padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;';
+          live.onclick = () => { livePaneTaskId = (livePaneTaskId === task.id) ? null : task.id; refreshPane(); loadJarvisTasks(); };
+          acts.appendChild(live);
+        }
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = '✕ 취소';
+        cancelBtn.title = '실행 취소 (tmux=실 kill, ollama=포기 마킹) · 반영 안 함';
+        cancelBtn.style.cssText = 'padding:4px 10px; background:rgba(217,122,133,0.12); border:1px solid var(--danger); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;';
+        cancelBtn.onclick = () => cancelTask(task.id);
+        acts.appendChild(cancelBtn);
+        card.appendChild(acts);
+        // 인라인 라이브 pane (카드 안, 버튼 아래) — refreshPane 이 1초마다 textContent 갱신.
+        if (task.worker_type === 'tmux' && livePaneTaskId === task.id) {
+          const pane = document.createElement('pre');
+          pane.id = 'jarvis-pane-' + task.id;
+          pane.style.cssText = 'white-space:pre-wrap; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px; margin-top:8px; font-size:11px; max-height:200px; overflow:auto;';
+          pane.textContent = '(불러오는 중…)';
+          card.appendChild(pane);
+        }
+      }
+      return card;
+    };
+
+    const loadJarvisTasks = async () => {
+      try {
+        const res = await fetch('/api/jarvis/tasks');
+        const data = await res.json();
+        const tasks = data.tasks || [];
+        // 변경 없으면 DOM 재구성 생략(매초 replaceChildren 깜빡임 차단).
+        // livePaneTaskId 포함 → 라이브 보기 토글도 즉시 반영.
+        const sig = JSON.stringify(tasks) + '|' + (livePaneTaskId || '');
+        if (sig === lastTasksSig) return;
+        lastTasksSig = sig;
+        jarvisTaskList.replaceChildren();
+        tasks.forEach(t => jarvisTaskList.appendChild(renderJarvisCard(t)));
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const refreshPane = async () => {
+      // 인라인 pane(카드 안) 의 textContent 만 직접 갱신 — 카드 재렌더 없이 라이브 갱신(깜빡임 0).
+      if (!livePaneTaskId) return;
+      try {
+        const r = await fetch(`/api/jarvis/task/${livePaneTaskId}/pane`);
+        const d = await r.json();
+        const el = document.getElementById('jarvis-pane-' + livePaneTaskId);
+        if (el) el.textContent = d.pane || '(pane 없음 — 세션 종료)';  // CB-5: textContent
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const decideTask = async (id, decision) => {
+      try {
+        await fetch(`/api/jarvis/task/${id}/decision`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision }),
+        });
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const cancelTask = async (id) => {
+      // 디딤돌0 실행 중 취소 — 반영 안 함(default-deny). tmux 세션 실 kill.
+      try {
+        await fetch(`/api/jarvis/task/${id}/cancel`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (livePaneTaskId === id) livePaneTaskId = null;  // 취소 시 라이브 pane 닫기
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const dismissTask = async (id) => {
+      // 완결 카드 제거 — 보드+기록(dismissed 이벤트)에서 제외(재시작해도 안 돌아옴).
+      try {
+        await fetch(`/api/jarvis/task/${id}/dismiss`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+        });
+        if (livePaneTaskId === id) livePaneTaskId = null;
+        lastTasksSig = null;   // 카드 사라짐 → 강제 재렌더
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const dismissCompleted = async () => {
+      // 완결(수락/거절/실패/취소/중단) 카드 일괄 제거(진행중/승인대기는 유지).
+      try {
+        await fetch('/api/jarvis/tasks/dismiss-completed', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+        });
+        lastTasksSig = null;
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const submitJarvisTask = async () => {
+      const promptEl = $('jarvis-prompt');
+      const prompt = promptEl.value.trim();
+      if (!prompt) return;
+      try {
+        await fetch('/api/jarvis/task', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, worker_type: $('jarvis-worker').value }),
+        });
+        promptEl.value = '';
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const startJarvisPoll = () => {
+      stopJarvisPoll();
+      jarvisPollTimer = setInterval(() => { loadJarvisTasks(); refreshPane(); }, 1000);
+    };
+    const stopJarvisPoll = () => { if (jarvisPollTimer) { clearInterval(jarvisPollTimer); jarvisPollTimer = null; } };
+
+    const setCanvasView = (view) => {
+      const isJarvis = view === 'jarvis';
+      jarvisView.style.display = isJarvis ? '' : 'none';
+      canvasList.style.display = isJarvis ? 'none' : '';
+      tabJarvis.style.opacity = isJarvis ? '1' : '0.45';
+      tabNotes.style.opacity = isJarvis ? '0.45' : '1';
+      if (isJarvis) { loadJarvisTasks(); startJarvisPoll(); } else { stopJarvisPoll(); }
+    };
+    tabNotes.addEventListener('click', () => setCanvasView('notes'));
+    tabJarvis.addEventListener('click', () => setCanvasView('jarvis'));
+    $('jarvis-submit').addEventListener('click', submitJarvisTask);
+    $('jarvis-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitJarvisTask(); });
+    $('jarvis-clear-done').addEventListener('click', dismissCompleted);
 
     // === init ===
     loadInitial();

@@ -12,7 +12,7 @@
 #   - corpus 24 회귀 (Primary 1 rfc8785 + Primary 2 jcs cross-check + sha256 일관성)
 #   - NaN/Inf reject 2건 (양 라이브러리 모두 raise 검증)
 #   - PASS fixture × 2: jsonl_hash_chain.py rc=0
-#   - FAIL fixture × 4: jsonl_hash_chain.py rc=1 + 4 violation_type cover
+#   - FAIL fixture × 5: jsonl_hash_chain.py rc=1 + 5 violation_type cover
 #   - Round-trip PASS fixture: jsonl_roundtrip.py rc=0 (T2 strict)
 #
 # 본 PoC 는 G4 *부분 충족 시제* 한정 — G4 전체 PASS 권한 0건 (사용자 명시 답습).
@@ -48,10 +48,10 @@ jobs:
       PYTHONPATH: tools
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -194,15 +194,16 @@ jobs:
           done
           echo "PASS fixtures verified (rc=0 for all)"
 
-      - name: FAIL fixture — jsonl_hash_chain rc=1 + 4 violation_type cover
+      - name: FAIL fixture — jsonl_hash_chain rc=1 + 5 violation_type cover
         run: |
           set -e
-          # Expected violation_type per fixture (4 패턴 cover 강제)
+          # Expected violation_type per fixture (5 패턴 cover 강제 — 59 entry C-1 timestamp 보강)
           declare -A EXPECTED=(
             [prev_hash_mismatch.jsonl]=prev_hash_mismatch
             [hash_recalculation.jsonl]=hash_recalculation
             [missing_event_field.jsonl]=schema_missing_field
             [genesis_mismatch.jsonl]=genesis_mismatch
+            [timestamp_monotonicity.jsonl]=monotonicity_violation
           )
           for f in tests/fixtures/jsonl_ledger/fail/*.jsonl; do
             name=$(basename "$f")
@@ -223,7 +224,7 @@ jobs:
             echo "  $name OK (rc=1, violation_type=$expected)"
           done
           rm -f chain_out.txt
-          echo "FAIL fixtures verified — 4 violation_type cover (chain violation 4 패턴 답습)"
+          echo "FAIL fixtures verified — 5 violation_type cover (chain violation 4 패턴 + timestamp monotonicity)"
 
       - name: Round-trip — T2 strict on PASS fixtures
         run: |
@@ -251,7 +252,7 @@ jobs:
           echo "- agent: user" >> $GITHUB_STEP_SUMMARY
           echo "- ledger_layer: Layer 1 — Hash Chain + Canonical JSON + Round-trip (Group C PoC)" >> $GITHUB_STEP_SUMMARY
           echo "- corpus: 24 cases × 4 axes (Primary 1 + Primary 2 + cross_check + jq fallback)" >> $GITHUB_STEP_SUMMARY
-          echo "- chain violation cover: 4 패턴 (prev_hash_mismatch + hash_recalculation + schema_missing_field + genesis_mismatch)" >> $GITHUB_STEP_SUMMARY
+          echo "- chain violation cover: 5 패턴 (prev_hash_mismatch + hash_recalculation + schema_missing_field + genesis_mismatch + monotonicity_violation)" >> $GITHUB_STEP_SUMMARY
           echo "- round-trip: T2 strict (PASS fixtures)" >> $GITHUB_STEP_SUMMARY
           echo "- numeric reject: NaN + Inf + -Inf (rfc8785 + jcs)" >> $GITHUB_STEP_SUMMARY
           echo "- PASS scope: G4 *부분 충족 시제* 한정 (G4 전체 PASS 권한 0건, 사용자 명시 답습)" >> $GITHUB_STEP_SUMMARY

@@ -5,6 +5,10 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from src.jarvis import paths  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
+
+
 def main():
     print("=== Jarvis 자비스 상태 ===")
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -23,7 +27,7 @@ def main():
 
     # Section [2] Layer 0
     print("\n[2] Layer 0:")
-    layer0_path = "/tmp/jarvis-v00-layer0-memory.jsonl"
+    layer0_path = str(paths.layer0_memory_path())
     try:
         if os.path.exists(layer0_path):
             with open(layer0_path, 'r') as f:
@@ -43,7 +47,7 @@ def main():
 
     # Section [3] Layer 1
     print("\n[3] Layer 1:")
-    layer1_path = "/tmp/jarvis-v00-layer1-report.json"
+    layer1_path = str(paths.layer1_report_path())
     try:
         if os.path.exists(layer1_path):
             with open(layer1_path, 'r') as f:
@@ -65,7 +69,7 @@ def main():
 
     # Section [4] 최신 측정
     print("\n[4] 최신 측정:")
-    measurement_path = "/tmp/jarvis-v00-multi-model-measurement.json"
+    measurement_path = str(paths.multi_model_measurement_path())
     try:
         if os.path.exists(measurement_path):
             with open(measurement_path, 'r') as f:

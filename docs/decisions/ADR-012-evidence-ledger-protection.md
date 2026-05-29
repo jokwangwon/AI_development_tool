@@ -184,6 +184,8 @@ PR-1 §1.4 (C-I 흡수, `commit 750faaf`) 에서 G2 §1.2.5 P9~P12 deferred cand
 - GitHub Actions run ID + signed tag (Agent B C-4 권고)
 - 1인 SPOF 완화 + 침해 후 발견 가능
 
+> **Layer numbering 주의 (R-S1 cross-reference, 2026-05-28)**: 본 §2.3 = *원칙 + grouping view* (pre-commit hook + CI 회귀 검증 = Layer 2 Git append-only enforcement 하위 수단). **cross-document "Layer N" 참조의 canonical per-layer numbering = §2.8 / `provider-agnostic-memory-skill-design.md §4.4.1` 5-layer** (pre-commit = Layer 3, CI 회귀 검증 = Layer 4, External anchor = Layer 5). 본 §2.3 의 "Layer 4 = External anchor" 는 4-layer grouping view *내부 한정* — MVP-2 "Layer 1+2+4" 등 cross-document 참조는 5-layer (Layer 4 = CI 회귀 검증) 기준. 두 분해 모두 *내용* valid, 충돌 = numbering 관점 차이 (내용 0).
+
 ### 2.4 Signed commit OR Git append commit (사용자 명시 답습)
 
 **사용자 명시 결정 답습**: "signed commit 또는 git append commit (둘 중 하나) 의무".
@@ -270,6 +272,8 @@ genesis_hash = sha256("genesis:" + canonical_json({
 - **Layer 3**: pre-commit hook — `git rebase` / `git filter-branch` / `git reset --hard` 감지 시 reject (T3 자동 *방어* 권한, T3 자동 *변경* 금지의 비대칭 활용 — 외부 LLM 2 §3.3)
 - **Layer 4**: CI 회귀 검증 — base branch 대비 JSONL line deletion / rewrite 감지
 - **Layer 5 (RECOMMENDED MVP, MANDATORY multi-host)**: External anchor — GitHub Actions run ID + signed tag (Agent B C-4) 또는 월 1회 external snapshot (외부 LLM 2 C-4)
+
+> **canonical numbering (R-S1 cross-reference, 2026-05-28)**: 본 §2.8 5-layer = `provider-agnostic-memory-skill-design.md §4.4.1` (PRIMARY) 동형 — cross-document "Layer N" 참조 **canonical** (Layer 4 = CI 회귀 검증, Layer 5 = External anchor). §2.3 4-layer = 원칙 grouping view (CI/pre-commit = Layer 2 하위), numbering 충돌 아닌 분해 관점 차이 (내용 0). MVP-2 "Layer 1+2+4" = 본 §2.8 5-layer 기준 (hash + git append-only + CI 회귀 검증).
 
 **1인 동일 호스트 SPOF 한계 명시** (외부 LLM 1 권고 5 직접 인용):
 

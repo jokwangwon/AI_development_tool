@@ -1,0 +1,33 @@
+# llm-providers.yaml — LLM provider 단일 진실 원천 (Provider Liquidity 5조-2)
+#
+# SC-Provider Liquidity (69 entry) — facade complete() Router 위임 real (Core MVP).
+# 답습: docs/architecture/llm-providers-design.md §3.1 + ADR-009 §2 + ADR-008 #5(Min 2)
+#
+# 교체/추가/제거 = 본 파일 편집만 (코드 변경 0 — 5조-2 비협상). model_alias 는 의미 명칭만
+# (provider/모델명 인코딩 금지 — 위반패턴 #1). api_key 는 평문 금지, *_env 환경변수 보간.
+#
+# Core MVP active 2종 = 다른 type (anthropic + ollama) → Min 2 + 동일 type 금지 동시 충족.
+# OAuth / openrouter 등 standby 스키마는 설계 §3.1 참조 (본 cycle 미활성).
+
+defaults:
+  primary: anthropic-claude-api
+  secondary: ollama-llama-local
+
+routing:
+  default: anthropic-claude-api
+  background_jobs: ollama-llama-local
+
+providers:
+  anthropic-claude-api:
+    type: anthropic
+    litellm_model: anthropic/claude-opus-4-7
+    auth_method: api_key
+    api_key_env: ANTHROPIC_API_KEY
+    status: active
+
+  ollama-llama-local:
+    type: ollama
+    litellm_model: ollama/llama-3.3-70b
+    auth_method: none
+    endpoint: http://localhost:11434
+    status: active

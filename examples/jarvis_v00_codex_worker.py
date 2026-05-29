@@ -30,12 +30,13 @@ from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import CliWorker
+from src.jarvis import paths
 
 MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
-MEMORY_PATH = "/tmp/jarvis-v00-codex-worker-memory.jsonl"
-OLLAMA_RAW_PATH = "/tmp/jarvis-v00-codex-worker-ollama-raw.log"
-CODEX_RAW_PATH = "/tmp/jarvis-v00-codex-worker-codex-raw.log"
-CODEX_NDJSON_PATH = "/tmp/jarvis-v00-codex-worker-codex-ndjson.log"
+MEMORY_PATH = str(paths.data_file("jarvis-v00-codex-worker-memory.jsonl"))
+OLLAMA_RAW_PATH = str(paths.worker_raw_log_path("codex", "ollama"))
+CODEX_RAW_PATH = str(paths.worker_raw_log_path("codex", "codex"))
+CODEX_NDJSON_PATH = str(paths.data_file("jarvis-v00-codex-worker-codex-ndjson.log"))
 
 # claude 워커와 *동일* fizzbuzz prompt = Provider Liquidity side-by-side 입증.
 DEFAULT_PROMPT = (

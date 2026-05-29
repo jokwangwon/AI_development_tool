@@ -31,11 +31,12 @@ from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import CliWorker
+from src.jarvis import paths
 
 MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
-MEMORY_PATH = "/tmp/jarvis-v00-claude-worker-memory.jsonl"
-OLLAMA_RAW_PATH = "/tmp/jarvis-v00-claude-worker-ollama-raw.log"
-CLAUDE_RAW_PATH = "/tmp/jarvis-v00-claude-worker-claude-raw.log"
+MEMORY_PATH = str(paths.data_file("jarvis-v00-claude-worker-memory.jsonl"))
+OLLAMA_RAW_PATH = str(paths.worker_raw_log_path("claude", "ollama"))
+CLAUDE_RAW_PATH = str(paths.worker_raw_log_path("claude", "claude"))
 
 DEFAULT_PROMPT = (
     "Create a Python file named fizzbuzz.py in the current directory that prints "

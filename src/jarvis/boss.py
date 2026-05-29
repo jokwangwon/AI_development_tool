@@ -25,6 +25,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
+from src.adapters.llm.redaction import RedactionFilter  # SDK 아님 — 송신 redaction (RT-1, 70 entry)
+
 
 @dataclass(frozen=True)
 class AdviceRequest:
@@ -197,11 +199,14 @@ class OllamaBoss:
         model: str,
         timeout_s: float = _DEFAULT_TIMEOUT_S,
         system_prompt: str | None = None,
+        redactor: RedactionFilter | None = None,
     ) -> None:
         self.name = model
         self._timeout = timeout_s
         # None = 기본 code 도메인 (회귀 0). caller = boss_prompt_for(kind) 주입.
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
+        # 송신 redaction (RT-1, 70 entry (나)) — optional default 로 호환 보존.
+        self._redactor = redactor or RedactionFilter()
 
     def advise(self, req: AdviceRequest) -> BossAdvice:
         user_blob = (
@@ -210,13 +215,17 @@ class OllamaBoss:
             f"[worker output]\n{req.output}\n\n"
             f"[deterministic flags]\n" + ", ".join(req.deterministic_flags)
         )
+        # RT-1: 송신 전 redaction (untrusted worker output 의 secret strip — GP-2 prevention).
+        messages = self._redactor.redact_messages(
+            [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": user_blob},
+            ]
+        )
         body = {
             "model": self.name,
             "stream": False,
-            "messages": [
-                {"role": "system", "content": self._system_prompt},
-                {"role": "user", "content": user_blob},
-            ],
+            "messages": messages,
         }
         data = json.dumps(body).encode("utf-8")
         request = urllib.request.Request(

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# jarvis CLI 런처 — repo root 에서 `python -m src.jarvis` 실행.
+# 답습: docs/phase0/jarvis-cli-entrypoint-brief.md (72 entry)
+# jarvis 컴포넌트는 stdlib 만 사용(boss/worker = urllib, facade 미경유) → 시스템 python3 가용.
+# 인터프리터 override: JARVIS_PYTHON=/path/to/python bin/jarvis "작업"
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+exec "${JARVIS_PYTHON:-python3}" -m src.jarvis "$@"

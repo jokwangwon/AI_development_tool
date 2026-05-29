@@ -32,6 +32,23 @@ FORBIDDEN_PROVIDERS: frozenset[str] = frozenset(
 
 MODEL_PATTERN_REGEX = re.compile(r"^(claude-opus-|claude-sonnet-|gpt-|gemini-)")
 
+# facade allow-path (3+1 합의 2026-05-29 MT-1~MT-3, docs/review/3plus1-consensus-2026-05-29-facade-scanner.md)
+#   - ADR-009 §2.2 #1 + PoC §2.4 white-list + design §9.3 `pathNot:facade`:
+#     facade = Provider Liquidity(헌법 5조-2) 단일 통로 → litellm.Router 위임이 정당.
+#     import-linter 는 이미 facade 를 ignore. 본 scanner 의 facade 예외 누락이 결함이었음.
+#   - 면제 범위 = **정적 litellm direct/from-import 만** (MT-1 토큰 한정).
+#     facade 내 litellm 외 provider(openai 등)·동적 import(importlib/__import__)는 계속 검출(MT-3).
+_FACADE_LITELLM_ALLOW_PATH = "src/adapters/llm/facade.py"
+
+
+def _rel_posix(path: Path, repo_root: Path | None = None) -> str:
+    """repo-root 상대 posix 경로 (정확 경로 매칭용, MT-2). 실패 시 원본 posix."""
+    root = (Path(repo_root) if repo_root else Path.cwd()).resolve()
+    try:
+        return Path(path).resolve().relative_to(root).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
+
 
 @dataclass(frozen=True)
 class Violation:
@@ -60,14 +77,18 @@ def _matches_forbidden(module: str) -> str | None:
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self, file: Path) -> None:
+    def __init__(self, file: Path, allow_litellm: bool = False) -> None:
         self.file = file
+        self.allow_litellm = allow_litellm  # facade allow-path (MT-1, 정적 litellm 한정)
         self.violations: list[Violation] = []
+
+    def _exempt(self, hit: str) -> bool:
+        return hit == "litellm" and self.allow_litellm
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             hit = _matches_forbidden(alias.name)
-            if hit:
+            if hit and not self._exempt(hit):
                 self.violations.append(
                     Violation(self.file, node.lineno, "direct-import", hit)
                 )
@@ -76,7 +97,7 @@ class _Visitor(ast.NodeVisitor):
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if node.module:
             hit = _matches_forbidden(node.module)
-            if hit:
+            if hit and not self._exempt(hit):
                 self.violations.append(
                     Violation(self.file, node.lineno, "from-import", hit)
                 )
@@ -121,19 +142,26 @@ class _Visitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def scan_file(path: Path) -> list[Violation]:
+def scan_source(source: str, path: Path | str, repo_root: Path | None = None) -> list[Violation]:
+    """소스 문자열 검사 (테스트 oracle, MT-5). facade allow-path 판정 포함."""
+    p = Path(path)
+    try:
+        tree = ast.parse(source, filename=str(p))
+    except SyntaxError:
+        # 문법 오류 파일은 본 scanner 책무 외 — fail-closed 위해 위반으로 보고하지 않음
+        return []
+    allow_litellm = _rel_posix(p, repo_root) == _FACADE_LITELLM_ALLOW_PATH
+    visitor = _Visitor(p, allow_litellm=allow_litellm)
+    visitor.visit(tree)
+    return visitor.violations
+
+
+def scan_file(path: Path, repo_root: Path | None = None) -> list[Violation]:
     try:
         source = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return []
-    try:
-        tree = ast.parse(source, filename=str(path))
-    except SyntaxError:
-        # 문법 오류 파일은 본 scanner 책무 외 — fail-closed 위해 위반으로 보고하지 않음
-        return []
-    visitor = _Visitor(path)
-    visitor.visit(tree)
-    return visitor.violations
+    return scan_source(source, path, repo_root)
 
 
 def iter_python_files(root: Path) -> Iterator[Path]:

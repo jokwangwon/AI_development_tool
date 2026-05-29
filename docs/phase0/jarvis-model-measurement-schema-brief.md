@@ -2,7 +2,7 @@
 
 > **본 brief = 설계 정리 한정.** 어떤 §도 그 자체로 코드 작성·DB 생성·마이그레이션 실행을 발생시키지 않는다. staged: brief v1 → 사용자 승인 → **3+1 합의(+codex cross-vendor)** → (흡수) → 구현(TDD). 코드 전 문서 먼저(SDD). 실 변경 0건.
 
-**Status**: **DRAFT v1.1 — 3+1 합의(+codex) APPROVE WITH CONDITIONS 흡수 + §10-5a 구현 완료**(2026-05-29). 4 source(A/B/C+codex) 전원 APPROVE WITH CONDITIONS → BLOCKING 8(C1~C8) + 채택 권고 흡수. 흡수 매트릭스 = §11. **§10-5a 구현 완료(`ModelMeasurementRepo`, 동작 불변, 신규 23 + 전체 331 passed + grimp 0 + 커버리지 96%, §10)**. 모(母) brief = [[jarvis-unified-data-layer-design-brief]] §10-5 + Q5. 잔여 §10-5b(reader/writer 이관) = 사용자 명시 + 자동 진입 0.
+**Status**: **DRAFT v1.1 — 3+1 합의(+codex) 흡수 + §10-5a/§10-5b 구현 완료**(2026-05-29). §10-5a(repo, 동작 불변) + §10-5b(reader/writer 이관 + 히스토리 발효) 완료. 전체 337 passed. 4 source(A/B/C+codex) 전원 APPROVE WITH CONDITIONS → BLOCKING 8(C1~C8) + 채택 권고 흡수. 흡수 매트릭스 = §11. **§10-5a 구현 완료(`ModelMeasurementRepo`, 동작 불변, 신규 23 + 전체 331 passed + grimp 0 + 커버리지 96%, §10)**. 모(母) brief = [[jarvis-unified-data-layer-design-brief]] §10-5 + Q5. 잔여 §10-5b(reader/writer 이관) = 사용자 명시 + 자동 진입 0.
 
 **계기**: 데이터 레이어 brief §11 Q5 = "모델 비교 스키마 = 별도 cycle". §10-5 = "모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대)". 사용자 "§10-5 진행, Q5 스키마부터".
 
@@ -158,7 +158,10 @@ ConversationRepo 동형: **connection-per-operation + `PRAGMA journal_mode=WAL` 
 1. brief v1 → 사용자 승인 ✅
 2. 3+1 합의(+codex) → APPROVE WITH CONDITIONS → **v1.1 흡수** ✅
 3. **§10-5a 구현 완료(2026-05-29)** ✅ — `ModelMeasurementRepo`(3테이블 + append_session 단일 트랜잭션 + latest_session kind별 재구성 + top_models 화이트리스트 + model_history + list_sessions + migrate_legacy 생성자 옵션 + 신규 DB 0600) + `paths.measurement_db_path()`. **reader/writer 미변경(동작 불변)**. 수용기준 ①~⑥ 전원 테스트 + append 원자성 + live append. **검증: 신규 23 + 전체 331 passed(회귀 0) + grimp 경계 0 + 커버리지 96%**.
-4. §10-5b-reader → §10-5b-writer(이관+히스토리) → commit → push (별도 cycle, 자동 진입 0)
+4. **§10-5b 완료(2026-05-29)** ✅ — 이관 + 히스토리 발효.
+   - **5b-reader**: reader 3곳(server.get_top_measured_models → `repo.top_models`, dashboards [4] → `repo.latest_session`) repo 경유 전환(동작 불변). `open_reader_repo()` = 기존 JSON idempotent 마이그레이션 브리지. 실측 스모크(랭킹 원본 일치).
+   - **5b-writer**: examples writer 2종 JSON 기록 후 `append_measurement` 병기(Q5-b, source_id=None=append-only 히스토리 발효, fail-soft). writer→reader end-to-end 스모크(세션 2 누적, model_history 추세 2점).
+   - **검증: 신규 reader 4 + writer 2 + 전체 337 passed(회귀 0) + 대시보드·writer compile + grimp 0**.
 
 ## §11 v1.1 흡수 매트릭스 (3+1 합의 + codex)
 

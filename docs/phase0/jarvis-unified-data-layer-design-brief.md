@@ -107,7 +107,9 @@
 4. **다중 대화** = `ConversationRepo` 를 `sqlite3` **직접** 구현 + RB-1 threading 계약 + RB-3 마이그레이션 importer + RB-2 = **raw 저장**(Q7 해소).
    - ✅ **4a 완료(2026-05-29)** — backing JSONL→SQLite **동작 불변** swap. 스키마 `entries(seq PK, source_id UNIQUE partial, payload)`(ORDER BY seq=append 순서) + RB-1(connection-per-op + WAL + busy_timeout, `closing` leak 방지) + RB-3 마이그레이션(legacy JSONL→SQLite, source_id=entry id, INSERT OR IGNORE idempotent, 원본 보존=롤백, fail-soft, 손상 라인 skip) + `paths.conversations_db_path()`. 외부 5메서드 계약 불변 → server 6핸들러·라우트 통합 9 테스트 그대로 통과. repo 18 + 전체 296 passed, grimp 경계 0. (broken-line raw 보존[JSONL 특유]은 SQLite 유입 경로 0 → 마이그레이션 skip 으로 대체 / archive_to rename→export, 외부 동작 동일.)
    - ✅ **4b 완료(2026-05-29)** — 다중 대화. 스키마 v2 `conversations(id,title,created_ts,updated_ts)` + `entries.conversation_id`(ALTER, §10-4a 데이터 자동 'default' 배정). repo: `create/list(updated desc)/delete_conversation` + 자동 제목(첫 user 메시지) + `append/read_all/exists/archive_to` conversation_id(하위호환=default). 라우트: GET `/api/conversations` · POST `/new` · DELETE `/{id}` + history/canvas/respond conversation_id. UI: `+새 대화` 활성 + 사이드바 동적 목록(자동제목·active·hover ✕) + 클릭 전환(mockup 컨펌: 자동제목+전환+삭제, 이름변경 제외). repo 26 + 라우트 13 + 전체 308 passed + **실 브라우저 playwright 검증(목록·새대화·전환·삭제 4 STEP + 스크린샷)**.
-5. 모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대, 스키마 = Q5 별도).
+5. 모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대, 스키마 = Q5 별도 → [[jarvis-model-measurement-schema-brief]]).
+   - ✅ **5a 완료(2026-05-29)** — `ModelMeasurementRepo`(append-only 히스토리 + 정규화 3테이블 session/model/run + boss·multi 통합 kind) + `paths.measurement_db_path()`. Q5 brief v1.1(3+1 합의 BLOCKING 8 흡수). **reader/writer 미변경(동작 불변)** — repo 단독 추가. 신규 23 + 전체 331 passed(회귀 0) + grimp 0 + 커버리지 96%.
+   - **5b(이관)** = reader(server.top_models·대시보드 latest_session) → writer(examples append_session, 히스토리 발효) 전환. 별도 cycle(자동 진입 0).
 6. 계열 A(레저·관찰) JSONL 유지(RR-5) — SQLite 이관은 선택·점진(강제 아님).
 7. (Rule of Three) 2nd backing 임박 시 backing 추상화 사후 추출.
 

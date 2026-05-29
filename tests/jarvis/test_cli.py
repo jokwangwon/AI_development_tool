@@ -113,3 +113,53 @@ def test_main_denied(monkeypatch) -> None:
     monkeypatch.setattr("builtins.input", lambda _p: "n")  # default-deny
     code = cli.main(["some task", "--no-boss", "--no-memory"])
     assert code == 2  # DENIED
+
+
+# ── T-8 (73 entry): worker-type 분기 (build_orchestrator) ─────────────────────
+def test_build_orchestrator_worker_type_tmux() -> None:
+    from src.jarvis.worker import OllamaWorker, TmuxWorker
+
+    ns_tmux = cli.build_parser().parse_args(
+        ["t", "--worker-type", "tmux", "--tmux-argv", "bash -lc", "--no-boss", "--no-memory"]
+    )
+    orch = cli.build_orchestrator(ns_tmux, cli.auto_approver)
+    assert isinstance(orch._registry.select("ollama"), TmuxWorker)  # default alias
+
+    ns_ollama = cli.build_parser().parse_args(["t", "--no-boss", "--no-memory"])
+    orch2 = cli.build_orchestrator(ns_ollama, cli.auto_approver)
+    assert isinstance(orch2._registry.select("ollama"), OllamaWorker)
+
+
+# ── T-9 (73): arg parse — tmux 옵션 ───────────────────────────────────────────
+def test_build_parser_tmux_flags() -> None:
+    ns = cli.build_parser().parse_args(
+        ["fix bug", "--worker-type", "tmux", "--tmux-argv", "claude -p",
+         "--isolation", "landlock", "--poll-attempts", "10", "--poll-interval", "0.5"]
+    )
+    assert ns.worker_type == "tmux"
+    assert ns.tmux_argv == "claude -p"
+    assert ns.isolation == "landlock"
+    assert ns.poll_attempts == 10 and ns.poll_interval == 0.5
+
+
+# ── T-10 (73): main 통합 tmux (fake TmuxWorker 주입 — 실 tmux 0) ──────────────
+def test_main_tmux_applied(monkeypatch) -> None:
+    monkeypatch.setattr(cli, "TmuxWorker", _FakeWorker)  # 실 tmux spawn 0
+    code = cli.main(["echo hi", "--worker-type", "tmux", "--yes", "--no-boss", "--no-memory"])
+    assert code == 0  # APPLIED
+
+
+# ── T-11 (73, B-1): landlock fail-closed → main RuntimeError catch → exit 1 ───
+def test_main_landlock_fail_closed(monkeypatch) -> None:
+    class _RaisingIsolation:
+        name = "landlock"
+
+        def wrap(self, cmd, workdir):
+            raise RuntimeError("Landlock sandboxer 없음 — make -C src/jarvis/sandbox 필요")
+
+    # 실 TmuxWorker + 부재 sandboxer 모사 isolation → wrap 이 run 첫 줄에서 raise (tmux 미spawn).
+    monkeypatch.setattr(cli, "LandlockIsolation", _RaisingIsolation)
+    code = cli.main(
+        ["do x", "--worker-type", "tmux", "--isolation", "landlock", "--yes", "--no-boss", "--no-memory"]
+    )
+    assert code == 1  # 워커 실행 중단 (fail-closed, 무격리 fallback 0)

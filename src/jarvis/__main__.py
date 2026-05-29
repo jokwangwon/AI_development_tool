@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import sys
 import uuid
 from typing import Callable, TextIO
 
 from src.jarvis.approval import ApprovalGate, ApprovalRequest
 from src.jarvis.boss import OllamaBoss
+from src.jarvis.isolation import LandlockIsolation, PassthroughIsolation
 from src.jarvis.memory import MemoryLog
 from src.jarvis.orchestrator import (
     Orchestrator,
@@ -26,7 +28,7 @@ from src.jarvis.orchestrator import (
     WorkerRegistry,
 )
 from src.jarvis.review import ReviewGuard
-from src.jarvis.worker import OllamaWorker
+from src.jarvis.worker import OllamaWorker, TmuxWorker
 
 DEFAULT_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 DEFAULT_MEMORY_PATH = "~/.jarvis/memory.jsonl"
@@ -75,8 +77,23 @@ def build_parser() -> argparse.ArgumentParser:
         description="jarvis — 통제된 로컬 사장+워커 (반영 전 사람 승인 게이트, default-deny)",
     )
     p.add_argument("prompt", help="워커에게 줄 작업 프롬프트")
+    p.add_argument(
+        "--worker-type", choices=["ollama", "tmux"], default="ollama",
+        help="ollama=LLM 텍스트(명령 실행 0) / tmux=tmux 패널에서 명령 *실제 실행*",
+    )
     p.add_argument("--worker-alias", default="ollama", help="워커 alias (default: ollama)")
-    p.add_argument("--worker-model", default=DEFAULT_MODEL, help="워커 ollama 모델")
+    p.add_argument("--worker-model", default=DEFAULT_MODEL, help="워커 ollama 모델 (ollama 전용)")
+    # ── tmux 워커 전용 ──
+    p.add_argument(
+        "--tmux-argv", default="bash -lc",
+        help="tmux 워커 명령 prefix (shlex 분할, prompt 가 뒤에 append). 예: 'bash -lc' / 'claude -p'",
+    )
+    p.add_argument(
+        "--isolation", choices=["passthrough", "landlock"], default="passthrough",
+        help="tmux 워커 격리: passthrough=무격리(명령=사용자 책임) / landlock=커널 fs 격리(fail-closed, sandboxer 빌드 선결)",
+    )
+    p.add_argument("--poll-attempts", type=int, default=60, help="tmux sentinel polling 횟수")
+    p.add_argument("--poll-interval", type=float, default=1.0, help="tmux polling 간격(초)")
     p.add_argument("--boss-model", default=DEFAULT_MODEL, help="boss ollama 모델")
     p.add_argument("--no-boss", action="store_true", help="boss advisory 비활성")
     p.add_argument("--yes", action="store_true", help="자동 승인 (비대화형 — 사람 명시 의도)")
@@ -87,15 +104,33 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _build_isolation(ns: argparse.Namespace):
+    """tmux 워커 격리 backend. landlock = fail-closed (sandboxer 없으면 wrap 이 RuntimeError)."""
+    if ns.isolation == "landlock":
+        return LandlockIsolation()
+    return PassthroughIsolation()
+
+
 def build_orchestrator(ns: argparse.Namespace, approver: Approver) -> Orchestrator:
     registry = WorkerRegistry()
-    registry.register(
-        OllamaWorker(
-            alias=ns.worker_alias,
-            model=ns.worker_model,
-            output_filename=ns.output_filename,
+    if ns.worker_type == "tmux":
+        registry.register(
+            TmuxWorker(
+                alias=ns.worker_alias,
+                argv=shlex.split(ns.tmux_argv),
+                isolation=_build_isolation(ns),
+                poll_attempts=ns.poll_attempts,
+                poll_interval_s=ns.poll_interval,
+            )
         )
-    )
+    else:
+        registry.register(
+            OllamaWorker(
+                alias=ns.worker_alias,
+                model=ns.worker_model,
+                output_filename=ns.output_filename,
+            )
+        )
     guard = ReviewGuard()
     gate = ApprovalGate(approver=approver)
     boss = None if ns.no_boss else OllamaBoss(model=ns.boss_model)
@@ -117,10 +152,19 @@ def print_report(report: OutcomeReport, out: TextIO | None = None) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ns = build_parser().parse_args(argv)
+    # R-5: ollama 전용 옵션이 tmux 워커와 함께 주어지면 무시됨을 경고.
+    if ns.worker_type == "tmux" and ns.output_filename:
+        print("⚠️ --output-filename 은 ollama 워커 전용 — tmux 워커에서 무시됨", file=sys.stderr)
     approver: Approver = auto_approver if ns.yes else make_interactive_approver()
     orchestrator = build_orchestrator(ns, approver)
     task_id = ns.task_id or uuid.uuid4().hex[:8]
-    report = orchestrator.dispatch(ns.prompt, task_id, ns.worker_alias)
+    try:
+        report = orchestrator.dispatch(ns.prompt, task_id, ns.worker_alias)
+    except RuntimeError as exc:
+        # B-1 fail-closed: isolation 거부(landlock sandboxer 부재 등) → 무격리 fallback 0.
+        # RuntimeError 한정 — 일반 워커 실패(fail-soft WorkerResult)는 삼키지 않음.
+        print(f"\n[워커 실행 중단] {exc}", file=sys.stderr)
+        return 1
     print_report(report)
     return _EXIT_CODE.get(report.status, 0)
 

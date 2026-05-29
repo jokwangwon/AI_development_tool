@@ -53,8 +53,16 @@ SAFE_CONSUME_KINDS: frozenset[str] = frozenset({"file"})
 # Q2: artifact bounded text 길이 상한(평문 truncate — injection 차단 아님, 부피 제한).
 DEFAULT_MAX_ARTIFACT_LEN = 2000
 
-# Q3: contract name = 주입 라벨 → 위조 방어(newline·]·fence·XML delimiter 금지).
-_CONTRACT_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+# Q3: contract name = 주입 라벨 → 위조 방어. injection delimiter(newline·[·]·`·<·>) 금지
+# + 길이 1~64. (1b 의 영숫자-only 화이트리스트 `^[A-Za-z0-9_.-]{1,64}$` 는 과잉 — LLM 이
+# 자연어 name(한글·공백)을 내면 reject 되어 정상 plan 이 막힘[디딤돌1d dogfooding 발견].
+# Q3 합의 의도 "newline·]·fence·XML delimiter 금지" 에 맞게 *블랙리스트* 로 조정 — 위험
+# delimiter 는 여전히 차단[보안 약화 아님], 자연어 name 수용.)
+_CONTRACT_NAME_FORBIDDEN = re.compile(r"[\n\r\[\]`<>]")
+
+
+def _valid_contract_name(name: str) -> bool:
+    return bool(name.strip()) and len(name) <= 64 and not _CONTRACT_NAME_FORBIDDEN.search(name)
 
 # dispatcher 시그니처 = Orchestrator.dispatch(prompt, task_id, worker_alias).
 Dispatcher = Callable[[str, str, str], OutcomeReport]
@@ -197,7 +205,7 @@ class PlanController:
         for c in plan.contracts:
             if not (0 <= c.produced_by < n):
                 return self._reject(f"contract produced_by 범위초과: {c.produced_by}")
-            if not _CONTRACT_NAME_RE.match(c.name):
+            if not _valid_contract_name(c.name):
                 return self._reject(f"contract name 형식 위반(라벨 위조 방어): {c.name!r}")
             if c.name in seen_names:
                 return self._reject(f"contract name 중복: {c.name}")

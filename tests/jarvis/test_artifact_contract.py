@@ -172,17 +172,31 @@ def test_contract_produced_by_out_of_range_rejected() -> None:
     assert ctrl.run(plan, "t1").status == PlanStatus.VALIDATION_FAILED
 
 
-def test_contract_name_regex_rejected() -> None:
-    """name 위조 방어(Q3): newline/]/fence 금지."""
+def test_contract_name_rejects_injection_delimiters() -> None:
+    """name 위조 방어(Q3): injection delimiter(newline/[/]/`/</>) 금지."""
     w = FakeWorker("ollama")
     ctrl, _ = _build([w], {"file": "ollama"})
-    for bad in ("a\nb", "a]b", "sys instr", "```x"):
+    for bad in ("a\nb", "a]b", "a[b", "a`b", "a<b>", "```x", "", "   "):
         plan = BossPlan(
             subtasks=(PlanSubtask(desc="p", worker_kind="file"),
                       PlanSubtask(desc="c", worker_kind="file", depends_on=(0,))),
             contracts=(Contract(name=bad, produced_by=0),),
         )
         assert ctrl.run(plan, "t1").status == PlanStatus.VALIDATION_FAILED, bad
+
+
+def test_contract_name_allows_natural_language() -> None:
+    """1d 조정: 자연어 name(한글·공백)은 허용 — LLM(codex) 현실(위험 delimiter 만 차단)."""
+    w = FakeWorker("ollama", outputs={"산출": "DATA"})
+    ctrl, _ = _build([w], {"file": "ollama"})
+    plan = BossPlan(
+        subtasks=(PlanSubtask(desc="산출", worker_kind="file"),
+                  PlanSubtask(desc="소비", worker_kind="file", depends_on=(0,))),
+        contracts=(Contract(name="add 함수 정의", produced_by=0),),
+    )
+    out = ctrl.run(plan, "t1")
+    assert out.status == PlanStatus.COMPLETED
+    assert "[artifact:add 함수 정의]" in w.runs[1][0]
 
 
 def test_contract_duplicate_name_rejected() -> None:

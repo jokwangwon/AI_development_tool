@@ -142,3 +142,19 @@ def test_cliplanner_output_file_missing_raises(tmp_path) -> None:
                    output_file=str(tmp_path / "nonexistent.json"))
     with pytest.raises(RuntimeError):
         p.plan("x")
+
+
+# --- codex_planner 팩토리 (디딤돌1d 안정화) ---
+
+def test_codex_planner_factory_builds_bossplanner() -> None:
+    """codex_planner = schema flag + output-last-message + RO sandbox 캡슐화."""
+    from src.jarvis.planner import codex_planner
+
+    p = codex_planner(timeout_s=10.0)
+    assert isinstance(p, BossPlanner)
+    # argv 에 schema flag(strict)·output-last-message·RO sandbox 포함
+    argv = p._argv  # noqa: SLF001 (테스트 — 팩토리 조립 검증)
+    assert "--output-schema" in argv
+    assert "--output-last-message" in argv
+    assert argv[argv.index("-s") + 1] == "read-only"
+    assert p._output_file is not None  # noqa: SLF001

@@ -300,7 +300,9 @@ _PLAN_JSON_SCHEMA: dict = {
             },
         },
     },
-    "required": ["subtasks"],
+    # OpenAI strict schema(codex --output-schema)는 required 에 모든 properties 포함 요구.
+    # contracts 도 required(빈 배열 허용 — 1c 암묵 contract 가 흡수, _parse_bossplan get).
+    "required": ["subtasks", "contracts"],
     "additionalProperties": False,
 }
 

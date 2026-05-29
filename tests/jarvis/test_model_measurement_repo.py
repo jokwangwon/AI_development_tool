@@ -228,6 +228,31 @@ def test_migrate_legacy_idempotent(tmp_path):
     assert len(repo.list_sessions(kind="multi")) == 1
 
 
+def test_migrate_legacy_kind_guard_no_dup_on_changed_content(tmp_path):
+    # §10-5b 버그 회귀: writer JSON 병기로 내용(sha)이 바뀐 같은 kind 파일을 재마이그레이션해도
+    # kind 가드로 중복 세션 0 (이전 source_id 가드는 sha 변경 시 중복 생성했음).
+    multi_p = tmp_path / "multi.json"
+    _write_json(multi_p, _multi_measurement())
+    repo = ModelMeasurementRepo(tmp_path / "m.db")
+    assert repo.migrate_legacy(multi_path=str(multi_p), boss_path=None)["imported"] == 1
+    changed = _multi_measurement()
+    changed["total_elapsed_s"] = 999.0  # 내용 변경 = sha 변경(writer 덮어쓰기 모사)
+    _write_json(multi_p, changed)
+    r2 = repo.migrate_legacy(multi_path=str(multi_p), boss_path=None)
+    assert r2["imported"] == 0 and r2["skipped_existing"] == 1
+    assert len(repo.list_sessions(kind="multi")) == 1  # 중복 0
+
+
+def test_live_append_then_migrate_no_dup(monkeypatch, tmp_path):
+    # 실 버그 시나리오: writer 라이브 append + JSON 병기 → reader migrate 가 중복 안 만듦.
+    monkeypatch.setenv("JARVIS_DATA_DIR", str(tmp_path))
+    append_measurement(_boss_measurement(), kind="boss")  # 라이브(source_id=None)
+    _write_json(paths.boss_measurement_path(), _boss_measurement())  # writer JSON 병기
+    repo = ModelMeasurementRepo(paths.measurement_db_path())
+    repo.migrate_legacy(multi_path=None, boss_path=str(paths.boss_measurement_path()))
+    assert len(repo.list_sessions(kind="boss")) == 1  # 라이브 1건만, 재import 0
+
+
 def test_migrate_legacy_preserves_original(tmp_path):
     multi_p = tmp_path / "multi.json"
     _write_json(multi_p, _multi_measurement())

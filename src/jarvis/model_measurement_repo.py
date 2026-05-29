@@ -359,10 +359,10 @@ class ModelMeasurementRepo:
         ]
 
     # --- 마이그레이션 (RB-3, §6) ---
-    def _session_exists(self, source_id: str) -> bool:
+    def _kind_has_session(self, kind: str) -> bool:
         with closing(self._connect()) as conn:
             row = conn.execute(
-                "SELECT 1 FROM measurement_session WHERE source_id = ?", (source_id,)
+                "SELECT 1 FROM measurement_session WHERE kind = ? LIMIT 1", (kind,)
             ).fetchone()
         return row is not None
 
@@ -372,7 +372,13 @@ class ModelMeasurementRepo:
         multi_path: str | Path | None,
         boss_path: str | Path | None,
     ) -> dict:
-        """기존 스냅샷 JSON → DB 1회 import. idempotent + 원본 보존 + fail-soft + 손상 report."""
+        """기존 스냅샷 JSON → DB **bootstrap-once** import. 원본 보존 + fail-soft + 손상 report.
+
+        가드 = kind 단위(ConversationRepo "비었을 때만" 동형): 해당 kind 세션이 이미 있으면
+        재import 안 함. source_id(sha) 단독 가드는 §10-5b writer 의 JSON 병기가 매 측정마다
+        sha 를 바꿔 → 라이브 append 와 중복 세션을 만든다(2026-05-29 실측 발견). kind 가드로
+        bootstrap 1회만 수행 → writer 의 JSON 갱신은 재import 0.
+        """
         report = {"imported": 0, "skipped_existing": 0, "errors": []}
         for path, kind in ((multi_path, "multi"), (boss_path, "boss")):
             if path is None:
@@ -380,13 +386,13 @@ class ModelMeasurementRepo:
             path = str(path)
             if not os.path.exists(path):
                 continue
+            if self._kind_has_session(kind):  # bootstrap-once (중복 방지)
+                report["skipped_existing"] += 1
+                continue
             try:
                 raw = Path(path).read_bytes()
                 sha = hashlib.sha256(raw).hexdigest()[:8]
                 source_id = f"legacy:{kind}:{sha}"  # kind 포함(C4)
-                if self._session_exists(source_id):
-                    report["skipped_existing"] += 1
-                    continue
                 data = json.loads(raw)
                 mtime = os.path.getmtime(path)  # measured_ts 추정치(C6)
                 self.append_session(data, kind=kind, source_id=source_id, measured_ts=mtime)

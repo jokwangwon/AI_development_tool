@@ -26,6 +26,7 @@ from src.jarvis.isolation import PassthroughIsolation
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import TmuxWorker
+from src.jarvis import paths
 
 DEFAULT_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,8 +39,8 @@ DEV_TASK = (
     "lint-imports --config .importlinter 2>&1 | tail -8"
 )
 
-TMUX_RAW_PATH = "/tmp/jarvis-v00-dev-task-tmux-raw.log"
-OLLAMA_RAW_PATH = "/tmp/jarvis-v00-dev-task-ollama-raw.log"
+TMUX_RAW_PATH = str(paths.data_file("jarvis-v00-dev-task-tmux-raw.log"))
+OLLAMA_RAW_PATH = str(paths.data_file("jarvis-v00-dev-task-ollama-raw.log"))
 
 
 def main() -> int:

@@ -17,6 +17,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
+from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 
 def _check_ollama_health_sync():
     try:
@@ -48,10 +49,11 @@ def _ollama_chat_sync(payload: dict, timeout: int = 180) -> dict:
 
 async def get_layer0_entry_count():
     try:
-        if not os.path.exists("/tmp/jarvis-v00-layer0-memory.jsonl"):
+        p = paths.layer0_memory_path()
+        if not p.exists():
             return 0, None
-        mtime = os.path.getmtime("/tmp/jarvis-v00-layer0-memory.jsonl")
-        with open("/tmp/jarvis-v00-layer0-memory.jsonl", "r") as f:
+        mtime = os.path.getmtime(p)
+        with open(p, "r") as f:
             count = sum(1 for _ in f)
         return count, time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(mtime))
     except:
@@ -75,7 +77,7 @@ async def stream_status(websocket):
 async def get_layer1_axis_stats():
     """Layer 1 report 의 advice_axis_stats 읽기. 부재 시 빈 dict."""
     try:
-        path = "/tmp/jarvis-v00-layer1-report.json"
+        path = paths.layer1_report_path()
         if not os.path.exists(path):
             return {}
         with open(path, "r") as f:
@@ -88,7 +90,7 @@ async def get_layer1_axis_stats():
 async def get_top_measured_models(limit=3):
     """최신 측정 파일의 decode 순위 top-N."""
     try:
-        path = "/tmp/jarvis-v00-multi-model-measurement.json"
+        path = paths.multi_model_measurement_path()
         if not os.path.exists(path):
             return []
         with open(path, "r") as f:
@@ -174,7 +176,7 @@ async def jarvis_self_analysis_handler(request):
         return JSONResponse({"error": str(e), "analysis": "자체 분석 일시 부재"}, status_code=500)
 
 
-CONVERSATIONS_PATH = "/tmp/jarvis-conversations.jsonl"
+CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2: JARVIS_DATA_DIR > XDG (대화 raw 저장, Q7). str — line 360 `+ ".tmp"` 호환.
 
 NOTE_PROMPT_TEMPLATE = """다음 사용자 입력을 정리된 노트 형식의 JSON 으로만 출력하세요.
 출력 형식 (엄격, 다른 텍스트 0):
@@ -322,8 +324,7 @@ async def conversation_clear_handler(request):
     try:
         if os.path.exists(CONVERSATIONS_PATH):
             ts = time.strftime("%Y%m%d_%H%M%S")
-            archive_dir = "/tmp/jarvis-conversations-archive"
-            os.makedirs(archive_dir, exist_ok=True)
+            archive_dir = paths.conversations_archive_dir()  # 생성 + 0700 보장
             archive_path = os.path.join(archive_dir, f"conversations_{ts}.jsonl")
             os.rename(CONVERSATIONS_PATH, archive_path)
             return JSONResponse({"ok": True, "archived": archive_path})
@@ -567,7 +568,7 @@ routes = [
 #   경로 = /tmp (Layer0 memory 와 동형 컨벤션). 프로세스 재시작 유실 해소(brief §2).
 from src.jarvis.ledger import LedgerLog  # noqa: E402
 
-_jarvis_board = JarvisTaskBoard(ledger=LedgerLog("/tmp/jarvis-stone0-tasks.jsonl"))
+_jarvis_board = JarvisTaskBoard(ledger=LedgerLog(paths.tasks_ledger_path()))
 routes += make_jarvis_routes(_jarvis_board)
 
 app = Starlette(debug=False, routes=routes)

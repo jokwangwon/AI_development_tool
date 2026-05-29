@@ -31,11 +31,12 @@ from src.jarvis.isolation import PassthroughIsolation
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import TmuxWorker
+from src.jarvis import paths
 
 DEFAULT_MODEL = "qwen3-30b-a3b-instruct-2507-bartowski:latest"
 DEFAULT_PROMPT = "echo JARVIS_V00_ROUND_TRIP_OK && date -Is"
-OLLAMA_RAW_PATH = "/tmp/jarvis-v00-ollama-raw.log"
-TMUX_RAW_PATH = "/tmp/jarvis-v00-tmux-raw.log"
+OLLAMA_RAW_PATH = str(paths.data_file("jarvis-v00-ollama-raw.log"))
+TMUX_RAW_PATH = str(paths.data_file("jarvis-v00-tmux-raw.log"))
 
 
 def main() -> int:

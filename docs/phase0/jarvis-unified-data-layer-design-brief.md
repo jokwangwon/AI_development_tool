@@ -2,7 +2,7 @@
 
 > **본 brief = 설계 정리 한정.** 본 brief 의 어떤 §도 그 자체로 **코드 작성·DB 설치·마이그레이션 실행·엔진 선택 고정** 을 발생시키지 않는다. staged: brief v1 → 사용자 승인 → **3+1 합의(+codex cross-vendor)** → (합의 흡수) → 구현. 코드 전 문서 먼저(SDD). 실 변경 0건.
 
-**Status**: **DRAFT v1.1 — 3+1 합의 REVISE 흡수 완료 (BLOCKING 6 + 권고 5)**. 4 source(codex+A/B/C) → [[3plus1-consensus-2026-05-29-data-layer]]. 격상: APPROVE WITH CONDITIONS. 구현 진입 = 사용자 명시 + Q7/엔진/위치 결정 후 (자동 진입 0). v1.1 흡수 매트릭스 = §12.
+**Status**: **DRAFT v1.1 — 3+1 합의 REVISE 흡수 완료 (BLOCKING 6 + 권고 5)**. 4 source(codex+A/B/C) → [[3plus1-consensus-2026-05-29-data-layer]]. 격상: APPROVE WITH CONDITIONS. **Q7 해소(raw 저장 확정) + Q4 해소(XDG=`~/.local/share/jarvis`) — 둘 다 2026-05-29 사용자 결정, §8/§11**. 구현 진입 = 사용자 명시 + 엔진 결정 후 (자동 진입 0). v1.1 흡수 매트릭스 = §12.
 
 **계기**: dogfooding 중 "대화창 관리(새 대화/이전 대화 기억)" 질문 → 사용자가 관점 격상: *"앞으로 모델 작업 데이터(JSON)·모델별 비교·관리, 단순 대화 기록뿐 아니라 시스템 전반 데이터 관리가 필요"*. → 대화 저장 결정이 아니라 **시스템 데이터 레이어 아키텍처** 결정으로 재정의.
 
@@ -88,11 +88,11 @@
 
 **영속 위치(RR-3, U-3)**: 현 `/tmp` = 재부팅 소실 + 9개 경로 하드코딩.
 - **`JARVIS_DATA_DIR` env override 필수**(헌법 8조-2 하드코딩 제로 답습) — 경로 일원화.
-- 기본값(사용자 결정 영역): **XDG_DATA_HOME 우선**(Linux 표준·백업/state 분리) → fallback `~/.jarvis/`. **repo-local `.jarvis-data` 비권고**(gitignore 누락 사고 위험).
+- 기본값 **→ Q4 해소(2026-05-29 사용자 결정: XDG)**: `JARVIS_DATA_DIR` 미설정 시 fallback = `$XDG_DATA_HOME/jarvis`(미설정 시 `~/.local/share/jarvis`). 근거: Linux 표준 + 백업/state 분리 + `~/.local/share` 이미 `0700` + Q7 단서(백업 동기화 제외 위치)와 연결. **repo-local `.jarvis-data` 비권고**(gitignore 누락 사고 위험), `~/.jarvis` 미채택(홈 dotfile 증가·XDG 미준수).
 - DB 파일 `0600` / 디렉터리 `0700`.
 
 **RB-2 대화 영속 redaction/보안 정책(2 source 독립 일치 — codex+B, 헌법 8조)**: 현 `_save_conversation_entry`(server.py:211/263)는 raw user+model 을 redaction 없이 저장. ledger(scrub 전제)·memory(민감정보 제외)와 달리 **대화만 누락**. `/tmp`(휘발) → 영속 이동 = **노출 등급 의도적 상승** → 보안 표면 변경(헌법 8조). 정책 명문 필요: raw 저장 허용/금지, redaction 적용 범위, export/delete, opt-in.
-- **신규 Q7(사용자 결정)**: raw 복원성(대화 맥락 보존) vs secret/PII 제거 = **ADR-011 means/ends trade-off**. 본 brief 는 쟁점 명문화만, *결정* 은 사용자 영역.
+- **Q7 해소(2026-05-29 사용자 결정 — raw 저장 확정, redaction 없음)**: 위협 모델 재분석으로 결정. ① boss = 로컬 ollama(`server.py:42` `localhost:11434`)라 사용자↔boss 대화는 **외부 전송 0** ② `_save_conversation_entry` = 로컬 디스크 only ③ **단일 사용자**(공유 0) + DB `0600`/디렉터리 `0700`. → 저장 redaction이 막는 유일한 위협 = "로컬 디스크 평문 잔존"(디스크 도난·백업 유출·동일 호스트 타 사용자) = 비례적으로 ≈0. **ADR-011 means/ends**: 안전 결과(secret 외부 비노출)는 *저장 redaction*이 아니라 **boss 로컬성 + 워커 egress 통제**로 달성 → 저장 단계 redaction = 기여 미미한 수단, 강제 근거 약함. **외부 노출 방어가 실제 필요한 지점 = 워커 egress**(`worker.py`, 외부 AI 위임 시) = Q7과 별개, 별도 cycle(carry-over #5 응답 redaction). **단서**: `JARVIS_DATA_DIR` = 클라우드 백업/동기화 폴더 제외 위치 권고(XDG `~/.local/share` 등) — 백업 동기화 시 새 노출 표면 방지. 헌법 8조 "노출 등급 상승"은 형식상 성립하나 동일 호스트·동일 사용자라 실질 위협 증가 ≈0 → 비례성 DEFER 정당([[feedback_proportionate_security_personal_tool]]).
 
 ## §9 비례성 — 무엇을 *안* 하는가
 
@@ -104,22 +104,22 @@
 1. brief v1 → 승인 → **3+1 합의** → v1.1 흡수 ← **완료**
 2. **영속 위치 이동 + `JARVIS_DATA_DIR`**(RR-2: /tmp 소실은 지금도 위험 → 선행 가능). 경로 일원화 + 권한.
 3. **0.5단계(RR-1, U-1)**: server.py 인라인 conversation 핸들러 6곳 → **sync `ConversationRepo` 추출(동작 불변 refactor)**. 안 하면 swap 시 6곳 변경.
-4. **다중 대화** = `ConversationRepo` 를 `sqlite3` **직접** 구현(Backing 추상화 없이, `:memory:` 테스트) + RB-1 threading 계약 + RB-3 마이그레이션 importer + RB-2 redaction 정책(Q7 결정 후).
+4. **다중 대화** = `ConversationRepo` 를 `sqlite3` **직접** 구현(Backing 추상화 없이, `:memory:` 테스트) + RB-1 threading 계약 + RB-3 마이그레이션 importer + RB-2 = **raw 저장**(Q7 해소, 저장 redaction 없음 — 외부 노출 방어는 워커 egress 별도 cycle).
 5. 모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대, 스키마 = Q5 별도).
 6. 계열 A(레저·관찰) JSONL 유지(RR-5) — SQLite 이관은 선택·점진(강제 아님).
 7. (Rule of Three) 2nd backing 임박 시 backing 추상화 사후 추출.
 
-각 단계 = 별도 cycle(자동 진입 0). 수단 결정(엔진 고정·스키마)·Q7·기본 위치 = 사용자 명시 영역.
+각 단계 = 별도 cycle(자동 진입 0). 수단 결정(엔진 고정·Q5 스키마) = 사용자 명시 영역. (Q7 = raw 저장 확정 / Q4 = XDG `~/.local/share/jarvis` — 둘 다 해소.)
 
 ## §11 쟁점 — 3+1 후 상태
 
 - **Q1**: 계열 A JSONL 유지 **→ 해소(RR-5, 4 source 동의)**. SQLite 이관은 선택·점진.
 - **Q2**: **→ 해소(RR-4)** sync base + HUD to_thread 래핑 확정.
 - **Q3**: **→ 해소(RB-1)** connection-per-operation + WAL + busy_timeout, pool 금지(§6).
-- **Q4**: 영속 위치 — env override 필수는 합의, 기본값(XDG vs ~/.jarvis) = **사용자 결정**(§8).
+- **Q4**: 영속 위치 — env override 필수는 합의, 기본값 **→ 해소(2026-05-29 사용자 결정: XDG = `$XDG_DATA_HOME/jarvis`, 미설정 시 `~/.local/share/jarvis`)**. 상세 = §8.
 - **Q5**: 모델 비교 스키마 = **별도 cycle**(권고, §10-5).
 - **Q6**: 과설계 — **→ 해소(RB-5)** repo별 얇은 port + Backing deferred(§5).
-- **Q7 (신규)**: 대화 raw 저장 정책(raw 복원성 vs secret 제거, ADR-011 means/ends) = **사용자 결정**(§8 RB-2).
+- **Q7**: 대화 raw 저장 정책 **→ 해소(2026-05-29 사용자 결정: raw 저장 확정, redaction 없음)**. 근거: boss 로컬 + 단일 사용자 + 0600 → 저장 redaction 불필요, 외부 노출 방어는 워커 egress(별도 cycle). ADR-011 means/ends 부합. 상세 = §8 RB-2.
 
 ## §12 v1.1 흡수 매트릭스 (3+1 합의 REVISE → BLOCKING 6 + 권고 5)
 

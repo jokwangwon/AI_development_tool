@@ -7,6 +7,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from src.jarvis import paths  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
+from src.jarvis.model_measurement_repo import open_reader_repo  # §10-5b-reader
 
 
 def main():
@@ -67,20 +68,18 @@ def main():
     except Exception:
         print("  (자료 없음)")
 
-    # Section [4] 최신 측정
+    # Section [4] 최신 측정 (§10-5b-reader: ModelMeasurementRepo 경유, 동작 불변)
     print("\n[4] 최신 측정:")
-    measurement_path = str(paths.multi_model_measurement_path())
     try:
-        if os.path.exists(measurement_path):
-            with open(measurement_path, 'r') as f:
-                data = json.load(f)
-                models = data.get("models", [])
-                # Sort by decode_tok_per_s.mean descending
-                sorted_models = sorted(models, key=lambda x: x.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0), reverse=True)
-                for i, model in enumerate(sorted_models):
-                    mean_tok_per_s = model.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0)
-                    model_name = model.get("model", "unknown")
-                    print(f"  {i+1}위 {model_name}: {mean_tok_per_s:.2f} tok/s")
+        data = open_reader_repo().latest_session("multi")
+        if data:
+            models = data.get("models", [])
+            # Sort by decode_tok_per_s.mean descending
+            sorted_models = sorted(models, key=lambda x: x.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0), reverse=True)
+            for i, model in enumerate(sorted_models):
+                mean_tok_per_s = model.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0)
+                model_name = model.get("model", "unknown")
+                print(f"  {i+1}위 {model_name}: {mean_tok_per_s:.2f} tok/s")
         else:
             print("  (자료 없음)")
     except Exception:

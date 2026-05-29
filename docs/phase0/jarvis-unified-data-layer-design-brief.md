@@ -109,7 +109,7 @@
    - ✅ **4b 완료(2026-05-29)** — 다중 대화. 스키마 v2 `conversations(id,title,created_ts,updated_ts)` + `entries.conversation_id`(ALTER, §10-4a 데이터 자동 'default' 배정). repo: `create/list(updated desc)/delete_conversation` + 자동 제목(첫 user 메시지) + `append/read_all/exists/archive_to` conversation_id(하위호환=default). 라우트: GET `/api/conversations` · POST `/new` · DELETE `/{id}` + history/canvas/respond conversation_id. UI: `+새 대화` 활성 + 사이드바 동적 목록(자동제목·active·hover ✕) + 클릭 전환(mockup 컨펌: 자동제목+전환+삭제, 이름변경 제외). repo 26 + 라우트 13 + 전체 308 passed + **실 브라우저 playwright 검증(목록·새대화·전환·삭제 4 STEP + 스크린샷)**.
 5. 모델 비교/측정 `ModelMeasurementRepo` 이관 (모델 관리 화면 토대, 스키마 = Q5 별도 → [[jarvis-model-measurement-schema-brief]]).
    - ✅ **5a 완료(2026-05-29)** — `ModelMeasurementRepo`(append-only 히스토리 + 정규화 3테이블 session/model/run + boss·multi 통합 kind) + `paths.measurement_db_path()`. Q5 brief v1.1(3+1 합의 BLOCKING 8 흡수). **reader/writer 미변경(동작 불변)** — repo 단독 추가. 신규 23 + 전체 331 passed(회귀 0) + grimp 0 + 커버리지 96%.
-   - **5b(이관)** = reader(server.top_models·대시보드 latest_session) → writer(examples append_session, 히스토리 발효) 전환. 별도 cycle(자동 진입 0).
+   - ✅ **5b 완료(2026-05-29)** — 이관 + 히스토리 발효. reader(server.get_top_measured_models→top_models, 대시보드 2종→latest_session, `open_reader_repo` JSON idempotent 마이그레이션 브리지, 동작 불변) + writer(examples 2종 JSON 후 `append_measurement` 병기, source_id=None=append-only 히스토리, fail-soft). 신규 reader 4 + writer 2 + 전체 337 passed + 실측 writer→reader end-to-end 스모크.
 6. 계열 A(레저·관찰) JSONL 유지(RR-5) — SQLite 이관은 선택·점진(강제 아님).
 7. (Rule of Three) 2nd backing 임박 시 backing 추상화 사후 추출.
 

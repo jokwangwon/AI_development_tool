@@ -9,6 +9,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from src.jarvis import paths  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
+from src.jarvis.model_measurement_repo import open_reader_repo  # §10-5b-reader
 
 st.set_page_config(page_title="Jarvis 자비스 상태", layout="wide")
 st.title("자비스 상태 dashboard")
@@ -67,12 +68,10 @@ with col2:
     except Exception as e:
         st.info("자료 없음")
 
-    st.subheader("[4] 최신 모델 측정")
+    st.subheader("[4] 최신 모델 측정")  # §10-5b-reader: ModelMeasurementRepo 경유, 동작 불변
     try:
-        file_path = str(paths.multi_model_measurement_path())
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
-                data = json.load(f)
+        data = open_reader_repo().latest_session("multi")
+        if data:
             models = data.get("models", [])
             if models:
                 model_stats = []

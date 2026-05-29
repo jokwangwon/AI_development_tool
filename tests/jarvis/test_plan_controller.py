@@ -69,6 +69,7 @@ def _build(
         plan_approver=approver,
         max_steps=max_steps,
         ledger=ledger,
+        implicit_contracts=False,  # 1a/1b 불변식 격리(암묵=디딤돌1c test_implicit_contract.py)
     )
     return ctrl, reg
 

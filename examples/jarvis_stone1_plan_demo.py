@@ -59,8 +59,12 @@ def main() -> int:
             dep = f" depends_on={list(st.depends_on)}" if st.depends_on else ""
             print(f"  [{i}] ({st.worker_kind}→{req.mapped_aliases[i]}){dep}: {st.desc}")
         if req.contracts:
-            print("  contracts:")
+            print("  명시 contracts (boss 선언):")
             for c in req.contracts:
+                print(f"    - {c.name} produced_by={c.produced_by}")
+        if req.implicit_contracts:
+            print("  암묵 contracts (controller 가 depends_on 에서 합성 — 디딤돌1c):")
+            for c in req.implicit_contracts:
                 print(f"    - {c.name} produced_by={c.produced_by}")
         print(f"  실행 순서(위상정렬): {list(req.order)}")
         if args.yes:

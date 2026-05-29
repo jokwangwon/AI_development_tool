@@ -61,6 +61,7 @@ def _build(workers, kind_table, *, contracts_ok=True, ledger=None,
         dispatcher=orch.dispatch, kind_table=kind_table, registry=reg,
         plan_approver=lambda r: True, ledger=ledger,
         allow_code_consume=allow_code_consume, max_artifact_len=max_artifact_len,
+        implicit_contracts=False,  # 1b 명시-only 불변식 격리(암묵=test_implicit_contract.py)
     )
     return ctrl, reg
 

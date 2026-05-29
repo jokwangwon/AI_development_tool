@@ -7,8 +7,16 @@ import asyncio
 import io
 import json
 import os
+import sys
 import urllib.request
 import time
+
+# repo root 를 sys.path 에 — `from src.jarvis` / `from jarvis_hud...` 가 실행 방식 무관 성립 (75 entry).
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 
 async def check_ollama_health():
     try:
@@ -517,7 +525,7 @@ async def chat_handler(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 async def index(request):
-    return FileResponse("jarvis_hud/index.html", media_type="text/html")
+    return FileResponse(os.path.join(_ROOT, "jarvis_hud", "index.html"), media_type="text/html")
 
 async def stream(websocket):
     await stream_status(websocket)
@@ -547,6 +555,11 @@ routes = [
     Route("/api/conversation/export", conversation_export_handler, methods=["GET"]),
     Route("/api/tts", tts_handler, methods=["POST"]),
 ]
+
+# jarvis 작업 카드보드 (75 entry) — src.jarvis 오케스트레이터 통합.
+_jarvis_board = JarvisTaskBoard()
+routes += make_jarvis_routes(_jarvis_board)
+
 app = Starlette(debug=False, routes=routes)
 
 if __name__ == "__main__":

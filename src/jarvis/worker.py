@@ -155,6 +155,7 @@ class TmuxWorker:
         poll_interval_s: float = 1.0,
         session_prefix: str = "jarvis",
         nonce_factory: Callable[[], str] | None = None,
+        on_session: Callable[[str], None] | None = None,
     ) -> None:
         self.alias = alias
         self._argv = list(argv)
@@ -166,6 +167,8 @@ class TmuxWorker:
         # 완료 sentinel = per-session 무작위 nonce (위조 표면 사전/외부 차단, 74 entry B-2).
         # nonce = 비밀 아닌 per-run salt(사전 예측 불가) — 평문 노출 무관, 안전가치=예측불가만.
         self._nonce_factory = nonce_factory or (lambda: uuid.uuid4().hex)
+        # 75 entry: new-session 성공 직후 session 명 통지(라이브 capture-pane 용). lifecycle 변경 0.
+        self._on_session = on_session
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
         inner = self._isolation.wrap([*self._argv, prompt], workdir)
@@ -190,6 +193,13 @@ class TmuxWorker:
                 is_error=True,
                 raw=None,
             )
+
+        # 75 entry: 세션 생성 성공 후 통지 (보드가 라이브 capture-pane 가능). fail-soft.
+        if self._on_session is not None:
+            try:
+                self._on_session(session)
+            except Exception:
+                pass
 
         try:
             self._tmux(["tmux", "send-keys", "-t", session, full_cmd, "Enter"])

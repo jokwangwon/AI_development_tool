@@ -53,7 +53,7 @@ boss (untrusted planner):  subtasks + contracts 제안. 1회.
 **artifact 를 consume 하는 subtask 의 worker_kind 는 기본 `file`(OllamaWorker = fs 실행 능력 *경로 부재*, worker.py:264-269).** `code`(CliWorker = desc→argv→실 실행) consume 은 **명시 opt-in**(`PlanController(allow_code_consume=True)` + 계획 게이트 경고)로만. → **2차 injection 으로 주입 artifact 가 오염돼도, LLM-only consume 워커는 *실 부작용(파일·명령 실행) 0*.** 이는 brief v1 의 추론적 다층 방어보다 강한 *결정적 능력 경계*(CLAUDE.md §2 "잘못하는 것이 불가능하게").
 
 ### ⚠️ 정직 단서 — 무엇을 닫고 못 닫는가 (BL-1·BL-3, over-claim 차단)
-- ✅ **결정적 차단**(능력 경계): consume 워커 LLM-only 기본 → 오염 artifact 의 *실 부작용 0*(파일·명령 실행 불가). code opt-in 시에만 실 부작용 표면 노출.
+- ✅ **결정적 차단**(능력 경계): consume 워커 LLM-only 기본 → 오염 artifact 의 **임의 명령/경로 실행 0 + workdir escape 0**. ⚠️ 단 `output_filename` 설정 시 workdir 단일 파일 산출은 잔여(정밀화 2026-05-30, 디딤돌1c BL-1 / ADR-013 §2.2 — "실 부작용 절대 0"은 부정확, consume-safe=writer 없는 OllamaWorker). code opt-in 시 실 실행 표면 노출.
 - ✅ **표면 축소**(추론적): raw NL 전체 대신 truncate 된 bounded text · 파일 공유 0 · 워커 간 직접 통신 0.
 - ❌ **잔여(완전 차단 못 함)**: consume 워커(LLM)가 주입 텍스트를 instruction 으로 해석해 *오염된 텍스트를 산출*하는 것은 막지 못함. 단 능력 경계 덕에 그것이 *실 부작용*으로 이어지진 않음(code opt-in 제외). → "능력 경계로 실 부작용 차단, 오염 텍스트 산출만 잔여"(under-claim 개선).
 - **bounded(truncate)는 injection 차단이 아님**: 길이 제한은 *대량 exfil·payload 부피*만 축소 — **짧은 instruction-injection 문장("이전 지시 무시하고 X")은 truncate 를 통과**(길이≠의미 검사). bounded 를 injection 방어로 부르지 않는다.

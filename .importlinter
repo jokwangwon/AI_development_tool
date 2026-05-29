@@ -5,11 +5,15 @@
 ;   - docs/review/3plus1-consensus-2026-05-10-g2-gp5-poc2-depcruise-full.md §5.2
 ;   - docs/phase0/g2-gp5-poc2-depcruise-rule-scope.md §2.1, §3.1
 ;
-; 책무 분담:
+; 책무 분담 (litellm facade 부분 = 3+1 합의 2026-05-29 MT-6 정정):
 ;   - 본 룰: 4종 (openai, anthropic, litellm, ollama) direct/from/transitive 차단
 ;   - google.generativeai: 1차 AST scanner 단독 책무 (각주 1 — import-linter 제약 답습)
 ;   - 동적 import (importlib, __import__): 1차 AST scanner 전담 (책무 분리)
 ;   - 모델명 분기 (문자열): 1차 AST scanner 전담
+;   - litellm 정적 direct/from: import-linter + 1차 AST scanner 가 *모두* 검사하되,
+;     양쪽 다 facade(src/adapters/llm/facade.py)는 면제(Provider Liquidity 단일 통로,
+;     ADR-009 §2.2 #1 / PoC §2.4 white-list / design §9.3 pathNot:facade).
+;     facade 외 litellm·동적 litellm 은 계속 검출 (docs/review/3plus1-consensus-2026-05-29-facade-scanner.md).
 ;   - URL/endpoint 하드코딩: 3차 별도 합의 영역 외
 ;   - 의미적 lock-in: 라운드트립 검증 (P2-5) 영역 외
 ;

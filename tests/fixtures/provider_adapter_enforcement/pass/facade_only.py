@@ -7,9 +7,12 @@
 답습 출처:
   - docs/architecture/llm-providers-design.md §4.1 (정확히 이 파일만 LiteLLM 직접 import)
 
-본 fixture 는 fixture 위치 (tests/fixtures/...) 자체가 white-list 대상이지만,
-*형식적 통과* (위반 0건 보고) 검증용. scanner 가 import 무관 코드를 false
-positive 로 잡지 않는지 확인.
+⚠️ oracle 한계 (3+1 합의 2026-05-29 MT-5): fixture 경로(tests/fixtures/...)는
+facade allow-path(`src/adapters/llm/facade.py`)가 *아니므로*, 여기에 실 litellm
+import 를 넣으면 FAIL 된다 → 본 fixture 는 litellm 을 import 하지 않는다(형식 모사만).
+따라서 facade allow-path(litellm 토큰 면제)의 실 검증은 본 fixture 로 불가능하며,
+`tests/tools/test_provider_import_scanner.py` (MT-4 음성 3종 + MT-3 동적)가 oracle 이다.
+본 fixture 는 scanner 가 import 무관 코드를 false positive 로 잡지 않는지만 확인.
 """
 from __future__ import annotations
 

@@ -319,6 +319,10 @@ def boss_plan_prompt(allowed_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT) -> st
         "- depends_on 은 *선행 subtask 의 인덱스 배열*(없으면 빈 배열)\n"
         "- desc 는 해당 작업 내용(한국어). 명령어·경로·argv·도구 이름·alias 를 "
         "지정하지 마십시오 — 그것은 시스템이 정합니다.\n"
+        "- **한 subtask 의 산출물(코드·데이터·스키마)을 다른 subtask 가 입력으로 "
+        "써야 하면, contracts 에 {name: 산출물 이름, produced_by: 산출 subtask "
+        "인덱스} 를 추가하십시오.** 산출 subtask 를 depends_on 하는 subtask 들이 그 "
+        "산출물을 자동으로 받습니다. (전달이 필요 없으면 contracts 는 빈 배열.)\n"
         "- 사이클·자기참조 금지. 불필요하게 잘게 쪼개지 마십시오."
     )
 

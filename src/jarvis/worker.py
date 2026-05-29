@@ -124,8 +124,6 @@ class CliWorker:
 # tmux subprocess runner = argv → (exit_code, stdout, stderr). 주입으로 테스트 결정성.
 TmuxRunner = Callable[[list[str]], "tuple[int, str, str]"]
 
-_SENTINEL_RE = re.compile(r"__JARVIS_DONE_(-?\d+)__")
-
 
 def _default_tmux_runner(argv: list[str]) -> tuple[int, str, str]:
     """기본 tmux runner — `tmux <subcommand> ...` subprocess 실행."""
@@ -156,6 +154,7 @@ class TmuxWorker:
         poll_attempts: int = 60,
         poll_interval_s: float = 1.0,
         session_prefix: str = "jarvis",
+        nonce_factory: Callable[[], str] | None = None,
     ) -> None:
         self.alias = alias
         self._argv = list(argv)
@@ -164,13 +163,21 @@ class TmuxWorker:
         self._poll_attempts = max(1, poll_attempts)
         self._poll_interval = max(0.0, poll_interval_s)
         self._session_prefix = session_prefix
+        # 완료 sentinel = per-session 무작위 nonce (위조 표면 사전/외부 차단, 74 entry B-2).
+        # nonce = 비밀 아닌 per-run salt(사전 예측 불가) — 평문 노출 무관, 안전가치=예측불가만.
+        self._nonce_factory = nonce_factory or (lambda: uuid.uuid4().hex)
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
         inner = self._isolation.wrap([*self._argv, prompt], workdir)
         session = f"{self._session_prefix}-{uuid.uuid4().hex[:8]}"
+        # per-run nonce sentinel — 명령이 nonce 예측 불가 → 사전/외부 위조 차단(B-2).
+        nonce = self._nonce_factory()
+        if not nonce:
+            raise ValueError("nonce_factory 가 빈 nonce 반환 — sentinel 위조 방어 무력화 금지")
+        sentinel_re = re.compile(rf"__JARVIS_DONE_{re.escape(nonce)}_(-?\d+)__")
         # sentinel 포함 shell 한 줄 — exit code 보존(`$?`).
         inner_shell = shlex.join(inner)
-        full_cmd = f"cd {shlex.quote(workdir)} && {inner_shell}; echo __JARVIS_DONE_$?__"
+        full_cmd = f"cd {shlex.quote(workdir)} && {inner_shell}; echo __JARVIS_DONE_{nonce}_$?__"
 
         new_rc, _, new_err = self._tmux([
             "tmux", "new-session", "-d", "-s", session, "-x", "200", "-y", "50",
@@ -186,7 +193,7 @@ class TmuxWorker:
 
         try:
             self._tmux(["tmux", "send-keys", "-t", session, full_cmd, "Enter"])
-            pane_text, sentinel_code = self._poll_for_sentinel(session)
+            pane_text, sentinel_code = self._poll_for_sentinel(session, sentinel_re)
         finally:
             self._tmux(["tmux", "kill-session", "-t", session])
 
@@ -199,7 +206,7 @@ class TmuxWorker:
                 raw=None,
             )
 
-        cleaned = _SENTINEL_RE.sub("", pane_text).rstrip()
+        cleaned = sentinel_re.sub("", pane_text).rstrip()
         return WorkerResult(
             exit_code=sentinel_code,
             output=cleaned,
@@ -208,13 +215,15 @@ class TmuxWorker:
             raw=None,
         )
 
-    def _poll_for_sentinel(self, session: str) -> tuple[str, int | None]:
-        """capture-pane polling — sentinel 등장 시 즉시 반환."""
+    def _poll_for_sentinel(
+        self, session: str, sentinel_re: "re.Pattern[str]"
+    ) -> tuple[str, int | None]:
+        """capture-pane polling — per-run nonce sentinel 등장 시 즉시 반환."""
         pane_text = ""
         for _ in range(self._poll_attempts):
             _, out, _ = self._tmux(["tmux", "capture-pane", "-p", "-t", session])
             pane_text = out
-            m = _SENTINEL_RE.search(pane_text)
+            m = sentinel_re.search(pane_text)
             if m is not None:
                 return pane_text, int(m.group(1))
             if self._poll_interval > 0:

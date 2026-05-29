@@ -18,13 +18,33 @@ if _ROOT not in sys.path:
 
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 
-async def check_ollama_health():
+def _check_ollama_health_sync():
     try:
         with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2) as response:
             data = json.loads(response.read().decode())
             return True, len(data.get("models", []))
-    except:
+    except Exception:
         return False, 0
+
+
+async def check_ollama_health():
+    # 76 entry: 동기 urllib → to_thread (이벤트 루프 비차단 — self-analysis/chat 블로킹으로 인한 무한 로딩 fix).
+    return await asyncio.to_thread(_check_ollama_health_sync)
+
+
+def _ollama_chat_sync(payload: dict, timeout: int = 180) -> dict:
+    """동기 ollama /api/chat — async 핸들러는 asyncio.to_thread 로 감싸 이벤트 루프 비차단 (76 entry).
+
+    기존: async 핸들러 안에서 동기 urllib(최대 180s) 직접 호출 → 단일 uvicorn 이벤트 루프 차단
+    → 그동안 모든 요청(새 페이지 로드 포함) 멈춤(무한 로딩, 실측 self-analysis 18s 중 GET / 16.5s).
+    """
+    req = urllib.request.Request(
+        "http://localhost:11434/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read().decode())
 
 async def get_layer0_entry_count():
     try:
@@ -138,13 +158,7 @@ async def jarvis_self_analysis_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": prompt}],
         }
-        req = urllib.request.Request(
-            "http://localhost:11434/api/chat",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         analysis = result.get("message", {}).get("content", "")
         return JSONResponse({
             "analysis": analysis,
@@ -222,13 +236,7 @@ async def respond_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": prompt}],
         }
-        req = urllib.request.Request(
-            "http://localhost:11434/api/chat",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         raw_reply = result.get("message", {}).get("content", "")
 
         # mode 별 후처리
@@ -516,11 +524,9 @@ async def chat_handler(request):
             "stream": False,
             "messages": [{"role": "user", "content": message}]
         }
-        req = urllib.request.Request("http://localhost:11434/api/chat", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=180) as response:
-            result = json.loads(response.read().decode())
-            reply = result.get("message", {}).get("content", "")
-            return JSONResponse({"reply": reply, "model": model})
+        result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
+        reply = result.get("message", {}).get("content", "")
+        return JSONResponse({"reply": reply, "model": model})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

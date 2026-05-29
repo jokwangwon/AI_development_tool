@@ -42,12 +42,18 @@ def main() -> int:
     ap.add_argument("--worker-model", default=_DEFAULT_WORKER)
     ap.add_argument("--planner", default="ollama", choices=["ollama", "codex"],
                     help="plan 공급원: ollama(약한 로컬 boss) | codex(frontier CLI, 디딤돌1d)")
+    ap.add_argument("--real-workers", action="store_true",
+                    help="실 워커 배선: code=claude+Landlock / file=ollama(build_worker_registry). "
+                         "code consume opt-in(Q7). ⚠️ 실 claude 실행=토큰 소비")
     ap.add_argument(
         "--prompt",
         default="작은 작업 2개로 나눠줘: (1) 'add(a,b)' 파이썬 함수 한 줄 작성, "
         "(2) 그 함수를 호출해 2+3 을 출력하는 한 줄 작성. (2)는 (1)에 의존.",
     )
     args = ap.parse_args()
+
+    # 실 워커 배선(--real-workers): code=claude+Landlock / file=ollama. plan 도 code 안내.
+    plan_kinds = ("code", "file") if args.real_workers else ("file",)
 
     # plan 공급원(IN-2): ollama(약한 로컬) 또는 codex(frontier CLI, 디딤돌1d)
     if args.planner == "codex":
@@ -56,13 +62,20 @@ def main() -> int:
         # 디딤돌1d 안정화(dogfooding): codex 는 --output-schema 로 _PLAN_JSON_SCHEMA 를
         # *강제*해야 정확한 형식 생성(없으면 배열 직접·task 키 등 자기 식 → 파싱 실패).
         # codex_planner 가 schema flag(strict) + output-last-message 추출 + RO sandbox 캡슐화.
-        # plan_prompt = file-only(데모 kind_table={file} 과 일치, OllamaBoss plan_kinds 대칭).
-        planner = codex_planner(timeout_s=300.0, plan_prompt=boss_plan_prompt(("file",)))
+        planner = codex_planner(timeout_s=300.0, plan_prompt=boss_plan_prompt(plan_kinds))
     else:
-        planner = OllamaBoss(model=args.boss_model, plan_kinds=("file",))
-    worker = OllamaWorker(alias="ollama-file", model=args.worker_model)
-    registry = WorkerRegistry()
-    registry.register(worker)
+        planner = OllamaBoss(model=args.boss_model, plan_kinds=plan_kinds)
+
+    if args.real_workers:
+        from src.jarvis.worker_setup import build_worker_registry
+        # 디딤돌1d 실 배선 — code=CliWorker(claude)+Landlock / file=OllamaWorker.
+        registry, kind_table = build_worker_registry(file_model=args.worker_model)
+        allow_code = True  # code worker 가 artifact consume 시 opt-in(Q7)
+    else:
+        registry = WorkerRegistry()
+        registry.register(OllamaWorker(alias="ollama-file", model=args.worker_model))
+        kind_table = {"file": "ollama-file"}
+        allow_code = False
     orch = Orchestrator(registry, ReviewGuard(), ApprovalGate(approver=lambda r: True))
 
     def plan_approver(req: PlanApprovalRequest) -> bool:
@@ -86,11 +99,11 @@ def main() -> int:
 
     ctrl = PlanController(
         dispatcher=orch.dispatch,
-        kind_table={"file": "ollama-file"},
+        kind_table=kind_table,
         registry=registry,
         plan_approver=plan_approver,
         max_steps=5,
-        allow_code_consume=False,  # Q7 능력 경계 — file consume 만(기본)
+        allow_code_consume=allow_code,  # Q7 능력 경계 — real-workers 시 code consume opt-in
     )
 
     planner_desc = (f"codex (frontier CLI, 디딤돌1d)" if args.planner == "codex"

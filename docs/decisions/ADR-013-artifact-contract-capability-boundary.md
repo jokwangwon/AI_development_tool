@@ -20,7 +20,9 @@
 controller 가 produced 출력에서 평문 bounded text 를 추출(redact secret → truncate)해 consume subtask 의 desc 말미에 결정적 주입. workdir 독립 유지(파일 공유 0), 워커 간 직접 통신 0. raw NL 전체 전달 0.
 
 ### 2.2 ⭐ 능력 경계 (Capability Boundary) — 결정적 완화
-**artifact 를 consume 하는 subtask 의 worker_kind 는 기본 `file`(OllamaWorker = fs 실행 능력 *경로 부재*)만 허용.** `code`/`shell`(CliWorker/TmuxWorker = 실 실행) consume 은 `allow_code_consume=True` opt-in + 계획 게이트 경고로만. → **오염된 artifact 가 주입돼도 LLM-only consume 워커는 실 부작용(파일·명령 실행) 0**. 이는 추론적 다층 방어보다 강한 *결정적 능력 제거*(CLAUDE.md §2 "잘못하는 것이 불가능하게").
+**artifact 를 consume 하는 subtask 의 worker_kind 는 기본 `file`(OllamaWorker)만 허용.** `code`/`shell`(CliWorker/TmuxWorker = 실 실행) consume 은 `allow_code_consume=True` opt-in + 계획 게이트 경고로만. → **오염된 artifact 가 주입돼도 LLM-only consume 워커는 임의 명령/경로 실행·workdir escape 0**. 이는 추론적 다층 방어보다 강한 *결정적 능력 제거*(CLAUDE.md §2 "잘못하는 것이 불가능하게").
+
+> **정밀화(2026-05-30, 디딤돌1c BL-1)**: OllamaWorker 는 `output_filename` 설정 시 **workdir 단일 파일 write 경로**가 있다(worker.py:358-393, realpath traversal 차단). 따라서 "fs 실행 능력 0"은 부정확 — 정확히는 **"임의 명령/경로 실행 0 + workdir escape 0, 단 output_filename 설정 시 workdir 단일 파일 산출 잔여"**. consume-safe 불변식 = file alias 가 *writer 없는*(`output_filename=None`) OllamaWorker 임을 harness 구성이 보장.
 
 ### 2.3 Contract 모델 — consumed_by 유추
 `Contract{name, produced_by}` 만. consume subtask = produced_by 를 transitive depends_on 하는 subtask 로 controller 가 결정적 유추. boss 출력 표면↓ + depends_on/contract 정합 불일치 구조적 제거. means 틀 필드(argv·alias·추출 방법) 부재 — boss 는 "산출 선언"(ends)만, 추출·주입·검사·능력 경계(means)는 controller.
@@ -45,7 +47,7 @@ controller 가 produced 출력에서 평문 bounded text 를 추출(redact secre
 
 ## 4. 정직 단서 (Honesty — over-claim 차단)
 
-- ✅ **결정적 차단**: 능력 경계로 오염 artifact 의 *실 부작용* 0(code opt-in 제외).
+- ✅ **결정적 차단**: 능력 경계로 오염 artifact 의 **임의 명령/경로 실행 0 + workdir escape 0**(code opt-in 제외). ⚠️ 단 file consume 워커가 `output_filename` 설정 시 **workdir 단일 파일 산출은 잔여**(임의 실행 아님 — 정밀화 §2.2, 1c BL-1).
 - ❌ **완전 차단 아님**: consume 워커(LLM)가 주입 텍스트를 instruction 으로 해석해 *오염 텍스트를 산출*하는 것은 막지 못한다(단 능력 경계로 실 부작용 미발생). **"능력 경계로 실 부작용 차단, 오염 텍스트 산출만 잔여"**(under-claim 개선).
 - **bounded(truncate)는 injection 차단 아님** — 길이 제한은 부피만 축소, 짧은 injection 문장은 통과(길이≠의미 검사).
 - **redaction 은 secret-only** — NL injection payload 미차단(ADR-011 R-4 / 상위 brief §3 B1).

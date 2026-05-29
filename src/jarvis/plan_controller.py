@@ -74,8 +74,11 @@ class PlanApprovalRequest:
     mapped_aliases: tuple[str, ...]
     order: tuple[int, ...]
     total_steps: int
-    # 디딤돌1b: 데이터 흐름(name·produced→consume)을 사람이 1회 검토. 빈 tuple=전달 0.
+    # 디딤돌1b: boss 가 명시 선언한 contract. 사람이 1회 검토. 빈 tuple=명시 0.
     contracts: tuple[Contract, ...] = ()
+    # 디딤돌1c: controller 가 depends_on 에서 *합성*한 암묵 contract(boss 미선언).
+    # 명시와 *구분* 표시(BL-4) — 사람이 "boss 선언 흐름 vs controller 보강 흐름"을 식별.
+    implicit_contracts: tuple[Contract, ...] = ()
 
 
 # plan_approver(req) -> 승인 여부. 사람 인터페이스(CLI/HUD)는 주입. None=default-deny.
@@ -109,6 +112,7 @@ class PlanController:
         allow_code_consume: bool = False,
         max_artifact_len: int = DEFAULT_MAX_ARTIFACT_LEN,
         redactor: RedactionFilter | None = None,
+        implicit_contracts: bool = True,
     ) -> None:
         self._dispatch = dispatcher
         self._table = dict(kind_table)          # worker_kind → alias (harness 소유)
@@ -120,6 +124,12 @@ class PlanController:
         self._allow_code_consume = allow_code_consume  # Q7: code consume opt-in
         self._max_artifact_len = max_artifact_len      # Q2: bounded 길이
         self._redactor = redactor or RedactionFilter() # secret strip(NL injection 아님)
+        # 디딤돌1c: depends_on→암묵 contract 합성(Q1 기본 on). False=1b 명시-only.
+        # consume-safe 불변식(BL-1): file alias 는 writer 없는(output_filename=None)
+        # OllamaWorker 여야 함 — 능력 경계는 임의 명령/경로 실행 0 + workdir escape 0
+        # 을 보장하나, output_filename 설정 시 workdir 단일 파일 산출은 잔여(harness
+        # 구성 책임). 본 controller 는 worker_kind 단위로만 경계 검증.
+        self._implicit_contracts = implicit_contracts
 
     # ── plan 공급원 유연(IN-2) ─────────────────────────────────────────────
     def run_from_planner(
@@ -183,6 +193,7 @@ class PlanController:
         produced_set: set[int] = set()
         consume_artifacts: dict[int, list[tuple[str, int]]] = {}
         seen_names: set[str] = set()
+        explicit_pairs: set[tuple[int, int]] = set()  # 1c dedup: (produced, consumer)
         for c in plan.contracts:
             if not (0 <= c.produced_by < n):
                 return self._reject(f"contract produced_by 범위초과: {c.produced_by}")
@@ -194,17 +205,45 @@ class PlanController:
             # Q8: consumed_by 유추 — produced_by 를 transitive depends_on 하는 subtask
             consumers = self._transitive_dependents(c.produced_by, subtasks)
             for ci in consumers:
-                # Q7 ⭐ 능력 경계: file 외 consume 은 opt-in 필요(실 부작용 결정적 차단)
-                if (subtasks[ci].worker_kind not in SAFE_CONSUME_KINDS
-                        and not self._allow_code_consume):
+                if not self._consume_ok(subtasks[ci].worker_kind):
                     return self._reject(
                         f"'{subtasks[ci].worker_kind}' worker 의 artifact consume 은 "
                         f"opt-in 필요(subtask {ci}, allow_code_consume=False)"
                     )
                 consume_artifacts.setdefault(ci, []).append((c.name, c.produced_by))
+                explicit_pairs.add((c.produced_by, ci))
             produced_set.add(c.produced_by)
 
-        self._record(task_id, "plan_proposed", n_subtasks=n, n_contracts=len(plan.contracts))
+        # 5b. 디딤돌1c: depends_on→암묵 contract 합성(Q1 on / Q2 transitive / Q3 dedup).
+        # boss 가 Contract 를 안 내도(dogfooding) depends_on 으로 데이터 전달(하네스 흡수).
+        implicit_synth: list[Contract] = []
+        if self._implicit_contracts:
+            produced_candidates: set[int] = set()
+            for st in subtasks:
+                produced_candidates.update(st.depends_on)
+            for pidx in sorted(produced_candidates):
+                iname = f"subtask_{pidx}"  # Q4
+                if iname in seen_names:  # 명시 name 충돌 방지(Q4 uniqueness)
+                    return self._reject(f"암묵 contract name 충돌(명시와): {iname}")
+                consumers = self._transitive_dependents(pidx, subtasks)
+                used = False
+                for ci in consumers:
+                    if (pidx, ci) in explicit_pairs:  # Q3 dedup: 명시 커버 시 suppress
+                        continue
+                    if not self._consume_ok(subtasks[ci].worker_kind):
+                        return self._reject(
+                            f"'{subtasks[ci].worker_kind}' 암묵 consume 은 opt-in 필요"
+                            f"(subtask {ci}, allow_code_consume=False)"
+                        )
+                    consume_artifacts.setdefault(ci, []).append((iname, pidx))
+                    produced_set.add(pidx)
+                    used = True
+                if used:
+                    implicit_synth.append(Contract(name=iname, produced_by=pidx))
+                    seen_names.add(iname)
+
+        self._record(task_id, "plan_proposed", n_subtasks=n,
+                     n_contracts=len(plan.contracts), n_implicit=len(implicit_synth))
 
         # 6. 사람 승인 게이트 (계획 1회, desc 전문 비절단 GP-3 + contracts 흐름 표시)
         req = PlanApprovalRequest(
@@ -213,6 +252,7 @@ class PlanController:
             order=order,
             total_steps=n,
             contracts=plan.contracts,
+            implicit_contracts=tuple(implicit_synth),  # BL-4 구분 표시
         )
         if not self._approve(req):
             self._record(task_id, "plan_denied")
@@ -270,6 +310,13 @@ class PlanController:
 
     def _reject(self, reason: str) -> PlanOutcome:
         return PlanOutcome(PlanStatus.VALIDATION_FAILED, reason)
+
+    def _consume_ok(self, worker_kind: str) -> bool:
+        """Q7 ⭐ 능력 경계 — file(SAFE_CONSUME_KINDS) 외 consume 은 opt-in 필요.
+
+        명시·암묵 contract 양쪽에 동일 적용(2차 injection 실 부작용 결정적 차단).
+        """
+        return worker_kind in SAFE_CONSUME_KINDS or self._allow_code_consume
 
     def _transitive_dependents(
         self, produced: int, subtasks: tuple[PlanSubtask, ...]

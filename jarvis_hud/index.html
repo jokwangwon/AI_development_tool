@@ -1232,7 +1232,10 @@
         statusEl.textContent = '연결 끊김';
       }
     }
-    loadInfo();
+    // 76: 초기 self-analysis(보스 30B, ~13s 생성)를 load 이후로 지연 호출. 로드 *중* 13s pending
+    // 요청이 탭 로딩 스피너를 점유해 "무한 로딩"으로 보이던 것 방지(서버 비차단화로 다른 요청은
+    // 이미 안 멈춤). 주기 갱신(60s)은 유지.
+    window.addEventListener('load', () => setTimeout(loadInfo, 300));
     setInterval(loadInfo, 60000);
 
     // === WebSocket ===

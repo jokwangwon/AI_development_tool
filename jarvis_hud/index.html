@@ -1589,7 +1589,7 @@
     let jarvisPollTimer = null;
     let livePaneTaskId = null;
 
-    const STATUS_BADGE = { '진행중': '▶', '승인대기': '⏳', '수락': '✅', '거절': '✖', '실패': '⚠' };
+    const STATUS_BADGE = { '진행중': '▶', '승인대기': '⏳', '수락': '✅', '거절': '✖', '실패': '⚠', '취소': '⛔', '중단됨': '⏸' };
 
     const _line = (text) => { const d = document.createElement('div'); d.textContent = text; return d; };
 
@@ -1626,12 +1626,24 @@
         acts.append(acc, rej);
         card.appendChild(acts);
       }
-      if (task.worker_type === 'tmux' && task.status === 'running') {
-        const live = document.createElement('button');
-        live.textContent = livePaneTaskId === task.id ? '👁 라이브 닫기' : '👁 라이브 보기';
-        live.style.cssText = 'margin-top:8px; padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;';
-        live.onclick = () => { livePaneTaskId = (livePaneTaskId === task.id) ? null : task.id; refreshPane(); loadJarvisTasks(); };
-        card.appendChild(live);
+      if (task.status === 'running') {
+        // 진행중 = 취소 가능(실행 abort + tmux 실 kill). tmux 는 라이브 보기도 병행.
+        const acts = document.createElement('div');
+        acts.style.cssText = 'display:flex; gap:8px; margin-top:8px; align-items:center;';
+        if (task.worker_type === 'tmux') {
+          const live = document.createElement('button');
+          live.textContent = livePaneTaskId === task.id ? '👁 라이브 닫기' : '👁 라이브 보기';
+          live.style.cssText = 'padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;';
+          live.onclick = () => { livePaneTaskId = (livePaneTaskId === task.id) ? null : task.id; refreshPane(); loadJarvisTasks(); };
+          acts.appendChild(live);
+        }
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = '✕ 취소';
+        cancelBtn.title = '실행 취소 (tmux=실 kill, ollama=포기 마킹) · 반영 안 함';
+        cancelBtn.style.cssText = 'padding:4px 10px; background:rgba(217,122,133,0.12); border:1px solid var(--danger); border-radius:6px; color:var(--text-dim); cursor:pointer; font-size:12px;';
+        cancelBtn.onclick = () => cancelTask(task.id);
+        acts.appendChild(cancelBtn);
+        card.appendChild(acts);
       }
       return card;
     };
@@ -1661,6 +1673,18 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ decision }),
         });
+        loadJarvisTasks();
+      } catch (e) { /* fail-soft */ }
+    };
+
+    const cancelTask = async (id) => {
+      // 디딤돌0 실행 중 취소 — 반영 안 함(default-deny). tmux 세션 실 kill.
+      try {
+        await fetch(`/api/jarvis/task/${id}/cancel`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (livePaneTaskId === id) livePaneTaskId = null;  // 취소 시 라이브 pane 닫기
         loadJarvisTasks();
       } catch (e) { /* fail-soft */ }
     };

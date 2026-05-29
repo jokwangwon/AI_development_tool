@@ -177,8 +177,9 @@ async def jarvis_self_analysis_handler(request):
         return JSONResponse({"error": str(e), "analysis": "자체 분석 일시 부재"}, status_code=500)
 
 
-CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2: JARVIS_DATA_DIR > XDG (대화 raw 저장, Q7). str — repo 내부 `+ ".tmp"` 호환.
-_conversation_repo = ConversationRepo(CONVERSATIONS_PATH)  # §10-3: 대화 저장 단일 port (SQLite swap 시 이 1곳만 교체)
+CONVERSATIONS_PATH = str(paths.conversations_path())  # §10-2 위치. §10-4a 이후 = legacy JSONL(마이그레이션 원본, 보존).
+# §10-4a: backing = SQLite. 첫 기동 시 legacy JSONL 이 있으면 1회 마이그레이션(idempotent, 원본 보존).
+_conversation_repo = ConversationRepo(str(paths.conversations_db_path()), legacy_jsonl=CONVERSATIONS_PATH)
 
 NOTE_PROMPT_TEMPLATE = """다음 사용자 입력을 정리된 노트 형식의 JSON 으로만 출력하세요.
 출력 형식 (엄격, 다른 텍스트 0):

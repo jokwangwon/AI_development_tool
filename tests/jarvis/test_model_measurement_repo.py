@@ -331,6 +331,8 @@ def test_list_sessions_desc_by_measured_ts(tmp_path):
     sessions = repo.list_sessions()
     assert [s["measured_ts"] for s in sessions] == [200.0, 100.0]  # DESC
     assert {s["kind"] for s in sessions} == {"boss", "multi"}
+    by_kind = {s["kind"]: s["n_models"] for s in sessions}
+    assert by_kind == {"multi": 3, "boss": 1}  # n_models (skipped 포함)
 
 
 # --- §10-5b-writer: append_measurement (기본 DB 경로, 히스토리 누적) ---

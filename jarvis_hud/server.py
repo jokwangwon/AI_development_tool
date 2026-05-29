@@ -486,6 +486,25 @@ async def conversation_delete_handler(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# === §10-5 모델 관리 화면 ===
+async def measurements_overview_handler(request):
+    """모델 관리 화면 데이터 — 최신 측정(multi/boss) + 세션 히스토리 + 모델별 추세."""
+    try:
+        metric = request.query_params.get("metric", "decode")
+        if metric not in ("decode", "prefill", "latency"):
+            metric = "decode"
+        repo = open_reader_repo()
+        return JSONResponse({
+            "latest_multi": repo.latest_session("multi"),
+            "latest_boss": repo.latest_session("boss"),
+            "sessions": repo.list_sessions(limit=30),
+            "history": repo.model_history(metric=metric),
+            "metric": metric,
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 async def chat_handler(request):
     try:
         body = await request.body()
@@ -537,6 +556,7 @@ routes = [
     Route("/api/conversations", conversations_list_handler, methods=["GET"]),  # §10-4b
     Route("/api/conversations/new", conversation_new_handler, methods=["POST"]),
     Route("/api/conversations/{conversation_id}", conversation_delete_handler, methods=["DELETE"]),
+    Route("/api/measurements/overview", measurements_overview_handler, methods=["GET"]),  # §10-5 모델 관리
     Route("/api/tts", tts_handler, methods=["POST"]),
 ]
 

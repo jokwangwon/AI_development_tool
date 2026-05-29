@@ -36,7 +36,7 @@ class _FakeWorker:
 
 
 def _board(*, output="done", is_error=False, session=None, timeout=2.0) -> JarvisTaskBoard:
-    def builder(opts, on_session):
+    def builder(opts, on_session, cancel_check=None):
         return _FakeWorker(output=output, is_error=is_error, session=session, on_session=on_session)
     return JarvisTaskBoard(
         worker_builder=builder, boss_builder=lambda opts: None, approver_timeout_s=timeout,

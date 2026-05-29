@@ -222,3 +222,43 @@ def test_empty_nonce_rejected() -> None:
                    nonce_factory=lambda: "")
     with pytest.raises(ValueError):
         w.run(prompt="x", workdir="/tmp/ws")
+
+
+# ── 디딤돌0 취소 hook (brief §5 실행 중 취소 = 실 kill) ────────────────────────
+def test_cancel_check_breaks_poll_and_kills_session() -> None:
+    """cancel_check True → sentinel 미발화여도 poll 조기 종료 + kill-session(실 kill)."""
+    spy = SpyTmuxRunner(pane_text="incomplete\n$ ")  # sentinel 부재(미완)
+    w = _mk(spy, poll_attempts=999, poll_interval_s=0.0, cancel_check=lambda: True)
+    res = w.run(prompt="long task", workdir="/tmp/ws")
+    assert res.is_error is True
+    assert res.exit_code == 130           # 취소 관행(128+SIGINT) — timeout(124)과 구분
+    subs = [c[1] for c in spy.calls]
+    assert subs[-1] == "kill-session"     # 실 kill = 자원 회수
+    # poll_attempts=999 이나 cancel 로 capture-pane 호출 최소(<=1) — 폭주 0
+    assert subs.count("capture-pane") <= 1
+
+
+def test_cancel_distinct_from_timeout() -> None:
+    """취소(130) 와 타임아웃(124) 은 다른 exit_code(원인 구분)."""
+    spy_to = SpyTmuxRunner(pane_text="no sentinel\n$ ")
+    res_to = _mk(spy_to, poll_attempts=1, poll_interval_s=0.0).run(prompt="x", workdir="/tmp/ws")
+    assert res_to.exit_code == 124        # timeout
+
+    spy_cx = SpyTmuxRunner(pane_text="no sentinel\n$ ")
+    res_cx = _mk(spy_cx, poll_attempts=999, poll_interval_s=0.0,
+                 cancel_check=lambda: True).run(prompt="x", workdir="/tmp/ws")
+    assert res_cx.exit_code == 130        # cancel
+
+
+def test_cancel_check_none_completes_normally() -> None:
+    """cancel_check 미주입(default None) = 기존 동작 그대로(하위 호환)."""
+    spy = SpyTmuxRunner(pane_text=_done(0, "ok"))
+    res = _mk(spy).run(prompt="x", workdir="/tmp/ws")
+    assert res.exit_code == 0 and res.is_error is False
+
+
+def test_cancel_check_false_does_not_break() -> None:
+    """cancel_check 가 계속 False → 정상 완료(취소 아님)."""
+    spy = SpyTmuxRunner(pane_text=_done(0, "ok"))
+    res = _mk(spy, cancel_check=lambda: False).run(prompt="x", workdir="/tmp/ws")
+    assert res.exit_code == 0 and res.is_error is False

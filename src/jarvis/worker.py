@@ -156,6 +156,7 @@ class TmuxWorker:
         session_prefix: str = "jarvis",
         nonce_factory: Callable[[], str] | None = None,
         on_session: Callable[[str], None] | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> None:
         self.alias = alias
         self._argv = list(argv)
@@ -164,6 +165,9 @@ class TmuxWorker:
         self._poll_attempts = max(1, poll_attempts)
         self._poll_interval = max(0.0, poll_interval_s)
         self._session_prefix = session_prefix
+        # 디딤돌0 취소 hook (brief §5 실행 중 취소): poll 루프가 매 회 확인 → True 면
+        # 조기 종료(finally kill-session = 실 자원 회수). 미주입(None)=하위 호환.
+        self._cancel_check = cancel_check
         # 완료 sentinel = per-session 무작위 nonce (위조 표면 사전/외부 차단, 74 entry B-2).
         # nonce = 비밀 아닌 per-run salt(사전 예측 불가) — 평문 노출 무관, 안전가치=예측불가만.
         self._nonce_factory = nonce_factory or (lambda: uuid.uuid4().hex)
@@ -207,6 +211,16 @@ class TmuxWorker:
         finally:
             self._tmux(["tmux", "kill-session", "-t", session])
 
+        # 취소(brief §5): poll 가 cancel 로 조기 종료한 경우 timeout(124)과 구분(130).
+        if self._cancel_check is not None and self._cancel_check():
+            return WorkerResult(
+                exit_code=130,                            # 관행: 128+SIGINT(2) = 취소
+                output=sentinel_re.sub("", pane_text).rstrip(),
+                cost_usd=None,
+                is_error=True,                            # 미완 = 거짓 성공 금지
+                raw=None,
+            )
+
         if sentinel_code is None:
             return WorkerResult(
                 exit_code=124,                            # 관행: timeout 코드
@@ -228,9 +242,15 @@ class TmuxWorker:
     def _poll_for_sentinel(
         self, session: str, sentinel_re: "re.Pattern[str]"
     ) -> tuple[str, int | None]:
-        """capture-pane polling — per-run nonce sentinel 등장 시 즉시 반환."""
+        """capture-pane polling — per-run nonce sentinel 등장 시 즉시 반환.
+
+        매 회 *시작*에 cancel_check 확인 → 취소 시 capture-pane 호출 전 조기 종료
+        (sentinel_code=None 반환, run() 이 취소(130)로 식별). poll 폭주 방지.
+        """
         pane_text = ""
         for _ in range(self._poll_attempts):
+            if self._cancel_check is not None and self._cancel_check():
+                return pane_text, None
             _, out, _ = self._tmux(["tmux", "capture-pane", "-p", "-t", session])
             pane_text = out
             m = sentinel_re.search(pane_text)

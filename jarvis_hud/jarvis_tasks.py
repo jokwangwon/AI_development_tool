@@ -26,6 +26,7 @@ from src.adapters.llm.redaction import RedactionFilter
 from src.jarvis.approval import ApprovalGate, ApprovalRequest
 from src.jarvis.boss import BossAdvice, BossLLM, OllamaBoss
 from src.jarvis.isolation import LandlockIsolation, PassthroughIsolation
+from src.jarvis.ledger import LedgerLog
 from src.jarvis.orchestrator import Orchestrator, OutcomeStatus, WorkerRegistry
 from src.jarvis.review import ReviewGuard
 from src.jarvis.worker import OllamaWorker, TmuxWorker
@@ -39,11 +40,24 @@ _STATUS = {  # 내부 → UI 라벨
     "applied": "수락",
     "denied": "거절",
     "failed": "실패",
+    "cancelled": "취소",       # 디딤돌0: 실행 중 취소(반영 안 함)
+    "interrupted": "중단됨",   # 디딤돌0: 재시작 고아(자동 복구 없음)
 }
 
+# 재시작 fold 시 살아있는 task 로 오인하면 안 되는 완결 상태(LedgerLog._TERMINAL 동형).
+_TERMINAL = frozenset({"applied", "denied", "failed", "cancelled", "interrupted"})
 
-def _default_worker_builder(opts: dict[str, Any], on_session: Callable[[str], None]):
-    """opts → OllamaWorker(텍스트) 또는 TmuxWorker(명령 실행 + isolation + 세션 hook)."""
+
+def _default_worker_builder(
+    opts: dict[str, Any],
+    on_session: Callable[[str], None],
+    cancel_check: Callable[[], bool],
+):
+    """opts → OllamaWorker(텍스트) 또는 TmuxWorker(명령 실행 + isolation + 세션 hook + 취소).
+
+    cancel_check = 디딤돌0 실행 중 취소(brief §5). TmuxWorker poll 루프가 확인 → 실 kill.
+    OllamaWorker 는 HTTP 추론 in-flight 취소 경로 부재(R4) — board 가 포기 마킹만.
+    """
     wtype = opts.get("worker_type", "ollama")
     if wtype == "tmux":
         iso = (
@@ -56,6 +70,7 @@ def _default_worker_builder(opts: dict[str, Any], on_session: Callable[[str], No
             argv=shlex.split(opts.get("tmux_argv") or "bash -lc"),
             isolation=iso,
             on_session=on_session,
+            cancel_check=cancel_check,
         )
     return OllamaWorker(
         alias=_WORKER_ALIAS,
@@ -71,6 +86,30 @@ def _default_boss_builder(opts: dict[str, Any]) -> BossLLM | None:
     )
 
 
+def _card_skeleton(
+    task_id: str, prompt: str = "", worker_type: str = "ollama", now: str = "",
+) -> dict[str, Any]:
+    """카드 기본 필드 — create() 신규 + _restore() fold 병합 공통 골격.
+
+    UI 가 기대하는 키 전부 보장 → 복원 카드도 누락 없이 렌더(restore 시 fold 필드가 override).
+    """
+    return {
+        "id": task_id,
+        "prompt": prompt,
+        "worker_type": worker_type,
+        "status": "running",
+        "status_label": _STATUS["running"],
+        "flags": [],
+        "advice": None,
+        "redacted_output_preview": None,
+        "raw_available": False,
+        "decision": None,
+        "error": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
 class JarvisTaskBoard:
     """작업 카드 상태 보드 (in-memory, lock 보호). 재시작 = 유실 + 진행중 작업 고아(휘발성, R-7).
 
@@ -84,6 +123,8 @@ class JarvisTaskBoard:
         memory: Any | None = None,
         approver_timeout_s: float = 300.0,
         max_concurrent: int = 8,
+        ledger: LedgerLog | None = None,
+        tmux_runner: Callable[[list[str]], tuple] | None = None,
     ) -> None:
         self._worker_builder = worker_builder or _default_worker_builder
         self._boss_builder = boss_builder or _default_boss_builder
@@ -96,6 +137,38 @@ class JarvisTaskBoard:
         self._events: dict[str, threading.Event] = {}
         self._decisions: dict[str, bool] = {}
         self._sessions: dict[str, str] = {}
+        # 디딤돌0: 영속 레저(append-only event-sourcing) + 취소 신호 + tmux kill runner.
+        self._ledger = ledger
+        self._cancels: dict[str, threading.Event] = {}
+        self._tmux_runner = tmux_runner or _capture_runner
+        self._restore()
+
+    # ── 영속 레저 (디딤돌0) ─────────────────────────────────────────────────────
+    def _record(self, task_id: str, event: str, **fields: Any) -> None:
+        """레저 1 이벤트 적재 (fail-soft, ledger 부재=no-op). 호출측은 이미 scrub 된 메타만.
+
+        raw 워커 출력은 절대 전달하지 않는다(redacted_output_preview = scrub 완료분, CB-1).
+        """
+        if self._ledger is None:
+            return
+        try:
+            self._ledger.record(task_id, event, **fields)
+        except Exception:
+            return  # 두 겹 fail-soft — 레저 부재가 dispatch 차단 0건.
+
+    def _restore(self) -> None:
+        """재시작 시 레저 fold → _cards 복원. 비완결(running/awaiting) = interrupted(고아).
+
+        복원 카드는 *역사적* 상태(완결/중단) — 라이브 Event/취소 신호 없음(재배선 안 함).
+        """
+        if self._ledger is None:
+            return
+        folded = self._ledger.fold()
+        with self._lock:
+            for task_id, card in folded.items():
+                merged = {**_card_skeleton(task_id), **card}
+                merged["status_label"] = _STATUS.get(merged["status"], merged["status"])
+                self._cards[task_id] = merged
 
     # ── 생성 / 상태 ───────────────────────────────────────────────────────────
     def _scrub(self, text: str) -> str:
@@ -110,30 +183,24 @@ class JarvisTaskBoard:
             raise ValueError("prompt required")
         task_id = uuid.uuid4().hex[:8]
         now = time.strftime("%Y-%m-%dT%H:%M:%S")
+        wtype = opts.get("worker_type", "ollama")
         with self._lock:
             if self._running_count() >= self._max_concurrent:
                 raise RuntimeError(f"동시 작업 상한({self._max_concurrent}) 초과")
-            self._events[task_id] = threading.Event()  # CB-4: dispatch 전 선생성
-            self._cards[task_id] = {
-                "id": task_id,
-                "prompt": prompt[:200],
-                "worker_type": opts.get("worker_type", "ollama"),
-                "status": "running",
-                "status_label": _STATUS["running"],
-                "flags": [],
-                "advice": None,
-                "redacted_output_preview": None,
-                "raw_available": False,
-                "decision": None,
-                "error": None,
-                "created_at": now,
-                "updated_at": now,
-            }
-            self._opts = getattr(self, "_opts", {})
-        # opts 는 카드에 노출 안 함(민감 가능) — run_task 가 사용하도록 별도 보관
-        with self._lock:
-            self._cards[task_id]["_opts"] = opts
+            self._events[task_id] = threading.Event()   # CB-4: dispatch 전 선생성
+            self._cancels[task_id] = threading.Event()  # 디딤돌0 취소 신호(선생성, race 0)
+            card = _card_skeleton(task_id, prompt[:200], wtype, now)
+            # opts 는 카드에 노출 안 함(민감 가능) — run_task 만 사용.
+            card["_opts"] = opts
+            self._cards[task_id] = card
+        # 레저 created 이벤트 — prompt 는 사용자 입력이라 scrub(B5 영속=scrub 메타만).
+        self._record(task_id, "created", prompt=self._scrub(prompt[:200]),
+                     worker_type=wtype, status="running", created_at=now)
         return task_id
+
+    def _is_cancelled(self, task_id: str) -> bool:
+        ev = self._cancels.get(task_id)
+        return ev is not None and ev.is_set()
 
     def _update(self, task_id: str, **fields: Any) -> None:
         with self._lock:
@@ -154,13 +221,17 @@ class JarvisTaskBoard:
         def approver(req: ApprovalRequest) -> bool:
             # 표시 전 scrub (CB-1) — flags 는 패턴명(안전), advice/output 은 scrub.
             advice_summary = self._scrub(req.advice.summary) if req.advice else None
+            preview = self._scrub(req.output_preview)
             self._update(
                 task_id,
                 status="awaiting",
                 flags=list(req.flags),
                 advice=advice_summary,
-                redacted_output_preview=self._scrub(req.output_preview),
+                redacted_output_preview=preview,
             )
+            # 레저 awaiting 이벤트 (scrub 메타만 — raw 미영속, CB-1/B5).
+            self._record(task_id, "awaiting", status="awaiting", flags=list(req.flags),
+                         advice=advice_summary, redacted_output_preview=preview)
             ev = self._events.get(task_id)
             if ev is None:  # 방어 (선생성 보장이나)
                 return False
@@ -181,6 +252,36 @@ class JarvisTaskBoard:
             ev.set()
         return True
 
+    # ── 취소 (실행 중, brief §5) ──────────────────────────────────────────────
+    def cancel(self, task_id: str) -> bool:
+        """실행 중 취소 — tmux=실 kill / ollama=포기 마킹. 반영 안 함(default-deny).
+
+        완결(terminal) task 는 no-op(False). cancel 신호로 워커 poll 조기 종료(tmux),
+        awaiting approver 를 deny 로 깨움, tmux 세션 실 kill(자원 회수). OllamaWorker 는
+        HTTP 추론 in-flight 취소 경로 부재(R4) → 백그라운드 추론은 timeout 까지 GPU 점유
+        (자원 회수 한계) — 카드만 cancelled 마킹.
+        """
+        with self._lock:
+            card = self._cards.get(task_id)
+            if card is None or card["status"] in _TERMINAL:
+                return False
+            self._decisions[task_id] = False        # 반영 안 함(default-deny)
+            cancel_ev = self._cancels.get(task_id)
+            approve_ev = self._events.get(task_id)
+            session = self._sessions.get(task_id)
+        if cancel_ev is not None:
+            cancel_ev.set()                          # 워커 poll 루프 조기 종료(tmux)
+        if approve_ev is not None:
+            approve_ev.set()                         # awaiting approver 를 deny 로 깨움
+        if session:                                  # tmux 실 kill(ollama=세션 부재 skip)
+            try:
+                self._tmux_runner(["tmux", "kill-session", "-t", session])
+            except Exception:
+                pass
+        self._update(task_id, status="cancelled", decision=False)
+        self._record(task_id, "cancelled", status="cancelled", decision=False)
+        return True
+
     # ── dispatch (백그라운드 thread 에서 실행) ────────────────────────────────
     def run_task(self, task_id: str) -> None:
         try:
@@ -189,28 +290,43 @@ class JarvisTaskBoard:
                 opts = card.get("_opts", {}) if card else {}
             if card is None:
                 return
-            worker = self._worker_builder(opts, lambda s: self._set_session(task_id, s))
+            worker = self._worker_builder(
+                opts,
+                lambda s: self._set_session(task_id, s),
+                lambda: self._is_cancelled(task_id),   # 디딤돌0 취소 hook(tmux poll 조기 종료)
+            )
             registry = WorkerRegistry()
             registry.register(worker)
             gate = ApprovalGate(approver=self._make_approver(task_id))
             boss = self._boss_builder(opts)
             orch = Orchestrator(registry, ReviewGuard(), gate, boss=boss, memory=self._memory)
             report = orch.dispatch(card["prompt"], task_id, _WORKER_ALIAS)
+            if self._is_cancelled(task_id):
+                return  # 취소 마킹 승리 — 워커 결과로 cancelled 덮어쓰지 않음
             status = {
                 OutcomeStatus.APPLIED: "applied",
                 OutcomeStatus.DENIED: "denied",
                 OutcomeStatus.WORKER_FAILED: "failed",
             }.get(report.status, "failed")
+            advice = self._scrub(report.advice.summary) if report.advice else None
+            preview = self._scrub(report.result.output[:400])
             self._update(
                 task_id,
                 status=status,
                 flags=list(report.verdict.flags),
-                advice=self._scrub(report.advice.summary) if report.advice else None,
-                redacted_output_preview=self._scrub(report.result.output[:400]),
+                advice=advice,
+                redacted_output_preview=preview,
                 decision=report.applied,
             )
+            # 레저 resolved 이벤트 (scrub 메타만 — raw 미영속, CB-1/B5).
+            self._record(task_id, "resolved", status=status, flags=list(report.verdict.flags),
+                         advice=advice, redacted_output_preview=preview, decision=report.applied)
         except Exception as exc:  # fail-soft (서버 무중단)
-            self._update(task_id, status="failed", error=self._scrub(str(exc)))
+            if self._is_cancelled(task_id):
+                return  # 취소 후 예외 = cancelled 보존
+            err = self._scrub(str(exc))
+            self._update(task_id, status="failed", error=err)
+            self._record(task_id, "resolved", status="failed", error=err)
 
     # ── 조회 (UI) ─────────────────────────────────────────────────────────────
     def snapshot(self) -> list[dict[str, Any]]:
@@ -296,6 +412,14 @@ def make_jarvis_routes(board: JarvisTaskBoard) -> list:
         ok = board.decide(task_id, dec == "accept")
         return JSONResponse({"ok": ok}, status_code=200 if ok else 404)
 
+    async def cancel(request):
+        if not same_origin(request):
+            return JSONResponse({"error": "cross-origin forbidden"}, status_code=403)
+        task_id = request.path_params.get("task_id")
+        # cancel = tmux kill 포함(subprocess) → to_thread (이벤트 루프 비차단, 76 답습).
+        ok = await asyncio.to_thread(board.cancel, task_id)
+        return JSONResponse({"ok": ok}, status_code=200 if ok else 404)
+
     async def pane(request):
         task_id = request.path_params.get("task_id")
         pane_text = await asyncio.to_thread(board.pane, task_id)
@@ -305,5 +429,6 @@ def make_jarvis_routes(board: JarvisTaskBoard) -> list:
         Route("/api/jarvis/task", submit, methods=["POST"]),
         Route("/api/jarvis/tasks", tasks, methods=["GET"]),
         Route("/api/jarvis/task/{task_id}/decision", decision, methods=["POST"]),
+        Route("/api/jarvis/task/{task_id}/cancel", cancel, methods=["POST"]),
         Route("/api/jarvis/task/{task_id}/pane", pane, methods=["GET"]),
     ]

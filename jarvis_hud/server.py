@@ -563,7 +563,11 @@ routes = [
 ]
 
 # jarvis 작업 카드보드 (75 entry) — src.jarvis 오케스트레이터 통합.
-_jarvis_board = JarvisTaskBoard()
+# 디딤돌0: 영속 레저(LedgerLog) 주입 → 재시작 시 카드 복원 + 미완 작업 interrupted 마킹.
+#   경로 = /tmp (Layer0 memory 와 동형 컨벤션). 프로세스 재시작 유실 해소(brief §2).
+from src.jarvis.ledger import LedgerLog  # noqa: E402
+
+_jarvis_board = JarvisTaskBoard(ledger=LedgerLog("/tmp/jarvis-stone0-tasks.jsonl"))
 routes += make_jarvis_routes(_jarvis_board)
 
 app = Starlette(debug=False, routes=routes)

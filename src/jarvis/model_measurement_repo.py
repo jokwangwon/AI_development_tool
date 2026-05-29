@@ -389,3 +389,20 @@ class ModelMeasurementRepo:
             except Exception as e:  # 손상 JSON 등 — fail-soft + report
                 report["errors"].append({"path": path, "error": str(e)})
         return report
+
+
+def open_reader_repo() -> ModelMeasurementRepo:
+    """기본 경로로 측정 repo 열기 (§10-5b-reader 브리지).
+
+    writer 가 아직 JSON 스냅샷을 쓰는 단계 → 생성 시 기존 JSON 을 idempotent
+    마이그레이션(source_id=legacy:{kind}:{sha8})하여 DB 를 최신 JSON 과 일치시킨 뒤
+    읽는다(reader 동작 불변). §10-5b-writer(append_session 전환) 후엔 legacy import 가
+    first-run 한정이 된다. fail-soft 는 생성자 옵션이 보장.
+    """
+    from src.jarvis import paths
+
+    return ModelMeasurementRepo(
+        paths.measurement_db_path(),
+        legacy_multi=paths.multi_model_measurement_path(),
+        legacy_boss=paths.boss_measurement_path(),
+    )

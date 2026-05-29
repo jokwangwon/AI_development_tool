@@ -19,6 +19,7 @@ if _ROOT not in sys.path:
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
+from src.jarvis.model_measurement_repo import open_reader_repo  # noqa: E402  # §10-5b-reader 측정 repo
 
 def _check_ollama_health_sync():
     try:
@@ -89,22 +90,17 @@ async def get_layer1_axis_stats():
 
 
 async def get_top_measured_models(limit=3):
-    """최신 측정 파일의 decode 순위 top-N."""
+    """최신 측정의 decode 순위 top-N (§10-5b-reader: ModelMeasurementRepo 경유).
+
+    동작 불변 — repo.top_models 가 최신 세션 skipped 제외 decode_mean DESC top-N 을
+    반환(JSON 직접 스캔 대체). reader 단계는 writer 가 쓰는 JSON 을 idempotent 마이그레이션.
+    """
     try:
-        path = paths.multi_model_measurement_path()
-        if not os.path.exists(path):
-            return []
-        with open(path, "r") as f:
-            data = json.load(f)
-        models = data.get("models", [])
-        ranked = []
-        for m in models:
-            if m.get("skipped"):
-                continue
-            decode = m.get("stats", {}).get("decode_tok_per_s", {}).get("mean", 0.0)
-            ranked.append({"model": m["model"], "decode": decode})
-        ranked.sort(key=lambda x: -x["decode"])
-        return ranked[:limit]
+        repo = open_reader_repo()
+        return [
+            {"model": m["model"], "decode": m["mean"]}
+            for m in repo.top_models(limit=limit)
+        ]
     except Exception:
         return []
 

@@ -30,6 +30,7 @@ LAYER0_MEMORY = "jarvis-v00-layer0-memory.jsonl"
 LAYER1_REPORT = "jarvis-v00-layer1-report.json"
 MULTI_MODEL_MEASUREMENT = "jarvis-v00-multi-model-measurement.json"
 BOSS_MEASUREMENT = "jarvis-v00-boss-measurement.json"
+MEASUREMENT_DB = "jarvis-v00-measurement.db"  # §10-5a 모델 측정 SQLite backing
 
 
 def data_dir() -> Path:
@@ -107,6 +108,11 @@ def multi_model_measurement_path() -> Path:
 
 def boss_measurement_path() -> Path:
     return data_file(BOSS_MEASUREMENT)
+
+
+def measurement_db_path() -> Path:
+    """§10-5a 모델 측정 SQLite backing. legacy 스냅샷 JSON 은 마이그레이션 원본으로 보존."""
+    return data_file(MEASUREMENT_DB)
 
 
 def worker_raw_log_path(worker: str, backend: str) -> Path:

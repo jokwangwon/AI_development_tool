@@ -81,6 +81,7 @@ def test_named_helpers_point_under_data_dir(monkeypatch, tmp_path):
     assert paths.layer1_report_path() == base / "jarvis-v00-layer1-report.json"
     assert paths.multi_model_measurement_path() == base / "jarvis-v00-multi-model-measurement.json"
     assert paths.boss_measurement_path() == base / "jarvis-v00-boss-measurement.json"
+    assert paths.measurement_db_path() == base / "jarvis-v00-measurement.db"
 
 
 def test_conversations_archive_dir_is_dir(monkeypatch, tmp_path):

@@ -37,3 +37,19 @@ forbidden_modules =
     ollama
 ignore_imports =
     src.adapters.llm.facade -> *
+
+; ── 디딤돌1a BL-8 (3+1 합의 2026-05-29) ──────────────────────────────────────
+; plan-then-execute 단방향 경계: plan_controller > orchestrator > boss.
+; boss(untrusted planner)는 상위(orchestrator/plan_controller)를 import 할 수
+; 없다 — boss 출력이 제어흐름을 역류시키는 경로의 정적 차단(BL-1/§6.1 means/ends
+; 경계의 *센서*. brief v1 은 이 경계가 "유지된다"고 over-claim 했으나 실재하지
+; 않았음 → 신규 추가). 답습: docs/phase0/jarvis-stone1a-plan-then-execute-
+; design-brief.md §6(d)·§9 / docs/review/3plus1-consensus-2026-05-29-jarvis-
+; stone1a-plan-then-execute.md (GP-2).
+[importlinter:contract:jarvis-orchestration-layers]
+name = Jarvis orchestration single-direction (boss < orchestrator < plan_controller)
+type = layers
+layers =
+    src.jarvis.plan_controller
+    src.jarvis.orchestrator
+    src.jarvis.boss

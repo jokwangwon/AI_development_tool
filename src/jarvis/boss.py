@@ -57,6 +57,40 @@ class BossAdvice:
     advisory_failed: bool = False
 
 
+@dataclass(frozen=True)
+class PlanSubtask:
+    """작업그래프 1개 노드 — boss(untrusted planner)의 제안 (디딤돌1a §2).
+
+    PLAN-INV (a): means 의 *틀*(argv·alias·isolation backend·workdir) 필드 *부재*.
+    boss 는 아래 3개만 제안하고, argv prefix·worker alias·격리 backend 는 harness
+    table(§5)이 소유한다 — 이 dataclass 에 표현할 수 없다(구조적 means 봉쇄).
+
+    - desc: = 해당 워커에 전달되는 *실행 prompt*(untrusted instruction text).
+      "표시용"이 아니다(BL-1 정직화) — dispatch 의 prompt 인자로 흘러 워커 argv
+      tail 이 된다. 위험은 계획 승인 게이트(desc 전문 표시) + subtask 반영
+      게이트가 방어한다(redaction 아님).
+    - worker_kind: 허용 enum(§5 table 키) — boss 의 "워커 종류" 제약 선택(ends).
+    - depends_on: 선행 subtask 인덱스(DAG edge). 1a 에선 *실행 순서* 제약일 뿐
+      데이터 전달 아님(산출물 전달은 1b).
+    """
+
+    desc: str
+    worker_kind: str
+    depends_on: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
+class BossPlan:
+    """boss 가 1회 제안하는 작업그래프 — proposal, 권위 0 (controller 검증 전).
+
+    PLAN-INV: (a) means 틀 필드 부재 (b) controller 결정적 검증을 거쳐야만 소비
+    (c) non-adaptive(워커 결과가 plan 을 갱신하는 경로 없음). subtasks 만 보유 —
+    실행·승인 권위는 controller + 사람 게이트(§3·§4).
+    """
+
+    subtasks: tuple[PlanSubtask, ...]
+
+
 @runtime_checkable
 class BossLLM(Protocol):
     """로컬 사장 추상 — provider 교체 단위(헌법 5조). 순수 추론(부작용 0).
@@ -71,11 +105,29 @@ class BossLLM(Protocol):
         ...
 
 
-class StubBoss:
-    """결정적 테스트용 Boss — scripted advice 반환(트랙 A, 실 호출 0).
+@runtime_checkable
+class BossPlanner(Protocol):
+    """plan 공급원 추상 — advise(BossLLM)와 *별개* Protocol (IN-2).
 
-    fail=True 면 advise 가 예외(endpoint timeout/다운 모사) → R3 경로 검증.
-    calls 로 호출 여부 관찰(R8: 워커 실패 시 미호출 확인).
+    plan() 은 작업그래프(BossPlan)를 1회 제안하는 두 번째 판단 지점. advise 와
+    분리한 이유(IN-2): **plan 공급원은 boss 로 고정되지 않는다** — 약한 로컬
+    boss / 사람 / 더 똑똑한 frontier worker 모두 BossPlanner 를 구현해 plan 을
+    공급할 수 있다("사장≠가장 똑똑한 자"). 누가 공급하든 PLAN-SOURCE 불변식:
+    controller 검증(§3) + 사람 승인(§4)을 거친다 — 똑똑함≠신뢰.
+
+    실패 시 예외(거짓 진행 금지) — controller 가 "계획 부재 → 중단"으로 변환(§2).
+    """
+
+    def plan(self, prompt: str) -> BossPlan:
+        ...
+
+
+class StubBoss:
+    """결정적 테스트용 Boss — scripted advice/plan 반환(트랙 A, 실 호출 0).
+
+    advise(BossLLM) + plan(BossPlanner) 둘 다 구현 — 통합 stub(IN-2: 한 객체가
+    두 역할). fail=True 면 advise 예외(R3), plan_fail=True 면 plan 예외(§2).
+    calls/plan_calls 로 호출 관찰(R8 미호출 확인 / plan 호출 검증).
     """
 
     def __init__(
@@ -83,17 +135,28 @@ class StubBoss:
         name: str,
         advice: BossAdvice | None = None,
         fail: bool = False,
+        plan: BossPlan | None = None,
+        plan_fail: bool = False,
     ) -> None:
         self.name = name
         self._advice = advice if advice is not None else BossAdvice(summary="")
         self._fail = fail
+        self._plan = plan if plan is not None else BossPlan(subtasks=())
+        self._plan_fail = plan_fail
         self.calls: list[AdviceRequest] = []
+        self.plan_calls: list[str] = []
 
     def advise(self, req: AdviceRequest) -> BossAdvice:
         self.calls.append(req)
         if self._fail:
             raise RuntimeError("boss endpoint 실패(모사)")
         return self._advice
+
+    def plan(self, prompt: str) -> BossPlan:
+        self.plan_calls.append(prompt)
+        if self._plan_fail:
+            raise RuntimeError("boss plan 실패(모사)")
+        return self._plan
 
 
 # Ollama 직결 — endpoint 하드코딩(SSRF 회피, 외부 host 주입 경로 0).
@@ -181,6 +244,55 @@ def boss_prompt_for(task_kind: str) -> str:
 _SYSTEM_PROMPT = boss_prompt_for("code")
 
 
+# ── 디딤돌1a plan() — untrusted planner (트랙 B, format grammar) ──────────────
+# Q1 결정: 기본 허용 worker_kind = code/file (shell 은 opt-in — boss prompt 에서
+# 기본 제외). controller(§3)가 enum 을 재검증하므로 boss prompt 의 허용 집합은
+# best-effort 안내일 뿐(grammar 는 문법만, 의미검증 = controller 권위, R4).
+_PLAN_KINDS_DEFAULT: tuple[str, ...] = ("code", "file")
+
+# ollama `/api/chat` "format" 에 실을 JSON schema — grammar-constrained decoding.
+# PLAN-INV (a): argv·alias·workdir·isolation 필드 *부재*(means 틀 봉쇄).
+# additionalProperties=false (R3 강건성) — 모르는 필드 주입 차단.
+_PLAN_JSON_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "subtasks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "desc": {"type": "string"},
+                    "worker_kind": {"type": "string"},
+                    "depends_on": {"type": "array", "items": {"type": "integer"}},
+                },
+                "required": ["desc", "worker_kind", "depends_on"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["subtasks"],
+    "additionalProperties": False,
+}
+
+
+def boss_plan_prompt(allowed_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT) -> str:
+    """plan() system prompt — 작업을 subtask DAG 로 분해(목적만, means 금지).
+
+    boss 는 desc(작업 내용)·worker_kind(허용 enum)·depends_on(선행 인덱스)만 낸다.
+    argv·명령·경로·alias 출력 금지(means 틀 = harness 소유, §5). controller 재검증.
+    """
+    kinds = " | ".join(allowed_kinds)
+    return (
+        "당신은 작업 계획가입니다. 사용자 작업을 실행 가능한 subtask 목록으로 "
+        "분해해 JSON 으로만 출력하십시오.\n"
+        f"- worker_kind 는 다음 중 하나: {kinds}\n"
+        "- depends_on 은 *선행 subtask 의 인덱스 배열*(없으면 빈 배열)\n"
+        "- desc 는 해당 작업 내용(한국어). 명령어·경로·argv·도구 이름·alias 를 "
+        "지정하지 마십시오 — 그것은 시스템이 정합니다.\n"
+        "- 사이클·자기참조 금지. 불필요하게 잘게 쪼개지 마십시오."
+    )
+
+
 class OllamaBoss:
     """Ollama HTTP `/api/chat` 직결 BossLLM — stdlib urllib 단독.
 
@@ -200,6 +312,7 @@ class OllamaBoss:
         timeout_s: float = _DEFAULT_TIMEOUT_S,
         system_prompt: str | None = None,
         redactor: RedactionFilter | None = None,
+        plan_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT,
     ) -> None:
         self.name = model
         self._timeout = timeout_s
@@ -207,6 +320,8 @@ class OllamaBoss:
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
         # 송신 redaction (RT-1, 70 entry (나)) — optional default 로 호환 보존.
         self._redactor = redactor or RedactionFilter()
+        # 디딤돌1a plan() system prompt (allowed worker_kind 안내, best-effort).
+        self._plan_prompt = boss_plan_prompt(plan_kinds)
 
     def advise(self, req: AdviceRequest) -> BossAdvice:
         user_blob = (
@@ -253,6 +368,74 @@ class OllamaBoss:
                 "Ollama 응답에 message.content 누락 — silent empty advice 차단"
             )
         return BossAdvice(summary=content, extra_flags=[], advisory_failed=False)
+
+    def plan(self, prompt: str) -> BossPlan:
+        """작업 prompt → BossPlan 제안(format grammar). 실패 = RuntimeError(§2).
+
+        controller 가 RuntimeError 를 PLAN_UNAVAILABLE(계획 부재 → 중단)로 변환한다.
+        grammar 는 문법만 강제 — 의미 타당성(DAG·enum)은 controller 재검증(R4).
+        """
+        messages = self._redactor.redact_messages(
+            [
+                {"role": "system", "content": self._plan_prompt},
+                {"role": "user", "content": prompt},
+            ]
+        )
+        body = {
+            "model": self.name,
+            "stream": False,
+            "messages": messages,
+            "format": _PLAN_JSON_SCHEMA,  # grammar-constrained decoding
+        }
+        data = json.dumps(body).encode("utf-8")
+        request = urllib.request.Request(
+            _OLLAMA_CHAT_URL, data=data, method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self._timeout) as resp:
+                raw = resp.read()
+        except (urllib.error.URLError, OSError) as exc:
+            raise RuntimeError(f"Ollama plan 호출 실패: {exc}") from exc
+
+        try:
+            payload = json.loads(raw)
+        except (ValueError, TypeError) as exc:
+            raise RuntimeError(f"Ollama plan 응답 JSON 파싱 실패: {exc}") from exc
+
+        message = payload.get("message") if isinstance(payload, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError("Ollama plan 응답에 message.content 누락")
+        return _parse_bossplan(content)
+
+
+def _parse_bossplan(content: str) -> BossPlan:
+    """grammar 응답(JSON 문자열) → BossPlan. 구조 위반 = RuntimeError(거짓 진행 금지).
+
+    grammar 가 보통 schema 를 강제하나, provider liquidity(grammar 미지원 provider)
+    + 방어적 파싱을 위해 구조를 *재검증*한다 — controller 의 의미검증과 별개로
+    데이터 모델 적합성만 본다.
+    """
+    try:
+        obj = json.loads(content)
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError(f"plan content JSON 파싱 실패: {exc}") from exc
+    if not isinstance(obj, dict) or not isinstance(obj.get("subtasks"), list):
+        raise RuntimeError("plan content 에 subtasks 배열 없음")
+    subtasks: list[PlanSubtask] = []
+    for item in obj["subtasks"]:
+        if not isinstance(item, dict):
+            raise RuntimeError("subtask 항목이 object 아님")
+        desc = item.get("desc")
+        kind = item.get("worker_kind")
+        dep = item.get("depends_on", [])
+        if not isinstance(desc, str) or not isinstance(kind, str):
+            raise RuntimeError("subtask desc/worker_kind 타입 위반")
+        if not isinstance(dep, list) or not all(isinstance(d, int) for d in dep):
+            raise RuntimeError("subtask depends_on 은 정수 배열이어야 함")
+        subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep)))
+    return BossPlan(subtasks=tuple(subtasks))
 
 
 def merge_flags(deterministic: list[str], extra: list[str]) -> list[str]:

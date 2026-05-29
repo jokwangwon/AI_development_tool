@@ -420,6 +420,16 @@
     .sidebar-item:hover { background: var(--surface); color: var(--text); }
     .sidebar-item.active { background: var(--surface-2); color: var(--text); }
 
+    /* §10-4b 다중 대화 항목 — 제목 + hover ✕ 삭제 */
+    .conv-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .conv-item .conv-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .conv-item .conv-del {
+      opacity: 0; flex-shrink: 0; font-size: 11px; color: var(--text-mute);
+      transition: opacity 150ms ease, color 150ms ease;
+    }
+    .conv-item:hover .conv-del { opacity: 0.55; }
+    .conv-item .conv-del:hover { opacity: 1; color: var(--text); }
+
     .sidebar-divider {
       height: 1px;
       background: var(--border);
@@ -953,9 +963,7 @@
 
       <button class="new-chat">+ 새 대화</button>
       <div class="sidebar-title">최근 대화</div>
-      <div id="sidebar-list">
-        <div class="sidebar-item active">오늘의 대화</div>
-      </div>
+      <div id="sidebar-list"><!-- §10-4b 동적 렌더 (renderSidebar) --></div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-title">정보</div>
       <div class="sidebar-item" id="info-models">모델: --</div>
@@ -1024,6 +1032,8 @@
     const canvasList = $('canvas-list');
     const chatInput = $('chat-input');
     const sendBtn = $('send-btn');
+    let currentConversationId = null;  // §10-4b: null = default 대화
+    let __convs = [];
     const voiceBtn = $('voice-btn');
     const searchInput = $('search');
     const avatar = $('avatar');
@@ -1197,25 +1207,91 @@
     };
 
     // === Initial load ===
-    async function loadInitial() {
-      try {
-        const res = await fetch('/api/conversation/history');
-        const data = await res.json();
-        const entries = data.entries || [];
-        entries
-          .filter(e => e.role === 'user' || (e.role === 'jarvis' && !e.type))
-          .forEach(e => {
-            renderMsg(e.role, e.content || '', { mode: e.mode, entryId: e.id });
-          });
-      } catch (e) { console.warn('history load fail', e); }
+    // === §10-4b 다중 대화 ===
+    function _convQS() {
+      return currentConversationId ? ('?conversation_id=' + encodeURIComponent(currentConversationId)) : '';
+    }
 
+    async function loadConversation(cid) {
+      currentConversationId = cid;
+      messages.innerHTML = '';
+      canvasList.innerHTML = '';
+      const qs = _convQS();
       try {
-        const res = await fetch('/api/conversation/canvas');
+        const res = await fetch('/api/conversation/history' + qs);
+        const data = await res.json();
+        (data.entries || [])
+          .filter(e => e.role === 'user' || (e.role === 'jarvis' && !e.type))
+          .forEach(e => renderMsg(e.role, e.content || '', { mode: e.mode, entryId: e.id }));
+      } catch (e) { console.warn('history load fail', e); }
+      try {
+        const res = await fetch('/api/conversation/canvas' + qs);
         const data = await res.json();
         (data.cards || []).forEach(c => renderCanvasCard(c));
       } catch (e) { console.warn('canvas load fail', e); }
-
       updateCanvasEmpty();
+      await renderSidebar();
+    }
+
+    async function renderSidebar() {
+      try {
+        const res = await fetch('/api/conversations');
+        __convs = (await res.json()).conversations || [];
+      } catch (e) { console.warn('conversations load fail', e); __convs = []; }
+      const list = $('sidebar-list');
+      list.innerHTML = '';
+      if (!__convs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'sidebar-item active';
+        empty.textContent = '오늘의 대화';
+        list.appendChild(empty);
+        return;
+      }
+      const activeId = currentConversationId || 'default';
+      __convs.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'sidebar-item conv-item' + (c.id === activeId ? ' active' : '');
+        item.onclick = () => loadConversation(c.id);
+        const title = document.createElement('span');
+        title.className = 'conv-title';
+        title.textContent = c.title || '새 대화';
+        item.appendChild(title);
+        const del = document.createElement('span');
+        del.className = 'conv-del';
+        del.textContent = '✕';
+        del.title = '대화 삭제';
+        del.onclick = (e) => { e.stopPropagation(); deleteConversation(c.id); };
+        item.appendChild(del);
+        list.appendChild(item);
+      });
+    }
+
+    async function newConversation() {
+      try {
+        const res = await fetch('/api/conversations/new', { method: 'POST' });
+        currentConversationId = (await res.json()).conversation_id;
+      } catch (e) { console.warn('new conversation fail', e); return; }
+      messages.innerHTML = '';
+      canvasList.innerHTML = '';
+      updateCanvasEmpty();
+      await renderSidebar();
+    }
+
+    async function deleteConversation(cid) {
+      try {
+        await fetch('/api/conversations/' + encodeURIComponent(cid), { method: 'DELETE' });
+      } catch (e) { console.warn('delete conversation fail', e); return; }
+      if (cid === (currentConversationId || 'default')) {
+        await renderSidebar();
+        await loadConversation(__convs.length ? __convs[0].id : null);
+      } else {
+        await renderSidebar();
+      }
+    }
+
+    async function initConversations() {
+      await renderSidebar();
+      await loadConversation(__convs.length ? __convs[0].id : null);
     }
 
     // === Self analysis (info sidebar update) ===
@@ -1278,7 +1354,7 @@
         const res = await fetch('/api/respond', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, mode })
+          body: JSON.stringify({ message: text, mode, conversation_id: currentConversationId })
         });
         const data = await res.json();
         const entry = data.entry || {};
@@ -1307,6 +1383,7 @@
       } finally {
         sendBtn.disabled = false;
         chatInput.focus();
+        renderSidebar();  // §10-4b: 첫 메시지 제목·갱신 순서 반영
       }
     }
 
@@ -1780,7 +1857,9 @@
     $('jarvis-clear-done').addEventListener('click', dismissCompleted);
 
     // === init ===
-    loadInitial();
+    const _newChatBtn = document.querySelector('.new-chat');
+    if (_newChatBtn) _newChatBtn.addEventListener('click', newConversation);  // §10-4b
+    initConversations();
     chatInput.focus();
   </script>
 </body>

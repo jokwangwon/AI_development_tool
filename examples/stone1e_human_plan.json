@@ -1,0 +1,17 @@
+{
+  "subtasks": [
+    {
+      "desc": "두 정수를 더하는 파이썬 함수의 시그니처를 한 줄로만 제안하라. 예: def add(a: int, b: int) -> int  — 설명·코드블록 없이 시그니처 한 줄만 출력.",
+      "worker_kind": "file",
+      "depends_on": []
+    },
+    {
+      "desc": "제공된 함수 시그니처를 그대로 사용해 완전한 파이썬 함수를 구현하라. 함수 본문은 두 인자의 합을 반환한다. 함수 정의만 출력.",
+      "worker_kind": "file",
+      "depends_on": [0]
+    }
+  ],
+  "contracts": [
+    {"name": "add_signature", "produced_by": 0}
+  ]
+}

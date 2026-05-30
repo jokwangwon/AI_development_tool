@@ -25,7 +25,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.jarvis.approval import ApprovalGate
-from src.jarvis.boss import OllamaBoss
+from src.jarvis.boss import HumanPlanner, OllamaBoss
 from src.jarvis.orchestrator import Orchestrator, WorkerRegistry
 from src.jarvis.plan_controller import PlanApprovalRequest, PlanController, PlanStatus
 from src.jarvis.review import ReviewGuard
@@ -40,8 +40,11 @@ def main() -> int:
     ap.add_argument("--yes", action="store_true", help="계획 자동 승인(비대화형)")
     ap.add_argument("--boss-model", default=_DEFAULT_BOSS)
     ap.add_argument("--worker-model", default=_DEFAULT_WORKER)
-    ap.add_argument("--planner", default="ollama", choices=["ollama", "codex"],
-                    help="plan 공급원: ollama(약한 로컬 boss) | codex(frontier CLI, 디딤돌1d)")
+    ap.add_argument("--planner", default="ollama", choices=["ollama", "codex", "human"],
+                    help="plan 공급원: ollama(약한 로컬 boss) | codex(frontier CLI, 디딤돌1d) "
+                         "| human(사람 직접 plan.json, 디딤돌1e)")
+    ap.add_argument("--plan-file", default=None,
+                    help="--planner human 시 사람이 작성한 plan.json 경로(HumanPlanner.from_file)")
     ap.add_argument("--real-workers", action="store_true",
                     help="실 워커 배선: code=claude+Landlock / file=ollama(build_worker_registry). "
                          "code consume opt-in(Q7). ⚠️ 실 claude 실행=토큰 소비")
@@ -63,6 +66,14 @@ def main() -> int:
         # *강제*해야 정확한 형식 생성(없으면 배열 직접·task 키 등 자기 식 → 파싱 실패).
         # codex_planner 가 schema flag(strict) + output-last-message 추출 + RO sandbox 캡슐화.
         planner = codex_planner(timeout_s=300.0, plan_prompt=boss_plan_prompt(plan_kinds))
+    elif args.planner == "human":
+        # 디딤돌1e: 사람이 직접 작성한 plan.json → HumanPlanner.from_file.
+        # 약한 boss(94 dogfooding: contract 미생성)와 달리 사람이 contract 를 *직접*
+        # 명시 → artifact 전달 확실 발동. plan() 은 prompt 무시(사전 plan 반환, Q5).
+        if not args.plan_file:
+            print("ERROR: --planner human 은 --plan-file <plan.json> 필요", file=sys.stderr)
+            return 2
+        planner = HumanPlanner.from_file(args.plan_file)
     else:
         planner = OllamaBoss(model=args.boss_model, plan_kinds=plan_kinds)
 
@@ -106,8 +117,10 @@ def main() -> int:
         allow_code_consume=allow_code,  # Q7 능력 경계 — real-workers 시 code consume opt-in
     )
 
-    planner_desc = (f"codex (frontier CLI, 디딤돌1d)" if args.planner == "codex"
-                    else f"ollama {args.boss_model} (약한 로컬 boss)")
+    planner_desc = {
+        "codex": "codex (frontier CLI, 디딤돌1d)",
+        "human": f"human (사람 plan.json={args.plan_file}, 디딤돌1e)",
+    }.get(args.planner, f"ollama {args.boss_model} (약한 로컬 boss)")
     print("=== 디딤돌1 plan-then-execute E2E (실 LLM) ===")
     print(f"planner      : {planner_desc}")
     print(f"worker(file) : {args.worker_model}")

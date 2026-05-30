@@ -91,6 +91,25 @@ def test_landlock_workdir_is_rw_first_arg(tmp_path: Path) -> None:
     assert out[1] == str(tmp_path)  # 첫 디렉터리 = RW = workdir
 
 
+def test_landlock_rw_root_overrides_workdir(tmp_path: Path) -> None:
+    # BL-4: rw_root 주입 시 RW 첫 인자 = rw_root(가짜홈), workdir 아님.
+    # 작업폴더를 가짜홈 하위에 nest → 단일 RW 루트로 홈+작업폴더 커버(Q1a).
+    sb = _fake_sandbox_bin(tmp_path)
+    fake_home = str(tmp_path / "fh")
+    (tmp_path / "fh").mkdir()
+    iso = LandlockIsolation(sandbox_bin=sb, ro_paths=["/usr"], rw_root=fake_home)
+    out = iso.wrap(["claude", "-p"], workdir=str(tmp_path / "fh" / "work"))
+    assert out[1] == fake_home  # RW 루트 = 가짜홈
+
+
+def test_landlock_rw_root_none_falls_back_to_workdir(tmp_path: Path) -> None:
+    # 하위호환: rw_root 미지정 시 기존대로 workdir 가 RW 첫 인자.
+    sb = _fake_sandbox_bin(tmp_path)
+    iso = LandlockIsolation(sandbox_bin=sb, ro_paths=["/usr"])
+    out = iso.wrap(["x"], workdir=str(tmp_path))
+    assert out[1] == str(tmp_path)
+
+
 def test_landlock_separator_before_cmd(tmp_path: Path) -> None:
     # "--" 가 디렉터리 목록과 실행 명령을 분리 — cmd 는 separator 뒤
     sb = _fake_sandbox_bin(tmp_path)

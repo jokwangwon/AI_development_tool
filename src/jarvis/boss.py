@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -173,6 +174,77 @@ class StubBoss:
         self.plan_calls.append(prompt)
         if self._plan_fail:
             raise RuntimeError("boss plan 실패(모사)")
+        return self._plan
+
+
+# 사람이 ```json 으로 감싼 plan.json 흡수용 — worker._strip_code_fences 와 동등
+# 로직을 *로컬 복제*(boss 가 worker[부작용 모듈]를 import 하지 않아 "순수 추론"
+# 서술 보존, 디딤돌1e §4 CN-3). 사람이 raw JSON 을 주면 fence 없어 원문 그대로.
+_PLAN_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_+-]*\n?|\n?```$", re.MULTILINE)
+
+
+def _strip_plan_fences(text: str) -> str:
+    """plan 텍스트의 마크다운 코드 fence 제거. fence 없으면 원문 그대로."""
+    stripped = _PLAN_FENCE_RE.sub("", text).strip()
+    return stripped or text.strip()
+
+
+class HumanPlanner:
+    """사람이 작성한 작업그래프(BossPlan)를 공급하는 plan 공급원 — 디딤돌1e.
+
+    답습: docs/phase0/jarvis-stone1e-human-planner-design-brief.md (v1.1)
+      [[3plus1-consensus-2026-05-30-jarvis-stone1e-human-planner]] (만장일치 AWC).
+
+    BossPlanner Protocol 의 세 번째 구현 — plan 공급원의 극단(사람 = 통제 위치).
+    약한 boss(94 dogfooding: contract 미생성) / frontier CLI(1d) 외 사람이 직접
+    desc/worker_kind/depends_on/contracts 를 명시한다. 추론·subprocess·네트워크
+    실행면 0 — 파일 read(또는 객체) 뿐이라 plan 공급원 중 *가장 안전*(Q2: boss.py
+    의 OllamaBoss HTTP IO 와 같은 '공급원 본체 IO', planner.py 의 subprocess
+    실행면과 이질).
+
+    - PLAN-SOURCE 불변식: 사람이 짠 plan 이라도 controller 결정적 검증(§3) + 사람
+      승인(§4)을 거친다 — *정확성≠보장*(오타·미허용 worker_kind·DAG 사이클도
+      controller 가 reject). PLAN-INV (a): means 틀(argv/alias/isolation) 필드
+      부재(BossPlan 구조) — 사람도 means 를 못 정한다.
+    - ≠ StubBoss(boss.py:142, 테스트 stub·관찰필드 plan_calls/fail 보유)
+      — HumanPlanner 는 관찰필드 *부재* = 프로덕션 plan 공급원(CN-5).
+    - 두 진입(CN-4): HumanPlanner(plan) 직접 / HumanPlanner.from_file(path) 파일.
+    - 게이트 *존재* ≠ *실효*(CN-6): rubber-stamp approver 주입은 구조적으로 못
+      막는다(비례성상 허용). 게이트 자체 우회 경로는 0(controller default-deny).
+    """
+
+    def __init__(self, plan: BossPlan) -> None:
+        self._plan = plan
+
+    @classmethod
+    def from_file(cls, path: str) -> "HumanPlanner":
+        """사람이 작성한 plan.json(_PLAN_JSON_SCHEMA 와 동일 shape) → HumanPlanner.
+
+        CN-3: 모든 IO/파싱 실패(파일없음·빈/공백·malformed JSON·디코딩)를
+        RuntimeError 로 단일 수렴 → run_from_planner 가 PLAN_UNAVAILABLE 로 변환.
+        CN-1: _parse_bossplan 은 *방어 파서*(타입·구조만, unknown field 무시) —
+        schema strict 검증이 아니다. 의미검증(enum/DAG/범위)은 controller §3.
+        파일 크기 상한 미적용(자기 파일 비례성, CN-6 단서).
+        """
+        try:
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as exc:
+            raise RuntimeError(f"HumanPlanner plan 파일 읽기 실패: {exc}") from exc
+        except UnicodeDecodeError as exc:
+            raise RuntimeError(f"HumanPlanner plan 파일 디코딩 실패: {exc}") from exc
+        if not text.strip():
+            raise RuntimeError("HumanPlanner plan 파일 비어있음 — 거짓 진행 금지")
+        # fence 흡수(CN-3) 후 방어 파싱. malformed JSON 은 _parse_bossplan 이
+        # RuntimeError 로 던짐(단일 타입 수렴 충족).
+        return cls(_parse_bossplan(_strip_plan_fences(text)))
+
+    def plan(self, prompt: str) -> BossPlan:
+        """사전 작성 plan 반환. prompt 는 서명 호환용이며 반영하지 않는다(Q5).
+
+        사람 공급원은 plan 을 이미 손에 들고 있다 — prompt(작업 지시)를 무시하고
+        고정 plan 을 낸다. 관찰필드(plan_calls) 부재 = StubBoss 와 구분(CN-5).
+        """
         return self._plan
 
 

@@ -406,3 +406,15 @@ def test_exec_plan_ok_when_routed_to_exec_kind() -> None:
     out = ctrl.run(plan, "t3")
     assert out.status == PlanStatus.COMPLETED
     assert not getattr(captured[-1], "capability_warnings", [])
+
+
+# --- 디딤돌1f F3: 정직 표시 (COMPLETED ≠ 의미 달성) ---
+
+def test_completed_reason_does_not_claim_intent_achieved() -> None:
+    """COMPLETED reason 이 '의미 달성'을 함의하지 않음(반영=exit0+산출)."""
+    plan = BossPlan(subtasks=(PlanSubtask(desc="x", worker_kind="file"),), contracts=())
+    ctrl, _, _ = _build(plan)
+    out = ctrl.run(plan, "t")
+    assert out.status == PlanStatus.COMPLETED
+    # "반영" 은 유지하되 "의미/정상 동작 달성" 단언은 없음
+    assert "반영" in out.reason

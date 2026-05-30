@@ -169,3 +169,31 @@ def test_routes_cross_origin_forbidden() -> None:
     r = client.post("/api/jarvis/plan", json={"prompt": "x"},
                     headers={"origin": "http://evil-localhost:8765", "host": "localhost:8765"})
     assert r.status_code == 403  # BL-5 cross-origin 차단
+
+
+# --- 디딤돌1f F3: 능력 경고가 HUD plan_view 에 표시 ---
+
+def test_plan_view_exposes_capability_warnings() -> None:
+    plan = BossPlan(subtasks=(
+        PlanSubtask(desc="코드 실행해 결과 출력", worker_kind="file",
+                    requires_execution=True),
+    ), contracts=())
+
+    def planner_builder(opts):
+        return StubBoss(name="stub", plan=plan)
+
+    def worker_builder(opts):
+        reg = WorkerRegistry()
+        reg.register(FakeWorker("wf"))
+        reg.register(FakeWorker("wc"))
+        return reg, {"file": "wf", "code": "wc"}  # 실행워커 존재 → 거부 아닌 경고
+
+    board = JarvisPlanBoard(planner_builder=planner_builder,
+                            worker_builder=worker_builder, approver_timeout_s=5.0)
+    plan_id = board.create_plan({"prompt": "x"})
+    t = threading.Thread(target=board.run_plan, args=(plan_id,)); t.start()
+    assert _wait(lambda: board._plans[plan_id]["status"] == "awaiting")
+    view = board._plans[plan_id]["plan"]
+    board.decide_plan(plan_id, True); t.join(timeout=5)
+    assert view.get("capability_warnings"), "능력 경고가 plan_view 에 노출"
+    assert view["capability_warnings"][0]["subtask_index"] == 0

@@ -341,7 +341,12 @@ class PlanController:
                 self._record(sub_id, "artifact_extracted", length=len(value),
                              sha=hashlib.sha256(value.encode("utf-8")).hexdigest()[:16])
 
-        return PlanOutcome(PlanStatus.COMPLETED, "전 subtask 반영 완료", tuple(reports))
+        # 디딤돌1f F3: "반영 완료"=exit0+산출 반영. 의미적 정상 동작은 미검증(정직).
+        return PlanOutcome(
+            PlanStatus.COMPLETED,
+            "전 subtask 반영 완료(exit0+산출 — 의미 동작은 미검증)",
+            tuple(reports),
+        )
 
     # ── 내부 헬퍼 ─────────────────────────────────────────────────────────
     def _approve(self, req: PlanApprovalRequest) -> bool:

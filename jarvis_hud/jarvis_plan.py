@@ -176,12 +176,20 @@ class JarvisPlanBoard:
                         for c in req.implicit_contracts]
             with self._lock:
                 opts = self._plans.get(plan_id, {}).get("_opts", {})
+            # 디딤돌1f F3: 능력-의도 불일치 경고(실행요구×비실행 kind) 표시.
+            cap_warnings = [
+                {"subtask_index": w.subtask_index, "worker_kind": w.worker_kind,
+                 "reason": self._scrub(w.reason)}
+                for w in getattr(req, "capability_warnings", ())
+            ]
             plan_view = {
                 "subtasks": subtasks, "contracts": contracts,
                 "implicit_contracts": implicit, "order": list(req.order),
                 "total_steps": req.total_steps,
                 # BL-6: 능력 경계 read-only 표시(표시≠집행, controller 강제).
                 "allow_code_consume": bool(opts.get("allow_code_consume")),
+                # 디딤돌1f F3: silent semantic failure 경고(차단 아님, 사람 판단용).
+                "capability_warnings": cap_warnings,
             }
             self._update_plan(plan_id, status="awaiting", plan=plan_view)
             self._record(plan_id, "plan_proposed", status="awaiting",

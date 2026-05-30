@@ -359,3 +359,50 @@ def test_human_planner_denied_by_gate() -> None:
     out = ctrl.run_from_planner(HumanPlanner(plan), "x", "t1")
     assert out.status == PlanStatus.DENIED
     assert w.runs == []
+
+
+# --- 디딤돌1f F2-2: EXECUTING_KINDS + 능력 검증 + 구성 invariant ---
+
+def _exec_plan(worker_kind="file"):
+    return BossPlan(subtasks=(
+        PlanSubtask(desc="코드 실행해 결과 출력", worker_kind=worker_kind,
+                    requires_execution=True),
+    ), contracts=())
+
+
+def test_requires_execution_on_nonexec_kind_warns() -> None:
+    """실행요구 subtask 가 비실행 kind(file)인데 실행워커는 존재 → 경고(차단 아님)."""
+    ctrl, captured, _ = _build(
+        _exec_plan("file"),
+        kind_table={"file": "wf", "code": "wc"},
+        registry=_registry("wf", "wc"),
+    )
+    out = ctrl.run(_exec_plan("file"), "t1")
+    assert out.status == PlanStatus.COMPLETED  # 차단 아님(승인되면 진행)
+    assert captured, "승인 게이트 호출됨"
+    req = captured[-1]
+    assert getattr(req, "capability_warnings", None), "능력 경고가 게이트에 표시"
+    assert 0 in [w.subtask_index for w in req.capability_warnings]
+
+
+def test_no_executing_worker_rejects_exec_plan() -> None:
+    """실행요구 subtask 가 있는데 registry 에 실행가능 워커 0 → 즉시 거부(구성 invariant)."""
+    ctrl, captured, _ = _build(
+        _exec_plan("file"),
+        kind_table={"file": "w"},  # 실행가능(code/shell) 매핑 0
+        registry=_registry("w"),
+    )
+    out = ctrl.run(_exec_plan("file"), "t2")
+    assert out.status == PlanStatus.VALIDATION_FAILED
+    assert not captured, "구성 불가 → 게이트 미진입"
+
+
+def test_exec_plan_ok_when_routed_to_exec_kind() -> None:
+    """실행요구 subtask 가 실행 kind(code)로 라우팅 → 경고 0."""
+    plan = _exec_plan("code")
+    ctrl, captured, _ = _build(
+        plan, kind_table={"code": "wc"}, registry=_registry("wc"),
+    )
+    out = ctrl.run(plan, "t3")
+    assert out.status == PlanStatus.COMPLETED
+    assert not getattr(captured[-1], "capability_warnings", [])

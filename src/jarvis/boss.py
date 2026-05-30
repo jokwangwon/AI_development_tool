@@ -339,6 +339,15 @@ _SYSTEM_PROMPT = boss_prompt_for("code")
 # best-effort 안내일 뿐(grammar 는 문법만, 의미검증 = controller 권위, R4).
 _PLAN_KINDS_DEFAULT: tuple[str, ...] = ("code", "file")
 
+# 디딤돌1f F1: worker_kind 별 능력 한 줄(feedforward). boss 가 실행 작업을 무능력
+# 워커로 분류하는 silent semantic failure 예방. 실행 능력 경계는 controller F2 가
+# 결정적으로 재검증(가이드≠집행). file=LLM 텍스트 생성만, code=실 실행.
+_KIND_CAPABILITY_HINT: dict[str, str] = {
+    "file": "코드·텍스트를 *생성*만 함(실행·테스트·명령 불가).",
+    "code": "코드를 생성하고 *실제 실행*할 수 있음(테스트·결과 출력 가능).",
+    "shell": "셸 명령을 *실제 실행*할 수 있음.",
+}
+
 # ollama `/api/chat` "format" 에 실을 JSON schema — grammar-constrained decoding.
 # PLAN-INV (a): argv·alias·workdir·isolation 필드 *부재*(means 틀 봉쇄).
 # additionalProperties=false (R3 강건성) — 모르는 필드 주입 차단.
@@ -386,10 +395,22 @@ def boss_plan_prompt(allowed_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT) -> st
     argv·명령·경로·alias 출력 금지(means 틀 = harness 소유, §5). controller 재검증.
     """
     kinds = " | ".join(allowed_kinds)
+    # 디딤돌1f F1: worker_kind 능력 feedforward — boss 가 "file=실행 불가"를 모른 채
+    # 실행 작업을 file 로 분류하는 silent semantic failure 의 1차 트리거를 예방(가이드).
+    cap_lines = "".join(
+        f"    · {k}: {_KIND_CAPABILITY_HINT[k]}\n"
+        for k in allowed_kinds if k in _KIND_CAPABILITY_HINT
+    )
+    cap_block = (
+        f"- 각 worker_kind 의 능력:\n{cap_lines}"
+        "  실행·테스트·결과 출력이 *실제로* 필요한 작업은 실행 가능한 종류로 지정하십시오.\n"
+        if cap_lines else ""
+    )
     return (
         "당신은 작업 계획가입니다. 사용자 작업을 실행 가능한 subtask 목록으로 "
         "분해해 JSON 으로만 출력하십시오.\n"
         f"- worker_kind 는 다음 중 하나: {kinds}\n"
+        f"{cap_block}"
         "- depends_on 은 *선행 subtask 의 인덱스 배열*(없으면 빈 배열)\n"
         "- desc 는 해당 작업 내용(한국어). 명령어·경로·argv·도구 이름·alias 를 "
         "지정하지 마십시오 — 그것은 시스템이 정합니다.\n"

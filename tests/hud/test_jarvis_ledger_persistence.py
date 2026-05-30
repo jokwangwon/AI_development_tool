@@ -38,8 +38,14 @@ class _FakeWorker:
         )
 
 
+# 기본 approver_timeout_s 를 넉넉히(30s) — 본 파일 테스트는 모두 명시적
+# decision/cancel/dismiss 를 보내고 default-deny *timeout 발화* 를 검증하지 않는다.
+# 작은 값(이전 2.0s)이면 부하(전체 스위트 교차 실행) 시 awaiting→action 창이
+# timeout 을 넘겨 default-deny 가 먼저 발화 → denied(terminal) → cancel no-op 으로
+# 간헐 실패(wall-clock race). 큰 timeout = race window 제거(액션은 항상 먼저 옴),
+# 진짜 hang 시 30s 내 실패. timeout 발화 자체를 보려면 개별 짧은 timeout 명시.
 def _board(ledger_path: Path, *, output="done", is_error=False, session=None,
-           timeout=2.0, tmux_runner=None) -> JarvisTaskBoard:
+           timeout=30.0, tmux_runner=None) -> JarvisTaskBoard:
     def builder(opts, on_session, cancel_check):
         return _FakeWorker(output=output, is_error=is_error, session=session, on_session=on_session)
     return JarvisTaskBoard(

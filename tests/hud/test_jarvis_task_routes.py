@@ -35,7 +35,10 @@ class _FakeWorker:
         )
 
 
-def _board(*, output="done", is_error=False, session=None, timeout=2.0) -> JarvisTaskBoard:
+# 기본 approver_timeout_s 넉넉히(30s) — awaiting→action(cancel/decide/dismiss) 테스트가
+# 부하 시 default-deny timeout 을 먼저 타는 wall-clock race 방지. timeout 발화 검증
+# 테스트(test_timeout_default_deny)는 개별 짧은 timeout=0.3 명시(영향 없음).
+def _board(*, output="done", is_error=False, session=None, timeout=30.0) -> JarvisTaskBoard:
     def builder(opts, on_session, cancel_check=None):
         return _FakeWorker(output=output, is_error=is_error, session=session, on_session=on_session)
     return JarvisTaskBoard(

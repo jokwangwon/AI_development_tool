@@ -48,6 +48,13 @@
 - **토큰 복제**(Q3 복사): 진짜 홈 토큰을 가짜 홈에 복사 = 동일 토큰 2부 → 무효화 시 둘 다, 진짜 홈 재로그인 회전 시 가짜 홈 사본 stale(재시드 정책).
 - **근본 위험**: untrusted plan 실행은 그대로(레벨 2 = blast radius 축소, 제거 아님).
 
+### 잔여(net exfil) resolution — 레벨 3 탐색 결과 (3+1 합의 2026-05-30, REVISE×4 만장일치, Q8 보강)
+위 net exfil 잔여를 egress 격리(레벨 3)로 차단하려 설계 탐색(`docs/phase0/jarvis-claude-net-egress-isolation-design-brief.md` + `docs/review/3plus1-consensus-2026-05-30-jarvis-net-egress-isolation.md`)했으나, 4 source 만장일치로 **풀구현 보류** 결정:
+- **prevention 패러다임 부적합**: 정당 채널(api.anthropic.com)로의 데이터 exfil 은 어떤 egress 메커니즘으로도 *원리상 불가차단* → root/docker/프록시 최대 비용을 치르고도 핵심 위험 잔존.
+- **머신 제약**: netns/iptables = root 필요(자동화 불가), docker = root-동치, Landlock net = 포트만(도메인 allowlist 불가).
+- **resolution = 영향 축소 + DESIGN-DEFER**: (a) 레벨 3 풀구현은 실 trigger(토큰 오용 사고 / multi-tenant / 토큰 scope 가 broad 판명)까지 보류. (b) **apiKeyHelper 제한/단명 토큰**(scope·rate·TTL·즉시 revoke)으로 가짜홈 OAuth refresh 토큰(2부 복제) 대체 = exfil 당해도 blast bounded(별도 brief/구현 진입은 사용자 승인 시). prevention 대신 *영향 축소*.
+- 미해결 전제: claude OAuth 토큰의 실제 blast radius(scope/과금/데이터접근)는 *미검증* — "bounded" 단정 금지(3+1 BL-1, [[feedback_pass_scope_overclaim]]).
+
 ### 비례성
 PoC 가 "격리 안 claude 동작"을 실증 → 레벨 1(격리 해제)의 편의 이득 소멸. 레벨 2 는 무권한·결정적(커널 강제)으로 즉시 가능하며 진짜 위협 자산을 차단([[feedback_proportionate_security_personal_tool]]). 컨테이너(레벨 4)·별도 uid 는 새 권한 도입으로 현 단계 미채택(별도 uid = 레벨 3 net 격리 카드로 보존).
 

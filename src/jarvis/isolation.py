@@ -76,11 +76,16 @@ class LandlockIsolation:
         self,
         sandbox_bin: str | None = None,
         ro_paths: list[str] | tuple[str, ...] | None = None,
+        rw_root: str | None = None,
     ) -> None:
         self._bin = sandbox_bin or _DEFAULT_SANDBOX_BIN
         self._ro_paths = (
             tuple(ro_paths) if ro_paths is not None else self.DEFAULT_RO_PATHS
         )
+        # rw_root(BL-4): RW 루트를 명시 고정(가짜 홈). 미지정 시 workdir(하위호환).
+        # 가짜 홈 격리 = 작업폴더를 가짜 홈 하위에 nest, 단일 RW 루트(가짜홈)로 커버.
+        # 답습: docs/phase0/jarvis-claude-landlock-fakehome-design-brief.md §1 (Q1a).
+        self._rw_root = rw_root
 
     def wrap(self, cmd: list[str], workdir: str) -> list[str]:
         if not (os.path.isfile(self._bin) and os.access(self._bin, os.X_OK)):
@@ -90,6 +95,7 @@ class LandlockIsolation:
                 "(fail-closed: 격리 불가 시 비격리 실행 금지)"
             )
         # 존재하는 RO 경로만 — 없는 경로는 ll_sandbox open(O_PATH) 실패로 전체
-        # 거부되므로 제외. RO 누락은 더 제한적이라 안전 약화 아님(RW workdir 는 유지).
+        # 거부되므로 제외. RO 누락은 더 제한적이라 안전 약화 아님(RW root 는 유지).
         ro = [p for p in self._ro_paths if os.path.isdir(p)]
-        return [self._bin, workdir, *ro, "--", *cmd]
+        rw = self._rw_root or workdir
+        return [self._bin, rw, *ro, "--", *cmd]

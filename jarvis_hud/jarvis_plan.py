@@ -183,10 +183,10 @@ class JarvisPlanBoard:
                 # BL-6: 능력 경계 read-only 표시(표시≠집행, controller 강제).
                 "allow_code_consume": bool(opts.get("allow_code_consume")),
             }
+            # 디딤돌1f BL-10: plan_proposed/plan_approved/plan_denied 는 controller
+            # (plan_controller.py)가 권위 단일 기록. board 가 중복 기록하면 detection
+            # 기준선(107 runbook Tier A) 오염 → 여기선 in-memory 카드만 갱신, ledger 0.
             self._update_plan(plan_id, status="awaiting", plan=plan_view)
-            self._record(plan_id, "plan_proposed", status="awaiting",
-                         n_subtasks=req.total_steps, n_contracts=len(req.contracts),
-                         n_implicit=len(req.implicit_contracts))
             ev = self._events.get(plan_id)
             if ev is None:
                 return False
@@ -194,8 +194,6 @@ class JarvisPlanBoard:
             if not got:  # CB-4: timeout = default-deny
                 return False
             accepted = bool(self._decisions.get(plan_id, False))
-            self._record(plan_id, "plan_approved" if accepted else "plan_denied",
-                         status="running" if accepted else "denied")
             return accepted
 
         return approver

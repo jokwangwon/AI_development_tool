@@ -78,6 +78,11 @@ class PlanSubtask:
     desc: str
     worker_kind: str
     depends_on: tuple[int, ...] = ()
+    # 디딤돌1f F2: 이 subtask 가 실제 *실행*(테스트·결과 출력·명령)을 요구하는지의
+    # boss 구조 선언(ends 속성 — argv 같은 means 틀 아님, PLAN-INV 위반 아님).
+    # controller 가 "requires_execution=True AND 비실행 worker_kind"를 결정적으로
+    # 검출(F2). 누락 시 False(보수적 — silent pass 면 F1/구성 invariant/F4 가 방어).
+    requires_execution: bool = False
 
 
 @dataclass(frozen=True)
@@ -362,8 +367,10 @@ _PLAN_JSON_SCHEMA: dict = {
                     "desc": {"type": "string"},
                     "worker_kind": {"type": "string"},
                     "depends_on": {"type": "array", "items": {"type": "integer"}},
+                    # 디딤돌1f F2: 실행 요구 구조 선언(ends 속성). controller 결정적 검증.
+                    "requires_execution": {"type": "boolean"},
                 },
-                "required": ["desc", "worker_kind", "depends_on"],
+                "required": ["desc", "worker_kind", "depends_on", "requires_execution"],
                 "additionalProperties": False,
             },
         },
@@ -412,6 +419,8 @@ def boss_plan_prompt(allowed_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT) -> st
         f"- worker_kind 는 다음 중 하나: {kinds}\n"
         f"{cap_block}"
         "- depends_on 은 *선행 subtask 의 인덱스 배열*(없으면 빈 배열)\n"
+        "- requires_execution 은 그 subtask 가 코드/명령을 *실제 실행*해야 하면 true, "
+        "생성·작성만이면 false (실행 능력 없는 종류로 실행 작업을 보내면 막힙니다).\n"
         "- desc 는 해당 작업 내용(한국어). 명령어·경로·argv·도구 이름·alias 를 "
         "지정하지 마십시오 — 그것은 시스템이 정합니다.\n"
         "- **한 subtask 의 산출물(코드·데이터·스키마)을 다른 subtask 가 입력으로 "

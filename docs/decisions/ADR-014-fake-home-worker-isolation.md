@@ -59,7 +59,7 @@
 - **실측(코드 변경 0, 토큰 값 미노출)**: OAuth 토큰 선언 scope = `user:inference`·`user:profile`·`user:file_upload`·`user:mcp_servers`·`user:sessions:claude_code`. subscriptionType=`max`, rateLimitTier=`default_claude_max_5x`. → **계정/결제 *관리* scope·org admin 부재 → blast 실제 bounded**(rate-limited Max 추론 + 경미 프로필).
 - **결론**: apiKeyHelper(전용 API 키)는 exfil 시 *종량 $ 남용(spend cap 까지)* 으로 **영향을 줄이는지 불분명**(OAuth = rate-limited 구독 남용, $ 추가 0 — 오히려 $ 측면 악화 가능) + 구독→종량 **과금 전환**(영구) + 헬퍼/키 평문 가짜홈 RW 상주 = exfil·**변조(임의 코드 실행)** 노출면 추가. → **영향 축소 이득 < 비용 → 구현 DEFER**(증거 기반, 레벨 3 DEFER 와 일관). DESIGN 청사진은 보존, 발효 trigger = sessions scope 데이터 접근 판명 / 종량 과금 수용 / opt-in 이탈.
 - 잔여 미확인: `user:sessions:claude_code` 의 대화 데이터 읽기 허용 여부(scope 이름만으론 불확정, 서버 enforcement 미검증).
-- 저비용 보완재: Console 사용량 알림 + 수동 revoke runbook(detection) — opt-in 단계 최우선.
+- 저비용 보완재: Console 사용량 알림 + 수동 revoke **runbook**(detection) — opt-in 단계 최우선. → `docs/guides/claude-worker-credential-detection-runbook.md`(작성 완료).
 
 ### 비례성
 PoC 가 "격리 안 claude 동작"을 실증 → 레벨 1(격리 해제)의 편의 이득 소멸. 레벨 2 는 무권한·결정적(커널 강제)으로 즉시 가능하며 진짜 위협 자산을 차단([[feedback_proportionate_security_personal_tool]]). 컨테이너(레벨 4)·별도 uid 는 새 권한 도입으로 현 단계 미채택(별도 uid = 레벨 3 net 격리 카드로 보존).

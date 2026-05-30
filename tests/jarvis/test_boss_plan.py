@@ -180,3 +180,107 @@ def test_ollama_boss_plan_no_contracts_is_empty() -> None:
                return_value=_fake_resp({"message": {"content": content}})):
         out = boss.plan("x")
     assert out.contracts == ()
+
+
+# --- 디딤돌1e: HumanPlanner (사람 직접 plan 공급, CN-1~6) ---
+
+def test_human_planner_satisfies_protocol() -> None:
+    """BossPlanner Protocol 의 세 번째 구현(사람 = plan 공급원 극단)."""
+    from src.jarvis.boss import HumanPlanner
+
+    assert isinstance(HumanPlanner(BossPlan(subtasks=())), BossPlanner)
+
+
+def test_human_planner_returns_supplied_plan_ignoring_prompt() -> None:
+    """(B) 객체 직접 + Q5 prompt 무시 — 사전 plan 그대로(서명 호환만)."""
+    from src.jarvis.boss import HumanPlanner
+
+    scripted = BossPlan(subtasks=(
+        PlanSubtask(desc="백엔드 API", worker_kind="code", depends_on=()),
+        PlanSubtask(desc="프론트", worker_kind="code", depends_on=(0,)),
+    ))
+    hp = HumanPlanner(scripted)
+    assert hp.plan("아무 작업 지시") is scripted
+    assert hp.plan("전혀 다른 지시") is scripted  # prompt 무관 동일(무시)
+
+
+def test_human_planner_has_no_observation_fields() -> None:
+    """CN-5: StubBoss(테스트 stub)와 달리 관찰필드 부재 = 프로덕션 공급원."""
+    from src.jarvis.boss import HumanPlanner
+
+    hp = HumanPlanner(BossPlan(subtasks=()))
+    assert not hasattr(hp, "plan_calls")  # StubBoss 는 보유(boss.py:164)
+    assert not hasattr(hp, "fail")
+    assert not hasattr(hp, "plan_fail")
+
+
+def test_human_planner_from_file_parses(tmp_path) -> None:
+    """(A) 파일 — _PLAN_JSON_SCHEMA 동일 shape JSON → BossPlan(contracts 포함)."""
+    import json as _json
+
+    from src.jarvis.boss import Contract, HumanPlanner
+
+    p = tmp_path / "plan.json"
+    p.write_text(_json.dumps({
+        "subtasks": [
+            {"desc": "백엔드", "worker_kind": "code", "depends_on": []},
+            {"desc": "프론트", "worker_kind": "code", "depends_on": [0]},
+        ],
+        "contracts": [{"name": "api_schema", "produced_by": 0}],
+    }), encoding="utf-8")
+    out = HumanPlanner.from_file(str(p)).plan("x")
+    assert len(out.subtasks) == 2
+    assert out.subtasks[1].depends_on == (0,)
+    assert out.contracts == (Contract(name="api_schema", produced_by=0),)
+
+
+def test_human_planner_from_file_strips_fences(tmp_path) -> None:
+    """CN-3: 사람이 ```json 으로 감싼 plan 도 흡수(fence-strip 답습)."""
+    from src.jarvis.boss import HumanPlanner
+
+    p = tmp_path / "plan.json"
+    p.write_text(
+        '```json\n{"subtasks": [{"desc": "a", "worker_kind": "file", '
+        '"depends_on": []}]}\n```',
+        encoding="utf-8")
+    out = HumanPlanner.from_file(str(p)).plan("x")
+    assert len(out.subtasks) == 1
+    assert out.subtasks[0].worker_kind == "file"
+
+
+def test_human_planner_from_file_missing_raises(tmp_path) -> None:
+    """CN-3: 파일 없음 → RuntimeError(run_from_planner PLAN_UNAVAILABLE 정합)."""
+    from src.jarvis.boss import HumanPlanner
+
+    with pytest.raises(RuntimeError):
+        HumanPlanner.from_file(str(tmp_path / "nonexistent.json"))
+
+
+def test_human_planner_from_file_empty_raises(tmp_path) -> None:
+    """CN-3: 빈/공백 파일 → RuntimeError(거짓 진행 금지)."""
+    from src.jarvis.boss import HumanPlanner
+
+    p = tmp_path / "empty.json"
+    p.write_text("   \n  ", encoding="utf-8")
+    with pytest.raises(RuntimeError):
+        HumanPlanner.from_file(str(p))
+
+
+def test_human_planner_from_file_malformed_raises(tmp_path) -> None:
+    """CN-3: 잘못된 JSON → RuntimeError(단일 타입 수렴, _parse_bossplan 위임)."""
+    from src.jarvis.boss import HumanPlanner
+
+    p = tmp_path / "bad.json"
+    p.write_text("{not valid json", encoding="utf-8")
+    with pytest.raises(RuntimeError):
+        HumanPlanner.from_file(str(p))
+
+
+def test_human_planner_from_file_decode_error_raises(tmp_path) -> None:
+    """CN-3: UTF-8 디코딩 실패(바이너리) → RuntimeError."""
+    from src.jarvis.boss import HumanPlanner
+
+    p = tmp_path / "bin.json"
+    p.write_bytes(b"\xff\xfe\x00\x01garbage")
+    with pytest.raises(RuntimeError):
+        HumanPlanner.from_file(str(p))

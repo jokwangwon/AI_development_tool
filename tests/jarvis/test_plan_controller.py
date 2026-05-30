@@ -321,3 +321,41 @@ def test_ledger_records_plan_and_subtask_events(tmp_path) -> None:
     assert "plan_proposed" in events
     assert "plan_approved" in events
     assert "subtask_applied" in events
+
+
+# --- 디딤돌1e: HumanPlanner PLAN-SOURCE 통합 (사람 plan 도 검증+승인) ---
+
+def test_human_planner_integration_via_run_from_planner() -> None:
+    """PLAN-SOURCE: 사람 plan 도 controller 검증+승인 거쳐 실행(prompt 무시)."""
+    from src.jarvis.boss import HumanPlanner
+
+    plan = BossPlan(subtasks=(PlanSubtask(desc="a", worker_kind="code"),))
+    w = FakeWorker("claude")
+    ctrl, _ = _build([w], {"code": "claude"})
+    out = ctrl.run_from_planner(HumanPlanner(plan), "무시되는 prompt", "t1")
+    assert out.status == PlanStatus.COMPLETED
+    assert len(w.runs) == 1
+
+
+def test_human_planner_invalid_plan_rejected_by_controller() -> None:
+    """PLAN-SOURCE: 사람이 잘못 쓴 plan(미허용 worker_kind)도 reject — 정확성≠보장."""
+    from src.jarvis.boss import HumanPlanner
+
+    plan = BossPlan(subtasks=(PlanSubtask(desc="a", worker_kind="evil_kind"),))
+    w = FakeWorker("claude")
+    ctrl, _ = _build([w], {"code": "claude"})
+    out = ctrl.run_from_planner(HumanPlanner(plan), "x", "t1")
+    assert out.status == PlanStatus.VALIDATION_FAILED
+    assert w.runs == []
+
+
+def test_human_planner_denied_by_gate() -> None:
+    """CN-6: 승인 게이트 유지 — 사람 plan 도 게이트 거부 시 DENIED(스킵 0)."""
+    from src.jarvis.boss import HumanPlanner
+
+    plan = BossPlan(subtasks=(PlanSubtask(desc="a", worker_kind="code"),))
+    w = FakeWorker("claude")
+    ctrl, _ = _build([w], {"code": "claude"}, approve=False)
+    out = ctrl.run_from_planner(HumanPlanner(plan), "x", "t1")
+    assert out.status == PlanStatus.DENIED
+    assert w.runs == []

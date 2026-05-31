@@ -117,7 +117,7 @@ COMPLETED/applied 의미를 "exit0 + 반영, 의미 달성 아님"으로 정직�
 6. ✅ **BL-9**: ADR-013 §6.3 보강.
 7. ✅ **검증**: 462 passed(회귀 0) + grimp NONE + secret PASS + dogfooding 재검증(§7 — F2 가 파싱 버그 fix 후 실 ollama 에서 정상 작동 확인).
 
-> ⚠️ **커밋 위생 단서**: 세션 인터럽트로 F1~F3 의 *테스트* 가 깨진 중간 버전으로 커밋됨 → 정합화 커밋(e7f9a82)으로 GREEN 복구. 그 과정에서 보조 에이전트의 오진 2건(존재하지 않는 "_parse_bossplan 회귀" / 테스트 자체 IndexError 버그)을 메인이 실측으로 정정. source F1~F3 자체는 정상.
+> ⚠️ **커밋 위생 단서**: 세션 인터럽트로 F1~F3 의 *테스트* + **`_parse_bossplan` 의 requires_execution read(F2-1 핵심 한 줄)** 가 유실된 채 커밋됨 → 테스트 정합화(093e326) + 파서 fix(ba04358)로 복구. ⭐ 보조 에이전트가 "_parse_bossplan 회귀"를 **정확히 보고**했으나 메인(나)이 한때 "오진"으로 잘못 반박 → 직접 실측(`PARSED_REQ_EXEC=False`)으로 에이전트가 옳았음 확인. 교훈: 에이전트 보고 반박 전 직접 repro([[feedback_pass_scope_overclaim]]).
 
 ---
 

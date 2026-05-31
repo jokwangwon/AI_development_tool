@@ -122,17 +122,10 @@ def test_parse_bossplan_defaults_requires_execution_false() -> None:
     assert out.subtasks[0].requires_execution is False
 
 
-@pytest.mark.xfail(
-    reason="F2-1 회귀: _parse_bossplan(boss.py:575)이 item['requires_execution']를 "
-           "읽지 않아 OllamaBoss plan 의 실행요구 선언이 유실됨 — source 수정 필요(메인 판단). "
-           "설계 brief F2-1: item.get('requires_execution', False) 로 읽어야 함.",
-    strict=True,
-)
 def test_parse_bossplan_reads_requires_execution() -> None:
-    """F2-1 의도: _parse_bossplan 이 requires_execution=True 선언을 보존해야 함.
+    """F2-1: _parse_bossplan 이 requires_execution 선언을 보존(누락→False).
 
-    현재 source 는 이 필드를 파싱에서 누락(XFAIL) — 통과(XPASS)하면 source 가
-    고쳐진 것이므로 이 마커를 제거하고 정식 테스트로 승격할 것.
+    인터럽트로 유실됐던 파서 한 줄(ba04358 fix) 회귀 가드.
     """
     import json as _json
 

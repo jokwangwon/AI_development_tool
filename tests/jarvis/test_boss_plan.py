@@ -41,9 +41,12 @@ def test_plan_subtask_has_no_means_frame_fields() -> None:
     alias·격리 backend 는 harness table 소유(§5) — schema 에 표현 불가.
     """
     fields = {f.name for f in dataclasses.fields(PlanSubtask)}
-    assert fields == {"desc", "worker_kind", "depends_on"}
+    # 디딤돌1f G-2: requires_execution 은 boss 의 *ends 속성*(실행 요구 여부) 선언이지
+    # means 의 틀(argv·path·cmd·workdir·alias·isolation)이 아니다 → PLAN-INV (a) 무위반.
+    assert fields == {"desc", "worker_kind", "depends_on", "requires_execution"}
+    # means 틀 필드 부재 단언(본질 — 위 집합 갱신이 means 틀 누수를 가리지 않도록 명시).
     forbidden = {"argv", "cmd", "command", "path", "workdir", "alias",
-                 "isolation", "backend", "exec"}
+                 "isolation", "backend", "exec", "prefix"}
     assert fields & forbidden == set()
 
 
@@ -90,6 +93,80 @@ def test_stubboss_advise_and_plan_independent() -> None:
     boss = StubBoss(name="local", advice=BossAdvice(summary="ok"))
     assert isinstance(boss, BossLLM)      # advise 구현
     assert isinstance(boss, BossPlanner)  # plan 도 구현(StubBoss 는 통합 stub)
+
+
+# --- 디딤돌1f F2-1: requires_execution 구조 선언(ends 속성) ---
+
+def test_plan_subtask_requires_execution_defaults_false() -> None:
+    """requires_execution 미지정 = False(보수적 기본 — 누락 시 silent pass 방지)."""
+    st = PlanSubtask(desc="x", worker_kind="file")
+    assert st.requires_execution is False
+
+
+def test_plan_subtask_requires_execution_settable() -> None:
+    """boss 가 실행 요구를 True 로 구조 선언 가능(ends 속성, means 틀 아님)."""
+    st = PlanSubtask(desc="테스트 실행", worker_kind="code", requires_execution=True)
+    assert st.requires_execution is True
+
+
+def test_parse_bossplan_defaults_requires_execution_false() -> None:
+    """_parse_bossplan 결과의 requires_execution 은 기본 False(누락 시 보수적)."""
+    import json as _json
+
+    from src.jarvis.boss import _parse_bossplan
+
+    content = _json.dumps({"subtasks": [
+        {"desc": "생성", "worker_kind": "file", "depends_on": []},
+    ]})
+    out = _parse_bossplan(content)
+    assert out.subtasks[0].requires_execution is False
+
+
+def test_parse_bossplan_reads_requires_execution() -> None:
+    """F2-1: _parse_bossplan 이 requires_execution 선언을 보존(누락→False).
+
+    인터럽트로 유실됐던 파서 한 줄(ba04358 fix) 회귀 가드.
+    """
+    import json as _json
+
+    from src.jarvis.boss import _parse_bossplan
+
+    content = _json.dumps({"subtasks": [
+        {"desc": "실행", "worker_kind": "code", "depends_on": [],
+         "requires_execution": True},
+    ]})
+    out = _parse_bossplan(content)
+    assert out.subtasks[0].requires_execution is True
+
+
+def test_plan_json_schema_includes_requires_execution() -> None:
+    """F2-1: grammar schema 의 subtask required 에 requires_execution 포함."""
+    from src.jarvis.boss import _PLAN_JSON_SCHEMA
+
+    item = _PLAN_JSON_SCHEMA["properties"]["subtasks"]["items"]
+    assert "requires_execution" in item["properties"]
+    assert item["properties"]["requires_execution"]["type"] == "boolean"
+    assert "requires_execution" in item["required"]
+
+
+# --- 디딤돌1f F1: worker_kind 능력 feedforward(boss_plan_prompt) ---
+
+def test_boss_plan_prompt_includes_capability_hints() -> None:
+    """F1: 허용 kind 의 능력 한 줄 안내 + requires_execution 사용 안내가 prompt 에."""
+    from src.jarvis.boss import boss_plan_prompt
+
+    prompt = boss_plan_prompt(("code", "file"))
+    # 능력 안내(file=생성만, code=실 실행)
+    assert "생성" in prompt and "실행" in prompt
+    assert "requires_execution" in prompt
+
+
+def test_boss_plan_prompt_only_lists_allowed_kinds() -> None:
+    """F1: cap 안내는 allowed_kinds 에 한정 — 미허용 kind(shell) 누출 0."""
+    from src.jarvis.boss import boss_plan_prompt
+
+    prompt = boss_plan_prompt(("file",))  # shell 미허용
+    assert "셸" not in prompt  # shell 능력 줄 부재
 
 
 # --- OllamaBoss.plan() — 트랙 B(format grammar). 실 HTTP 0건(urlopen monkeypatch) ---

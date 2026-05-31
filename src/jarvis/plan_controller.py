@@ -50,6 +50,11 @@ DEFAULT_MAX_STEPS = 5
 # allow_code_consume=True opt-in 시에만(CLAUDE.md §2 계산적 우선).
 SAFE_CONSUME_KINDS: frozenset[str] = frozenset({"file"})
 
+# 디딤돌1f F2: 실제 실행(테스트·명령·결과 출력) 능력이 있는 worker_kind.
+# requires_execution=True subtask 가 이 집합 밖 kind 로 가면 silent semantic failure
+# (무능력 워커가 텍스트만 내고 COMPLETED). 능력 경계(SAFE_CONSUME_KINDS)의 produce 짝.
+EXECUTING_KINDS: frozenset[str] = frozenset({"code", "shell"})
+
 # Q2: artifact bounded text 길이 상한(평문 truncate — injection 차단 아님, 부피 제한).
 DEFAULT_MAX_ARTIFACT_LEN = 2000
 
@@ -87,6 +92,18 @@ class PlanApprovalRequest:
     # 디딤돌1c: controller 가 depends_on 에서 *합성*한 암묵 contract(boss 미선언).
     # 명시와 *구분* 표시(BL-4) — 사람이 "boss 선언 흐름 vs controller 보강 흐름"을 식별.
     implicit_contracts: tuple[Contract, ...] = ()
+    # 디딤돌1f F2: 능력-의도 불일치 경고(requires_execution=True 인데 비실행 kind).
+    # 차단 아님(boss 자기선언 신뢰성 한계) — 사람 게이트에 표시, 사람이 판단.
+    capability_warnings: tuple["CapabilityWarning", ...] = ()
+
+
+@dataclass(frozen=True)
+class CapabilityWarning:
+    """디딤돌1f F2: subtask 의 능력-의도 불일치(실행요구×비실행 kind). 표시용."""
+
+    subtask_index: int
+    worker_kind: str
+    reason: str = "실행을 요구하나 비실행 worker_kind"
 
 
 # plan_approver(req) -> 승인 여부. 사람 인터페이스(CLI/HUD)는 주입. None=default-deny.
@@ -197,6 +214,25 @@ class PlanController:
                 return self._reject(f"미등록 worker alias: {alias}")
             aliases.append(alias)
 
+        # 4b. 디딤돌1f F2: 능력-의도 검증 (silent semantic failure 예방)
+        needs_exec = [i for i, st in enumerate(subtasks) if st.requires_execution]
+        if needs_exec:
+            # (b) 구성 invariant: 실행가능 워커가 kind_table 에 0개면 실행류 plan 은
+            # 어떤 라우팅으로도 성공 불가 → 즉시 거부(거짓 진행 금지, GP-2 동형).
+            has_exec_worker = any(k in EXECUTING_KINDS for k in self._table)
+            if not has_exec_worker:
+                return self._reject(
+                    "실행이 필요한 subtask 가 있으나 실행 가능한 worker_kind"
+                    f"({'/'.join(sorted(EXECUTING_KINDS))})가 등록되지 않음 — "
+                    "실 워커 구성(예: real_workers) 필요"
+                )
+        # (a) 경고: 실행요구 subtask 가 비실행 kind 로 라우팅(boss 자기선언 신뢰성
+        # 한계로 차단 아님 — 사람 게이트 표시).
+        capability_warnings = tuple(
+            CapabilityWarning(subtask_index=i, worker_kind=subtasks[i].worker_kind)
+            for i in needs_exec if subtasks[i].worker_kind not in EXECUTING_KINDS
+        )
+
         # 5. contract 검증 + consume 유추(Q8) + 능력 경계(Q7) — 사람 승인 *전* (디딤돌1b)
         produced_set: set[int] = set()
         consume_artifacts: dict[int, list[tuple[str, int]]] = {}
@@ -261,6 +297,7 @@ class PlanController:
             total_steps=n,
             contracts=plan.contracts,
             implicit_contracts=tuple(implicit_synth),  # BL-4 구분 표시
+            capability_warnings=capability_warnings,   # 디딤돌1f F2
         )
         if not self._approve(req):
             self._record(task_id, "plan_denied")
@@ -304,7 +341,12 @@ class PlanController:
                 self._record(sub_id, "artifact_extracted", length=len(value),
                              sha=hashlib.sha256(value.encode("utf-8")).hexdigest()[:16])
 
-        return PlanOutcome(PlanStatus.COMPLETED, "전 subtask 반영 완료", tuple(reports))
+        # 디딤돌1f F3: "반영 완료"=exit0+산출 반영. 의미적 정상 동작은 미검증(정직).
+        return PlanOutcome(
+            PlanStatus.COMPLETED,
+            "전 subtask 반영 완료(exit0+산출 — 의미 동작은 미검증)",
+            tuple(reports),
+        )
 
     # ── 내부 헬퍼 ─────────────────────────────────────────────────────────
     def _approve(self, req: PlanApprovalRequest) -> bool:

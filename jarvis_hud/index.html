@@ -1716,6 +1716,14 @@
         v.implicit_contracts.forEach(c => planBody.appendChild(_planLine(`  · ${c.name} (produced_by ${c.produced_by})`)));
       }
       planBody.appendChild(_planLine(`능력 경계: code consume ${v.allow_code_consume ? 'ON(opt-in)' : 'OFF(file-only)'}`));
+      // 디딤돌1f F3: 능력-의도 불일치 경고(실행요구×비실행 kind). CB-5: textContent 전용.
+      if (v.capability_warnings && v.capability_warnings.length) {
+        const w = _planLine('⚠️ 능력 경고 (실행 요구 vs 워커 능력 불일치):');
+        w.style.color = 'var(--warn, #e0a000)';
+        planBody.appendChild(w);
+        v.capability_warnings.forEach(cw => planBody.appendChild(
+          _planLine(`  · subtask [${cw.subtask_index}] (${cw.worker_kind}): ${cw.reason}`)));
+      }
     }
 
     async function loadJarvisPlans() {

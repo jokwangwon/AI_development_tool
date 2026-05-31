@@ -95,8 +95,8 @@ COMPLETED/applied 의미를 "exit0 + 반영, 의미 달성 아님"으로 정직�
 - `orchestrator.py:24-27` OutcomeStatus / `jarvis_plan.py:43-51` `_PLAN_STATUS` label
 - HUD 승인 게이트(`index.html` 모달)·subtask 카드에 "file alias=실행/검증 안 함(현 배선: writer 없는 OllamaWorker, `output_filename=None`)" 라벨(BL-1 배선 의존 명시).
 
-### F4 — advisory (추론적 보조, dispatch 後) — 사용자 Q2=채택·표시 전용
-HUD plan 경로(`jarvis_plan.py:247`)의 `Orchestrator(...)` 에 **boss 주입** → 기배선 `OllamaBoss.advise`("의도 부합: 요청한 파일이 생성·수정됐는가" 평가축, `boss.py:265-292`)를 subtask 카드에 **표시**(차단 0, scrub 경유 BL-5). ReviewGuard 확장 금지(책임 분리). merge_flags union-only(게이트 자동반영 0).
+### F4 — advisory (추론적 보조, dispatch 後) — **구현 보류(2026-05-31)**
+> 당초 사용자 Q2=채택. 보류 사유(정정됨): dogfooding(§7)상 약한 boss 의 실질 방어는 F1(라우팅 유도)+F3(정직 표시)이고, F4 advisory 도 **같은 약한 모델(boss.advise)**이라 약한 boss 갭을 못 메움(F2 무력과 동일 약점). 추가 가치 낮아 보류. HUD plan 경로 boss 주입 + 기배선 `OllamaBoss.advise`("의도 부합" 평가축) 표시 청사진은 보존 — 단 **frontier boss 를 advise 에 쓸 때** 가치 발생(약한 boss advise 아님). 발효 시 원칙: ReviewGuard 확장 금지·scrub 경유(BL-5)·차단 0·merge_flags union-only.
 
 ---
 
@@ -108,18 +108,25 @@ HUD plan 경로(`jarvis_plan.py:247`)의 `Orchestrator(...)` 에 **boss 주입**
 
 ---
 
-## 6. 구현 순서 (TDD)
-1. **BL-10 선행**: ledger 이중기록 fix (회귀 격리).
-2. **F1**: boss_plan_prompt 능력 1줄 (기존 plan 테스트 회귀 0 확인).
-3. **F2**: EXECUTING_KINDS + 구성 invariant + requires_execution (TDD RED→GREEN, 1d/1e plan shape 회귀 확인).
-4. **F3**: COMPLETED/applied 정직화 (controller+orchestrator+HUD).
-5. **F4**: HUD boss 주입 + advisory 카드 (scrub, TestClient hermetic).
-6. **BL-9**: ADR-013 §6 보강.
-7. **검증**: 전체 테스트 + grimp + secret + **dogfooding 재검증**(⭐ 약한 boss 가 requires_execution 을 신뢰성 있게 생성하는지 — §7 미검증 가정).
+## 6. 구현 결과 (TDD, 2026-05-31)
+1. ✅ **BL-10 선행**: ledger 이중기록 fix (별도 PR #39, main 기반).
+2. ✅ **F1**: `_KIND_CAPABILITY_HINT` + `boss_plan_prompt` 능력 안내 (커밋 d98d511).
+3. ✅ **F2-1/F2-2**: requires_execution 구조필드 + schema/파싱 + EXECUTING_KINDS + 구성 invariant + CapabilityWarning (3ab9c2a, c26310e). ⚠️ 파싱 누락 버그는 ad84426 에서 fix(인터럽트 유실 — §7).
+4. ✅ **F3**: COMPLETED reason 정직화 + 능력경고 HUD plan_view + index.html 모달 (16bd0de).
+5. 🛑 **F4**: 보류(YAGNI) — §7 dogfooding 상 결정적 layer(F1+F2)가 실 ollama 약한 boss 에서 작동 → 추론적 보조 불요. 청사진 보존.
+6. ✅ **BL-9**: ADR-013 §6.3 보강.
+7. ✅ **검증**: 462 passed(회귀 0) + grimp NONE + secret PASS + dogfooding 재검증(§7 — F2 가 파싱 버그 fix 후 실 ollama 에서 정상 작동 확인).
+
+> ⚠️ **커밋 위생 단서**: 세션 인터럽트로 F1~F3 의 *테스트* + **`_parse_bossplan` 의 requires_execution read(F2-1 핵심 한 줄)** 가 유실된 채 커밋됨 → 테스트 정합화(093e326) + 파서 fix(ba04358)로 복구. ⭐ 보조 에이전트가 "_parse_bossplan 회귀"를 **정확히 보고**했으나 메인(나)이 한때 "오진"으로 잘못 반박 → 직접 실측(`PARSED_REQ_EXEC=False`)으로 에이전트가 옳았음 확인. 교훈: 에이전트 보고 반박 전 직접 repro([[feedback_pass_scope_overclaim]]).
 
 ---
 
-## 7. 미검증 가정 / 잔여 (구현 시 확인 필수)
-- ⚠️ **F2(a) 핵심 가정 미검증**: `requires_execution` 이 약한 boss(OllamaBoss)에서 신뢰성 있게 생성되는지 미실측. 94 dogfooding("약한 boss 는 contracts 거의 미생성")상 누락 가능 → default False 면 silent pass 재발. 이 경우 F2(a) 결정적 효과가 약한 boss 에서 제한되고 **F1+F2(b 구성 invariant)+F4 가 실질 방어**. → 구현 후 dogfooding 재검증 필수.
-- F2 schema 변경(requires_execution)이 frontier(1d)/human(1e) plan shape 에 미치는 영향 미검증 — 회귀 확인.
-- "해결" 아님 — §3 정직성 유지. 일반 의미 충족은 결정 불가.
+## 7. dogfooding 재검증 결과 (2026-05-31) — F2 실 ollama 경로 작동 확인
+
+> ⚠️ 정직 이력(2중 정정): 본 절은 두 번 틀렸다가 실측으로 바로잡혔다. ① 초안 "약한 boss requires_execution 3/3 True 일관"(미검증 낙관) → ② "전부 False, 약한 boss 가 grammar 필드 의미 안 채움"(이것도 틀림 — 원인 오귀속) → ③ **진실**: `_parse_bossplan` 이 requires_execution 을 *읽지 않는 버그*(인터럽트로 F2-1 수정 유실)였고, 버그 수정 후 약한 boss 는 requires_execution 을 **정확히 생성**한다. [[feedback_pass_scope_overclaim]] — 실측 없이 원인 단정 금지.
+
+- ✅ **F2-1 약한 boss 정상 작동(버그 수정 후)**: 실 ollama(qwen3-30b) 회문 작업 3회, `requires_execution` 정확 생성 — run1 `[F,T]`, run2 `[F,T,T]`, run3 `[F,T,T,T]`(함수 정의=False, 실행/출력=True). grammar-required 필드 + F1 prompt 안내가 약한 boss 에서도 작동.
+- 🐛 **진짜 원인(수정됨)**: `_parse_bossplan`(boss.py)이 `requires_execution` 을 PlanSubtask 에 안 넘겨 *항상 False* 로 떨궜음(커밋 ad84426 fix). 이전 "전부 False" 관찰은 boss 약함이 아니라 **파서 버그**. 보조 에이전트의 "_parse_bossplan 회귀" 보고가 옳았음(메인 오진 정정).
+- ✅ **F1 라우팅**: 3회 모두 실행 작업을 `code`(실행 kind) 라우팅 → happy path 능력-의도 불일치 0(경고 미발생 정상). F2-2 경고/구성 invariant 는 boss 가 *오라우팅*(실행요구를 비실행 kind)할 때 발동하는 안전망.
+- **결론**: 결정적 layer(F1 라우팅 + F2-1 구조선언 + F2-2 검증)가 실 ollama 약한 boss 경로에서 작동. **F4(advisory) 보류 정당**(결정적 layer 충분, 추론적 보조 불요 — YAGNI).
+- **잔여(정직)**: ① "의미적 정상 동작" 일반 검증은 결정 불가(완전 해결 아님 — §3). ② boss 가 requires_execution 을 *틀리게* 채우면(false negative) F2 무발동 — F1 라우팅이 보조 방어. ③ 발견#3(code 대화형 되묻기) 별건 후속.

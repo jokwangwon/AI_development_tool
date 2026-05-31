@@ -78,6 +78,11 @@ class PlanSubtask:
     desc: str
     worker_kind: str
     depends_on: tuple[int, ...] = ()
+    # 디딤돌1f F2: 이 subtask 가 실제 *실행*(테스트·결과 출력·명령)을 요구하는지의
+    # boss 구조 선언(ends 속성 — argv 같은 means 틀 아님, PLAN-INV 위반 아님).
+    # controller 가 "requires_execution=True AND 비실행 worker_kind"를 결정적으로
+    # 검출(F2). 누락 시 False(보수적 — silent pass 면 F1/구성 invariant/F4 가 방어).
+    requires_execution: bool = False
 
 
 @dataclass(frozen=True)
@@ -339,6 +344,17 @@ _SYSTEM_PROMPT = boss_prompt_for("code")
 # best-effort 안내일 뿐(grammar 는 문법만, 의미검증 = controller 권위, R4).
 _PLAN_KINDS_DEFAULT: tuple[str, ...] = ("code", "file")
 
+# 디딤돌1f F1: worker_kind 별 능력 한 줄(feedforward). boss 가 실행 작업을 무능력
+# 워커로 분류하는 silent semantic failure 예방. 실행 능력 경계는 controller F2 가
+# 결정적으로 재검증(가이드≠집행). file 종류는 LLM 텍스트 생성만, code 종류는 실 실행.
+# dict() 튜플 형태 — 리터럴 `"code": "..."` 은 secret_scanner T1-041(code: 값) false
+# positive 유발(메모리 reference_codex_verify_tooling gotcha 답습, 패턴 회피).
+_KIND_CAPABILITY_HINT: dict[str, str] = dict([
+    ("file", "코드·텍스트를 *생성*만 함(실행·테스트·명령 불가)."),
+    ("code", "코드를 생성하고 *실제 실행*할 수 있음(테스트·결과 출력 가능)."),
+    ("shell", "셸 명령을 *실제 실행*할 수 있음."),
+])
+
 # ollama `/api/chat` "format" 에 실을 JSON schema — grammar-constrained decoding.
 # PLAN-INV (a): argv·alias·workdir·isolation 필드 *부재*(means 틀 봉쇄).
 # additionalProperties=false (R3 강건성) — 모르는 필드 주입 차단.
@@ -353,8 +369,10 @@ _PLAN_JSON_SCHEMA: dict = {
                     "desc": {"type": "string"},
                     "worker_kind": {"type": "string"},
                     "depends_on": {"type": "array", "items": {"type": "integer"}},
+                    # 디딤돌1f F2: 실행 요구 구조 선언(ends 속성). controller 결정적 검증.
+                    "requires_execution": {"type": "boolean"},
                 },
-                "required": ["desc", "worker_kind", "depends_on"],
+                "required": ["desc", "worker_kind", "depends_on", "requires_execution"],
                 "additionalProperties": False,
             },
         },
@@ -386,11 +404,25 @@ def boss_plan_prompt(allowed_kinds: tuple[str, ...] = _PLAN_KINDS_DEFAULT) -> st
     argv·명령·경로·alias 출력 금지(means 틀 = harness 소유, §5). controller 재검증.
     """
     kinds = " | ".join(allowed_kinds)
+    # 디딤돌1f F1: worker_kind 능력 feedforward — boss 가 "file=실행 불가"를 모른 채
+    # 실행 작업을 file 로 분류하는 silent semantic failure 의 1차 트리거를 예방(가이드).
+    cap_lines = "".join(
+        f"    · {k}: {_KIND_CAPABILITY_HINT[k]}\n"
+        for k in allowed_kinds if k in _KIND_CAPABILITY_HINT
+    )
+    cap_block = (
+        f"- 각 worker_kind 의 능력:\n{cap_lines}"
+        "  실행·테스트·결과 출력이 *실제로* 필요한 작업은 실행 가능한 종류로 지정하십시오.\n"
+        if cap_lines else ""
+    )
     return (
         "당신은 작업 계획가입니다. 사용자 작업을 실행 가능한 subtask 목록으로 "
         "분해해 JSON 으로만 출력하십시오.\n"
         f"- worker_kind 는 다음 중 하나: {kinds}\n"
+        f"{cap_block}"
         "- depends_on 은 *선행 subtask 의 인덱스 배열*(없으면 빈 배열)\n"
+        "- requires_execution 은 그 subtask 가 코드/명령을 *실제 실행*해야 하면 true, "
+        "생성·작성만이면 false (실행 능력 없는 종류로 실행 작업을 보내면 막힙니다).\n"
         "- desc 는 해당 작업 내용(한국어). 명령어·경로·argv·도구 이름·alias 를 "
         "지정하지 마십시오 — 그것은 시스템이 정합니다.\n"
         "- **한 subtask 의 산출물(코드·데이터·스키마)을 다른 subtask 가 입력으로 "
@@ -542,7 +574,10 @@ def _parse_bossplan(content: str) -> BossPlan:
             raise RuntimeError("subtask desc/worker_kind 타입 위반")
         if not isinstance(dep, list) or not all(isinstance(d, int) for d in dep):
             raise RuntimeError("subtask depends_on 은 정수 배열이어야 함")
-        subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep)))
+        # 디딤돌1f F2-1: 실행 요구 구조 선언 read(누락→False 보수적). bool() 로 정규화.
+        req_exec = bool(item.get("requires_execution", False))
+        subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep),
+                                    requires_execution=req_exec))
     # 디딤돌1b contracts(선택) — 없으면 빈 tuple(전달 0, 1a 동작).
     contracts: list[Contract] = []
     raw_contracts = obj.get("contracts", [])

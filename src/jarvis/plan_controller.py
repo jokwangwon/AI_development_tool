@@ -123,6 +123,9 @@ class PlanOutcome:
     status: PlanStatus
     reason: str
     subtask_reports: tuple[OutcomeReport, ...] = ()
+    # 디딤돌1g: 실행 후 관측된 no-op 경고(did_act=False ∧ requires_execution).
+    # 차단 아님(BL-4 MVP) — applied 유지·COMPLETED 이되 "효과 미관측"을 정직 표기(G3).
+    noop_warnings: tuple["CapabilityWarning", ...] = ()
 
 
 class PlanController:
@@ -307,6 +310,7 @@ class PlanController:
         # 7. 위상정렬 순차 dispatch (중간 control-affecting boss call 0)
         reports: list[OutcomeReport] = []
         extracted: dict[int, str] = {}  # produced idx → artifact value (런타임만, 레저 영속 0)
+        noop_warnings: list[CapabilityWarning] = []  # 디딤돌1g: 실행 후 관측 no-op
         for idx in order:
             st = subtasks[idx]
             sub_id = f"{task_id}.{idx}"  # BL-7 고유 파생
@@ -326,6 +330,15 @@ class PlanController:
                     tuple(reports),
                 )
             self._record(sub_id, "subtask_applied")
+            # 디딤돌1g: 실행을 요구한 subtask 인데 워커가 행동 미관측(did_act=False) →
+            # no-op 경고(차단 아님 BL-4 — applied 유지). did_act=None(미상)은 발화 안 함
+            # (false positive 금지 BL-3). "효과 미관측"=중립 사실(BL-6, over-claim 금지).
+            if st.requires_execution and report.result.did_act is False:
+                noop_warnings.append(CapabilityWarning(
+                    subtask_index=idx, worker_kind=st.worker_kind,
+                    reason="실행 요구인데 워커 행동 미관측(did_act=False) — 효과 미확인",
+                ))
+                self._record(sub_id, "noop_observed", worker_kind=st.worker_kind)
             # produced: artifact 추출(redact→truncate) — raw value 레저 미영속(BL-2),
             # scrub 메타(len·sha)만 기록. raw 는 런타임 extracted 에만(주입용).
             if idx in produced_set:
@@ -342,10 +355,16 @@ class PlanController:
                              sha=hashlib.sha256(value.encode("utf-8")).hexdigest()[:16])
 
         # 디딤돌1f F3: "반영 완료"=exit0+산출 반영. 의미적 정상 동작은 미검증(정직).
+        # 디딤돌1g: no-op 관측 시 reason 에 정직 표기(차단 아님 — COMPLETED 유지, BL-4/6).
+        reason = "전 subtask 반영 완료(exit0+산출 — 의미 동작은 미검증)"
+        if noop_warnings:
+            idxs = ", ".join(str(w.subtask_index) for w in noop_warnings)
+            reason += f" ⚠️ 효과 미관측 subtask({idxs}): 실행 요구인데 워커 행동 미관측"
         return PlanOutcome(
             PlanStatus.COMPLETED,
-            "전 subtask 반영 완료(exit0+산출 — 의미 동작은 미검증)",
+            reason,
             tuple(reports),
+            noop_warnings=tuple(noop_warnings),
         )
 
     # ── 내부 헬퍼 ─────────────────────────────────────────────────────────

@@ -61,6 +61,20 @@ _ENV_ALLOWLIST: tuple[str, ...] = (
 _DEFAULT_FILE_MODEL = "qwen3-coder-next:latest"
 
 
+def _claude_did_act(raw: dict | None) -> bool | None:
+    """디딤돌1g — claude headless did_act 프록시(PoC 2026-05-31 실측).
+
+    claude `-p --output-format json` 엔벨로프는 로컬 tool-use(Write/Edit/Bash)를
+    *직접* 노출하지 않으나(`server_tool_use` 는 web 전용), `num_turns` 가 프록시:
+    num_turns=1 ⟺ 텍스트-only/무행동(되묻기 #3 원형), ≥2 ⟺ 도구 행동 1회 이상.
+    raw None(파싱불가) → None(미상, fail-soft). num_turns 지식은 본 wiring 에
+    격리 — CliWorker·controller 에 provider 분기 누출 0(헌법5조).
+    """
+    if not raw:
+        return None
+    return raw.get("num_turns", 0) > 1
+
+
 def _build_claude_env(home: str, tmpdir: str, base_env: dict[str, str]) -> dict[str, str]:
     """BL-1 — 워커 env 를 allowlist 로 재구성(진짜 env 비밀 차단).
 
@@ -190,6 +204,7 @@ def build_worker_registry(
         argv=list(CLAUDE_ARGV),
         isolation=real_isolation,
         runner=real_runner,
+        did_act_fn=_claude_did_act,  # 디딤돌1g: num_turns>1 프록시(provider 누출 0)
     )
     registry.register(code_worker)
     registry.register(OllamaWorker(alias="ollama-file", model=file_model))

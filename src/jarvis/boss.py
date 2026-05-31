@@ -574,7 +574,10 @@ def _parse_bossplan(content: str) -> BossPlan:
             raise RuntimeError("subtask desc/worker_kind 타입 위반")
         if not isinstance(dep, list) or not all(isinstance(d, int) for d in dep):
             raise RuntimeError("subtask depends_on 은 정수 배열이어야 함")
-        subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep)))
+        # 디딤돌1f F2-1: 실행 요구 구조 선언 read(누락→False 보수적). bool() 로 정규화.
+        req_exec = bool(item.get("requires_execution", False))
+        subtasks.append(PlanSubtask(desc=desc, worker_kind=kind, depends_on=tuple(dep),
+                                    requires_execution=req_exec))
     # 디딤돌1b contracts(선택) — 없으면 빈 tuple(전달 0, 1a 동작).
     contracts: list[Contract] = []
     raw_contracts = obj.get("contracts", [])

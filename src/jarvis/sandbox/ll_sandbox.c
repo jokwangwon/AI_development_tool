@@ -15,6 +15,7 @@
 #include <linux/landlock.h>
 #include <sys/syscall.h>
 #include <sys/prctl.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -49,7 +50,23 @@ static int ll_restrict_self(int fd, __u32 flags) {
     LANDLOCK_ACCESS_FS_MAKE_BLOCK | LANDLOCK_ACCESS_FS_MAKE_SYM | \
     LANDLOCK_ACCESS_FS_REFER | LANDLOCK_ACCESS_FS_TRUNCATE)
 
+// 디딤돌1h CL-4: 파일/디바이스 노드 전용 access — 디렉터리 bit(READ_DIR/MAKE_*/
+// REMOVE_*/REFER) 제거. 디렉터리 bit 를 파일 fd 에 적용 시 add_rule EINVAL(F3).
+#define ACCESS_FS_FILE_RW ( \
+    LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_EXECUTE)
+
 static int allow_path(const char *path, int ruleset_fd, __u64 allowed) {
+    // 디딤돌1h: 비-디렉터리(파일/디바이스)는 파일용 mask 로 좁힌다(EINVAL 회피).
+    // 블록 디바이스(/dev/sda 등)는 명시 거부 — Python _safe_rw_device(S_ISCHR-only)에
+    // 더해 C 2차 방어(ll_sandbox 직접 호출 경로 차단, 합의 CL-4).
+    struct stat st;
+    if (!stat(path, &st) && !S_ISDIR(st.st_mode)) {
+        if (S_ISBLK(st.st_mode)) {
+            fprintf(stderr, "reject block device: %s\n", path);
+            return -1;
+        }
+        allowed &= ACCESS_FS_FILE_RW;
+    }
     struct landlock_path_beneath_attr pb = {0};
     pb.parent_fd = open(path, O_PATH | O_CLOEXEC);
     if (pb.parent_fd < 0) { fprintf(stderr, "open(%s): %s\n", path, strerror(errno)); return -1; }
@@ -81,12 +98,18 @@ int main(int argc, char **argv) {
     int ruleset_fd = ll_create_ruleset(&ra, sizeof(ra), 0);
     if (ruleset_fd < 0) { fprintf(stderr, "create_ruleset: %s\n", strerror(errno)); return 1; }
 
-    // first dir = rw, remaining = ro
+    // first dir = rw, remaining = ro 디렉터리 / RW 파일(디바이스). 디딤돌1h:
+    // sep 전 인자가 *파일*이면 RW 파일 mask(allow_path 가 FILE_RW 로 좁힘+BLK 거부),
+    // 디렉터리면 RO. claude Bash 의 /dev/null 쓰기(2>/dev/null) 복구.
     if (allow_path(argv[1], ruleset_fd, handled)) return 1;
     fprintf(stderr, "[ll_sandbox] RW allow: %s\n", argv[1]);
     for (int i = 2; i < sep; i++) {
-        if (allow_path(argv[i], ruleset_fd, handled & ~ACCESS_FS_ROUGHLY_WRITE)) return 1;
-        fprintf(stderr, "[ll_sandbox] RO allow: %s\n", argv[i]);
+        struct stat st;
+        __u64 acc = (!stat(argv[i], &st) && !S_ISDIR(st.st_mode))
+                    ? handled                                // 파일: allow_path 가 FILE_RW 마스킹
+                    : (handled & ~ACCESS_FS_ROUGHLY_WRITE);  // 디렉터리: RO
+        if (allow_path(argv[i], ruleset_fd, acc)) return 1;
+        fprintf(stderr, "[ll_sandbox] allow: %s\n", argv[i]);
     }
 
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) { perror("prctl"); return 1; }

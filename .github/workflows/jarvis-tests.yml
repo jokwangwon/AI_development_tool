@@ -1,0 +1,49 @@
+# Jarvis Tests — sandbox 컴파일 검증 + 단위 테스트 (디딤돌1h CL-6)
+#
+# 답습:
+#   - docs/phase0/jarvis-stone1h-execution-isolation-gap-design-brief.md (v1.1, CL-6)
+#   - docs/review/3plus1-consensus-2026-05-31-jarvis-stone1h-execution-isolation.md
+#   - src/jarvis/sandbox/Makefile (ll_sandbox 빌드)
+#
+# 목적: ll_sandbox.c(C 코드) 변경 회귀를 자동 포착. 디딤돌1h 가 allow_path 에 파일/
+#   디바이스 mask 분기를 추가하면서, 그간 jarvis 테스트가 CI 부재로 로컬에서만
+#   검증되던 갭을 메운다.
+#
+# 결정성: pytest 를 ll_sandbox 빌드 *전* 실행 → 통합(_sandbox_built gated) 테스트는
+#   바이너리 부재로 자동 skip(트랙 A 단위만). 이후 make 로 컴파일 회귀 포착.
+#   ⚠️ Landlock *런타임* 통합 검증은 커널/컨테이너 의존(ABI·seccomp)이라 CI 비결정 →
+#   여기선 컴파일 검증까지만. 런타임 격리 회귀는 로컬 통합 테스트 + dogfooding 권위.
+name: Jarvis Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/jarvis/**'
+      - 'tests/jarvis/**'
+      - 'requirements*.txt'
+      - '.github/workflows/jarvis-tests.yml'
+  pull_request:
+    paths:
+      - 'src/jarvis/**'
+      - 'tests/jarvis/**'
+      - 'requirements*.txt'
+      - '.github/workflows/jarvis-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Jarvis 단위 테스트 (트랙 A — 격리 불요; 통합은 미빌드라 skip)
+        run: python -m pytest tests/jarvis/ -q
+      - name: ll_sandbox 컴파일 검증 (CL-6 — C 회귀 자동 포착)
+        run: make -C src/jarvis/sandbox

@@ -45,6 +45,24 @@ def test_code_worker_runner_isolation_injected() -> None:
     assert calls[0][0] == "claude" and calls[0][-1] == "작업"
 
 
+def test_code_worker_did_act_wired_from_num_turns() -> None:
+    """디딤돌1g — build_worker_registry 가 claude did_act_fn(num_turns>1) 배선."""
+    reg, _ = build_worker_registry(
+        code_runner=lambda cmd, wd: (
+            0, '{"result": "x", "is_error": false, "num_turns": 2}', ""),
+        code_isolation=PassthroughIsolation())
+    assert reg.select("claude").run("작업", "/tmp/ws").did_act is True  # 도구 행동
+
+
+def test_code_worker_did_act_false_when_num_turns_1() -> None:
+    """num_turns=1(텍스트-only/되묻기 #3 원형) → did_act=False."""
+    reg, _ = build_worker_registry(
+        code_runner=lambda cmd, wd: (
+            0, '{"result": "ask?", "is_error": false, "num_turns": 1}', ""),
+        code_isolation=PassthroughIsolation())
+    assert reg.select("claude").run("회문 함수 정의", "/tmp/ws").did_act is False
+
+
 def test_plan_controller_routes_code_via_table() -> None:
     """kind_table 주입 → PlanController 가 code subtask 를 claude 로 라우팅(트랙 A)."""
     seen: list = []

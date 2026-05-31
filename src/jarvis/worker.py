@@ -40,6 +40,11 @@ class WorkerResult:
     cost_usd: float | None
     is_error: bool
     raw: dict[str, Any] | None
+    # 디딤돌1g: 워커가 *행동을 취했는가*의 결정적 보고(provider-무관 인터페이스).
+    # True=도구/효과 행동함, False=무행동(텍스트만/되묻기), None=미상(워커가 못 채움).
+    # 구현은 워커별(claude=num_turns>1, ollama=content 산출) — 헌법5조 누출 0.
+    # controller 가 "did_act is False ∧ requires_execution" 을 no-op 경고로 판정.
+    did_act: bool | None = None
 
     @property
     def succeeded(self) -> bool:
@@ -109,16 +114,26 @@ class CliWorker:
         argv: list[str],
         isolation: IsolationBackend | None = None,
         runner: Runner | None = None,
+        did_act_fn: "Callable[[dict[str, Any] | None], bool | None] | None" = None,
     ) -> None:
         self.alias = alias
         self._argv = list(argv)
         self._isolation = isolation or PassthroughIsolation()
         self._runner = runner or _subprocess_runner
+        # 디딤돌1g: provider-specific did_act 추출(예: claude=num_turns>1)을 worker_setup
+        # 배선이 주입 → CliWorker 는 generic 유지, controller 에 provider 분기 누출 0.
+        # 미주입(None)=did_act 미상(None) 반환(하위호환). raw 가 None(파싱불가)이면 fn 에
+        # None 전달 → fn 이 None 반환(fail-soft).
+        self._did_act_fn = did_act_fn
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
         cmd = self._isolation.wrap([*self._argv, prompt], workdir)
         exit_code, stdout, stderr = self._runner(cmd, workdir)
-        return WorkerResult.from_cli(exit_code, stdout, stderr)
+        result = WorkerResult.from_cli(exit_code, stdout, stderr)
+        if self._did_act_fn is None:
+            return result
+        from dataclasses import replace
+        return replace(result, did_act=self._did_act_fn(result.raw))
 
 
 # tmux subprocess runner = argv → (exit_code, stdout, stderr). 주입으로 테스트 결정성.
@@ -365,7 +380,10 @@ class OllamaWorker:
             {"result": code, "is_error": False, "total_cost_usd": 0.0},
             ensure_ascii=False,
         )
-        return WorkerResult.from_cli(0, result_blob)
+        from dataclasses import replace
+        # 디딤돌1g: ollama 성공 = content 산출(빈 content 는 위 _error 로 차단됨) →
+        # did_act=True. file 종류라 EXECUTING_KINDS 밖이지만 신호 일관성 위해 채움.
+        return replace(WorkerResult.from_cli(0, result_blob), did_act=True)
 
     def _error(self, msg: str) -> WorkerResult:
         return WorkerResult(

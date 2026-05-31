@@ -121,7 +121,10 @@ COMPLETED/applied 의미를 "exit0 + 반영, 의미 달성 아님"으로 정직�
 
 ---
 
-## 7. 미검증 가정 / 잔여 (구현 시 확인 필수)
-- ⚠️ **F2(a) 핵심 가정 미검증**: `requires_execution` 이 약한 boss(OllamaBoss)에서 신뢰성 있게 생성되는지 미실측. 94 dogfooding("약한 boss 는 contracts 거의 미생성")상 누락 가능 → default False 면 silent pass 재발. 이 경우 F2(a) 결정적 효과가 약한 boss 에서 제한되고 **F1+F2(b 구성 invariant)+F4 가 실질 방어**. → 구현 후 dogfooding 재검증 필수.
-- F2 schema 변경(requires_execution)이 frontier(1d)/human(1e) plan shape 에 미치는 영향 미검증 — 회귀 확인.
-- "해결" 아님 — §3 정직성 유지. 일반 의미 충족은 결정 불가.
+## 7. dogfooding 재검증 결과 (2026-05-31) — 합의 §7 가정 **확인(해소 아님)**
+> ⚠️ 정직 정정: 구현 중 한때 "requires_execution 3/3 True 일관 생성"이라 적었으나 **실측 미검증 over-claim 이었다**. 재실행 결과 정반대 — 합의 §7 우려가 *확인*됐다([[feedback_pass_scope_overclaim]]).
+
+- ⚠️ **F2-1 약한 boss 무발동(확인)**: 실 ollama(qwen3-30b) 회문 작업 3회, **`requires_execution` 전부 False**(`[F,F,F]`/`[F,F,F,F]`/`[F,F,F,F]`). grammar-required 필드라 *존재*는 하나 약한 boss 가 의미를 안 채움(94 dogfooding 답습). → **F2(requires_execution 기반 검증·구성 invariant)는 약한 boss happy path 무발동.**
+- ✅ **F1 이 약한 boss 의 실질 방어**: 같은 3회, 실행 작업을 대부분 `code`(실행 kind) 라우팅(run1 `[code,file,code]`, run2/3 `[code×4]`). 단 run1 에 `file` 1건 혼재 = **F1 도 추론적이라 100% 아님**(그 file 이 실행요구였다면 requires_execution=False 라 F2 도 못 잡음 = **잔여 silent path**).
+- **정정된 결론**: 약한 boss = **F1(라우팅 유도)+F3(정직 표시)** 실질 방어. **F2(결정적 검증)는 requires_execution 을 정직 선언하는 planner(human 1e/frontier 1d)용 안전망** — 약한 boss 엔 무력(똑똑함≠신뢰: 약한 boss 는 구조 선언도 약함). F4 도 같은 약한 모델이라 무익(frontier advise 시만 가치) → 보류.
+- **잔여(정직)**: ① 약한 boss+실행요구 file subtask = silent path 잔존(F1 가 줄이나 0 아님). ② "의미적 정상 동작" 일반 검증 결정 불가(§3). ③ F2 schema 변경 frontier(1d)/human(1e) plan shape 영향 = 462 passed 로 회귀 0(추가 실 dogfooding 후속). ④ 발견#3(code 되묻기) 별건 후속. → **완전 해결 아님.**

@@ -111,20 +111,22 @@ COMPLETED/applied 의미를 "exit0 + 반영, 의미 달성 아님"으로 정직�
 ## 6. 구현 결과 (TDD, 2026-05-31)
 1. ✅ **BL-10 선행**: ledger 이중기록 fix (별도 PR #39, main 기반).
 2. ✅ **F1**: `_KIND_CAPABILITY_HINT` + `boss_plan_prompt` 능력 안내 (커밋 d98d511).
-3. ✅ **F2-1/F2-2**: requires_execution 구조필드 + schema/파싱 + EXECUTING_KINDS + 구성 invariant + CapabilityWarning (3ab9c2a, c26310e).
-4. ✅ **F3**: COMPLETED reason 정직화 + 능력경고 HUD plan_view + index.html 모달 (fcc3e1c).
-5. 🛑 **F4**: 보류 — §7 dogfooding 상 약한 boss 엔 F1+F3 가 실질 방어, F4 도 같은 약한 모델이라 무익. 청사진 보존(frontier advise 시 발효).
+3. ✅ **F2-1/F2-2**: requires_execution 구조필드 + schema/파싱 + EXECUTING_KINDS + 구성 invariant + CapabilityWarning (3ab9c2a, c26310e). ⚠️ 파싱 누락 버그는 ad84426 에서 fix(인터럽트 유실 — §7).
+4. ✅ **F3**: COMPLETED reason 정직화 + 능력경고 HUD plan_view + index.html 모달 (16bd0de).
+5. 🛑 **F4**: 보류(YAGNI) — §7 dogfooding 상 결정적 layer(F1+F2)가 실 ollama 약한 boss 에서 작동 → 추론적 보조 불요. 청사진 보존.
 6. ✅ **BL-9**: ADR-013 §6.3 보강.
-7. ✅ **검증**: 462 passed(회귀 0, 기존 xfail 1=실 ollama smoke) + grimp NONE + secret PASS + dogfooding 재검증(§7 — ⚠️ 합의 §7 우려 *확인*: 약한 boss requires_execution 전부 False, F1 라우팅이 실질 방어).
+7. ✅ **검증**: 462 passed(회귀 0) + grimp NONE + secret PASS + dogfooding 재검증(§7 — F2 가 파싱 버그 fix 후 실 ollama 에서 정상 작동 확인).
 
 > ⚠️ **커밋 위생 단서**: 세션 인터럽트로 F1~F3 의 *테스트* 가 깨진 중간 버전으로 커밋됨 → 정합화 커밋(e7f9a82)으로 GREEN 복구. 그 과정에서 보조 에이전트의 오진 2건(존재하지 않는 "_parse_bossplan 회귀" / 테스트 자체 IndexError 버그)을 메인이 실측으로 정정. source F1~F3 자체는 정상.
 
 ---
 
-## 7. dogfooding 재검증 결과 (2026-05-31) — 합의 §7 가정 **확인(해소 아님)**
-> ⚠️ 정직 정정: 구현 중 한때 "requires_execution 3/3 True 일관 생성"이라 적었으나 **실측 미검증 over-claim 이었다**. 재실행 결과 정반대 — 합의 §7 우려가 *확인*됐다([[feedback_pass_scope_overclaim]]).
+## 7. dogfooding 재검증 결과 (2026-05-31) — F2 실 ollama 경로 작동 확인
 
-- ⚠️ **F2-1 약한 boss 무발동(확인)**: 실 ollama(qwen3-30b) 회문 작업 3회, **`requires_execution` 전부 False**(`[F,F,F]`/`[F,F,F,F]`/`[F,F,F,F]`). grammar-required 필드라 *존재*는 하나 약한 boss 가 의미를 안 채움(94 dogfooding 답습). → **F2(requires_execution 기반 검증·구성 invariant)는 약한 boss happy path 무발동.**
-- ✅ **F1 이 약한 boss 의 실질 방어**: 같은 3회, 실행 작업을 대부분 `code`(실행 kind) 라우팅(run1 `[code,file,code]`, run2/3 `[code×4]`). 단 run1 에 `file` 1건 혼재 = **F1 도 추론적이라 100% 아님**(그 file 이 실행요구였다면 requires_execution=False 라 F2 도 못 잡음 = **잔여 silent path**).
-- **정정된 결론**: 약한 boss = **F1(라우팅 유도)+F3(정직 표시)** 실질 방어. **F2(결정적 검증)는 requires_execution 을 정직 선언하는 planner(human 1e/frontier 1d)용 안전망** — 약한 boss 엔 무력(똑똑함≠신뢰: 약한 boss 는 구조 선언도 약함). F4 도 같은 약한 모델이라 무익(frontier advise 시만 가치) → 보류.
-- **잔여(정직)**: ① 약한 boss+실행요구 file subtask = silent path 잔존(F1 가 줄이나 0 아님). ② "의미적 정상 동작" 일반 검증 결정 불가(§3). ③ F2 schema 변경 frontier(1d)/human(1e) plan shape 영향 = 462 passed 로 회귀 0(추가 실 dogfooding 후속). ④ 발견#3(code 되묻기) 별건 후속. → **완전 해결 아님.**
+> ⚠️ 정직 이력(2중 정정): 본 절은 두 번 틀렸다가 실측으로 바로잡혔다. ① 초안 "약한 boss requires_execution 3/3 True 일관"(미검증 낙관) → ② "전부 False, 약한 boss 가 grammar 필드 의미 안 채움"(이것도 틀림 — 원인 오귀속) → ③ **진실**: `_parse_bossplan` 이 requires_execution 을 *읽지 않는 버그*(인터럽트로 F2-1 수정 유실)였고, 버그 수정 후 약한 boss 는 requires_execution 을 **정확히 생성**한다. [[feedback_pass_scope_overclaim]] — 실측 없이 원인 단정 금지.
+
+- ✅ **F2-1 약한 boss 정상 작동(버그 수정 후)**: 실 ollama(qwen3-30b) 회문 작업 3회, `requires_execution` 정확 생성 — run1 `[F,T]`, run2 `[F,T,T]`, run3 `[F,T,T,T]`(함수 정의=False, 실행/출력=True). grammar-required 필드 + F1 prompt 안내가 약한 boss 에서도 작동.
+- 🐛 **진짜 원인(수정됨)**: `_parse_bossplan`(boss.py)이 `requires_execution` 을 PlanSubtask 에 안 넘겨 *항상 False* 로 떨궜음(커밋 ad84426 fix). 이전 "전부 False" 관찰은 boss 약함이 아니라 **파서 버그**. 보조 에이전트의 "_parse_bossplan 회귀" 보고가 옳았음(메인 오진 정정).
+- ✅ **F1 라우팅**: 3회 모두 실행 작업을 `code`(실행 kind) 라우팅 → happy path 능력-의도 불일치 0(경고 미발생 정상). F2-2 경고/구성 invariant 는 boss 가 *오라우팅*(실행요구를 비실행 kind)할 때 발동하는 안전망.
+- **결론**: 결정적 layer(F1 라우팅 + F2-1 구조선언 + F2-2 검증)가 실 ollama 약한 boss 경로에서 작동. **F4(advisory) 보류 정당**(결정적 layer 충분, 추론적 보조 불요 — YAGNI).
+- **잔여(정직)**: ① "의미적 정상 동작" 일반 검증은 결정 불가(완전 해결 아님 — §3). ② boss 가 requires_execution 을 *틀리게* 채우면(false negative) F2 무발동 — F1 라우팅이 보조 방어. ③ 발견#3(code 대화형 되묻기) 별건 후속.

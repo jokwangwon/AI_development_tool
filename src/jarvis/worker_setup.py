@@ -33,12 +33,24 @@ from src.jarvis.worker import CliWorker, OllamaWorker, Runner
 # /proc/<pid>/root traversal, /run/user 세션 소켓[keyring·dbus·ssh-agent])을 닫는다.
 # 대신 claude 동작에 필요한 *좁은* subpath 만 노출(calibration 실측):
 #   - /run/systemd/resolve: DNS(/etc/resolv.conf 심볼릭 대상). /run/user 소켓 미노출.
-# (/dev 는 calibration 결과 불필요 — node 는 getrandom() syscall 사용, /dev 파일 미요구.
-#  ll_sandbox PATH_BENEATH 는 디렉터리 단위라 /dev 단일 파일 노출도 EINVAL → 디렉터리만.)
-# 쓰기는 가짜 홈(RW root)만, 그 외 미노출 = 커널 deny-by-default.
+# (/dev 디렉터리 통째는 미노출 — /dev/sda·/dev/mem 등 위험 노드 동시 노출 회피.
+#  단 무해 디바이스는 CLAUDE_RW_DEVICES 로 *단일 파일* 선별 노출[디딤돌1h].)
+# 쓰기는 가짜 홈(RW root) + CLAUDE_RW_DEVICES 만, 그 외 미노출 = 커널 deny-by-default.
 CLAUDE_RO_PATHS: tuple[str, ...] = (
     "/usr", "/lib", "/lib64", "/bin", "/sbin", "/etc",
     "/run/systemd/resolve",
+)
+
+# 디딤돌1h — claude Bash 도구의 shell-snapshot source 가 모든 명령에 `2>/dev/null`
+# 쓰기를 붙여, /dev 미노출 시 requires_execution 실행이 전부 실패하고 LLM 추론
+# 폴백으로 빠졌다(발견#1, 회귀 아닌 레벨2 도입 이래 기존 갭). 해소 = 무해 캐릭터
+# 디바이스를 *단일 파일 RW* 로 선별 노출(CL-2 명시 means 레버, harness 소유).
+# CL-3: 시작 = /dev/null 단일(스냅샷 실측상 충분). /dev/tty(터미널 주입)·zero·
+# urandom 은 dogfooding 신호 시 노드별 개별 판정으로만 추가. 디렉터리/glob 금지.
+# CL-4 검증(심링크/realpath/S_ISCHR)은 isolation._safe_rw_device + ll_sandbox.c 2중.
+# 답습: docs/phase0/jarvis-stone1h-execution-isolation-gap-design-brief.md (v1.1).
+CLAUDE_RW_DEVICES: tuple[str, ...] = (
+    "/dev/null",
 )
 
 # claude 기본 argv — headless json 출력(exit code·cost 결정적 권위).
@@ -196,7 +208,7 @@ def build_worker_registry(
         provision_claude_home(home, src_home=src_home)
     real_runner = code_runner if code_runner is not None else _make_claude_runner(home)
     real_isolation = code_isolation if code_isolation is not None else LandlockIsolation(
-        ro_paths=list(CLAUDE_RO_PATHS), rw_root=home
+        ro_paths=list(CLAUDE_RO_PATHS), rw_root=home, rw_files=list(CLAUDE_RW_DEVICES)
     )
     registry = WorkerRegistry()
     code_worker = CliWorker(

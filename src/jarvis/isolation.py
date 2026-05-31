@@ -13,7 +13,32 @@
 from __future__ import annotations
 
 import os
+import stat
 from typing import Protocol, runtime_checkable
+
+
+def _safe_rw_device(path: str) -> str | None:
+    """디딤돌1h CL-4 — RW 노출 후보 디바이스 파일을 결정적 검증.
+
+    무해 캐릭터 디바이스(`/dev/null` 등)만 RW 노출 허용. 위험 디바이스/우회 경로
+    차단(합의 CL-4, [[3plus1-consensus-2026-05-31-jarvis-stone1h-execution-isolation]]):
+      - `os.path.islink` 거부: `/dev/stdin`→`/proc/self/fd` 류 심링크 우회 차단.
+      - `realpath` 후 `/dev/` prefix 강제: /dev 밖 경로 차단.
+      - `stat.S_ISCHR` 만 허용: 블록 디바이스(`/dev/sda` = S_ISBLK)·일반 파일 거부.
+    통과 시 검증된 경로 반환, 아니면 None(호출측이 드롭). ll_sandbox.c 가 2차 방어.
+    """
+    if os.path.islink(path):
+        return None
+    try:
+        real = os.path.realpath(path)
+        st = os.stat(real)
+    except OSError:
+        return None
+    if not real.startswith("/dev/"):
+        return None
+    if not stat.S_ISCHR(st.st_mode):
+        return None
+    return real
 
 
 @runtime_checkable
@@ -77,6 +102,7 @@ class LandlockIsolation:
         sandbox_bin: str | None = None,
         ro_paths: list[str] | tuple[str, ...] | None = None,
         rw_root: str | None = None,
+        rw_files: list[str] | tuple[str, ...] | None = None,
     ) -> None:
         self._bin = sandbox_bin or _DEFAULT_SANDBOX_BIN
         self._ro_paths = (
@@ -86,6 +112,10 @@ class LandlockIsolation:
         # 가짜 홈 격리 = 작업폴더를 가짜 홈 하위에 nest, 단일 RW 루트(가짜홈)로 커버.
         # 답습: docs/phase0/jarvis-claude-landlock-fakehome-design-brief.md §1 (Q1a).
         self._rw_root = rw_root
+        # rw_files(디딤돌1h CL-2): 무해 캐릭터 디바이스(/dev/null 등) 단일 파일 RW.
+        # ro_paths(디렉터리)와 *명시 분리* — "RO 목록의 파일이 자동 RW" silent 권한
+        # 상승 차단. wrap 이 _safe_rw_device(CL-4)로 재검증한 항목만 노출.
+        self._rw_files = tuple(rw_files) if rw_files is not None else ()
 
     def wrap(self, cmd: list[str], workdir: str) -> list[str]:
         if not (os.path.isfile(self._bin) and os.access(self._bin, os.X_OK)):
@@ -96,6 +126,10 @@ class LandlockIsolation:
             )
         # 존재하는 RO 경로만 — 없는 경로는 ll_sandbox open(O_PATH) 실패로 전체
         # 거부되므로 제외. RO 누락은 더 제한적이라 안전 약화 아님(RW root 는 유지).
+        # ro 는 *디렉터리만*(isdir) — 파일은 rw_files 명시 경로로만(CL-2 함정 차단).
         ro = [p for p in self._ro_paths if os.path.isdir(p)]
+        # rw_files: CL-4 검증 통과한 무해 디바이스만(심링크/비-/dev/블록 디바이스 드롭).
+        rwf = [d for p in self._rw_files if (d := _safe_rw_device(p)) is not None]
         rw = self._rw_root or workdir
-        return [self._bin, rw, *ro, "--", *cmd]
+        # ll_sandbox: 첫 인자=RW 루트, 이후 디렉터리=RO·파일=RW 파일 mask(stat 분기).
+        return [self._bin, rw, *ro, *rwf, "--", *cmd]

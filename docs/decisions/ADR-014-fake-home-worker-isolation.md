@@ -28,8 +28,10 @@
 - 인증은 가짜 홈의 `.credentials.json` 경유(env API 키 미사용 — 필요 시 `apiKeyHelper` 후속).
 
 ### 2.3 RO 면 최소화 (BL-2 — calibration 실측)
-- 광범위 `/proc`·전체 `/run`·전체 `/dev`·진짜 홈 **미노출** — fs 외 우회 채널(`/proc/self/environ` 상속 env, `/proc/<pid>/root` traversal, `/run/user` 세션 소켓[keyring·dbus·ssh-agent]) 차단.
-- 노출 = `/usr`·`/lib`·`/lib64`·`/bin`·`/sbin`·`/etc` + **`/run/systemd/resolve`**(DNS, `/etc/resolv.conf` 심볼릭 대상 — `/run/user` 소켓 미포함). calibration: claude 가 이 최소 세트로 동작(`/dev` 불요 — node 는 `getrandom()` syscall).
+- 광범위 `/proc`·전체 `/run`·**전체 `/dev` 디렉터리**·진짜 홈 **미노출** — fs 외 우회 채널(`/proc/self/environ` 상속 env, `/proc/<pid>/root` traversal, `/run/user` 세션 소켓[keyring·dbus·ssh-agent]) + 위험 디바이스(`/dev/sda`·`/dev/mem`) 차단.
+- 노출 = `/usr`·`/lib`·`/lib64`·`/bin`·`/sbin`·`/etc` + **`/run/systemd/resolve`**(DNS, `/etc/resolv.conf` 심볼릭 대상 — `/run/user` 소켓 미포함).
+- **디딤돌1h 정정**: 초기 calibration("claude node 는 `/dev` 불요 — `getrandom()` syscall")은 **claude *Bash 도구*가 모든 명령에 `2>/dev/null` 쓰기를 붙이는 것**(shell-snapshot source)을 못 봤다 → `requires_execution` 실행이 전부 실패하고 LLM 추론 폴백으로 빠졌다(발견#1, 회귀 아닌 도입 이래 기존 갭). 해소 = 무해 캐릭터 디바이스 `/dev/null` 을 **단일 파일 RW** 로 선별 노출(`CLAUDE_RW_DEVICES`). 전체 `/dev` 디렉터리 노출이 아니므로(`/dev/sda` 등 미노출) BL-2 의 *우회 채널 차단 정신* 보존 — `/dev/null` 은 write→폐기·read→EOF 로 exfil/우회 채널 아님. CL-4 검증(`islink` 거부 + `realpath` `/dev/` prefix + `S_ISCHR`-only, 블록 디바이스 거부)을 `isolation._safe_rw_device` + `ll_sandbox.c` 2중. (이전 주석 "PATH_BENEATH 단일 파일도 EINVAL → 디렉터리만"은 PoC F5 가 반증: 파일용 access mask 로 좁히면 단일 파일 RW 노출 가능.)
+- 답습: `docs/phase0/jarvis-stone1h-execution-isolation-gap-design-brief.md`, [[3plus1-consensus-2026-05-31-jarvis-stone1h-execution-isolation]].
 
 ### 2.4 시드 신뢰경계 + fail-closed (BL-5/6)
 - 시드 = 격리 *밖* trusted provisioner(`provision_claude_home`). 가짜 홈 0700 + `.credentials.json` 0600 + **symlink 거부**(공격 방어) + **realpath 검증**(dst 가 가짜 홈 밖으로 새지 않음) + 진짜 홈으로의 단방향(비오염).

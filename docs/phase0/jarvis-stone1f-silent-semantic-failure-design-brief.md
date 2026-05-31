@@ -95,8 +95,8 @@ COMPLETED/applied 의미를 "exit0 + 반영, 의미 달성 아님"으로 정직�
 - `orchestrator.py:24-27` OutcomeStatus / `jarvis_plan.py:43-51` `_PLAN_STATUS` label
 - HUD 승인 게이트(`index.html` 모달)·subtask 카드에 "file alias=실행/검증 안 함(현 배선: writer 없는 OllamaWorker, `output_filename=None`)" 라벨(BL-1 배선 의존 명시).
 
-### F4 — advisory (추론적 보조, dispatch 後) — 사용자 Q2=채택·표시 전용
-HUD plan 경로(`jarvis_plan.py:247`)의 `Orchestrator(...)` 에 **boss 주입** → 기배선 `OllamaBoss.advise`("의도 부합: 요청한 파일이 생성·수정됐는가" 평가축, `boss.py:265-292`)를 subtask 카드에 **표시**(차단 0, scrub 경유 BL-5). ReviewGuard 확장 금지(책임 분리). merge_flags union-only(게이트 자동반영 0).
+### F4 — advisory (추론적 보조, dispatch 後) — **구현 보류(YAGNI, 2026-05-31)**
+> 당초 사용자 Q2=채택이었으나, F1~F3 구현 후 dogfooding 재검증(§7)에서 **결정적 layer(F1+F2)가 약한 boss 에서도 충분 작동** 입증 → 추론적 보조 F4 는 실익 낮아 보류. HUD plan 경로 boss 주입 + 기배선 `OllamaBoss.advise`("의도 부합" 평가축, `boss.py`) 표시 청사진은 보존(실 사용에서 결정적 layer 미흡 판명 시 발효). 발효 시 원칙: ReviewGuard 확장 금지·scrub 경유(BL-5)·차단 0·merge_flags union-only.
 
 ---
 
@@ -108,14 +108,16 @@ HUD plan 경로(`jarvis_plan.py:247`)의 `Orchestrator(...)` 에 **boss 주입**
 
 ---
 
-## 6. 구현 순서 (TDD)
-1. **BL-10 선행**: ledger 이중기록 fix (회귀 격리).
-2. **F1**: boss_plan_prompt 능력 1줄 (기존 plan 테스트 회귀 0 확인).
-3. **F2**: EXECUTING_KINDS + 구성 invariant + requires_execution (TDD RED→GREEN, 1d/1e plan shape 회귀 확인).
-4. **F3**: COMPLETED/applied 정직화 (controller+orchestrator+HUD).
-5. **F4**: HUD boss 주입 + advisory 카드 (scrub, TestClient hermetic).
-6. **BL-9**: ADR-013 §6 보강.
-7. **검증**: 전체 테스트 + grimp + secret + **dogfooding 재검증**(⭐ 약한 boss 가 requires_execution 을 신뢰성 있게 생성하는지 — §7 미검증 가정).
+## 6. 구현 결과 (TDD, 2026-05-31)
+1. ✅ **BL-10 선행**: ledger 이중기록 fix (별도 PR #39, main 기반).
+2. ✅ **F1**: `_KIND_CAPABILITY_HINT` + `boss_plan_prompt` 능력 안내 (커밋 d98d511).
+3. ✅ **F2-1/F2-2**: requires_execution 구조필드 + schema/파싱 + EXECUTING_KINDS + 구성 invariant + CapabilityWarning (3ab9c2a, c26310e).
+4. ✅ **F3**: COMPLETED reason 정직화 + 능력경고 HUD plan_view + index.html 모달 (fcc3e1c).
+5. 🛑 **F4**: 보류(YAGNI — §7 dogfooding 상 F1+F2 충분, 청사진 보존).
+6. ✅ **BL-9**: ADR-013 §6.3 보강.
+7. ✅ **검증**: 462 passed(회귀 0, 기존 xfail 1=실 ollama smoke) + grimp NONE + secret PASS + dogfooding 재검증(§7).
+
+> ⚠️ **커밋 위생 단서**: 세션 인터럽트로 F1~F3 의 *테스트* 가 깨진 중간 버전으로 커밋됨 → 정합화 커밋(e7f9a82)으로 GREEN 복구. 그 과정에서 보조 에이전트의 오진 2건(존재하지 않는 "_parse_bossplan 회귀" / 테스트 자체 IndexError 버그)을 메인이 실측으로 정정. source F1~F3 자체는 정상.
 
 ---
 

@@ -347,11 +347,13 @@ _PLAN_KINDS_DEFAULT: tuple[str, ...] = ("code", "file")
 # 디딤돌1f F1: worker_kind 별 능력 한 줄(feedforward). boss 가 실행 작업을 무능력
 # 워커로 분류하는 silent semantic failure 예방. 실행 능력 경계는 controller F2 가
 # 결정적으로 재검증(가이드≠집행). file=LLM 텍스트 생성만, code=실 실행.
-_KIND_CAPABILITY_HINT: dict[str, str] = {
-    "file": "코드·텍스트를 *생성*만 함(실행·테스트·명령 불가).",
-    "code": "코드를 생성하고 *실제 실행*할 수 있음(테스트·결과 출력 가능).",
-    "shell": "셸 명령을 *실제 실행*할 수 있음.",
-}
+# dict() 튜플 형태 — 리터럴 `"code": "..."` 은 secret_scanner T1-041(code: 값) false
+# positive 유발(메모리 reference_codex_verify_tooling gotcha 답습, 패턴 회피).
+_KIND_CAPABILITY_HINT: dict[str, str] = dict([
+    ("file", "코드·텍스트를 *생성*만 함(실행·테스트·명령 불가)."),
+    ("code", "코드를 생성하고 *실제 실행*할 수 있음(테스트·결과 출력 가능)."),
+    ("shell", "셸 명령을 *실제 실행*할 수 있음."),
+])
 
 # ollama `/api/chat` "format" 에 실을 JSON schema — grammar-constrained decoding.
 # PLAN-INV (a): argv·alias·workdir·isolation 필드 *부재*(means 틀 봉쇄).

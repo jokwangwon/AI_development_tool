@@ -363,19 +363,49 @@ def test_human_planner_denied_by_gate() -> None:
 
 # --- 디딤돌1f F2-2: EXECUTING_KINDS + 능력 검증 + 구성 invariant ---
 
-def _exec_plan(worker_kind="file"):
+def _exec_plan(worker_kind: str = "file") -> BossPlan:
     return BossPlan(subtasks=(
         PlanSubtask(desc="코드 실행해 결과 출력", worker_kind=worker_kind,
                     requires_execution=True),
     ), contracts=())
 
 
+def _capturing_build(workers: list[FakeWorker], kind_table: dict[str, str]):
+    """승인 게이트로 들어오는 PlanApprovalRequest 를 캡처하는 controller 빌더.
+
+    _build 의 approver 는 단순 bool 반환이라 req 를 못 본다 → 이 헬퍼는 capture
+    리스트를 닫는 approver 클로저를 주입해 (ctrl, captured) 를 돌려준다(승인=True).
+    """
+    reg = WorkerRegistry()
+    for w in workers:
+        reg.register(w)
+    orch = Orchestrator(
+        registry=reg,
+        guard=ReviewGuard(),
+        gate=ApprovalGate(approver=lambda req: True),
+        workdir_factory=lambda t: f"/tmp/ws/{t}",
+    )
+    captured: list[PlanApprovalRequest] = []
+
+    def _approver(req: PlanApprovalRequest) -> bool:
+        captured.append(req)
+        return True
+
+    ctrl = PlanController(
+        dispatcher=orch.dispatch,
+        kind_table=kind_table,
+        registry=reg,
+        plan_approver=_approver,
+        implicit_contracts=False,
+    )
+    return ctrl, captured
+
+
 def test_requires_execution_on_nonexec_kind_warns() -> None:
     """실행요구 subtask 가 비실행 kind(file)인데 실행워커는 존재 → 경고(차단 아님)."""
-    ctrl, captured, _ = _build(
-        _exec_plan("file"),
+    ctrl, captured = _capturing_build(
+        [FakeWorker("wf"), FakeWorker("wc")],
         kind_table={"file": "wf", "code": "wc"},
-        registry=_registry("wf", "wc"),
     )
     out = ctrl.run(_exec_plan("file"), "t1")
     assert out.status == PlanStatus.COMPLETED  # 차단 아님(승인되면 진행)
@@ -386,11 +416,10 @@ def test_requires_execution_on_nonexec_kind_warns() -> None:
 
 
 def test_no_executing_worker_rejects_exec_plan() -> None:
-    """실행요구 subtask 가 있는데 registry 에 실행가능 워커 0 → 즉시 거부(구성 invariant)."""
-    ctrl, captured, _ = _build(
-        _exec_plan("file"),
+    """실행요구 subtask 가 있는데 table 에 실행가능 워커 0 → 즉시 거부(구성 invariant)."""
+    ctrl, captured = _capturing_build(
+        [FakeWorker("w")],
         kind_table={"file": "w"},  # 실행가능(code/shell) 매핑 0
-        registry=_registry("w"),
     )
     out = ctrl.run(_exec_plan("file"), "t2")
     assert out.status == PlanStatus.VALIDATION_FAILED
@@ -399,12 +428,24 @@ def test_no_executing_worker_rejects_exec_plan() -> None:
 
 def test_exec_plan_ok_when_routed_to_exec_kind() -> None:
     """실행요구 subtask 가 실행 kind(code)로 라우팅 → 경고 0."""
-    plan = _exec_plan("code")
-    ctrl, captured, _ = _build(
-        plan, kind_table={"code": "wc"}, registry=_registry("wc"),
+    ctrl, captured = _capturing_build(
+        [FakeWorker("wc")], kind_table={"code": "wc"},
     )
-    out = ctrl.run(plan, "t3")
+    out = ctrl.run(_exec_plan("code"), "t3")
     assert out.status == PlanStatus.COMPLETED
+    assert captured
+    assert not getattr(captured[-1], "capability_warnings", [])
+
+
+def test_requires_execution_false_no_invariant_no_warning() -> None:
+    """requires_execution=False(기본)면 능력 invariant·경고 무발동(회귀 가드)."""
+    ctrl, captured = _capturing_build(
+        [FakeWorker("wf")], kind_table={"file": "wf"},  # 실행워커 0이어도
+    )
+    plan = BossPlan(subtasks=(PlanSubtask(desc="생성만", worker_kind="file"),),
+                    contracts=())
+    out = ctrl.run(plan, "t4")
+    assert out.status == PlanStatus.COMPLETED  # invariant 무발동 → 정상 진행
     assert not getattr(captured[-1], "capability_warnings", [])
 
 
@@ -413,8 +454,9 @@ def test_exec_plan_ok_when_routed_to_exec_kind() -> None:
 def test_completed_reason_does_not_claim_intent_achieved() -> None:
     """COMPLETED reason 이 '의미 달성'을 함의하지 않음(반영=exit0+산출)."""
     plan = BossPlan(subtasks=(PlanSubtask(desc="x", worker_kind="file"),), contracts=())
-    ctrl, _, _ = _build(plan)
+    ctrl, _ = _build([FakeWorker("wf")], {"file": "wf"})
     out = ctrl.run(plan, "t")
     assert out.status == PlanStatus.COMPLETED
-    # "반영" 은 유지하되 "의미/정상 동작 달성" 단언은 없음
+    # "반영" 은 유지하되 "의미/정상 동작 달성"·"성공" 같은 과대 단언은 없음(정직)
     assert "반영" in out.reason
+    assert "미검증" in out.reason  # 의미 동작 미검증 명시(F3)

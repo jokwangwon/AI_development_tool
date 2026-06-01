@@ -634,6 +634,16 @@ def _plugin_available_ports() -> dict:
 _active_plugins = discover_enabled_plugins(_PLUGINS_DIR, _PLUGINS_ENABLED)
 routes += build_plugin_routes(_active_plugins, _plugin_available_ports())
 
+# #UI-4 반영 게이트(단계3): 격리 work 산출물 → 사람 승인 → plugins/ 복사 + 활성화.
+# work_root = claude 가짜홈 하위 work/ (단일 RW 루트, worker_setup 와 동일 경로).
+from jarvis_hud.plugin_routes import make_plugin_admin_routes  # noqa: E402
+from src.jarvis.worker_setup import DEFAULT_FAKE_HOME  # noqa: E402
+
+_PLUGIN_WORK_ROOT = os.path.join(DEFAULT_FAKE_HOME, "work")
+routes += make_plugin_admin_routes(
+    work_root=_PLUGIN_WORK_ROOT, plugins_dir=_PLUGINS_DIR, enabled_file=_PLUGINS_ENABLED
+)
+
 # 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
 if os.path.isdir(_PLUGINS_DIR):
     routes.append(Mount("/plugins", app=StaticFiles(directory=_PLUGINS_DIR)))

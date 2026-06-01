@@ -2155,16 +2155,51 @@
     };
     const stopJarvisPoll = () => { if (jarvisPollTimer) { clearInterval(jarvisPollTimer); jarvisPollTimer = null; } };
 
+    // 플러그인 패널 레지스트리 (단계4, C-2 분리 JS 동적 로드). name -> {tab, panel, mounted}
+    const _pluginPanels = {};
     const setCanvasView = (view) => {
       const isJarvis = view === 'jarvis';
+      const pluginName = view.startsWith('plugin:') ? view.slice(7) : null;
       jarvisView.style.display = isJarvis ? '' : 'none';
-      canvasList.style.display = isJarvis ? 'none' : '';
+      canvasList.style.display = (!isJarvis && !pluginName) ? '' : 'none';
+      for (const [n, p] of Object.entries(_pluginPanels)) {
+        p.panel.style.display = (n === pluginName) ? '' : 'none';
+        p.tab.style.opacity = (n === pluginName) ? '1' : '0.45';
+      }
       tabJarvis.style.opacity = isJarvis ? '1' : '0.45';
-      tabNotes.style.opacity = isJarvis ? '0.45' : '1';
+      tabNotes.style.opacity = (!isJarvis && !pluginName) ? '1' : '0.45';
       if (isJarvis) { loadJarvisTasks(); startJarvisPoll(); } else { stopJarvisPoll(); }
     };
     tabNotes.addEventListener('click', () => setCanvasView('notes'));
     tabJarvis.addEventListener('click', () => setCanvasView('jarvis'));
+
+    // 플러그인 패널 동적 로드 (탐색≠활성화: enabled 만 노출). panel.js 가
+    // window.registerJarvisPlugin(name, {mount(el)}) 로 자신을 등록한다.
+    window.registerJarvisPlugin = (name, api) => {
+      const p = _pluginPanels[name];
+      if (p && !p.mounted) { try { api.mount(p.panel); p.mounted = true; } catch (e) {} }
+    };
+    async function loadPlugins() {
+      let list = [];
+      try { const r = await fetch('/api/jarvis/plugins'); list = (await r.json()).plugins || []; } catch (e) {}
+      const titleBar = document.querySelector('.canvas-title');
+      const canvasAside = document.querySelector('.canvas');
+      for (const p of list.filter(x => x.enabled)) {
+        const tab = document.createElement('span');
+        tab.className = 'canvas-tab';
+        tab.style.cssText = 'cursor:pointer; opacity:0.45;';
+        tab.textContent = (p.icon ? p.icon + ' ' : '') + p.title;
+        titleBar.appendChild(tab);
+        const panel = document.createElement('div');
+        panel.style.display = 'none';
+        canvasAside.appendChild(panel);
+        _pluginPanels[p.name] = { tab, panel, mounted: false };
+        tab.addEventListener('click', () => setCanvasView('plugin:' + p.name));
+        const s = document.createElement('script');
+        s.src = '/plugins/' + encodeURIComponent(p.name) + '/panel.js';
+        document.body.appendChild(s);
+      }
+    }
     $('jarvis-submit').addEventListener('click', submitJarvisTask);
     $('jarvis-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitJarvisTask(); });
     $('jarvis-clear-done').addEventListener('click', dismissCompleted);
@@ -2173,6 +2208,7 @@
     const _newChatBtn = document.querySelector('.new-chat');
     if (_newChatBtn) _newChatBtn.addEventListener('click', newConversation);  // §10-4b
     initConversations();
+    loadPlugins();  // 단계4: enabled 플러그인 패널 동적 로드
     chatInput.focus();
   </script>
 </body>

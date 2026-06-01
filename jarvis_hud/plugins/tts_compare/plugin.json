@@ -1,0 +1,8 @@
+{
+  "name": "tts_compare",
+  "title": "TTS 음성 비교",
+  "icon": "🔊",
+  "panel_js": "panel.js",
+  "routes_module": "jarvis_hud.plugins.tts_compare.routes",
+  "permissions": ["measurement:write"]
+}

@@ -865,6 +865,14 @@
       }
       .sidebar, .canvas { display: none; }
     }
+    /* 발견 #UI-2 모드 버튼 */
+    .mode-pill {
+      cursor: pointer; padding: 2px 10px; border-radius: 10px;
+      border: 1px solid var(--border, #333); color: var(--text-dim, #889);
+      opacity: 0.6; user-select: none; transition: all .15s;
+    }
+    .mode-pill:hover { opacity: 0.9; }
+    .mode-pill.active { opacity: 1; background: var(--accent, #4a9); color: #fff; border-color: transparent; }
   </style>
 </head>
 <body>
@@ -1082,6 +1090,13 @@
 
     <!-- Input bar -->
     <div class="input-bar">
+      <!-- 발견 #UI-2: 모드 버튼(transient). auto=백엔드 문맥 분류, 명시=강제(1회 후 auto 복귀) -->
+      <div id="mode-bar" style="display:flex; gap:6px; margin-bottom:6px; font-size:11px;">
+        <span data-mode="auto" class="mode-pill" title="자동 판정">자동</span>
+        <span data-mode="chat" class="mode-pill" title="대화로 강제">대화</span>
+        <span data-mode="note" class="mode-pill" title="노트로 강제">노트</span>
+        <span data-mode="svg" class="mode-pill" title="도식으로 강제">도식</span>
+      </div>
       <div class="input-shell">
         <button class="icon-btn" id="attach-btn" title="첨부 (예정)">＋</button>
         <input type="text" id="chat-input" placeholder="무엇이든 말씀하세요..." autocomplete="off" />
@@ -1198,13 +1213,19 @@
     setInterval(updateClock, 30000);
     updateClock();
 
-    // === Mode detection ===
-    const detectMode = (text) => {
-      if (/정리|노트|메모|요약/.test(text)) return 'note';
-      if (/그림|그려|도식|flow|다이어그램/.test(text)) return 'svg';
-      return 'chat';
+    // === Mode (발견 #UI-2: detectMode 키워드 폐기 → 백엔드 문맥 분류) ===
+    // currentMode = 'auto'(백엔드 분류) 또는 명시(chat/note/svg, transient: 1회 후 auto 복귀).
+    let currentMode = 'auto';
+    const MODE_LABEL = { chat: '대화', note: '노트', svg: '도식', auto: '자동' };
+    const updateModePills = () => {
+      document.querySelectorAll('#mode-bar .mode-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.mode === currentMode);
+      });
     };
-    const MODE_LABEL = { chat: '대화', note: '노트', svg: '도식' };
+    document.querySelectorAll('#mode-bar .mode-pill').forEach(p => {
+      p.addEventListener('click', () => { currentMode = p.dataset.mode; updateModePills(); });
+    });
+    updateModePills();
 
     // === Render helpers ===
     const escapeHtml = (s) => (s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -1491,10 +1512,12 @@
     async function sendMessage() {
       const text = chatInput.value.trim();
       if (!text) return;
-      const mode = detectMode(text);
+      const mode = currentMode;  // #UI-2: auto(백엔드 분류) 또는 명시 강제
 
-      renderMsg('user', text, { mode });
+      renderMsg('user', text, { mode: mode === 'auto' ? null : mode });
       chatInput.value = '';
+      // transient: 명시 mode 는 1회 적용 후 auto 복귀 (BL-ζ: sticky 면 #UI-2 재현)
+      currentMode = 'auto'; updateModePills();
       sendBtn.disabled = true;
       const pendingRow = renderPending();
       setCharState('thinking');
@@ -1509,7 +1532,9 @@
         const entry = data.entry || {};
         pendingRow.remove();
 
-        if (mode === 'chat') {
+        // BL-η: 서버가 결정한 실제 mode 로 분기(로컬 mode 아님 — auto 면 서버가 분류).
+        const serverMode = data.mode || entry.mode || 'chat';
+        if (serverMode === 'chat') {
           const reply = entry.content || data.error || '(응답이 도착하지 않았어요)';
           const jarvisRow = renderMsg('jarvis', reply, { entryId: entry.id });
           if (data.proposal) renderTaskProposal(jarvisRow, data.proposal);  // 발견 #UI-1
@@ -1521,7 +1546,7 @@
             setCharState('idle');
           }
         } else {
-          renderMsg('jarvis', `${mode === 'note' ? '노트로 정리했어요' : '도식으로 그렸어요'} — 우측 패널을 보세요.`, { meta: '캔버스 갱신됨', entryId: entry.id });
+          renderMsg('jarvis', `${serverMode === 'note' ? '노트로 정리했어요' : '도식으로 그렸어요'} — 우측 패널을 보세요.`, { meta: '캔버스 갱신됨', entryId: entry.id });
           renderCanvasCard(entry);
           updateCanvasEmpty();
           setCharState('idle');

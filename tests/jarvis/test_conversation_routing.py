@@ -77,3 +77,68 @@ def test_multi_subtask_still_single_plan_path():
     decision = classify_for_routing("mathutil 만들고 실행해줘", boss)
     assert decision.is_task is True
     assert decision.subtask_count == 2
+
+
+# ── #UI-2 백엔드 통합 모드 판정 (classify_mode, 2-pass Pass1) ─────────
+from src.jarvis.conversation_routing import ModeDecision, classify_mode, VALID_MODES
+
+
+def test_classify_mode_returns_each_valid_mode():
+    for m in ("chat", "note", "svg", "task"):
+        d = classify_mode("입력", classifier=lambda t, _m=m: _m)
+        assert isinstance(d, ModeDecision)
+        assert d.mode == m
+
+
+def test_classify_mode_frozen():
+    import pytest
+    d = classify_mode("x", classifier=lambda t: "chat")
+    with pytest.raises(Exception):
+        d.mode = "note"  # type: ignore
+
+
+def test_classify_mode_empty_text_chat_no_call():
+    called = []
+    d = classify_mode("   ", classifier=lambda t: called.append(t) or "task")
+    assert d.mode == "chat"          # fail-CLOSED
+    assert called == []              # 빈 입력 = classifier 미호출(latency)
+
+
+def test_classify_mode_classifier_raises_fail_closed_chat():
+    def _boom(t):
+        raise RuntimeError("ollama down")
+    # 강한 동사 없는 입력(LLM 경로) → 실패 시 fail-CLOSED chat
+    assert classify_mode("회의 정리해줘", classifier=_boom).mode == "chat"
+
+
+def test_classify_mode_invalid_value_fail_closed_chat():
+    # enum 밖 값(LLM이 엉뚱한 라벨) → chat (BL: 화이트리스트 fail-CLOSED)
+    assert classify_mode("질문이요", classifier=lambda t: "diagram").mode == "chat"
+    assert classify_mode("질문이요", classifier=lambda t: "").mode == "chat"
+    assert classify_mode("질문이요", classifier=lambda t: None).mode == "chat"
+
+
+# ⭐ 규칙 1차: 강한 생성 동사 → task (LLM 우회, #UI-2 함정 보완)
+def test_classify_mode_strong_verb_forces_task_before_llm():
+    called = []
+    def _classifier(t):
+        called.append(t)
+        return "note"  # LLM이 note 라 해도
+    # PoC 유일 오분류 케이스 — 규칙 1차가 task 로 보완
+    d = classify_mode("계산기 만들어줘. 정리 노트에서 쓸 수 있게", classifier=_classifier)
+    assert d.mode == "task"
+    assert called == []  # 강한 동사 → LLM 호출 0
+
+
+def test_classify_mode_weak_verb_trusts_llm_note():
+    # "정리해줘"(약한 동사)는 LLM 문맥 판단에 위임 → 진짜 note 보존(회귀 방지)
+    assert classify_mode("회의 내용 정리해줘", classifier=lambda t: "note").mode == "note"
+
+
+def test_classify_mode_mixed_intent_task_priority():
+    # 혼합의도("노트로 정리하고 코드도 짜줘") → 강한 동사(짜줘) task 우선(사용자 결정)
+    assert classify_mode("노트로 정리하고 코드도 짜줘", classifier=lambda t: "note").mode == "task"
+
+
+def test_valid_modes_constant():
+    assert VALID_MODES == ("chat", "note", "svg", "task")

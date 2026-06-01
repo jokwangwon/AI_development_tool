@@ -44,6 +44,49 @@ class RoutingDecision:
     subtask_count: int
 
 
+# #UI-2 백엔드 통합 모드 판정 — 2-pass Pass1 (detectMode 키워드 폐기).
+# 합의 REVISE + PoC: 단일 결합 호출은 svg 88~99초로 사용 불가 → 분류-전용(1.1초)
+# 후 기존 생성 경로 재사용(2-pass). VALID_MODES 화이트리스트 밖/실패 → chat(fail-CLOSED).
+VALID_MODES = ("chat", "note", "svg", "task")
+
+# 규칙 1차(브리프 §5-1 + PoC): 강한 *소프트웨어 생성* 동사 = 명확한 task. note/svg
+# 요청엔 안 나타남("회의 정리해줘"·"흐름도 그려줘"엔 없음) → 이 동사가 있으면 LLM 분류
+# 전에 task 확정(PoC 분류-전용 유일 오분류 "계산기 만들어줘 정리 노트에서"=#UI-2 함정
+# 보완 + 혼합의도 task 우선 결정). 약한 동사(해줘/정리)는 LLM 문맥 판단에 위임.
+_STRONG_TASK_RE = re.compile(
+    r"(만들|구현|짜줘|짜 줘|개발|배포|리팩터|리팩토링|디버그|컴파일|스크립트.*작성)"
+)
+
+
+@dataclass(frozen=True)
+class ModeDecision:
+    """4-way 모드 분류 결과. mode ∈ VALID_MODES."""
+
+    mode: str
+
+
+def classify_mode(text: str, classifier) -> ModeDecision:
+    """raw message → 4-way mode (chat/note/svg/task). 2-pass Pass1.
+
+    classifier(text)->str 주입(seam) = LLM 분류-전용 호출(format=mode enum). 순수 로직:
+    빈 입력 → chat(classifier 미호출, latency). 예외/enum 밖/빈값 → chat(BL-2 fail-CLOSED,
+    BL-ε 화이트리스트). detectMode 키워드 정규식을 대체 — 명사/명령 문맥 구분(#UI-2).
+    """
+    text = (text or "").strip()
+    if not text:
+        return ModeDecision("chat")
+    # 규칙 1차: 강한 생성 동사 → task 확정(LLM 호출 0, #UI-2 함정·혼합의도 task 우선).
+    if _STRONG_TASK_RE.search(text):
+        return ModeDecision("task")
+    try:
+        mode = classifier(text)
+    except Exception:  # noqa: BLE001 — fail-CLOSED: 분류 실패 → chat(부작용 0 안전)
+        return ModeDecision("chat")
+    if mode not in VALID_MODES:
+        return ModeDecision("chat")
+    return ModeDecision(mode)
+
+
 def classify_for_routing(text: str, planner: BossPlanner) -> RoutingDecision:
     """대화 텍스트 → 라우팅 결정 (A3 + B2 + fail-CLOSED).
 

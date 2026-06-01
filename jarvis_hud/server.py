@@ -20,8 +20,9 @@ if _ROOT not in sys.path:
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
-from src.jarvis.conversation_routing import (  # noqa: E402  # 발견 #UI-1 대화→작업 라우팅 분류
+from src.jarvis.conversation_routing import (  # noqa: E402  # 발견 #UI-1/#UI-2 대화 라우팅·모드 분류
     classify_for_routing,
+    classify_mode,
     looks_like_task,
 )
 from src.jarvis.model_measurement_repo import open_reader_repo  # noqa: E402  # §10-5b-reader 측정 repo
@@ -231,6 +232,40 @@ def _make_routing_planner(model: str):
     return OllamaBoss(model=model, timeout_s=60.0)
 
 
+# #UI-2 모드 분류 (2-pass Pass1) — 분류-전용 grammar 호출. detectMode 키워드 폐기.
+_MODE_CLASSIFY_SCHEMA = {
+    "type": "object",
+    "properties": {"mode": {"type": "string", "enum": ["chat", "note", "svg", "task"]}},
+    "required": ["mode"],
+}
+_MODE_CLASSIFY_SYS = (
+    "사용자 입력의 의도를 분류하세요. "
+    "task=개발/실행 작업 요청(프로그램·스크립트·파일을 만들기/고치기/실행). "
+    "note=내용 정리/메모/요약 요청. svg=도식/그림/다이어그램 요청. "
+    "chat=그 외 일반 대화·질문. "
+    "주의: '정리 노트'처럼 명사로 쓰인 단어는 그 자체로 note가 아니다 — 문장의 진짜 행동 의도로 판단."
+)
+
+
+def _make_mode_classifier(model: str):
+    """#UI-2 분류-전용 콜러블(seam). text -> mode str. 실패 시 raise → classify_mode 가
+    fail-CLOSED(chat)로 흡수. format=enum grammar(분류만, 생성 0 → ~1.1초, PoC 실측).
+    Provider Liquidity: model 인자만으로 교체. 테스트는 이 함수 monkeypatch."""
+    def classify(text: str) -> str:
+        payload = {
+            "model": model,
+            "stream": False,
+            "messages": [{"role": "system", "content": _MODE_CLASSIFY_SYS},
+                         {"role": "user", "content": text}],
+            "format": _MODE_CLASSIFY_SCHEMA,
+        }
+        result = _ollama_chat_sync(payload, timeout=60)
+        content = result.get("message", {}).get("content", "")
+        return json.loads(content).get("mode")
+
+    return classify
+
+
 async def respond_handler(request):
     """사용자 메시지 + mode → 자비스 응답 (chat/note/svg). JSONL 저장."""
     try:
@@ -240,10 +275,18 @@ async def respond_handler(request):
         mode = data.get("mode", "chat")
         model = data.get("model", "qwen3-30b-a3b-instruct-2507-bartowski:latest")
         conversation_id = data.get("conversation_id")  # §10-4b: 미지정 시 default 대화
-        if mode not in MODE_PROMPTS:
-            mode = "chat"
         if not message:
             return JSONResponse({"error": "Missing message"}, status_code=400)
+
+        # 발견 #UI-2: mode=="auto" → 백엔드 4-way 문맥 분류(2-pass Pass1, detectMode 폐기).
+        # task/미지값 → chat 생성으로 매핑(BL-ε: MODE_PROMPTS 화이트리스트 보존). 명시
+        # mode(chat/note/svg)는 분류 스킵(transient 버튼 = deterministic 탈출구).
+        if mode == "auto":
+            classifier = _make_mode_classifier(model)
+            resolved = await asyncio.to_thread(lambda: classify_mode(message, classifier).mode)
+            mode = resolved if resolved in MODE_PROMPTS else "chat"
+        if mode not in MODE_PROMPTS:
+            mode = "chat"
 
         prompt = MODE_PROMPTS[mode].format(message=message)
         payload = {

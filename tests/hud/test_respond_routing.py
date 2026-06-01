@@ -84,3 +84,79 @@ def test_chat_task_but_empty_plan_no_proposal(monkeypatch):
     r = TestClient(server.app).post(
         "/api/respond", json={"message": "뭐 만들까 생각중", "mode": "chat"})
     assert "proposal" not in r.json()
+
+
+# ── #UI-2 백엔드 통합 모드 판정 (mode="auto" → classify_mode) ──────────
+def _patch_classifier(monkeypatch, mode_value, *, track=None):
+    def factory(model):
+        def classify(text):
+            if track is not None:
+                track.append(text)
+            return mode_value
+        return classify
+    monkeypatch.setattr(server, "_make_mode_classifier", factory)
+
+
+def test_auto_classifies_note_routes_to_note(monkeypatch):
+    _patch_common(monkeypatch)
+    _patch_classifier(monkeypatch, "note")
+    r = TestClient(server.app).post(
+        "/api/respond", json={"message": "회의 내용 정리해줘", "mode": "auto"})
+    body = r.json()
+    assert body["mode"] == "note"
+    assert body["entry"]["type"] == "note"
+    assert "proposal" not in body  # note → 작업 라우팅 스킵
+
+
+def test_auto_classifies_task_maps_to_chat_with_proposal(monkeypatch):
+    """⭐#UI-2 핵심: 명사 함정 작업이 task 분류 → chat 생성 + proposal."""
+    _patch_common(monkeypatch)
+    _patch_classifier(monkeypatch, "task")  # 분류기가 task 판정
+    monkeypatch.setattr(server, "_make_routing_planner",
+                        lambda model: StubBoss("x", plan=BossPlan(
+                            subtasks=(PlanSubtask("계산기 작성", "claude"),))))
+    r = TestClient(server.app).post(
+        "/api/respond",
+        json={"message": "계산기 만들어줘. 정리 노트에서 쓸 수 있게", "mode": "auto"})
+    body = r.json()
+    assert body["mode"] == "chat"  # task → chat 생성 매핑(BL-ε)
+    assert body["proposal"]["prompt"] == "계산기 만들어줘. 정리 노트에서 쓸 수 있게"  # BL-δ 원문
+    assert body["proposal"]["subtask_count"] == 1
+
+
+def test_auto_classifies_chat_no_proposal(monkeypatch):
+    _patch_common(monkeypatch)
+    _patch_classifier(monkeypatch, "chat")
+    created = []
+    monkeypatch.setattr(server, "_make_routing_planner",
+                        lambda model: created.append(model) or StubBoss("x"))
+    r = TestClient(server.app).post(
+        "/api/respond", json={"message": "안녕", "mode": "auto"})
+    body = r.json()
+    assert body["mode"] == "chat"
+    assert "proposal" not in body
+    assert created == []  # 잡담 → planner 생성 0 (latency 불변식)
+
+
+def test_auto_classifier_failure_fail_closed_chat(monkeypatch):
+    _patch_common(monkeypatch)
+    monkeypatch.setattr(server, "_make_routing_planner", lambda model: StubBoss("x"))  # 빈 plan(실 ollama 0)
+    def factory(model):
+        def classify(text):
+            raise RuntimeError("ollama down")
+        return classify
+    monkeypatch.setattr(server, "_make_mode_classifier", factory)
+    r = TestClient(server.app).post(
+        "/api/respond", json={"message": "회의 정리해줘", "mode": "auto"})
+    assert r.json()["mode"] == "chat"  # 분류 실패 → fail-CLOSED chat
+
+
+def test_explicit_mode_skips_classifier(monkeypatch):
+    """명시 mode(note) → 분류기 미호출(transient 버튼 = 분류 스킵)."""
+    _patch_common(monkeypatch)
+    track = []
+    _patch_classifier(monkeypatch, "task", track=track)
+    r = TestClient(server.app).post(
+        "/api/respond", json={"message": "회의 정리해줘", "mode": "note"})
+    assert r.json()["mode"] == "note"
+    assert track == []  # 명시 mode → classify 미호출

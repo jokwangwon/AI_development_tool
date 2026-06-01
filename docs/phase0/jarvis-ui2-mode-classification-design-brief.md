@@ -1,11 +1,26 @@
 # 설계 brief — #UI-2 백엔드 통합 모드 판정 (detectMode 키워드 폐기)
 
-> **상태**: v1 (사용자 검토 대기) · **출처**: 119 발견 #UI-2 + 120 세션 정확성 측정
+> **상태**: v2 (3+1 합의 REVISE + PoC 반영, TDD 진입) · **출처**: 119 발견 #UI-2 + 120 측정/PoC
 > **상위**: `jarvis-conversation-task-routing-design-brief.md`(#UI-1, BL-4가 이 충돌 예측)
+> **합의**: `docs/review/3plus1-consensus-2026-06-01-jarvis-ui2-mode-classification.md` (REVISE)
 > **핵심 명제**: 프론트 `detectMode` 키워드 게이트를 **백엔드 LLM 문맥 분류**로 대체
-> **다음 단계**: 검토 → 3+1 합의(기존 note/svg 동작 변경 = 큰 변경) → TDD (자동 진입 0)
+> **다음 단계**: TDD (자동 진입 0)
 
 ---
+
+## 0. v1 → v2 변경 (3+1 합의 + PoC)
+
+| 항목 | v1 | v2 | 근거 |
+|---|---|---|---|
+| 호출 구조 | 단일 결합(사용자 결정) | **2-pass 분류-우선** | ⭐PoC: 단일결합 svg **88~99초**(사용 불가) vs 분류-전용 1.1초·91% |
+| 명시 버튼 | 추가 | **transient**(1회 후 auto 복귀) | BL-ζ, 사용자 결정 |
+| 혼합의도 | 미정 | **task 우선 + 나머지 후속** | 사용자 결정 |
+| §1 framing | "100% 측정됨" | **task 라우팅 한정** 명시 | over-claim 정정(B) |
+| 프론트 범위 | "raw만 전송" | + **렌더 분기를 서버 `data.mode` 기반 재작성** | BL-η(Reviewer 신규) |
+| task valid mode | 암묵 | **MODE_PROMPTS 화이트리스트 밖 처리** | BL-ε |
+| proposal.prompt | 암묵 | **원본 message 고정**(LLM 재작성 금지) | BL-δ |
+
+**PoC 결과 (실 ollama 11케이스)**: 단일결합 분류 100%·null누수0 but **latency 12~99초(svg 재앙)**. 분류-전용 91%(1.1초)·**note/svg 회귀 4/4 보존**. 유일 오분류("계산기 만들어줘 정리 노트에서")는 `looks_like_task("만들어줘")` 규칙 필터가 보완. → **2-pass 규칙1차 하이브리드 확정**(#UI-1 A3 패턴 4-way 확장).
 
 ## 1. 배경 + 측정 증거 (before-state)
 
@@ -21,6 +36,16 @@
 → **약한 고리는 라우팅 브레인이 아니라 프론트 detectMode 키워드 게이트**. 정량 확인.
 ⚠️ 12케이스 수기 배터리 = 통계적 일반화 아님(이 배터리 기준). 실 영향은 작업 요청에
 해당 명사 빈도에 의존 — `정리/노트/메모/요약/그림` 흔한 단어라 비무시.
+⚠️ **over-claim 정정(합의 B)**: 위 "100%"는 **task 라우팅 판정 한정** 측정. **note/svg
+분류 정확도는 별개** — PoC-2(아래)가 측정. 4-way 근거로 "100%"를 확장하면 over-claim.
+
+**PoC-1/PoC-2 측정 (실 ollama 11케이스, `/tmp/poc_ui2_classification.py`)**:
+| 방식 | 분류 정확도 | latency | note/svg 회귀 |
+|---|---|---|---|
+| 단일 결합(분류+생성) | 11/11=100%·null누수0 | ⚠️**svg 88~99초·note 12초·chat 20초** | 4/4 |
+| **분류-전용(2-pass stage1)** | 10/11=91% | **평균 1.1초** | **4/4 보존** |
+- 분류-전용 유일 오분류("계산기 만들어줘 정리 노트에서")는 `looks_like_task` 규칙이 보완.
+- chat 품질: 결합 reply ≈ 평문 baseline(품질 OK, 문제는 결합 latency뿐). → **2-pass 확정.**
 
 ## 2. 현 구조 진단 (실측)
 
@@ -64,27 +89,28 @@
 
 ## 5. 설계 — 통합 분류
 
-### 5-1. 분류 계약
-- 입력: raw message. 출력: `{mode: chat|note|svg|task, (task면) prompt, subtask_count}`.
-- 위치: 백엔드(`conversation_routing` 확장 또는 신규 `classify_mode`). 프론트는 hint 없이 raw 전송.
-- fail-CLOSED: 분류 실패·모호 → **chat**(가장 안전 — 원치 않는 작업/캔버스 부작용 0).
+### 5-1. 분류 계약 (2-pass 분류-우선, PoC 확정)
+- **Pass 1 — 분류**: raw message → `classify_mode(text, classifier)` → `mode ∈ {chat,note,svg,task}`.
+  규칙 1차(`looks_like_task` 류) 우선 + LLM 분류-전용 호출(format=mode enum, ~1.1초).
+  fail-CLOSED: 분류 실패·모호·enum 밖 → **chat**.
+- **Pass 2 — 생성**: 분류된 mode로 **기존 생성 경로 그대로**(MODE_PROMPTS[note/svg], CHAT_PROMPT).
+  → 비목표("생성 프롬프트 변경 안 함") 진짜 보존. **단일 결합 폐기**(PoC svg 88~99초).
+- **task 처리(갈림길2=a)**: task/chat 둘 다 **conversational 경로**(chat 답변 생성 + 기존
+  `looks_like_task`→`classify_for_routing`→proposal). **BL-ε**: task는 MODE_PROMPTS 화이트리스트
+  *밖*에서 chat 생성으로 매핑(현 `if mode not in MODE_PROMPTS: chat` 검증 보존). **BL-δ**:
+  proposal.prompt = **원본 message 고정**(현 `decision.prompt=text` 불변식).
+- **프론트(BL-η)**: detectMode 폐기, 기본 `mode="auto"` 전송. **렌더 분기를 로컬 mode →
+  서버 응답 `data.mode`/`data.entry.type` 기반으로 재작성**.
 
-### 5-2. 핵심 갈림길 (검토/합의 결정)
-1. **호출 수 / latency** ⭐ → **▶ 사용자 결정: (a) 단일 결합 호출**(1회 LLM이 분류+생성
-   동시, structured output `{mode, content/parsed}`). note/svg latency 회귀 0. 합의 안건 =
-   결합 프롬프트 설계 실현성(분류+4-way 생성 한 호출에 + structured output 파싱 견고성).
-2. **task 처리**: task 분류 시 (a) chat 답변 생성+proposal 동반(현 동작 유지) vs (b) 생성
-   스킵하고 proposal만. 현재는 chat 답변 안에 proposal. (단일 결합 호출 채택 → task도 한
-   호출에서 분류+chat답변+proposal 산출 형태 검토.)
-3. **명시 override** → **▶ 사용자 결정: 명시 모드 버튼 추가**. 백엔드 자동 분류가 기본,
-   chat/노트/도식 버튼으로 사용자 강제 가능(분류 오류 시 deterministic 탈출구). 버튼 지정 시
-   해당 mode 고정(분류 스킵). 합의 안건 = 버튼 UX + "auto" 기본 상태 표현.
-4. **프론트 hint 잔존 여부**: 완전 raw vs 약한 prior(detectMode를 hint로만, 백엔드가 최종).
-   (명시 버튼 채택 → 버튼 미지정=auto는 완전 백엔드 분류, detectMode 정규식 폐기.)
-5. **분류 신뢰도/임계**: LLM 분류의 fail-safe 방향 + 저신뢰 시 chat 강등 임계.
-
-**▶ 사용자 결정 요약 (검토 시)**: 갈림길1 = 단일 결합 호출 / 갈림길3 = 명시 모드 버튼
-추가(auto 기본). 나머지(2·4·5)는 합의에서 결정.
+### 5-2. 갈림길 — 합의/PoC 확정 상태
+| # | 갈림길 | 확정 |
+|---|---|---|
+| 1 호출 구조 | **2-pass 분류-우선** (PoC: 단일결합 svg 88~99초 사용불가) |
+| 2 task 처리 | **(a) chat답변+proposal 동반** (합의 만장일치) |
+| 3 명시 override | **명시 모드 버튼(chat/노트/도식) + transient**(1회 후 auto 복귀, BL-ζ) |
+| 4 프론트 hint | **완전 raw**(detectMode 폐기), auto=백엔드 분류 |
+| 5 신뢰도 임계 | **이진 fail-CLOSED**(파싱실패/enum밖→chat), 수치 threshold **고정 0건** |
+| 혼합의도 | **task 우선 + 나머지 후속**(복합 라벨 후속 분리) |
 
 ## 6. 보안 / 신뢰 경계
 - **BL-1 보존**: 분류는 순수 판정(부작용 0). board.create/run 직접 호출 0 — task면 proposal

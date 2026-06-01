@@ -1,6 +1,7 @@
 from starlette.applications import Starlette
 from starlette.responses import FileResponse, JSONResponse, Response
-from starlette.routing import Route, WebSocketRoute
+from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
 from starlette.websockets import WebSocket, WebSocketDisconnect
 from uvicorn import run
 import asyncio
@@ -604,6 +605,38 @@ from jarvis_hud.jarvis_plan import JarvisPlanBoard, make_jarvis_plan_routes  # n
 
 _plan_board = JarvisPlanBoard(ledger=LedgerLog(paths.plans_ledger_path()))
 routes += make_jarvis_plan_routes(_plan_board)
+
+# ── 플러그인 인프라 (단계2, #UI-1~4 통합) ─────────────────────────────
+# 데이터 레지스트리(C-4): jarvis_hud/plugins/<name>/plugin.json 탐색 → enabled.json
+# 명시 등록된 것만 활성화(탐색≠활성화, self-mod 우회 차단). 코어는 이 1블록만 — 새
+# 플러그인 추가는 데이터(폴더+enabled 등록)로, server.py 코드 불변.
+from src.jarvis.plugin_registry import (  # noqa: E402
+    build_plugin_routes,
+    discover_enabled_plugins,
+)
+
+_PLUGINS_DIR = os.path.join(_ROOT, "jarvis_hud", "plugins")
+_PLUGINS_ENABLED = os.path.join(_PLUGINS_DIR, "enabled.json")
+
+
+def _plugin_available_ports() -> dict:
+    """플러그인에 주입 가능한 capability 포트 (갈림길5 최소권한 — 대화 read-only /
+    측정 read·write). select_ports 가 manifest 선언분만 골라 전달."""
+    from src.jarvis.model_measurement_repo import append_measurement, open_reader_repo
+
+    return {
+        "conversation:read": _conversation_repo,  # 대화 read (선언한 플러그인만)
+        "measurement:read": open_reader_repo,
+        "measurement:write": append_measurement,
+    }
+
+
+_active_plugins = discover_enabled_plugins(_PLUGINS_DIR, _PLUGINS_ENABLED)
+routes += build_plugin_routes(_active_plugins, _plugin_available_ports())
+
+# 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
+if os.path.isdir(_PLUGINS_DIR):
+    routes.append(Mount("/plugins", app=StaticFiles(directory=_PLUGINS_DIR)))
 
 app = Starlette(debug=False, routes=routes)
 

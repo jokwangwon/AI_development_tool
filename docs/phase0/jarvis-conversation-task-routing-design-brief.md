@@ -136,8 +136,25 @@ UI 대화창과 작업 실행이 **완전히 분리**되어 있어, 사용자가
 - plan board 영속성 부재 → task `_restore` fold 패턴(`jarvis_tasks.py:159`) 이식 (작은 갭).
 - qwen3-30b "작업/잡담" 분류 정확도(한국어 변형) 실측 — grammar≠정확도.
 
-## 9. UX 컨펌 (`[[feedback_ui_design_confirm_first]]`)
-대화창에서 작업 감지 시 화면 표현(자동 카드 / 제안 버튼 / mode-tag "작업")은 **구현 전 mockup 컨펌** 필요. 7-③ 결정과 묶임.
+## 9. UX 컨펌 — **mockup A 확정 (사용자, 119)** (`[[feedback_ui_design_confirm_first]]`)
+
+3안(A 인라인 카드 / B 독립 배너 / C 배지 태그) 중 **A 인라인 카드** 채택.
+```
+┌─ J ──────────────────────────────────┐
+│ 네, 그건 작업으로 해드릴 수 있어요.       │   ← jarvis chat 응답(boss)
+│ ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ │   ← 구분선(--border)
+│ 🛠 작업 감지                            │
+│ "mathutil.py에 gcd 함수 작성"          │   ← 작업 요약(prompt, textContent)
+│                                       │
+│ [ ▶ 작업으로 실행 ]   [ 그냥 대화 ]      │   ← 2버튼
+└───────────────────────────────────────┘
+```
+### 시각 명세
+- 위치: jarvis 응답 메시지 **버블 내부 하단** (대화 흐름 유지).
+- `[▶ 작업으로 실행]`: accent(`--accent #a8d5e8`) 테두리 강조. 클릭 → `POST /api/jarvis/plan` → 전역 폴링이 awaiting 감지 → 승인 모달 자동 표출.
+- `[그냥 대화]`: 보조 버튼(`--border`), 클릭 시 제안 영역만 닫힘(작업 미생성).
+- 구분선 + "🛠 작업 감지" 라벨로 chat 응답과 제안 영역 구분.
+- ★ 보안(Agent A): 제안 영역은 `renderMsg`의 innerHTML 조립이 아니라 **`createElement`/`textContent`로 별도 append**(XSS 표면 회피, plan/task 카드 패턴 답습).
 
 ---
 

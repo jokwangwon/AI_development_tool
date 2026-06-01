@@ -627,6 +627,21 @@
       letter-spacing: 0.04em;
       margin-bottom: 6px;
     }
+    /* 발견 #UI-1 대화→작업 라우팅 제안 카드 (mockup A: jarvis 버블 내부 하단) */
+    .task-proposal { margin-top: 10px; }
+    .task-proposal-sep { border-top: 1px solid var(--border); margin: 8px 0 10px; }
+    .task-proposal-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    .task-proposal-desc { font-size: 13px; color: var(--text); opacity: 0.85; margin-bottom: 10px; word-break: break-word; }
+    .task-proposal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .task-proposal-run, .task-proposal-dismiss {
+      border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+      background: transparent; transition: background 150ms, color 150ms;
+    }
+    .task-proposal-run { border: 1px solid var(--accent); color: var(--accent); }
+    .task-proposal-run:hover { background: rgba(168, 213, 232, 0.10); }
+    .task-proposal-run:disabled { opacity: 0.5; cursor: default; }
+    .task-proposal-dismiss { border: 1px solid var(--border); color: var(--text-dim); }
+    .task-proposal-dismiss:hover { color: var(--text); }
 
     /* === Input row === */
     .input-bar {
@@ -1234,6 +1249,61 @@
       return row;
     };
 
+    // 발견 #UI-1 대화→작업 라우팅 제안 카드 (mockup A). createElement/textContent
+    // 전용 — XSS 회피(Agent A). [작업으로 실행] 클릭 → POST /api/jarvis/plan →
+    // 전역 plan 폴링(loadJarvisPlans 1s)이 awaiting 감지 → 승인 모달 자동 표출(BL-1).
+    const renderTaskProposal = (row, proposal) => {
+      const content = row.querySelector('.msg-content');
+      if (!content || !proposal || !proposal.prompt) return;
+      const box = document.createElement('div');
+      box.className = 'task-proposal';
+
+      const sep = document.createElement('div');
+      sep.className = 'task-proposal-sep';
+      const label = document.createElement('div');
+      label.className = 'task-proposal-label';
+      label.textContent = '🛠 작업 감지';
+      const desc = document.createElement('div');
+      desc.className = 'task-proposal-desc';
+      desc.textContent = `"${proposal.prompt}"`;
+
+      const actions = document.createElement('div');
+      actions.className = 'task-proposal-actions';
+      const runBtn = document.createElement('button');
+      runBtn.className = 'task-proposal-run';
+      runBtn.textContent = '▶ 작업으로 실행';
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'task-proposal-dismiss';
+      dismissBtn.textContent = '그냥 대화';
+
+      runBtn.addEventListener('click', async () => {
+        runBtn.disabled = true;
+        runBtn.textContent = '작업 생성 중…';
+        try {
+          await fetch('/api/jarvis/plan', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: proposal.prompt }),
+          });
+          // 승인 모달은 전역 폴링이 자동 표출 — 제안 영역만 정리.
+          desc.textContent = '✓ 작업으로 보냈어요. 승인 창을 확인하세요.';
+          actions.remove();
+        } catch (e) {
+          runBtn.disabled = false;
+          runBtn.textContent = '▶ 작업으로 실행 (재시도)';
+        }
+      });
+      dismissBtn.addEventListener('click', () => box.remove());
+
+      actions.appendChild(runBtn);
+      actions.appendChild(dismissBtn);
+      box.appendChild(sep);
+      box.appendChild(label);
+      box.appendChild(desc);
+      box.appendChild(actions);
+      content.appendChild(box);
+      messages.parentElement.scrollTop = messages.parentElement.scrollHeight;
+    };
+
     const renderPending = () => {
       const row = document.createElement('div');
       row.className = 'msg-row jarvis pending';
@@ -1441,7 +1511,8 @@
 
         if (mode === 'chat') {
           const reply = entry.content || data.error || '(응답이 도착하지 않았어요)';
-          renderMsg('jarvis', reply, { entryId: entry.id });
+          const jarvisRow = renderMsg('jarvis', reply, { entryId: entry.id });
+          if (data.proposal) renderTaskProposal(jarvisRow, data.proposal);  // 발견 #UI-1
           // TTS — settings 답습
           if (window.__hanaSpeak) {
             window.__hanaSpeak(reply);

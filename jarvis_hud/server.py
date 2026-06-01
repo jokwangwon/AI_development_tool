@@ -19,6 +19,10 @@ if _ROOT not in sys.path:
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
+from src.jarvis.conversation_routing import (  # noqa: E402  # 발견 #UI-1 대화→작업 라우팅 분류
+    classify_for_routing,
+    looks_like_task,
+)
 from src.jarvis.model_measurement_repo import open_reader_repo  # noqa: E402  # §10-5b-reader 측정 repo
 
 def _check_ollama_health_sync():
@@ -214,6 +218,18 @@ async def _save_conversation_entry(entry: dict, conversation_id: str | None = No
     _conversation_repo.append(entry, conversation_id)
 
 
+def _make_routing_planner(model: str):
+    """발견 #UI-1 라우팅 분류용 BossPlanner — 로컬 ollama(분류·분해 통합).
+
+    매 요청 생성(stateless·미미한 비용). timeout=60s(분류엔 chat 180s 과함, BL-5).
+    seam: 테스트는 이 함수를 monkeypatch 해 StubBoss 주입(hermetic).
+    Provider Liquidity: model 인자만으로 교체(코드 변경 0).
+    """
+    from src.jarvis.boss import OllamaBoss  # noqa: PLC0415 — 지연 import(모듈 결합 최소)
+
+    return OllamaBoss(model=model, timeout_s=60.0)
+
+
 async def respond_handler(request):
     """사용자 메시지 + mode → 자비스 응답 (chat/note/svg). JSONL 저장."""
     try:
@@ -236,6 +252,18 @@ async def respond_handler(request):
         }
         result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         raw_reply = result.get("message", {}).get("content", "")
+
+        # 발견 #UI-1 대화→작업 라우팅 (A3 하이브리드 + B2 + fail-CLOSED).
+        # chat mode 한정(BL-4: note/svg 는 detectMode 가 먼저 가져감). 규칙 1차
+        # 필터(looks_like_task, 0ms) 통과 시에만 boss.plan 1회(to_thread 비차단).
+        # is_task 면 proposal *페이로드만* 반환 — board.create/run 직접 호출 0(BL-1).
+        proposal = None
+        if mode == "chat" and looks_like_task(message):
+            planner = _make_routing_planner(model)
+            decision = await asyncio.to_thread(classify_for_routing, message, planner)
+            if decision.is_task:
+                proposal = {"prompt": decision.prompt,
+                            "subtask_count": decision.subtask_count}
 
         # mode 별 후처리
         parsed = None
@@ -283,7 +311,10 @@ async def respond_handler(request):
             }
         await _save_conversation_entry(jarvis_entry, conversation_id)
 
-        return JSONResponse({"mode": mode, "entry": jarvis_entry})
+        resp = {"mode": mode, "entry": jarvis_entry}
+        if proposal is not None:  # 발견 #UI-1: 작업 감지 시에만 제안 페이로드 동봉
+            resp["proposal"] = proposal
+        return JSONResponse(resp)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

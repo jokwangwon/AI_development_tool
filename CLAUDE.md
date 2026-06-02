@@ -186,8 +186,16 @@ Phase 5: 보고 (Report)
 ### 브랜치 전략 (Simplified Git Flow)
 
 - `main`: 안정 버전 (PR만 허용)
-- `develop`: 일상 개발 브랜치
+- `develop`: 일상 개발 통합 브랜치
 - `feature/*`: 기능 개발 브랜치
+
+**흐름 (비협상)**:
+```
+feature/* ──PR(잦음)──▶ develop ──[특정 큰 분기에만]──▶ main
+```
+- feature 작업의 **PR 베이스 = `develop`** (main 아님). 잦은 주기.
+- **`main` 으로의 push/PR 은 "특정한 큰 분기"(마일스톤) 시점에만**, 그리고 **사용자가 명시할 때만**. feature마다 main 가지 않음.
+- ⛔ **main 으로의 push/PR 을 자동·관성으로 하지 말 것.** develop 검증·정리 완료 + 사용자 명시가 동시 충족돼야 함.
 
 ### 커밋 메시지 (Conventional Commits)
 

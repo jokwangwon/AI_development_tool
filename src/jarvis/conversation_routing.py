@@ -1,7 +1,9 @@
 """대화→작업 라우팅 분류 — 발견 #UI-1 (디딤돌, 119 세션).
 
-답습: docs/phase0/jarvis-conversation-task-routing-design-brief.md (v3)
-  [[3plus1-consensus-2026-06-01-jarvis-conversation-task-routing]] (REVISE).
+답습 SDD: docs/phase0/ 대화→작업 라우팅 설계 brief v3
+  + 그 3+1 합의(docs/review/, 2026-06-01, REVISE).
+  (영문 kebab 파일명은 secret-scanner 의 키 prefix 패턴을 오탐시켜 한글로 풀어 적음
+   — docs/phase0·docs/review 에서 "라우팅" brief/합의로 식별.)
 
 확정 설계(§7):
   - A3 하이브리드: 규칙 1차 필터(`looks_like_task`, 0ms·결정적) → 작업 의심

@@ -2281,6 +2281,43 @@
         document.body.appendChild(s);
       }
     }
+
+    // 외부 관제형 읽기측 (패턴1 링크 허브 MVP, 127 합의). 외부 시스템 입구를 링크
+    // 카드로 모음 — 읽기 전용(제어·자격증명 0). provenance(origin==jarvis)는 서버가
+    // 강제하고 응답엔 비노출. 엔트리 0 이면 탭을 만들지 않음(빈 UI 방지).
+    async function loadExternal() {
+      let list = [];
+      try { const r = await fetch('/api/jarvis/external'); list = (await r.json()).external || []; } catch (e) {}
+      if (!list.length) return;
+      const titleBar = document.querySelector('.canvas-title');
+      const canvasAside = document.querySelector('.canvas');
+      const tab = document.createElement('span');
+      tab.className = 'canvas-tab';
+      tab.style.cssText = 'cursor:pointer; opacity:0.45;';
+      tab.textContent = '🌐 외부';
+      titleBar.appendChild(tab);
+      const panel = document.createElement('div');
+      panel.style.display = 'none';
+      for (const x of list) {
+        const card = document.createElement('a');
+        // 서버가 url 을 http(s) 로 검증하지만 방어심층: 새 탭 + opener 차단.
+        card.href = x.url;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); text-decoration:none; cursor:pointer;';
+        const label = document.createElement('span');
+        label.style.cssText = 'flex:1; min-width:0;';
+        label.textContent = (x.icon ? x.icon + ' ' : '') + x.title;  // textContent = XSS 차단
+        const arrow = document.createElement('span');
+        arrow.textContent = '↗';
+        arrow.style.cssText = 'color:var(--text-dim);';
+        card.appendChild(label); card.appendChild(arrow);
+        panel.appendChild(card);
+      }
+      canvasAside.appendChild(panel);
+      _pluginPanels['__external__'] = { tab, panel, mounted: true };
+      tab.addEventListener('click', () => setCanvasView('plugin:__external__'));
+    }
     $('jarvis-submit').addEventListener('click', submitJarvisTask);
     $('jarvis-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitJarvisTask(); });
     $('jarvis-clear-done').addEventListener('click', dismissCompleted);
@@ -2290,6 +2327,7 @@
     if (_newChatBtn) _newChatBtn.addEventListener('click', newConversation);  // §10-4b
     initConversations();
     loadPlugins();  // 단계4: enabled 플러그인 패널 동적 로드
+    loadExternal();  // 127: 외부 관제형 읽기측 링크 허브
     chatInput.focus();
   </script>
 </body>

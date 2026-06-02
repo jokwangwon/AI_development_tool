@@ -687,6 +687,15 @@ routes += make_plugin_admin_routes(
     work_root=_PLUGIN_WORK_ROOT, plugins_dir=_PLUGINS_DIR, enabled_file=_PLUGINS_ENABLED
 )
 
+# ── 외부 관제형 읽기측 (패턴1 링크 허브 MVP, 127 합의 승인분) ──────────
+# 외부에서 독립 운용하는(자비스 도움 프로젝트 한정) 시스템을 HUD 에 링크 카드로 모음.
+# 읽기 전용 — 제어·자격증명·게이트 0(제어측 §3.5 는 별도 풀3+1 + DEFER). provenance
+# fail-closed(origin==jarvis)는 external_registry 가 강제.
+from jarvis_hud.external_routes import make_external_routes  # noqa: E402
+
+_EXTERNAL_REGISTRY = os.path.join(_ROOT, "jarvis_hud", "external", "registry.json")
+routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY)
+
 # 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
 if os.path.isdir(_PLUGINS_DIR):
     routes.append(Mount("/plugins", app=StaticFiles(directory=_PLUGINS_DIR)))

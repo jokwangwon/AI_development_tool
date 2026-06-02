@@ -1,6 +1,7 @@
 from starlette.applications import Starlette
 from starlette.responses import FileResponse, JSONResponse, Response
-from starlette.routing import Route, WebSocketRoute
+from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
 from starlette.websockets import WebSocket, WebSocketDisconnect
 from uvicorn import run
 import asyncio
@@ -19,6 +20,11 @@ if _ROOT not in sys.path:
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
+from src.jarvis.conversation_routing import (  # noqa: E402  # 발견 #UI-1/#UI-2 대화 라우팅·모드 분류
+    classify_for_routing,
+    classify_mode,
+    looks_like_task,
+)
 from src.jarvis.model_measurement_repo import open_reader_repo  # noqa: E402  # §10-5b-reader 측정 repo
 
 def _check_ollama_health_sync():
@@ -214,6 +220,52 @@ async def _save_conversation_entry(entry: dict, conversation_id: str | None = No
     _conversation_repo.append(entry, conversation_id)
 
 
+def _make_routing_planner(model: str):
+    """발견 #UI-1 라우팅 분류용 BossPlanner — 로컬 ollama(분류·분해 통합).
+
+    매 요청 생성(stateless·미미한 비용). timeout=60s(분류엔 chat 180s 과함, BL-5).
+    seam: 테스트는 이 함수를 monkeypatch 해 StubBoss 주입(hermetic).
+    Provider Liquidity: model 인자만으로 교체(코드 변경 0).
+    """
+    from src.jarvis.boss import OllamaBoss  # noqa: PLC0415 — 지연 import(모듈 결합 최소)
+
+    return OllamaBoss(model=model, timeout_s=60.0)
+
+
+# #UI-2 모드 분류 (2-pass Pass1) — 분류-전용 grammar 호출. detectMode 키워드 폐기.
+_MODE_CLASSIFY_SCHEMA = {
+    "type": "object",
+    "properties": {"mode": {"type": "string", "enum": ["chat", "note", "svg", "task"]}},
+    "required": ["mode"],
+}
+_MODE_CLASSIFY_SYS = (
+    "사용자 입력의 의도를 분류하세요. "
+    "task=개발/실행 작업 요청(프로그램·스크립트·파일을 만들기/고치기/실행). "
+    "note=내용 정리/메모/요약 요청. svg=도식/그림/다이어그램 요청. "
+    "chat=그 외 일반 대화·질문. "
+    "주의: '정리 노트'처럼 명사로 쓰인 단어는 그 자체로 note가 아니다 — 문장의 진짜 행동 의도로 판단."
+)
+
+
+def _make_mode_classifier(model: str):
+    """#UI-2 분류-전용 콜러블(seam). text -> mode str. 실패 시 raise → classify_mode 가
+    fail-CLOSED(chat)로 흡수. format=enum grammar(분류만, 생성 0 → ~1.1초, PoC 실측).
+    Provider Liquidity: model 인자만으로 교체. 테스트는 이 함수 monkeypatch."""
+    def classify(text: str) -> str:
+        payload = {
+            "model": model,
+            "stream": False,
+            "messages": [{"role": "system", "content": _MODE_CLASSIFY_SYS},
+                         {"role": "user", "content": text}],
+            "format": _MODE_CLASSIFY_SCHEMA,
+        }
+        result = _ollama_chat_sync(payload, timeout=60)
+        content = result.get("message", {}).get("content", "")
+        return json.loads(content).get("mode")
+
+    return classify
+
+
 async def respond_handler(request):
     """사용자 메시지 + mode → 자비스 응답 (chat/note/svg). JSONL 저장."""
     try:
@@ -223,10 +275,18 @@ async def respond_handler(request):
         mode = data.get("mode", "chat")
         model = data.get("model", "qwen3-30b-a3b-instruct-2507-bartowski:latest")
         conversation_id = data.get("conversation_id")  # §10-4b: 미지정 시 default 대화
-        if mode not in MODE_PROMPTS:
-            mode = "chat"
         if not message:
             return JSONResponse({"error": "Missing message"}, status_code=400)
+
+        # 발견 #UI-2: mode=="auto" → 백엔드 4-way 문맥 분류(2-pass Pass1, detectMode 폐기).
+        # task/미지값 → chat 생성으로 매핑(BL-ε: MODE_PROMPTS 화이트리스트 보존). 명시
+        # mode(chat/note/svg)는 분류 스킵(transient 버튼 = deterministic 탈출구).
+        if mode == "auto":
+            classifier = _make_mode_classifier(model)
+            resolved = await asyncio.to_thread(lambda: classify_mode(message, classifier).mode)
+            mode = resolved if resolved in MODE_PROMPTS else "chat"
+        if mode not in MODE_PROMPTS:
+            mode = "chat"
 
         prompt = MODE_PROMPTS[mode].format(message=message)
         payload = {
@@ -236,6 +296,18 @@ async def respond_handler(request):
         }
         result = await asyncio.to_thread(_ollama_chat_sync, payload)  # 76: 비차단
         raw_reply = result.get("message", {}).get("content", "")
+
+        # 발견 #UI-1 대화→작업 라우팅 (A3 하이브리드 + B2 + fail-CLOSED).
+        # chat mode 한정(BL-4: note/svg 는 detectMode 가 먼저 가져감). 규칙 1차
+        # 필터(looks_like_task, 0ms) 통과 시에만 boss.plan 1회(to_thread 비차단).
+        # is_task 면 proposal *페이로드만* 반환 — board.create/run 직접 호출 0(BL-1).
+        proposal = None
+        if mode == "chat" and looks_like_task(message):
+            planner = _make_routing_planner(model)
+            decision = await asyncio.to_thread(classify_for_routing, message, planner)
+            if decision.is_task:
+                proposal = {"prompt": decision.prompt,
+                            "subtask_count": decision.subtask_count}
 
         # mode 별 후처리
         parsed = None
@@ -283,7 +355,10 @@ async def respond_handler(request):
             }
         await _save_conversation_entry(jarvis_entry, conversation_id)
 
-        return JSONResponse({"mode": mode, "entry": jarvis_entry})
+        resp = {"mode": mode, "entry": jarvis_entry}
+        if proposal is not None:  # 발견 #UI-1: 작업 감지 시에만 제안 페이로드 동봉
+            resp["proposal"] = proposal
+        return JSONResponse(resp)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
@@ -573,6 +648,57 @@ from jarvis_hud.jarvis_plan import JarvisPlanBoard, make_jarvis_plan_routes  # n
 
 _plan_board = JarvisPlanBoard(ledger=LedgerLog(paths.plans_ledger_path()))
 routes += make_jarvis_plan_routes(_plan_board)
+
+# ── 플러그인 인프라 (단계2, #UI-1~4 통합) ─────────────────────────────
+# 데이터 레지스트리(C-4): jarvis_hud/plugins/<name>/plugin.json 탐색 → enabled.json
+# 명시 등록된 것만 활성화(탐색≠활성화, self-mod 우회 차단). 코어는 이 1블록만 — 새
+# 플러그인 추가는 데이터(폴더+enabled 등록)로, server.py 코드 불변.
+from src.jarvis.plugin_registry import (  # noqa: E402
+    build_plugin_routes,
+    discover_enabled_plugins,
+)
+
+_PLUGINS_DIR = os.path.join(_ROOT, "jarvis_hud", "plugins")
+_PLUGINS_ENABLED = os.path.join(_PLUGINS_DIR, "enabled.json")
+
+
+def _plugin_available_ports() -> dict:
+    """플러그인에 주입 가능한 capability 포트 (갈림길5 최소권한 — 대화 read-only /
+    측정 read·write). select_ports 가 manifest 선언분만 골라 전달."""
+    from src.jarvis.model_measurement_repo import append_measurement, open_reader_repo
+
+    return {
+        "conversation:read": _conversation_repo,  # 대화 read (선언한 플러그인만)
+        "measurement:read": open_reader_repo,
+        "measurement:write": append_measurement,
+    }
+
+
+_active_plugins = discover_enabled_plugins(_PLUGINS_DIR, _PLUGINS_ENABLED)
+routes += build_plugin_routes(_active_plugins, _plugin_available_ports())
+
+# #UI-4 반영 게이트(단계3): 격리 work 산출물 → 사람 승인 → plugins/ 복사 + 활성화.
+# work_root = claude 가짜홈 하위 work/ (단일 RW 루트, worker_setup 와 동일 경로).
+from jarvis_hud.plugin_routes import make_plugin_admin_routes  # noqa: E402
+from src.jarvis.worker_setup import DEFAULT_FAKE_HOME  # noqa: E402
+
+_PLUGIN_WORK_ROOT = os.path.join(DEFAULT_FAKE_HOME, "work")
+routes += make_plugin_admin_routes(
+    work_root=_PLUGIN_WORK_ROOT, plugins_dir=_PLUGINS_DIR, enabled_file=_PLUGINS_ENABLED
+)
+
+# ── 외부 관제형 읽기측 (패턴1 링크 허브 MVP, 127 합의 승인분) ──────────
+# 외부에서 독립 운용하는(자비스 도움 프로젝트 한정) 시스템을 HUD 에 링크 카드로 모음.
+# 읽기 전용 — 제어·자격증명·게이트 0(제어측 §3.5 는 별도 풀3+1 + DEFER). provenance
+# fail-closed(origin==jarvis)는 external_registry 가 강제.
+from jarvis_hud.external_routes import make_external_routes  # noqa: E402
+
+_EXTERNAL_REGISTRY = os.path.join(_ROOT, "jarvis_hud", "external", "registry.json")
+routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY)
+
+# 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
+if os.path.isdir(_PLUGINS_DIR):
+    routes.append(Mount("/plugins", app=StaticFiles(directory=_PLUGINS_DIR)))
 
 app = Starlette(debug=False, routes=routes)
 

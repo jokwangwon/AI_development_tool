@@ -874,7 +874,19 @@
       white-space: nowrap; user-select: none; transition: all .15s;
     }
     .mode-chip:hover { color: var(--text, #eee); border-color: var(--accent, #4a9); }
-    .mode-chip.forced { color: var(--accent, #4a9); border-color: var(--accent, #4a9); }
+    /* [123 후속] sticky 고정 — accent 배경 강조로 "자동 아님" 항상 가시 */
+    .mode-chip.forced {
+      color: #fff; border-color: var(--accent, #4a9);
+      background: var(--accent, #4a9); font-weight: 600;
+    }
+    /* ✕ 해제 버튼 — 고정 시에만 노출(hidden 토글) */
+    .mode-clear {
+      cursor: pointer; margin-left: 3px; padding: 4px 7px; border-radius: 8px;
+      border: 1px solid var(--border, #333); background: transparent;
+      color: var(--text-dim, #889); font-family: inherit; font-size: 12px;
+      line-height: 1; user-select: none; transition: all .15s;
+    }
+    .mode-clear:hover { color: #fff; border-color: var(--accent, #4a9); background: rgba(255,255,255,0.06); }
     .mode-menu {
       position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 50;
       background: var(--surface, #161616); border: 1px solid var(--border, #333);
@@ -1105,9 +1117,12 @@
     <!-- Input bar -->
     <div class="input-bar">
       <div class="input-shell">
-        <!-- 발견 #UI-2: 컴팩트 모드 드롭다운(transient). auto=백엔드 분류, 명시=강제 -->
+        <!-- 발견 #UI-2: 컴팩트 모드 드롭다운. auto=백엔드 분류, 명시=강제(sticky).
+             [123 후속] 하이브리드: 명시 모드는 sticky(전송 후 유지) + 🔒 고정 배지 +
+             ✕ 해제(자동 복귀). 121 transient → sticky 전환, 잠금 가시성으로 #UI-2 완화. -->
         <div class="mode-select" id="mode-select">
           <button class="mode-chip" id="mode-chip" title="응답 모드">⚙ 자동 ▾</button>
+          <button class="mode-clear" id="mode-clear" title="자동으로 해제" hidden>✕</button>
           <div class="mode-menu" id="mode-menu" hidden>
             <div class="mode-item" data-mode="auto">⚙ 자동</div>
             <div class="mode-item" data-mode="chat">💬 대화</div>
@@ -1231,15 +1246,22 @@
     updateClock();
 
     // === Mode (발견 #UI-2: detectMode 키워드 폐기 → 백엔드 문맥 분류) ===
-    // currentMode = 'auto'(백엔드 분류) 또는 명시(chat/note/svg, transient: 1회 후 auto 복귀).
+    // currentMode = 'auto'(백엔드 분류) 또는 명시(chat/note/svg). [123 후속] sticky:
+    // 명시 모드는 전송 후에도 유지. 🔒 고정 배지 + ✕ 해제로 #UI-2 재현 위험 완화.
     let currentMode = 'auto';
     const MODE_LABEL = { chat: '대화', note: '노트', svg: '도식', auto: '자동' };
     const MODE_ICON = { auto: '⚙', chat: '💬', note: '📝', svg: '📊' };
     const _modeChip = $('mode-chip');
+    const _modeClear = $('mode-clear');
     const _modeMenu = $('mode-menu');
-    const updateModePills = () => {  // 칩 라벨 + 메뉴 active + 강제 상태 표시
-      _modeChip.textContent = `${MODE_ICON[currentMode]} ${MODE_LABEL[currentMode]} ▾`;
-      _modeChip.classList.toggle('forced', currentMode !== 'auto');
+    const updateModePills = () => {  // 칩 라벨 + 메뉴 active + 고정(sticky) 상태 표시
+      const forced = currentMode !== 'auto';
+      // 고정 시: 🔒 {라벨} 고정 ▾ + ✕ 노출. 자동: ⚙ 자동 ▾ + ✕ 숨김.
+      _modeChip.textContent = forced
+        ? `🔒 ${MODE_LABEL[currentMode]} 고정 ▾`
+        : `${MODE_ICON.auto} ${MODE_LABEL.auto} ▾`;
+      _modeChip.classList.toggle('forced', forced);
+      _modeClear.hidden = !forced;
       _modeMenu.querySelectorAll('.mode-item').forEach(it =>
         it.classList.toggle('active', it.dataset.mode === currentMode));
     };
@@ -1247,6 +1269,10 @@
     _modeChip.addEventListener('click', (e) => {
       e.stopPropagation();
       _modeMenu.hidden = !_modeMenu.hidden;
+    });
+    _modeClear.addEventListener('click', (e) => {  // ✕ → 자동 복귀(고정 해제)
+      e.stopPropagation();
+      currentMode = 'auto'; updateModePills(); _closeModeMenu();
     });
     _modeMenu.querySelectorAll('.mode-item').forEach(it => {
       it.addEventListener('click', (e) => {
@@ -1546,8 +1572,8 @@
 
       renderMsg('user', text, { mode: mode === 'auto' ? null : mode });
       chatInput.value = '';
-      // transient: 명시 mode 는 1회 적용 후 auto 복귀 (BL-ζ: sticky 면 #UI-2 재현)
-      currentMode = 'auto'; updateModePills();
+      // [123 후속] sticky: 명시 모드는 전송 후에도 유지(auto 복귀 제거). 🔒 고정 배지가
+      // 항상 가시 + ✕ 로 명시 해제 → 연속 동일모드 작성 편의 + #UI-2 재현은 가시성으로 완화.
       sendBtn.disabled = true;
       const pendingRow = renderPending();
       setCharState('thinking');

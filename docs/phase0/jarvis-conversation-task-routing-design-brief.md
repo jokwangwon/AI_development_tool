@@ -122,7 +122,7 @@ UI 대화창과 작업 실행이 **완전히 분리**되어 있어, 사용자가
 | **BL-1** | 高 | B | §4 문구 정정(반영 전 게이트 ≠ 실행 전) + `respond_handler`는 board.create/run **직접 호출 금지**, 제안 페이로드만 반환 | §4 정정 완료 ✓ / 구현 시 enforce |
 | **BL-2** | 高 | B·C | boss 응답 파싱 실패·빈 subtasks → **fail-CLOSED = chat**(제안 미표출). fail-open 금지. note/svg except 폴백(`server.py:248,256`) 답습 | 테스트로 강제 |
 | **BL-3** | 中 | B | 대화 입력→plan prompt→외부 `CliWorker` 시 redaction 미적용(`worker.py:129-131`, OllamaWorker만 redact). 입력원 확대 평가 + 잔여 명시 | 구현 시 평가 |
-| **BL-4** | 中 | A·B | 규칙 1차 필터 키워드 ↔ detectMode(note/svg) **우선순위 규칙 정의**. 예: "보고서 정리해서 파일로 만들어줘"=note? task? | 규칙 확정 + 테스트 |
+| **BL-4** | 中 | A·B | 규칙 1차 필터 키워드 ↔ detectMode(note/svg) **우선순위 규칙 정의**. 예: "보고서 정리해서 파일로 만들어줘"=note? task? | **부분 해소(122)**: detectMode 폐기(#UI-2)+`classify_mode` 2-트랙(122 합의 옵션 B). "만들"은 SW명사 동반 시만 task, 아니면 LLM 위임 → "보고서 정리해서 파일로 만들어줘"는 SW명사 부재로 LLM 판단(note/task 문맥). 답습 `jarvis-ui2-strong-verb-overtrigger-design-brief.md` + `3plus1-consensus-2026-06-02-...`. 잔여: 혼합의도 우선순위는 LLM 위임으로 결정성 일부 양보(명시버튼 탈출구) |
 | **BL-5** | 中 | A | `respond_handler` 분류 호출 **테스트 seam**(monkeypatch 가능 분리) + `boss.plan` timeout 단축(~60s) | 구현 |
 
 **B2 채택으로 자연 해소**: 旧 인젝션 complexity 조작 표면 소멸 · 旧 complexity 분기 배선 제거.

@@ -49,13 +49,36 @@ class RoutingDecision:
 # 후 기존 생성 경로 재사용(2-pass). VALID_MODES 화이트리스트 밖/실패 → chat(fail-CLOSED).
 VALID_MODES = ("chat", "note", "svg", "task")
 
-# 규칙 1차(브리프 §5-1 + PoC): 강한 *소프트웨어 생성* 동사 = 명확한 task. note/svg
-# 요청엔 안 나타남("회의 정리해줘"·"흐름도 그려줘"엔 없음) → 이 동사가 있으면 LLM 분류
-# 전에 task 확정(PoC 분류-전용 유일 오분류 "계산기 만들어줘 정리 노트에서"=#UI-2 함정
-# 보완 + 혼합의도 task 우선 결정). 약한 동사(해줘/정리)는 LLM 문맥 판단에 위임.
+# 규칙 1차 — 2-트랙 (122 합의 옵션 B, 강한동사 과오버라이드 narrow).
+# 답습: docs/phase0/jarvis-ui2-strong-verb-overtrigger-design-brief.md (v2)
+#   [[3plus1-consensus-2026-06-02-jarvis-ui2-strong-verb-overtrigger]] (REVISE, BL-B1~B3).
+#
+# 트랙1 (_STRONG_TASK_RE): 본질이 SW 행위라 *무조건* task 인 동사. note/svg 요청엔
+#   안 나타남. "만들"은 제외 — dogfooding(122)에서 svg/note("다이어그램/노트 만들어줘")
+#   를 과오버라이드함이 실측됨(RULE 분기 50%).
+# 트랙2 (_MAKE_VERB_RE + _SW_NOUNS): "만들"은 본질적으로 모호(목적어가 판별자) →
+#   SW 산출 명사가 *동반*할 때만 task 확정(BL-B1). 명사 없으면 LLM 문맥 판단에 위임
+#   (LLM 분기는 실측 정확). #UI-2 함정 "계산기 만들어줘 정리 노트에서"는 "계산기"가
+#   SW명사라 task 보존. ⚠️ over-claim 금지(BL-2): 명사 allowlist 는 완전성 보장 아닌
+#   fail-safe(누락 명사 → LLM 폴백) — 측정 한정값, detection≠prevention.
 _STRONG_TASK_RE = re.compile(
-    r"(만들|구현|짜줘|짜 줘|개발|배포|리팩터|리팩토링|디버그|컴파일|스크립트.*작성)"
+    r"(구현|짜줘|짜 줘|개발|배포|리팩터|리팩토링|디버그|컴파일|스크립트.*작성)"
 )
+_MAKE_VERB_RE = re.compile(r"만들")
+# SW 산출 명사 allowlist — "만들"과 동반 시 task 확정. note/svg 명사(다이어그램·노트·
+# 목록·도식…)는 *불포함*(만들과 함께 와도 LLM 위임). BL-B3: "노트 앱 만들어줘"는
+# SW명사("앱")가 note명사("노트")를 이겨 task(설계결정, 자명 fail-safe 아님 — 합의 명시).
+_SW_NOUNS: tuple[str, ...] = (
+    "계산기", "프로그램", "앱", "애플리케이션", "어플", "스크립트", "함수", "모듈",
+    "클래스", "사이트", "웹사이트", "서버", "봇", "게임", "API", "api", "코드",
+    "페이지", "플러그인", "라이브러리", "대시보드", "CLI", "명령어", "도구", "툴",
+)
+
+
+def _is_make_task(text: str) -> bool:
+    """트랙2 — "만들" 동사 + SW 산출 명사 동반 시 task 확정(BL-B1). 모듈 로드 시
+    compile 된 패턴·상수만 사용(BL-B2: 런타임 컴파일 0 → fail-CLOSED try 앞단 예외 방지)."""
+    return bool(_MAKE_VERB_RE.search(text)) and any(n in text for n in _SW_NOUNS)
 
 
 @dataclass(frozen=True)
@@ -75,8 +98,9 @@ def classify_mode(text: str, classifier) -> ModeDecision:
     text = (text or "").strip()
     if not text:
         return ModeDecision("chat")
-    # 규칙 1차: 강한 생성 동사 → task 확정(LLM 호출 0, #UI-2 함정·혼합의도 task 우선).
-    if _STRONG_TASK_RE.search(text):
+    # 규칙 1차 2-트랙: 무조건 강한동사 OR ("만들"+SW명사) → task 확정(LLM 호출 0).
+    # #UI-2 함정·혼합의도 task 우선 보존, svg/note+"만들" 과오버라이드는 LLM 위임(122).
+    if _STRONG_TASK_RE.search(text) or _is_make_task(text):
         return ModeDecision("task")
     try:
         mode = classifier(text)

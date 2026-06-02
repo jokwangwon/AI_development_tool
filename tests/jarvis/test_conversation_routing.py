@@ -140,5 +140,52 @@ def test_classify_mode_mixed_intent_task_priority():
     assert classify_mode("노트로 정리하고 코드도 짜줘", classifier=lambda t: "note").mode == "task"
 
 
+# ⭐ 옵션 B (122 합의) — "만들"은 SW명사 동반 시만 task (과오버라이드 narrow)
+def test_classify_mode_make_verb_without_sw_noun_trusts_llm_svg():
+    """'다이어그램 만들어줘'(SW명사 없음) → 규칙이 task 강제 안 함, LLM svg 위임."""
+    called = []
+    def _c(t):
+        called.append(t)
+        return "svg"
+    assert classify_mode("다이어그램 만들어줘", classifier=_c).mode == "svg"
+    assert called == ["다이어그램 만들어줘"]  # SW명사 없음 → LLM 호출됨
+
+
+def test_classify_mode_make_verb_without_sw_noun_trusts_llm_note():
+    """'회의 내용 노트로 만들어줘'(SW명사 없음) → LLM note 위임(과오버라이드 해소)."""
+    assert classify_mode("회의 내용 노트로 만들어줘", classifier=lambda t: "note").mode == "note"
+    assert classify_mode("할 일 목록 만들어줘", classifier=lambda t: "note").mode == "note"
+
+
+def test_classify_mode_make_verb_with_sw_noun_forces_task_no_call():
+    """'계산기 만들어줘'(SW명사 동반) → task 확정, LLM 호출 0 (#UI-2 함정 보완 유지)."""
+    called = []
+    def _c(t):
+        called.append(t)
+        return "note"
+    assert classify_mode("계산기 만들어줘", classifier=_c).mode == "task"
+    assert called == []  # SW명사 + 만들 → 규칙 1차, LLM 우회
+
+
+def test_classify_mode_sw_noun_wins_over_note_noun_bl_b3():
+    """BL-B3(합의 명시): 'X 앱 만들어줘'는 note명사 공존해도 SW명사 우선 → task.
+
+    설계결정(자명 fail-safe 아님): '앱/프로그램' 등 SW 산출명사가 있으면 만들=task.
+    """
+    assert classify_mode("노트 앱 만들어줘", classifier=lambda t: "note").mode == "task"
+    assert classify_mode("메모 앱 만들어줘", classifier=lambda t: "note").mode == "task"
+
+
+def test_classify_mode_unconditional_verb_no_noun_still_task():
+    """'만들' 외 강한동사(디버그/구현/짜줘…)는 SW명사 없이도 무조건 task(2-트랙)."""
+    called = []
+    def _c(t):
+        called.append(t)
+        return "chat"
+    assert classify_mode("이 버그 디버그해줘", classifier=_c).mode == "task"
+    assert classify_mode("로그인 기능 구현해줘", classifier=_c).mode == "task"
+    assert called == []  # 무조건 강한동사 → LLM 우회
+
+
 def test_valid_modes_constant():
     assert VALID_MODES == ("chat", "note", "svg", "task")

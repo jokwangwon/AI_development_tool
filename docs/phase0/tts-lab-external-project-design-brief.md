@@ -1,7 +1,9 @@
-# TTS 랩 — 외부 관제형 음성 생성 프로젝트 설계 brief (v1)
+# TTS 랩 — 외부 관제형 음성 생성 프로젝트 설계 brief (v1.1)
 
-> 2026-06-02. 외부 관제형 **첫 실사례**(세션 #127 taxonomy). 버추얼 캐릭터 **오리지널 음성
+> 2026-06-02(v1). 외부 관제형 **첫 실사례**(세션 #127 taxonomy). 버추얼 캐릭터 **오리지널 음성
 > 생성**(복제 아님). 결정 0건 — 후보 비교 + 권고 + 3+1 회부 항목 정리(SDD 검토 *전* 단계).
+> **v1.1(2026-06-03)**: §13 추가 — 탐색-우선 구축으로 건너뛴 3+1 합의를 **DEFER + 근거 문서화**
+> (사용자 결정). 회부 7항목 중 사후 3+1이 결과를 바꿀 항목 0건(이미 합의/means/위생/moot/DEFER).
 >
 > 답습: `docs/phase0/tts-lab-voice-generation-research-synthesis.md`(연구+GB10 실측+경로1 PoC) ·
 > `docs/phase0/jarvis-plugin-taxonomy-external-view-design-brief.md` v2.1(외부 관제형 §1.5/§3.5/§4) ·
@@ -187,3 +189,51 @@
 - 아키텍처 결정(외부 별도 프로젝트·백본 seam·라이선스) = **3+1 합의 권고**(CLAUDE.md §3
   아키텍처 의사결정 필수). 단 읽기측 링크 등록 자체는 #128 합의로 이미 승인(풀3+1 불요).
 - **순서**: 이 brief 사용자 검토 → U-1~4 결정 → 3+1 합의(B/P/A 항목) → 1b TDD 구현.
+
+---
+
+## 13. 방법론 정리 (v1.1 addendum, 2026-06-03) — 건너뛴 3+1 합의 **DEFER + 근거**
+
+> 2026-06-02 세션은 §12 권고 순서(검토→U결정→3+1→구현) 대신 **탐색-우선으로 바로 구축**
+> 했다(방법론 일탈, SESSION_2026-06-03 정직 단서). 2026-06-03 세션에서 이 갭을 **사후
+> 진행 vs DEFER** 메타 결정 → 사용자: **DEFER + 근거 문서화** 선택. 아래가 그 근거.
+
+### 13.1. 회부 항목 사후 처분 (§10 BLOCKING 매핑)
+
+| 항목 | §10 회부 사유 | 탐색 중 실제 처리 | 처분 |
+|------|--------------|------------------|------|
+| **A-1** 위치(별도 repo) | 아키텍처 | ✅ 별도 GitHub repo `jokwangwon/voice_lab` 확정 | **이미 합의됨** — 외부 관제형 패턴은 #127/#128 풀3+1(`3plus1-consensus-2026-06-02-jarvis-plugin-external-taxonomy.md`)로 승인. 이 결정은 그 패턴의 직접 적용일 뿐 신규 아키텍처 결정 아님 |
+| **A-2** 트랙 A 격리 | venv 분리 | ✅ `~/gpt_sovits` 별도 venv, 메인 `.venv` 무영향(실측 확인) | **DEFER 불요** — 위생 결정, 계산적 검증(메인 .venv 청정)으로 충족. 아키텍처 의사결정 아님 |
+| **A-3** python3.12-dev | C확장 빌드 선결 | GPT-SoVITS 경로가 pynini 등 C확장 회피 | **moot** — 선결 조건 자체가 불필요해짐 |
+| **B-1** 백본 선택 | 라이선스/백본 | ✅ GPT-SoVITS v2(MIT, 상업) | **means(ADR-011)** — 백본 = 교체 가능한 수단. 사용자 청취 검증(젊은+또렷+새목소리 PASS). 수단 *결정*은 사용자 영역, 3+1 대상 아님 |
+| **B-2** 백본 seam | Provider Liquidity | 🔴 **미구현** — `server.py`가 GPT-SoVITS 하드결합(`from GPT_SoVITS... import TTS` + chdir) | **DEFER**(§13.2 근거) |
+| **P-1** 한국어 prior 실측 | 정량 검증 | 접근법 폐기 — GPT-SoVITS는 충실복제+aux_ref 톤 융합, 임베딩뱅크 prior 샘플링 미사용 | **moot** — 검증 대상 메커니즘 자체가 산출 경로에서 빠짐 |
+| **P-2** 동질성 완화 | 정량 검증 | 同上(prior 샘플링 폐기) | **moot** |
+
+→ **결론**: §10 회부 7항목 중 사후 풀 3+1이 *결과를 바꿀* 항목 **0건**. 유일한 진짜
+아키텍처 결정(외부 별도 프로젝트 패턴)은 이미 taxonomy 풀3+1로 승인. 나머지는
+means(B-1) / 위생(A-2) / moot(A-3·P-1·P-2) / DEFER(B-2).
+
+### 13.2. B-2(백본 seam) DEFER 근거 — 위반 아님
+
+brief가 "seam 필수"로 쓴 건 voice_lab을 **영구 제품**으로 상정했을 때다. 실제 산출은
+120줄 탐색용 연구 서버이며, seam 부재는 헌법 5조-2 위반이 아니다:
+
+1. **Provider Liquidity(헌법 5조-2 비협상)는 *자비스*를 구속하지, 외부 개인 연구툴을
+   구속하지 않는다.** 자비스는 voice_lab에 read-only 링크 카드만 보유 — voice_lab의 백본
+   하드결합은 자비스의 provider liquidity에 영향 **0**. [[feedback_provider_liquidity]]
+2. **수단/목적(ADR-011)**: 120줄 서버에서 백본 교체 = 서버 재작성(저렴). Provider
+   Liquidity의 본질은 *비싼* lock-in 회피인데, 120줄엔 비싼 lock-in이 없다.
+3. 탐색용 연구 서버에 추상 seam = 과잉 의례. [[feedback_ceremony_inflation]] /
+   [[feedback_proportionate_security_personal_tool]] 정면 답습.
+
+→ **Rollback Trigger**(이 DEFER를 깨고 seam·3+1을 다시 들여야 하는 조건):
+   voice_lab이 (a) **상업 산출 제품**으로 격상되거나 (b) **자비스가 voice_lab을 직접
+   제어**(제어측, 자격증명·제어채널)하게 되어 신뢰경계 안으로 들어올 때. 그 시점에
+   B-2 seam + 정식 3+1 재진입.
+
+### 13.3. 잔여 (이 정리 범위 밖, 별도 단서)
+
+- **U-5**(AIHub 015 상업 약관 미확인) = 라이선스 정직 단서, SESSION_2026-06-03 ③로 이월.
+  상업 안전 조합 = Common Voice(CC0) + GPT-SoVITS(MIT)/Qwen3(Apache)로 이미 우회 가능.
+- **품질** "약간 이상한 부분" = 사용자 청취 검증 영역(계산적 게이트 아님), 랩 심화로 이월.

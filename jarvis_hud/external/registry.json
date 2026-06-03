@@ -1,3 +1,11 @@
 {
-  "entries": []
+  "entries": [
+    {
+      "name": "voice_lab",
+      "title": "음성 생성 랩 (GPT-SoVITS)",
+      "url": "http://localhost:8777",
+      "icon": "🎙️",
+      "origin": "jarvis"
+    }
+  ]
 }

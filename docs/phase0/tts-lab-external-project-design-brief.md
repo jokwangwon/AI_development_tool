@@ -234,6 +234,9 @@ brief가 "seam 필수"로 쓴 건 voice_lab을 **영구 제품**으로 상정했
 
 ### 13.3. 잔여 (이 정리 범위 밖, 별도 단서)
 
-- **U-5**(AIHub 015 상업 약관 미확인) = 라이선스 정직 단서, SESSION_2026-06-03 ③로 이월.
-  상업 안전 조합 = Common Voice(CC0) + GPT-SoVITS(MIT)/Qwen3(Apache)로 이미 우회 가능.
+- **U-5**(AIHub 015 상업 약관 미확인) → ✅ **해소(2026-06-03 후속 세션)**: voice_lab 에
+  **CC0 상업안전 fail-closed 게이트** 구축(`commercial=true` 생성은 `source==CommonVoice`(CC0)
+  화자만 허용, AIHub=source 누락→자동 제외, 서버 강제). AIHub 약관 확인 불요화 — 상업 출력은
+  CC0(Common Voice) + GPT-SoVITS(MIT)/Qwen3(Apache)만으로 보장. 또한 **Qwen3 디자인 경로는
+  참조 화자 데이터 0 → 본질적 상업안전**(라이선스 문제 자체가 없음). 사용자 방향 = 디자인 선호.
 - **품질** "약간 이상한 부분" = 사용자 청취 검증 영역(계산적 게이트 아님), 랩 심화로 이월.

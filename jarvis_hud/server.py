@@ -5,7 +5,6 @@ from starlette.staticfiles import StaticFiles
 from starlette.websockets import WebSocket, WebSocketDisconnect
 from uvicorn import run
 import asyncio
-import io
 import json
 import os
 import sys
@@ -18,6 +17,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from jarvis_hud.jarvis_tasks import JarvisTaskBoard, make_jarvis_routes  # noqa: E402
+from jarvis_hud.readaloud import synth_via_voicelab  # noqa: E402  # 읽어주기 = 외부 voice_lab 연계
 from src.jarvis import paths  # noqa: E402  # §10-2 영속 위치 일원화 (JARVIS_DATA_DIR > XDG)
 from src.jarvis.conversation_repo import ConversationRepo  # noqa: E402  # §10-3 대화 저장 port
 from src.jarvis.conversation_routing import (  # noqa: E402  # 발견 #UI-1/#UI-2 대화 라우팅·모드 분류
@@ -442,66 +442,15 @@ async def conversation_export_handler(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
-# === F5-TTS-ko (team-lucid 한국어 fine-tuned, jamo 분해 vocab) ===
-_f5_tts = None
-_tts_lock = asyncio.Lock()
-
-HANA_REF_AUDIO = "/home/delangi/.cache/hana_voice/kss_ref_24k.wav"
-HANA_REF_TEXT = "그녀의 사랑을 얻기 위해 애썼지만 헛수고였다."
-HANA_F5_CKPT = "/home/delangi/.cache/f5_ko/model_wrapped.pt"
-HANA_F5_VOCAB = "/home/delangi/.cache/f5_ko/vocab.txt"
-
-
-def _patch_torchaudio_load_with_soundfile() -> None:
-    """torchaudio.load 가 torchcodec 의존(FFmpeg mismatch) 우회 — soundfile 사용."""
-    import torchaudio  # type: ignore
-    import soundfile as sf  # type: ignore
-    import torch  # type: ignore
-    def _load(path, **kwargs):
-        audio, sr = sf.read(path, dtype='float32')
-        audio = audio[None, :] if audio.ndim == 1 else audio.T
-        return torch.from_numpy(audio), sr
-    torchaudio.load = _load
-
-
-def _to_jamo(s: str) -> str:
-    """한글 음절 → NFD 자모 분해 (team-lucid F5-TTS-ko vocab 호환)."""
-    import unicodedata
-    return unicodedata.normalize('NFD', s)
-
-
-async def _ensure_tts():
-    """F5-TTS-ko 한국어 모델 lazy load."""
-    global _f5_tts
-    if _f5_tts is not None:
-        return
-    async with _tts_lock:
-        if _f5_tts is not None:
-            return
-        try:
-            _patch_torchaudio_load_with_soundfile()
-            from f5_tts.api import F5TTS  # type: ignore
-            _f5_tts = F5TTS(ckpt_file=HANA_F5_CKPT, vocab_file=HANA_F5_VOCAB)
-        except Exception as exc:
-            print(f"[TTS] F5-TTS-ko load fail: {exc}")
-            _f5_tts = "FAILED"
-
-
-def _synthesize_wav_sync(text: str) -> tuple[bytes, int]:
-    """동기 합성. F5-TTS-ko.infer + soundfile encoder. NFD 자모 분해 적용."""
-    import soundfile as sf  # type: ignore
-    wav, sr, _ = _f5_tts.infer(
-        ref_file=HANA_REF_AUDIO,
-        ref_text=_to_jamo(HANA_REF_TEXT),
-        gen_text=_to_jamo(text),
-    )
-    buf = io.BytesIO()
-    sf.write(buf, wav, sr, format='WAV')
-    return buf.getvalue(), int(sr)
+# === 읽어주기(하나 음성) — 외부 voice_lab(Qwen3 디자인) 연계 ===
+# 내부 F5-TTS 제거. 읽어주기를 외부 관제형 voice_lab 음성 *생성*으로 연계(연계형) — 음성
+# 비교 랩이 외부에 독립 존재하므로 내부에 합성 엔진 중복 보유 안 함. Provider Liquidity:
+# voice_lab 위치 = env 주입(하드코딩 0). voice_lab 다운 시 프론트 speakAI 가 Web Speech 폴백.
+VOICELAB_DESIGN_URL = os.environ.get("VOICELAB_DESIGN_URL", "http://127.0.0.1:8778/api/design")
 
 
 async def tts_handler(request):
-    """POST {text: "..."} → audio/wav."""
+    """POST {text: "..."} → audio/wav. 외부 voice_lab(Qwen3 디자인) 연계 합성(고정 '하나' 페르소나)."""
     try:
         body = await request.body()
         try:
@@ -511,14 +460,13 @@ async def tts_handler(request):
         text = (data.get("text") or "").strip()
         if not text:
             return JSONResponse({"error": "text required"}, status_code=400)
-        await _ensure_tts()
-        if _f5_tts == "FAILED" or _f5_tts is None:
-            return JSONResponse({"error": "TTS model 로드 실패"}, status_code=500)
-        # blocking 합성 → thread pool
-        wav_bytes, _ = await asyncio.to_thread(_synthesize_wav_sync, text)
+        wav_bytes = await asyncio.to_thread(  # blocking HTTP → thread pool(이벤트 루프 비차단)
+            synth_via_voicelab, text, design_url=VOICELAB_DESIGN_URL
+        )
         return Response(content=wav_bytes, media_type="audio/wav")
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        # voice_lab 다운/오류 → 502, 프론트 speakAI 가 Web Speech 폴백(speakBrowser).
+        return JSONResponse({"error": str(e)}, status_code=502)
 
 
 async def conversation_canvas_handler(request):

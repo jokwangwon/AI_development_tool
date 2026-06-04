@@ -635,14 +635,37 @@ routes += make_plugin_admin_routes(
     work_root=_PLUGIN_WORK_ROOT, plugins_dir=_PLUGINS_DIR, enabled_file=_PLUGINS_ENABLED
 )
 
-# ── 외부 관제형 읽기측 (패턴1 링크 허브 MVP, 127 합의 승인분) ──────────
-# 외부에서 독립 운용하는(자비스 도움 프로젝트 한정) 시스템을 HUD 에 링크 카드로 모음.
-# 읽기 전용 — 제어·자격증명·게이트 0(제어측 §3.5 는 별도 풀3+1 + DEFER). provenance
-# fail-closed(origin==jarvis)는 external_registry 가 강제.
-from jarvis_hud.external_routes import make_external_routes  # noqa: E402
+# ── 외부 관제형 (읽기측 패턴1 링크 허브 + 제어측 slice-1a probe / slice-1b lifecycle) ──
+# 읽기측: 자비스 도움 프로젝트를 HUD 링크 카드로 모음(provenance fail-closed=external_registry).
+# 제어측 slice-1b: start/stop/restart(MEDIUM·게이트) + adopt(HIGH·cutover). propose-only seam(B-1).
+#   배선(합의 CB): launcher=non-blocking Popen+killpg(CB-3) / approver= HUD 요청 도달=사람
+#   1-클릭(C-2, 실 게이트=프론트 모달+confirmed+same-origin) / owner_starttime·port_pid=/proc
+#   (CB-1·AC-4) / cumulative_count·audit= LedgerLog 파생·intent fail-closed(CB-2·CB-4).
+#   ⚠ 정직: approver=True 는 default-deny(L-6)를 server 에서 1-클릭 게이트로 대체 — boss 자율
+#   경로 부재(HUD 라우트만), 자율 완화는 1b dogfood 후. 자격증명 0(B-6).
+from jarvis_hud.external_routes import (  # noqa: E402
+    make_external_routes,
+    make_lifecycle_wiring,
+)
+from src.jarvis.launcher import (  # noqa: E402
+    SubprocessLauncher,
+    find_listener_pid,
+    read_starttime,
+)
+from src.jarvis.process_control import ProcessController  # noqa: E402
 
 _EXTERNAL_REGISTRY = os.path.join(_ROOT, "jarvis_hud", "external", "registry.json")
-routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY)
+_control_ledger = LedgerLog(paths.control_ledger_path())
+_control_cumulative, _control_audit = make_lifecycle_wiring(_control_ledger)
+_control = ProcessController(
+    launcher=SubprocessLauncher(),
+    approver=lambda req: True,  # HUD 요청 도달 = 사람 1-클릭(프론트 모달·confirmed·same-origin 게이트)
+    owner_starttime=read_starttime,
+    cumulative_count=_control_cumulative,
+    port_pid=find_listener_pid,
+    audit=_control_audit,
+)
+routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY, controller=_control)
 
 # 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
 if os.path.isdir(_PLUGINS_DIR):

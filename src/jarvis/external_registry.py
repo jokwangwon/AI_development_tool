@@ -95,6 +95,58 @@ def parse_entry(data: object) -> ExternalEntry:
     )
 
 
+@dataclass(frozen=True)
+class ControlSpec:
+    """제어측 lifecycle 집행에 필요한 registry 필드 (C-4/L-10 — 읽기측 분리).
+
+    ⭐ ExternalEntry(읽기측: name/url/icon) 스키마에 launch 필드를 섞지 않는다(L-10
+    스키마 오염 금지). 제어 필드는 본 *별도* 구조체로 파싱 — registry.json 엔트리의
+    optional `control: {launch_argv, cwd}` 에서만. provenance(origin==jarvis)는
+    parse_entry 가 이미 강제(B-2 상속). launch_argv = argv 리스트(쉘 미경유, L-8).
+    """
+
+    name: str
+    launch_argv: tuple = ()
+    cwd: str = ""
+
+
+def discover_control_specs(registry_file: str) -> dict[str, ControlSpec]:
+    """registry.json → {name: ControlSpec}. provenance 통과 + control 필드 유효 엔트리만.
+
+    fail-soft: control 부재/launch_argv 불량 = skip(제어 불가, crash 아님). 읽기측
+    discover_external 과 분리(L-10) — 같은 파일을 읽되 ExternalEntry 스키마는 불변.
+    """
+    try:
+        with open(registry_file, encoding="utf-8") as f:
+            data = json.load(f)
+    except (ValueError, OSError):
+        return {}
+
+    raw = data.get("entries") if isinstance(data, dict) else None
+    if not isinstance(raw, list):
+        return {}
+
+    out: dict[str, ControlSpec] = {}
+    for item in raw:
+        try:
+            entry = parse_entry(item)  # provenance/name/url 검증(B-2 상속)
+        except ExternalRegistryError:
+            continue
+        ctrl = item.get("control") if isinstance(item, dict) else None
+        if not isinstance(ctrl, dict):
+            continue
+        argv = ctrl.get("launch_argv")
+        if not isinstance(argv, list) or not argv or not all(isinstance(a, str) and a for a in argv):
+            continue  # launch_argv 없음/불량 = 제어 불가(fail-soft)
+        cwd = ctrl.get("cwd", "")
+        out[entry.name] = ControlSpec(
+            name=entry.name,
+            launch_argv=tuple(argv),
+            cwd=cwd if isinstance(cwd, str) else "",
+        )
+    return out
+
+
 def discover_external(registry_file: str) -> list[ExternalEntry]:
     """레지스트리 파일({"entries": [...]}) 파싱 → 검증 통과 엔트리. fail-soft.
 

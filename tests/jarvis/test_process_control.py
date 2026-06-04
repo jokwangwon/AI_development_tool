@@ -80,10 +80,14 @@ def test_health_action_registered_as_probe():
     assert CONTROL_ACTIONS["health"].capabilities == frozenset({Capability.PROBE})
 
 
-def test_lifecycle_actions_not_in_slice_1a():
-    """start/stop/restart(중위험·게이트)은 slice-1b — 1a 코어 allowlist에 없어야(정직 범위)."""
-    for name in ("start", "stop", "restart"):
-        assert name not in CONTROL_ACTIONS
+def test_lifecycle_actions_registered_in_slice_1b():
+    """start/stop/restart(MEDIUM)+adopt(HIGH)는 slice-1b 에서 등록됨.
+
+    (slice-1a 시점엔 미등록이었음 — 1b 진입으로 추가. 등급/게이트 검증은
+    test_process_control_lifecycle.py.)
+    """
+    for name in ("start", "stop", "restart", "adopt"):
+        assert name in CONTROL_ACTIONS
 
 
 # ── parse_target: provenance(B-2) + localhost(B-4) + 안전성 ────────────────
@@ -217,21 +221,23 @@ def test_propose_unregistered_action_high_fail_closed():
 
 
 def test_propose_non_low_action_never_auto_executes_b1_seam():
-    """B-1 핵심: 비-저위험(중/고) 동작은 propose로도 자동 집행 0 (게이트는 slice-1b).
+    """B-1 핵심: 비-저위험(중/고) 동작은 propose로도 자동 집행 0.
 
-    SPAWN(중) capability 동작을 코어 allowlist에 주입해도 propose는 집행하지 않고 거부한다.
-    boss가 propose만 호출 → 등급 게이팅을 우회해 _execute에 도달할 수 없음을 증명.
+    SPAWN(중) capability 동작을 코어 allowlist에 주입해도, launcher/approver 미배선이면
+    propose 가 집행하지 않는다. boss가 propose만 호출 → 등급 게이팅을 우회해 _execute/
+    launcher 에 도달할 수 없음을 증명(B-1/CB-6 seam).
     """
     calls = []
     actions = {"rogue_spawn": Action("rogue_spawn", frozenset({Capability.SPAWN}))}
     ctrl = ProcessController(
         actions=actions,
         prober=lambda t: calls.append(t) or ProbeStatus(listening=True),
-    )
+    )  # launcher/approver 미배선
     decision = ctrl.propose("rogue_spawn", _good_target())
     assert decision.grade is Grade.MEDIUM
-    assert decision.outcome == "rejected"  # 1a엔 게이트/집행 경로 없음 → fail-closed
-    assert calls == []  # 집행 절대 안 됨
+    # 1b: MEDIUM 은 게이트 경로. launcher 미배선 = fail-closed(referred) — 어느 쪽이든 집행 0.
+    assert decision.outcome in ("rejected", "referred")
+    assert calls == []  # 집행 절대 안 됨(_execute/launcher 미도달)
 
 
 def test_propose_audits_every_decision():

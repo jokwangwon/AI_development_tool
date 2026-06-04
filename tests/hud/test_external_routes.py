@@ -14,8 +14,36 @@ import json
 from starlette.applications import Starlette
 from starlette.testclient import TestClient
 
-from jarvis_hud.external_routes import make_external_routes
-from src.jarvis.process_control import ProbeStatus, ProcessController
+from jarvis_hud.external_routes import make_external_routes, make_lifecycle_wiring
+from src.jarvis.ledger import LedgerLog
+from src.jarvis.process_control import (
+    ControlDecision,
+    Grade,
+    ProbeStatus,
+    ProcessController,
+)
+
+
+# ── CB-2 누적(ledger 파생) + CB-4 감사 배선 ───────────────────────────────
+def test_cumulative_count_derives_from_ledger(tmp_path):
+    led = LedgerLog(tmp_path / "led.jsonl")
+    cum, audit = make_lifecycle_wiring(led)
+    assert cum("voice_lab") == 0
+    audit(ControlDecision("start", "voice_lab", Grade.MEDIUM, "executed", pid=1))
+    audit(ControlDecision("restart", "voice_lab", Grade.MEDIUM, "executed", pid=2))
+    audit(ControlDecision("start", "other", Grade.MEDIUM, "executed", pid=3))
+    audit(ControlDecision("stop", "voice_lab", Grade.MEDIUM, "referred"))  # referred 는 미집계
+    assert cum("voice_lab") == 2
+    assert cum("other") == 1
+
+
+def test_audit_intent_recorded_but_not_counted(tmp_path):
+    """intent 는 ledger 에 남되 누적 카운트엔 안 들어감(executed 만 누적)."""
+    led = LedgerLog(tmp_path / "led.jsonl")
+    cum, audit = make_lifecycle_wiring(led)
+    audit(ControlDecision("start", "voice_lab", Grade.MEDIUM, "intent"))
+    assert cum("voice_lab") == 0
+    assert "lifecycle_intent" in [e.get("event") for e in led.read()]
 
 
 def _entry(name="tts_lab"):
@@ -119,6 +147,113 @@ def test_probe_provenance_only_registry_entries(tmp_path):
     bad = {"name": "evil", "title": "x", "url": "http://127.0.0.1:8777", "origin": "third_party"}
     client = _probe_client(tmp_path, [bad], ctrl)
     assert client.get("/api/jarvis/external/probe?name=evil").status_code == 404
+
+
+# ── 제어측 slice-1b: lifecycle 라우트 (start/stop/restart/adopt, propose 경유) ──
+class _FakeLauncher:
+    def __init__(self):
+        self.spawned = []
+        self.signaled = []
+        self._pid = 1000
+
+    def spawn(self, argv, cwd, env):
+        self._pid += 1
+        self.spawned.append((argv, cwd))
+        return self._pid
+
+    def signal(self, pid, sig):
+        self.signaled.append((pid, sig))
+
+
+def _lifecycle_ctrl(launcher, port_pid=lambda p: None):
+    return ProcessController(
+        launcher=launcher, approver=lambda req: True,
+        owner_starttime=lambda pid: 5000, cumulative_count=lambda n: 0,
+        port_pid=port_pid, now=lambda: 0.0, sleep=lambda _s: None,
+        prober=lambda t: ProbeStatus(listening=True),
+    )
+
+
+def _ctrl_entry(name="voice_lab", port=8777):
+    e = _local_entry(name, port)
+    e["control"] = {"launch_argv": ["python", "server.py"], "cwd": "/srv/voice_lab"}
+    return e
+
+
+def test_lifecycle_unconfirmed_does_not_execute(tmp_path):
+    """C-2 1-클릭 게이트: confirmed 없으면 needs_confirm 만 반환, 집행 0."""
+    lc = _FakeLauncher()
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(lc))
+    r = client.post("/api/jarvis/external/lifecycle", json={"name": "voice_lab", "action": "start"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["needs_confirm"] is True
+    assert lc.spawned == []  # 집행 0
+
+
+def test_lifecycle_confirmed_start_executes(tmp_path):
+    lc = _FakeLauncher()
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(lc))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "voice_lab", "action": "start", "confirmed": True})
+    body = r.json()
+    assert body["outcome"] == "executed"
+    assert body["grade"] == "MEDIUM"
+    assert lc.spawned == [(["python", "server.py"], "/srv/voice_lab")]
+
+
+def test_lifecycle_adopt_is_high_cutover(tmp_path):
+    """adopt = HIGH cutover. 미소유 점유 정지 → 재spawn."""
+    lc = _FakeLauncher()
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(lc, port_pid=lambda p: 502419))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "voice_lab", "action": "adopt", "confirmed": True})
+    body = r.json()
+    assert body["grade"] == "HIGH"
+    assert body["outcome"] == "executed"
+    assert any(pid == 502419 for pid, _ in lc.signaled)  # 미소유 정지
+    assert len(lc.spawned) == 1                            # 재기동
+
+
+def test_lifecycle_stop_unowned_referred(tmp_path):
+    """미소유(start 안 한) 프로세스 stop = referred(인수 권유)."""
+    lc = _FakeLauncher()
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(lc, port_pid=lambda p: 502419))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "voice_lab", "action": "stop", "confirmed": True})
+    assert r.json()["outcome"] == "referred"
+    assert lc.signaled == []
+
+
+def test_lifecycle_unknown_action_400(tmp_path):
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(_FakeLauncher()))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "voice_lab", "action": "rm_rf", "confirmed": True})
+    assert r.status_code == 400
+
+
+def test_lifecycle_unknown_name_404(tmp_path):
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(_FakeLauncher()))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "ghost", "action": "start", "confirmed": True})
+    assert r.status_code == 404
+
+
+def test_lifecycle_external_host_not_controllable(tmp_path):
+    """B-4: 외부 호스트 카드 = 제어 불가."""
+    client = _probe_client(tmp_path, [_entry("remote")], _lifecycle_ctrl(_FakeLauncher()))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "remote", "action": "start", "confirmed": True})
+    assert r.json()["controllable"] is False
+
+
+def test_lifecycle_cross_origin_forbidden(tmp_path):
+    """CSRF: cross-origin POST 거부(same_origin 가드)."""
+    client = _probe_client(tmp_path, [_ctrl_entry()], _lifecycle_ctrl(_FakeLauncher()))
+    r = client.post("/api/jarvis/external/lifecycle",
+                    json={"name": "voice_lab", "action": "start", "confirmed": True},
+                    headers={"origin": "http://evil.com", "host": "127.0.0.1:8765"})
+    assert r.status_code == 403
 
 
 def test_probe_default_controller_real_socket(tmp_path):

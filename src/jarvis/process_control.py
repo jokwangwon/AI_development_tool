@@ -26,11 +26,15 @@
 from __future__ import annotations
 
 import re
+import signal as _signal_mod
+import threading
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Optional
 
 from src.jarvis.external_registry import JARVIS_ORIGIN  # B-2 provenance 상속(단일 출처)
+from src.jarvis.launcher import read_starttime  # CB-1 (pid, starttime) 소유권 키
 
 # name = 소문자 영숫자 + _ - (path separator·..·공백·대문자 차단 — registry 답습)
 _SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
@@ -54,6 +58,7 @@ class Capability:
     PROBE = "probe"    # 읽기: 포트 LISTEN/health 조회 (가역·부작용 0)
     SPAWN = "spawn"    # 쓰기: 프로세스 기동 (slice-1b)
     SIGNAL = "signal"  # 쓰기: 프로세스에 시그널(stop/restart) (slice-1b)
+    ADOPT = "adopt"    # 쓰기: 미소유 프로세스 신원도용 = cutover 인수 (slice-1b, HIGH)
 
 
 class Grade(Enum):
@@ -65,10 +70,12 @@ class Grade(Enum):
 
 
 # capability → 등급 코어 고정 매핑(G6(a), X-3). 미등재 capability = 고위험 fail-closed.
+# adopt = 미소유 프로세스 신원도용 *연산* 이라 HIGH(이름이 아니라 capability 바인딩 — CO-6).
 _CAP_GRADE = {
     Capability.PROBE: Grade.LOW,
     Capability.SPAWN: Grade.MEDIUM,
     Capability.SIGNAL: Grade.MEDIUM,
+    Capability.ADOPT: Grade.HIGH,
 }
 
 
@@ -97,22 +104,34 @@ class Action:
     capabilities: frozenset
 
 
-# 코어 고정 allowlist(미등재 = 고위험 fail-closed). slice-1a = health(probe)만.
-# lifecycle(start/stop/restart = spawn/signal = 중위험)은 slice-1b 에서 추가.
+# 코어 고정 allowlist(미등재 = 고위험 fail-closed). 미등재 동작 = unknown → 고위험.
+# slice-1a = health(probe, 저). slice-1b = lifecycle(spawn/signal, 중) + adopt(HIGH).
 CONTROL_ACTIONS: dict[str, Action] = {
     "health": Action("health", frozenset({Capability.PROBE})),
+    # slice-1b lifecycle — MEDIUM(게이트). restart = signal(정지)+spawn(재기동).
+    "start": Action("start", frozenset({Capability.SPAWN})),
+    "stop": Action("stop", frozenset({Capability.SIGNAL})),
+    "restart": Action("restart", frozenset({Capability.SIGNAL, Capability.SPAWN})),
+    # slice-1b 인수 = cutover(미소유 정지 → 재spawn). ADOPT capability 로 HIGH(CO-6).
+    "adopt": Action("adopt", frozenset({Capability.SIGNAL, Capability.SPAWN, Capability.ADOPT})),
 }
 
 
 @dataclass(frozen=True)
 class ControlTarget:
-    """검증된 제어 대상(불변). 자비스가 도와 만든 로컬 프로세스 한정(B-2/B-4)."""
+    """검증된 제어 대상(불변). 자비스가 도와 만든 로컬 프로세스 한정(B-2/B-4).
+
+    제어 필드(launch_argv/cwd, C-4/L-10) = lifecycle 집행에 필요한 registry 주입 값.
+    argv 리스트(쉘 미경유, L-8). probe-only(1a) 대상은 빈 launch_argv 로 둔다.
+    """
 
     name: str
     host: str
     port: int
     origin: str = ""
     health_path: str = ""
+    launch_argv: tuple = ()  # CB-3/L-8: registry 주입 argv(쉘 문자열 금지)
+    cwd: str = ""
 
 
 def parse_target(data: object) -> ControlTarget:
@@ -211,7 +230,11 @@ def probe_target(
 
 @dataclass(frozen=True)
 class ControlDecision:
-    """propose 결정(감사·반환). outcome ∈ {executed, rejected}. (gated 경로는 slice-1b)"""
+    """propose 결정(감사·반환). outcome ∈ {executed, rejected, referred}.
+
+    referred(slice-1b) = 사람 회부(미소유 PID·PID 재사용·C-3 초과·부분 실패) — 자동
+    집행도 단순 거부도 아닌 "사람이 판단해야 함". pid = 집행 대상/결과 PID(감사·HUD).
+    """
 
     action: str
     target_name: str
@@ -219,13 +242,39 @@ class ControlDecision:
     outcome: str
     result: Any = None
     reason: str = ""
+    pid: Optional[int] = None
+
+
+class SeamViolation(Exception):
+    """CB-6: 게이트/lock 통과 증거(토큰) 없이 lifecycle 집행에 도달 = seam 우회.
+
+    boss 가 propose 를 건너뛰고 내부 `_execute_lifecycle` 에 직접 도달하면 이 예외로
+    *구조적* 차단(관례적 `_`-prefix 가 아니라 토큰 강제 — L-1/CB-6 우회불가).
+    """
+
+
+class _GateToken:
+    """`_gated_lifecycle` 내부에서만 생성되는 게이트 통과 증거(CB-6)."""
+
+
+class _LifecyclePartialFailure(Exception):
+    """CB-8: lifecycle 집행 중 부분 실패. 자동 롤백 0 → referred(통제 보존, L-7)."""
 
 
 class ProcessController:
     """제어 동작 결정적 집행자(B-1 seam). boss 는 propose() 만 호출.
 
     propose 흐름: provenance/localhost 검증(B-2/B-4) → 코어 allowlist 조회(미등재=고 fail-closed)
-    → capability 등급(B-5) → 저위험만 자율 집행, 그 외 거부(게이트는 slice-1b). 자격증명 0(B-6).
+    → capability 등급(B-5) → 저위험(probe)만 자율 집행. 중/고위험(lifecycle/adopt)은
+    per-target lock 안에서 C-3 2축 → 사전 조건 → 승인 → 감사 → 집행(CB-1~CB-9). 자격증명 0(B-6).
+
+    슬라이스 주입(전부 hermetic 테스트 seam, Provider Liquidity):
+      launcher  = lifecycle 집행 백엔드(CB-3). 없으면 lifecycle 집행 불가(fail-closed).
+      approver  = 게이트 콜백(L-6). None = default-deny.
+      owner_starttime(pid)->starttime  = CB-1 PID 재사용 차단(기본 /proc).
+      cumulative_count(name)->int      = CB-2 누적(LedgerLog read() 파생, server 배선).
+      port_pid(port)->pid|None         = 포트 점유 PID 역추적(동시1인스턴스/adopt).
+      now()->float                     = rate 윈도 시계(테스트 결정성).
     """
 
     def __init__(
@@ -233,16 +282,49 @@ class ProcessController:
         actions: Optional[dict] = None,
         prober: Optional[Callable[[ControlTarget], ProbeStatus]] = None,
         audit: Optional[Callable[[ControlDecision], None]] = None,
+        *,
+        launcher: Any = None,
+        approver: Optional[Callable[[dict], bool]] = None,
+        owner_starttime: Optional[Callable[[int], Optional[int]]] = None,
+        cumulative_count: Optional[Callable[[str], int]] = None,
+        port_pid: Optional[Callable[[int], Optional[int]]] = None,
+        now: Optional[Callable[[], float]] = None,
+        sleep: Optional[Callable[[float], None]] = None,
+        cumulative_limit: int = 10,
+        rate_limit: int = 2,
+        rate_window: float = 60.0,
+        start_probe_attempts: int = 30,
+        start_probe_interval: float = 0.1,
     ) -> None:
         self._actions = dict(CONTROL_ACTIONS if actions is None else actions)
         self._prober = prober if prober is not None else probe_target
         self._audit = audit
+        self._launcher = launcher
+        self._approver = approver
+        self._owner_starttime = owner_starttime if owner_starttime is not None else read_starttime
+        self._cumulative_count = cumulative_count
+        self._port_pid = port_pid
+        self._now = now if now is not None else time.monotonic
+        self._sleep = sleep if sleep is not None else time.sleep
+        self._cumulative_limit = cumulative_limit
+        self._rate_limit = rate_limit
+        self._rate_window = rate_window
+        self._start_probe_attempts = start_probe_attempts
+        self._start_probe_interval = start_probe_interval
+        # 내부 상태(자격증명 0 — B-6): 소유권·rate·per-target lock
+        self._owned: dict[str, tuple] = {}        # name -> (pid, starttime)  CB-1
+        self._rate: dict[str, list] = {}          # name -> [timestamps]      C-3
+        self._locks: dict[str, threading.Lock] = {}  # name -> Lock           CB-5
+        self._locks_guard = threading.Lock()
 
     def propose(self, action_name: str, target: ControlTarget) -> ControlDecision:
-        """boss-facing 단일 진입점. 결정 후 감사 기록(GP-7)."""
+        """boss-facing 단일 진입점. 결정 후 감사 기록(GP-7, fail-soft sink)."""
         decision = self._decide(action_name, target)
         if self._audit is not None:
-            self._audit(decision)
+            try:
+                self._audit(decision)
+            except Exception:
+                pass  # 결정-후 sink 는 fail-soft. lifecycle intent 감사는 집행 전 fail-closed.
         return decision
 
     def _decide(self, action_name: str, target: ControlTarget) -> ControlDecision:
@@ -263,15 +345,207 @@ class ProcessController:
 
         grade = grade_for(action.capabilities)
         if grade is Grade.LOW:
-            result = self._execute(action, target)
+            result = self._execute(action, target)  # 1a probe — 자율
             return ControlDecision(action_name, tname, grade, "executed", result, "low-grade auto")
 
-        # 비-저위험: slice-1a 엔 게이트/집행 경로 없음 → fail-closed 거부(게이트 = slice-1b)
-        return ControlDecision(action_name, tname, grade, "rejected", None,
-                               f"grade {grade.name} requires approval gate (slice-1b)")
+        # 중/고위험 = lifecycle/adopt → per-target lock critical section(CB-5 atomicity)
+        with self._lock_for(tname):
+            return self._gated_lifecycle(action, target, grade)
+
+    # ── 중/고위험 게이트 (lock 안에서만 — CB-5) ────────────────────────────
+    def _gated_lifecycle(self, action: Action, target: ControlTarget, grade: Grade) -> ControlDecision:
+        name = target.name
+        caps = action.capabilities
+        is_adopt = Capability.ADOPT in caps
+
+        # launcher 부재 = lifecycle 집행 불가(fail-closed)
+        if self._launcher is None:
+            return _refer(action, name, grade, "launcher 미배선 (fail-closed)")
+
+        # CB-2 누적(LedgerLog 파생) — 2축 중 누적 먼저(controller 재시작 우회 차단)
+        if self._cumulative_count is not None and self._cumulative_count(name) >= self._cumulative_limit:
+            return _refer(action, name, grade, f"누적 한도 초과 (cumulative ≥ {self._cumulative_limit})")
+        # C-3 rate(슬라이딩 윈도)
+        if not self._rate_ok(name):
+            return _refer(action, name, grade, f"rate 빈도 한도 초과 ({self._rate_limit}/{int(self._rate_window)}s)")
+
+        # 동작별 사전 조건(CB-9 동시1 / L-2 소유권+CB-1 starttime / adopt 점유)
+        pre = self._precheck(action, target, grade, is_adopt)
+        if pre is not None:
+            return pre
+
+        # approver 게이트(L-6 default-deny/fail-closed, CB-7 adopt 도 항상 승인)
+        if not self._approve(action, target, grade):
+            return ControlDecision(action.name, name, grade, "rejected", None,
+                                   "approval denied (default-deny/fail-closed)")
+
+        # CB-4 audit intent fail-closed(감사 기록 실패 시 집행 안 함)
+        try:
+            self._audit_intent(action, target, grade)
+        except Exception:
+            return _refer(action, name, grade, "감사 기록 실패 (audit fail-closed)")
+
+        # 집행(CB-6 토큰 강제). 부분 실패 = referred(CB-8 자동 롤백 0)
+        try:
+            result, pid = self._execute_lifecycle(action, target, gate_token=_GateToken())
+        except _LifecyclePartialFailure as exc:
+            return _refer(action, name, grade, str(exc), pid=self._owned.get(name, (None,))[0])
+        self._rate_record(name)
+        return ControlDecision(action.name, name, grade, "executed", result, "gated executed", pid=pid)
+
+    def _precheck(self, action: Action, target: ControlTarget, grade: Grade,
+                  is_adopt: bool) -> Optional[ControlDecision]:
+        name = target.name
+        caps = action.capabilities
+        occupant = self._port_pid(target.port) if self._port_pid is not None else None
+
+        if is_adopt:
+            # adopt = 미소유 점유 PID cutover 인수. 점유 없으면 인수 대상 없음.
+            if occupant is None:
+                return _refer(action, name, grade, "포트 점유 프로세스 없음 (인수 대상 없음)")
+            return None
+
+        if Capability.SPAWN in caps and Capability.SIGNAL not in caps:
+            # 순수 start: CB-9 동시 1인스턴스 — 기존 LISTEN/소유 살아있으면 거부
+            if occupant is not None or name in self._owned:
+                return _refer(action, name, grade, "이미 실행 중 (동시 1인스턴스, CB-9)")
+            return None
+
+        if Capability.SIGNAL in caps:
+            # stop/restart: 소유 PID 필요(L-2) + starttime 재대조(CB-1 PID 재사용)
+            owned = self._owned.get(name)
+            if owned is None:
+                return _refer(action, name, grade, "미소유 프로세스 (signal 불가 — L-2, 인수 권유)")
+            pid, st0 = owned
+            if self._owner_starttime(pid) != st0:
+                return _refer(action, name, grade, "PID 재사용 감지 (starttime 불일치 — CB-1)", pid=pid)
+            return None
+        return None
+
+    def _execute_lifecycle(self, action: Action, target: ControlTarget,
+                           gate_token: Any = None) -> tuple:
+        """게이트/lock 통과 후에만 도달(CB-6 토큰 강제). 우회 호출 = SeamViolation."""
+        if not isinstance(gate_token, _GateToken):
+            raise SeamViolation("_execute_lifecycle requires a valid gate token (CB-6 seam)")
+        caps = action.capabilities
+        if Capability.ADOPT in caps:
+            return self._do_adopt(target)
+        if Capability.SPAWN in caps and Capability.SIGNAL not in caps:
+            return self._do_start(target)
+        if Capability.SIGNAL in caps and Capability.SPAWN not in caps:
+            return self._do_stop(target)
+        if Capability.SIGNAL in caps and Capability.SPAWN in caps:
+            return self._do_restart(target)
+        raise SeamViolation("unsupported lifecycle capability set")
+
+    # ── 결정적 lifecycle 절차(launcher 경유) ───────────────────────────────
+    def _spawn_and_own(self, target: ControlTarget) -> int:
+        pid = self._launcher.spawn(list(target.launch_argv), target.cwd or None, None)
+        self._owned[target.name] = (pid, self._owner_starttime(pid))
+        return pid
+
+    def _await_free(self, target: ControlTarget) -> None:
+        """정지 후 포트 해제 대기(voice_lab 교훈: bind 충돌 방지). best-effort polling.
+
+        해제 안 돼도 spawn 시도(bind 충돌 시 _await_listen 이 dangling 으로 잡음 — CB-8).
+        """
+        for _i in range(self._start_probe_attempts):
+            if not self._prober(target).listening:
+                return
+            self._sleep(self._start_probe_interval)
+
+    def _await_listen(self, target: ControlTarget) -> bool:
+        """CB-3 start 성공 판정 = LISTEN probe(1a 재사용). 실 프로세스 기동 race 방어 polling.
+
+        spawn 즉시 probe 는 기동 전이라 거짓 실패 — 짧게 재시도(테스트는 sleep 주입으로 즉시).
+        """
+        for i in range(self._start_probe_attempts):
+            if self._prober(target).listening:
+                return True
+            if i < self._start_probe_attempts - 1:
+                self._sleep(self._start_probe_interval)
+        return False
+
+    def _do_start(self, target: ControlTarget) -> tuple:
+        pid = self._spawn_and_own(target)
+        if not self._await_listen(target):  # CB-3 start 성공 = LISTEN(기동 대기)
+            raise _LifecyclePartialFailure("start 실패: 포트 LISTEN 안 됨 (dangling, 자동 롤백 0)")
+        return ({"action": "start", "pid": pid, "listening": True}, pid)
+
+    def _do_stop(self, target: ControlTarget) -> tuple:
+        pid = self._owned[target.name][0]  # precheck 에서 소유+starttime 검증됨
+        self._launcher.signal(pid, _signal_mod.SIGTERM)
+        self._owned.pop(target.name, None)
+        return ({"action": "stop", "pid": pid}, pid)
+
+    def _do_restart(self, target: ControlTarget) -> tuple:
+        old = self._owned.get(target.name)  # precheck 검증됨
+        if old is not None:
+            self._launcher.signal(old[0], _signal_mod.SIGTERM)
+            self._owned.pop(target.name, None)
+            self._await_free(target)  # 포트 해제 대기(bind 충돌 방지)
+        pid = self._spawn_and_own(target)
+        if not self._await_listen(target):
+            raise _LifecyclePartialFailure("restart 실패: 재기동 후 LISTEN 안 됨 (dangling, 자동 롤백 0)")
+        return ({"action": "restart", "pid": pid}, pid)
+
+    def _do_adopt(self, target: ControlTarget) -> tuple:
+        """CB-7 cutover-재기동: 미소유 점유 정지(사람 승인) → controller 재spawn → 소유 전환."""
+        occupant = self._port_pid(target.port)  # precheck 에서 not None 확인됨
+        self._launcher.signal(occupant, _signal_mod.SIGTERM)  # 미소유 정지(HIGH 승인으로 예외)
+        self._await_free(target)  # 포트 해제 대기(cutover bind 충돌 방지)
+        pid = self._spawn_and_own(target)  # 직접 spawn → (pid, starttime) 자기 기록
+        if not self._await_listen(target):
+            raise _LifecyclePartialFailure("adopt(cutover) 실패: 재기동 후 LISTEN 안 됨")
+        return ({"action": "adopt", "old_pid": occupant, "pid": pid}, pid)
+
+    # ── 게이트 helpers ──────────────────────────────────────────────────────
+    def _lock_for(self, name: str) -> threading.Lock:
+        with self._locks_guard:
+            lk = self._locks.get(name)
+            if lk is None:
+                lk = threading.Lock()
+                self._locks[name] = lk
+            return lk
+
+    def _rate_ok(self, name: str) -> bool:
+        now = self._now()
+        window = [t for t in self._rate.get(name, []) if now - t < self._rate_window]
+        self._rate[name] = window
+        return len(window) < self._rate_limit
+
+    def _rate_record(self, name: str) -> None:
+        self._rate.setdefault(name, []).append(self._now())
+
+    def _approve(self, action: Action, target: ControlTarget, grade: Grade) -> bool:
+        if self._approver is None:
+            return False  # L-6 default-deny
+        try:
+            req = {
+                "action": action.name, "target": target.name, "grade": grade.name,
+                "port": target.port, "owned": self._owned.get(target.name),
+            }
+            return bool(self._approver(req))
+        except Exception:
+            return False  # L-6 fail-closed
+
+    def _audit_intent(self, action: Action, target: ControlTarget, grade: Grade) -> None:
+        """집행 전 intent 감사(CB-4). audit 이 raise 하면 _gated_lifecycle 가 referred(fail-closed).
+
+        audit None = 무감사(테스트/개발). production server 는 fail-closed audit 배선 필수(정직 단서).
+        """
+        if self._audit is None:
+            return
+        self._audit(ControlDecision(action.name, target.name, grade, "intent", None, "lifecycle intent"))
 
     def _execute(self, action: Action, target: ControlTarget) -> Any:
-        """등급 검증 통과 후에만 도달(B-1). capability 별 dispatch — 1a 는 probe 만."""
+        """등급 검증 통과 후에만 도달(B-1). 1a probe 자율 집행."""
         if Capability.PROBE in action.capabilities:
             return self._prober(target)
-        return None  # 1a 미구현 capability(도달 불가 — 비-저위험은 _decide 가 먼저 거부)
+        return None  # 도달 불가(비-저위험은 _decide 가 lock 분기로 보냄)
+
+
+def _refer(action: Action, name: str, grade: Grade, reason: str,
+           pid: Optional[int] = None) -> ControlDecision:
+    """사람 회부(referred) 결정 생성 — 미소유·재사용·C-3 초과·부분 실패."""
+    return ControlDecision(action.name, name, grade, "referred", None, reason, pid=pid)

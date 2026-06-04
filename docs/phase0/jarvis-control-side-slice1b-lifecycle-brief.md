@@ -191,8 +191,10 @@ slice-1a(probe, 자율)는 PR #50에서 머지됐고, 본 세션에서 **dogfood
 
 ---
 
-## 8. 정직 단서 (사전)
+## 8. 정직 단서 + 구현 결과 (TDD 완료)
 
 - C-3 수치(60s/2·누적10)는 1a probe로 *직접* 실측 불가(부작용 0) → 운영 빈도 근거 + 보수적 사용자 결정. 자율 완화·임계 조정은 1b dogfood 실측 누적 후.
-- lifecycle 음색/실효 검증은 사용자 브라우저·실 e2e. 미소유 PID 인수 게이트는 설계만(자동 인수 금지).
-- 본 brief = 설계 정리. **코드 변경 0.** 합의 BLOCKING 확정 후 TDD.
+- ✅ **TDD 구현 완료** — `launcher.py`(신규) · `process_control.py` lifecycle 확장 · `external_registry.ControlSpec` · `external_routes` lifecycle 라우트 · `server` 배선 · `index.html` 버튼/모달. **104 slice-1b 테스트 + 전체 회귀 0 + grimp 단방향(역류 NONE) + secret PASS + JS 문법 OK.**
+- ✅ **실 e2e**(더미 http.server, voice_lab 무관): start→restart(pid 변경)→stop(포트 해제 None) / 미소유=**referred**(안 죽임, L-2) / **adopt cutover**(미소유 정지→재spawn 소유) / `find_listener_pid`(/proc) 실동작 / 8799 clean 해제.
+- ⭐ **dogfood 발견 → 하네스 흡수**: `killpg` 가 controller *자기* 프로세스 그룹을 죽일 수 있음(테스트 스크립트에서 자비스 자살 재현) → **자살 방지 가드 추가**(대상 pgid == 자기 pgid면 거부). controller 정상 spawn 프로세스는 setsid 독립 그룹이라 정상 stop 가능. 실 voice_lab=독립 세션이라 현 위험 0.
+- 잔여(정직): (a) registry `control.launch_argv` 는 실 voice_lab dogfood 시 사용자 입력(현 registry.json 미기재 → 빈 argv 면 start 불가, 의도된 fail-soft). (b) server `approver=True` = default-deny(L-6)를 **1-클릭 게이트**(프론트 모달+confirmed+same-origin)로 대체 — boss 자율 경로 부재(HUD 라우트만), 자율 완화는 1b dogfood 후. (c) HUD 버튼/cutover 모달은 **사용자 브라우저 검증 대기**(헤드리스 JS 문법만 확인). (d) CB-4 audit fail-closed 강한 버전(디스크 풀)은 controller 레벨 검증, server intent strict append 로 배선.

@@ -2298,6 +2298,16 @@
       titleBar.appendChild(tab);
       const panel = document.createElement('div');
       panel.style.display = 'none';
+      // 헤더: 🔄 상태 새로고침(제어측 slice-1a probe). localhost 카드만 점 표시.
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex; align-items:center; justify-content:flex-end; margin-bottom:8px;';
+      const refresh = document.createElement('span');
+      refresh.textContent = '🔄';
+      refresh.title = '상태 새로고침';
+      refresh.style.cssText = 'cursor:pointer; opacity:0.7; font-size:13px; user-select:none;';
+      header.appendChild(refresh);
+      panel.appendChild(header);
+      const _dots = {};  // name -> 상태 점 span (localhost 카드만 갱신)
       for (const x of list) {
         const card = document.createElement('a');
         // 서버가 url 을 http(s) 로 검증하지만 방어심층: 새 탭 + opener 차단.
@@ -2305,18 +2315,40 @@
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
         card.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); text-decoration:none; cursor:pointer;';
+        const dot = document.createElement('span');  // ●작동 / ○정지 / ⋯측정중 / (빈칸)외부
+        dot.textContent = '⋯';
+        dot.style.cssText = 'width:12px; text-align:center; color:var(--text-dim); flex:none; font-size:11px;';
         const label = document.createElement('span');
         label.style.cssText = 'flex:1; min-width:0;';
         label.textContent = (x.icon ? x.icon + ' ' : '') + x.title;  // textContent = XSS 차단
         const arrow = document.createElement('span');
         arrow.textContent = '↗';
         arrow.style.cssText = 'color:var(--text-dim);';
-        card.appendChild(label); card.appendChild(arrow);
+        card.appendChild(dot); card.appendChild(label); card.appendChild(arrow);
         panel.appendChild(card);
+        _dots[x.name] = dot;
       }
       canvasAside.appendChild(panel);
       _pluginPanels['__external__'] = { tab, panel, mounted: true };
       tab.addEventListener('click', () => setCanvasView('plugin:__external__'));
+
+      // 제어측 slice-1a: 카드 상태 probe(ProcessController.propose health, 저위험·자율).
+      async function _probeOne(name, dot) {
+        dot.textContent = '⋯'; dot.style.color = 'var(--text-dim)'; dot.title = '측정 중';
+        let res = null;
+        try {
+          const r = await fetch('/api/jarvis/external/probe?name=' + encodeURIComponent(name));
+          res = await r.json();
+        } catch (e) {}
+        if (!res || res.probeable === false) {  // 외부 호스트 = probe 미지원 → 점 숨김
+          dot.textContent = ''; dot.title = '외부 호스트 — 상태 probe 미지원'; return;
+        }
+        if (res.listening) { dot.textContent = '●'; dot.style.color = '#3fb950'; dot.title = '작동 중'; }
+        else { dot.textContent = '○'; dot.style.color = 'var(--text-dim)'; dot.title = '정지'; }
+      }
+      function _probeAll() { for (const name in _dots) _probeOne(name, _dots[name]); }
+      refresh.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); _probeAll(); });
+      _probeAll();  // 자동 1회
     }
     $('jarvis-submit').addEventListener('click', submitJarvisTask);
     $('jarvis-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitJarvisTask(); });

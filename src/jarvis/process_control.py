@@ -39,6 +39,11 @@ _SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 _LOCALHOST_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+def is_localhost(host: object) -> bool:
+    """host 가 로컬 전용인지(B-4 SSRF 차단 판정 — 호출측이 probe 대상 선별에 사용)."""
+    return host in _LOCALHOST_HOSTS
+
+
 class ControlError(Exception):
     """제어 대상 검증 실패."""
 

@@ -528,6 +528,73 @@ async def measurements_overview_handler(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# ── 모델 측정 실행 (벤치마크 → append_measurement) — 비동기(수 분 소요) ──────
+# 측정 5/29 고정의 뿌리 = 측정 *수행* 도구 부재. run_benchmark 가 그 조각.
+# 동시 1개(중복 측정 차단) + same-origin(CSRF) + 백그라운드 task + status 폴링.
+import threading as _threading  # noqa: E402
+
+from jarvis_hud.jarvis_tasks import same_origin  # noqa: E402  CSRF 가드(기존 답습)
+
+_measure_state = {"state": "idle", "done": 0, "total": 0, "current": "", "error": None}
+_measure_guard = _threading.Lock()
+
+
+async def _run_measurement_bg(models, n_runs):
+    from src.jarvis.model_benchmark import run_benchmark
+    from src.jarvis.model_measurement_repo import append_measurement
+    try:
+        def _progress(done, total, model):
+            _measure_state.update(done=done, total=total, current=model)
+
+        def _work():
+            m = run_benchmark(list(models), n_runs=n_runs, on_progress=_progress)
+            append_measurement(m, kind="multi")  # DB 새 세션(live writer)
+
+        await asyncio.to_thread(_work)
+        _measure_state.update(state="done", current="")
+    except Exception as e:  # fail-soft: 측정 실패가 서버를 안 깬다
+        _measure_state.update(state="error", error=str(e))
+
+
+async def measurements_run_handler(request):
+    if not same_origin(request):
+        return JSONResponse({"error": "cross-origin forbidden"}, status_code=403)
+    with _measure_guard:
+        if _measure_state["state"] == "running":
+            return JSONResponse({"error": "이미 측정 중"}, status_code=409)
+        try:
+            body = json.loads(await request.body())
+        except Exception:
+            body = {}
+        models = [m for m in (body.get("models") or []) if isinstance(m, str) and m]
+        n_runs = body.get("n_runs", 3)
+        if not isinstance(n_runs, int) or not (1 <= n_runs <= 10):
+            n_runs = 3
+        if not models:
+            return JSONResponse({"error": "측정할 모델을 선택하세요"}, status_code=400)
+        _measure_state.update(state="running", done=0, total=len(models), current="", error=None)
+    asyncio.create_task(_run_measurement_bg(models, n_runs))
+    return JSONResponse({"state": "running", "total": len(models)}, status_code=202)
+
+
+async def measurements_run_status_handler(request):
+    return JSONResponse(dict(_measure_state))
+
+
+async def measurements_models_handler(request):
+    """측정 대상 후보 = ollama 설치 모델 *이름* 목록(체크박스용). /api/status 는 개수만."""
+    def _tags():
+        req = urllib.request.Request("http://localhost:11434/api/tags")
+        with urllib.request.urlopen(req, timeout=5) as r:  # noqa: S310 (localhost ollama)
+            return json.loads(r.read().decode())
+    try:
+        data = await asyncio.to_thread(_tags)
+        names = [m["name"] for m in data.get("models", []) if isinstance(m.get("name"), str)]
+        return JSONResponse({"models": names})
+    except Exception as e:
+        return JSONResponse({"models": [], "error": str(e)})
+
+
 async def chat_handler(request):
     try:
         body = await request.body()
@@ -580,6 +647,9 @@ routes = [
     Route("/api/conversations/new", conversation_new_handler, methods=["POST"]),
     Route("/api/conversations/{conversation_id}", conversation_delete_handler, methods=["DELETE"]),
     Route("/api/measurements/overview", measurements_overview_handler, methods=["GET"]),  # §10-5 모델 관리
+    Route("/api/measurements/run", measurements_run_handler, methods=["POST"]),  # 측정 실행(비동기)
+    Route("/api/measurements/run/status", measurements_run_status_handler, methods=["GET"]),
+    Route("/api/measurements/models", measurements_models_handler, methods=["GET"]),
     Route("/api/tts", tts_handler, methods=["POST"]),
 ]
 

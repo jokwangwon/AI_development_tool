@@ -214,6 +214,69 @@ def test_cumulative_limit_blocks_cb2():
     assert "누적" in d.reason or "cumulative" in d.reason.lower()
 
 
+# ── C-3 자율완화 (2026-06-05, 풀 3+1 합의 REVISE) ──────────────────────────
+#   3plus1-consensus-2026-06-05-control-c3-autorelax.md
+#   rate 2→5/60s (R-b) · 누적 lifetime 10→100 (C-a) · 경계 로직 0줄 · CC-1~CC-5.
+def _ctrl_default_limits(**kw):
+    """rate_limit/cumulative_limit 을 *명시 안 함* → 생성자 기본값(완화 후 5/100) 검증용."""
+    starttimes = kw.pop("starttimes", {})
+    defaults = dict(
+        launcher=FakeLauncher(),
+        approver=lambda req: True,
+        owner_starttime=lambda pid: starttimes.get(pid, 5000),
+        cumulative_count=lambda name: 0,
+        port_pid=lambda port: None,
+        prober=lambda t: ProbeStatus(listening=True),
+        now=Clock(),
+        sleep=lambda _s: None,
+        rate_window=60.0,
+        audit=None,
+    )  # rate_limit/cumulative_limit 미지정 = 기본값 사용
+    defaults.update(kw)
+    return ProcessController(**defaults)
+
+
+def test_rate_default_relaxed_to_five():
+    """자율완화: rate 기본값 = 5/60s (R-b). 5회까지 통과, 6번째 referred."""
+    clock = Clock(0.0)
+    ctrl = _ctrl_default_limits(port_pid=lambda p: None, now=clock)
+    for i in range(5):  # 1~5회 모두 executed (인간 cadence 수용)
+        clock.t = float(i)
+        d = ctrl.propose("start" if i == 0 else "restart", _target())
+        assert d.outcome == "executed", f"op #{i+1} should pass under R-b, got {d.outcome}"
+    clock.t = 5.0
+    d = ctrl.propose("restart", _target())  # 6번째 = 윈도 내 초과
+    assert d.outcome == "referred"
+    assert "rate" in d.reason.lower() or "빈도" in d.reason
+
+
+def test_cumulative_default_relaxed_to_hundred():
+    """자율완화: 누적 기본값 = 100 (C-a). 99 통과, 100 도달 시 referred."""
+    ok = _ctrl_default_limits(port_pid=lambda p: None, cumulative_count=lambda name: 99)
+    assert ok.propose("start", _target()).outcome == "executed"
+    blocked = _ctrl_default_limits(port_pid=lambda p: None, cumulative_count=lambda name: 100)
+    d = blocked.propose("start", _target())
+    assert d.outcome == "referred"
+    assert "누적" in d.reason or "cumulative" in d.reason.lower()
+
+
+def test_cc1_restart_does_not_bypass_cumulative():
+    """CC-1 (적대적 검증 코드화): controller 재시작으로 in-memory rate 를 리셋해도
+    ledger 파생 누적(executed 카운트)이 무제한 성공 lifecycle 을 차단한다.
+
+    2-B(누적을 crash-loop 탐지로 *재정의*)가 깨려던 불변 — 누적 축은 반드시
+    *executed* 를 세야 재시작-우회-of-성공-op 를 막는다(합의 ⭐ 적대적 검증).
+    """
+    # 새 controller 인스턴스 = 재시작 시뮬: in-memory rate 윈도는 빈 상태.
+    ctrl = _ctrl_default_limits(port_pid=lambda p: None,
+                                cumulative_count=lambda name: 100)
+    assert ctrl._rate == {}, "재시작 직후 rate 윈도는 비어 있어야(in-memory)"
+    d = ctrl.propose("start", _target())
+    # rate 는 깨끗하지만 ledger 파생 누적이 차단 → 재시작 우회 불가(CB-2 기능 보존).
+    assert d.outcome == "referred"
+    assert "누적" in d.reason or "cumulative" in d.reason.lower()
+
+
 # ── CB-6 seam 구조: _execute_lifecycle 우회 호출 차단 ──────────────────────
 def test_execute_lifecycle_raises_without_gate_token_cb6():
     """CB-6: _execute_lifecycle 가 게이트 통과 증거(토큰) 없이 호출되면 raise(우회불가).

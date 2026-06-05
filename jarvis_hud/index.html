@@ -2343,9 +2343,11 @@
       function _lifecycleRow(name, title) {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; gap:6px; margin:-2px 0 10px 22px;';
+        // 자체 const(_ACT_LABEL 은 아래 정의 — 카드 루프 시점 TDZ 회피).
+        const _LBL = { start: '▶ 시작', stop: '■ 정지', restart: '↻ 재시작' };
         for (const act of ['start', 'stop', 'restart']) {
           const btn = document.createElement('button');
-          btn.textContent = _ACT_LABEL[act];
+          btn.textContent = _LBL[act];
           btn.style.cssText = 'font-size:11px; padding:3px 9px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
           btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); _lifecycleClick(name, act, title); });
           row.appendChild(btn);

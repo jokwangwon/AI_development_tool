@@ -290,8 +290,8 @@ class ProcessController:
         port_pid: Optional[Callable[[int], Optional[int]]] = None,
         now: Optional[Callable[[], float]] = None,
         sleep: Optional[Callable[[float], None]] = None,
-        cumulative_limit: int = 10,
-        rate_limit: int = 2,
+        cumulative_limit: int = 100,  # C-3 자율완화(2026-06-05 합의 C-a): lifetime cap 10→100
+        rate_limit: int = 5,          # C-3 자율완화(R-b): 60s 윈도 2→5(인간 cadence 수용)
         rate_window: float = 60.0,
         start_probe_attempts: int = 30,
         start_probe_interval: float = 0.1,
@@ -509,6 +509,10 @@ class ProcessController:
             return lk
 
     def _rate_ok(self, name: str) -> bool:
+        # CC-5 (C-3 자율완화 합의): rate 는 *executed* lifecycle 빈도만 센다(_rate_record 는
+        # 집행 성공 시에만 — referred/crash-loop 미집계). 따라서 rate 는 crash-loop 를 *직접*
+        # 잡지 않는다. propose 폭주의 1차 방어 = 1-클릭 게이트(C-2). rate 는 "성공 재기동 연타"
+        # 2차 방어선. crash-loop 자체는 CB-9 동시1 + 누적(ledger 파생)이 막는다.
         now = self._now()
         window = [t for t in self._rate.get(name, []) if now - t < self._rate_window]
         self._rate[name] = window

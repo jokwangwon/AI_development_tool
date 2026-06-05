@@ -734,6 +734,11 @@ _control = ProcessController(
     cumulative_count=_control_cumulative,
     port_pid=find_listener_pid,
     audit=_control_audit,
+    # C-3 자율완화(2026-06-05 풀 3+1 합의, dogfood 실측 근거): rate 2→5/60s(R-b),
+    # 누적 lifetime 10→100(C-a). 잠정 보수값이 정상 작업(3-op)을 봉쇄(F-1)함을 실측 확인.
+    # 명시 인자화 = 운영 임계를 배선 지점에서 가시화(합의 권고). 경계 로직은 불변(CC-3).
+    rate_limit=5,
+    cumulative_limit=100,
 )
 routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY, controller=_control)
 

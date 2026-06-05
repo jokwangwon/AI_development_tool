@@ -977,7 +977,19 @@
       <div class="measure-modal" id="measure-modal">
         <div class="measure-head">
           <h2>모델 관리</h2>
-          <button class="measure-close" id="measure-close" title="닫기">✕</button>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button class="measure-close" id="measure-run-toggle" title="측정 실행" style="font-size:12px;">▶ 측정</button>
+            <button class="measure-close" id="measure-refresh" title="새로고침">🔄</button>
+            <button class="measure-close" id="measure-close" title="닫기">✕</button>
+          </div>
+        </div>
+        <div class="measure-section" id="measure-run-panel" style="display:none">
+          <div class="measure-sub">측정 실행 — 모델 선택 후 실행 (모델당 3회, 수 분 소요)</div>
+          <div id="measure-models" style="display:flex;flex-direction:column;gap:5px;margin:8px 0;font-size:13px"></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button id="measure-run-go" style="border:1px solid var(--border-strong);border-radius:8px;padding:6px 14px;color:var(--accent);background:none;cursor:pointer;font-size:12px">▶ 선택 모델 측정</button>
+            <span id="measure-progress" style="font-size:12px;color:var(--text-dim)"></span>
+          </div>
         </div>
         <div class="measure-section">
           <div class="measure-sub">최신 측정 <span class="meta" id="measure-latest-meta"></span></div>
@@ -1752,6 +1764,13 @@
     const measureBtn = $('measure-btn');
     const measureOverlay = $('measure-overlay');
     const measureClose = $('measure-close');
+    const measureRefresh = $('measure-refresh');
+    const measureRunToggle = $('measure-run-toggle');
+    const measureRunPanel = $('measure-run-panel');
+    const measureModels = $('measure-models');
+    const measureRunGo = $('measure-run-go');
+    const measureProgress = $('measure-progress');
+    let _measurePoll = null;
 
     function fmtTs(ts) {
       if (!ts) return '--';
@@ -1783,7 +1802,7 @@
       sessEl.innerHTML = '';
       metaEl.textContent = '';
       try {
-        const d = await (await fetch('/api/measurements/overview')).json();
+        const d = await (await fetch('/api/measurements/overview', { cache: 'no-store' })).json();
         // history → 모델별 mean 시계열 (추세 sparkline)
         const hist = {};
         (d.history || []).forEach(h => { (hist[h.model] = hist[h.model] || []).push(h.mean); });
@@ -1835,9 +1854,79 @@
       }
     }
 
-    function closeMeasurements() { measureOverlay.classList.remove('open'); }
+    function closeMeasurements() {
+      measureOverlay.classList.remove('open');
+      if (_measurePoll) { clearInterval(_measurePoll); _measurePoll = null; }  // 폴링 중단(측정은 서버서 계속)
+    }
     measureBtn.addEventListener('click', (e) => { e.stopPropagation(); openMeasurements(); });
+    // 열어둔 채 새 측정 반영 — 새로고침 버튼(openMeasurements 재호출 = 재fetch, no-store)
+    if (measureRefresh) measureRefresh.addEventListener('click', (e) => { e.stopPropagation(); openMeasurements(); });
     measureClose.addEventListener('click', closeMeasurements);
+
+    // ── 측정 실행 패널(모델 선택 → 벤치마크 → DB 저장 → 갱신) ──────────────
+    async function loadMeasureModels() {
+      measureModels.replaceChildren();
+      let models = [];
+      try {
+        const s = await (await fetch('/api/measurements/models', { cache: 'no-store' })).json();
+        models = s.models || [];
+      } catch (e) {}
+      if (!models.length) { measureModels.textContent = 'ollama 모델 없음'; return; }
+      models.forEach(name => {
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'display:flex;gap:6px;align-items:center;cursor:pointer';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = name; cb.className = 'measure-model-cb';
+        const span = document.createElement('span'); span.textContent = name;  // XSS 차단
+        lbl.appendChild(cb); lbl.appendChild(span);
+        measureModels.appendChild(lbl);
+      });
+    }
+    if (measureRunToggle) measureRunToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = measureRunPanel.style.display !== 'none';
+      measureRunPanel.style.display = open ? 'none' : 'block';
+      if (!open) loadMeasureModels();
+    });
+    async function pollMeasureStatus() {
+      let st;
+      try { st = await (await fetch('/api/measurements/run/status', { cache: 'no-store' })).json(); }
+      catch (e) { return; }
+      if (st.state === 'running') {
+        measureProgress.textContent = `측정 중 ${st.done}/${st.total} ${st.current || ''}…`;
+      } else if (st.state === 'done') {
+        if (_measurePoll) { clearInterval(_measurePoll); _measurePoll = null; }
+        measureProgress.textContent = '✓ 완료';
+        measureRunGo.disabled = false;
+        openMeasurements();  // 최신 랭킹 갱신
+        setTimeout(() => { measureProgress.textContent = ''; measureRunPanel.style.display = 'none'; }, 1800);
+      } else if (st.state === 'error') {
+        if (_measurePoll) { clearInterval(_measurePoll); _measurePoll = null; }
+        measureProgress.textContent = '✕ 실패: ' + (st.error || '');
+        measureRunGo.disabled = false;
+      }
+    }
+    if (measureRunGo) measureRunGo.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const models = Array.from(document.querySelectorAll('.measure-model-cb:checked')).map(c => c.value);
+      if (!models.length) { measureProgress.textContent = '모델을 선택하세요'; return; }
+      measureRunGo.disabled = true;
+      measureProgress.textContent = '시작 중…';
+      try {
+        const r = await fetch('/api/measurements/run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ models: models, n_runs: 3 }),
+        });
+        if (!r.ok) {
+          let d = {}; try { d = await r.json(); } catch (e) {}
+          measureProgress.textContent = (r.status === 409 ? '이미 측정 중' : ('실패: ' + (d.error || r.status)));
+          measureRunGo.disabled = false; return;
+        }
+        if (_measurePoll) clearInterval(_measurePoll);
+        _measurePoll = setInterval(pollMeasureStatus, 1500);
+        pollMeasureStatus();
+      } catch (err) { measureProgress.textContent = '오류: ' + err; measureRunGo.disabled = false; }
+    });
     measureOverlay.addEventListener('click', (e) => { if (e.target === measureOverlay) closeMeasurements(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeasurements(); });
 

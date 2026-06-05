@@ -2327,10 +2327,108 @@
         card.appendChild(dot); card.appendChild(label); card.appendChild(arrow);
         panel.appendChild(card);
         _dots[x.name] = dot;
+        // 제어측 slice-1b: localhost 카드에 lifecycle 버튼(start/stop/restart). 외부 호스트는 없음.
+        if (_isLocal(x.url)) panel.appendChild(_lifecycleRow(x.name, x.title));
       }
       canvasAside.appendChild(panel);
       _pluginPanels['__external__'] = { tab, panel, mounted: true };
       tab.addEventListener('click', () => setCanvasView('plugin:__external__'));
+
+      // 제어측 slice-1b: lifecycle 버튼 + cutover 승인 모달 ──────────────────
+      function _isLocal(url) {
+        try { const h = new URL(url).hostname; return h === '127.0.0.1' || h === 'localhost' || h === '::1'; }
+        catch (e) { return false; }
+      }
+      const _ACT_LABEL = { start: '▶ 시작', stop: '■ 정지', restart: '↻ 재시작', adopt: '인수' };
+      function _lifecycleRow(name, title) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:6px; margin:-2px 0 10px 22px;';
+        // 자체 const(_ACT_LABEL 은 아래 정의 — 카드 루프 시점 TDZ 회피).
+        const _LBL = { start: '▶ 시작', stop: '■ 정지', restart: '↻ 재시작' };
+        for (const act of ['start', 'stop', 'restart']) {
+          const btn = document.createElement('button');
+          btn.textContent = _LBL[act];
+          btn.style.cssText = 'font-size:11px; padding:3px 9px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
+          btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); _lifecycleClick(name, act, title); });
+          row.appendChild(btn);
+        }
+        return row;
+      }
+      // 차단 승인 모달(1-클릭 게이트, C-2). textContent 전용 = XSS 차단(99 CB-5 답습).
+      function _controlModal(opts) {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:9999;';
+          const box = document.createElement('div');
+          box.style.cssText = 'background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 22px; max-width:400px; width:90%;';
+          const h = document.createElement('div');
+          h.textContent = opts.title; h.style.cssText = 'font-weight:600; margin-bottom:10px; color:var(--text);';
+          box.appendChild(h);
+          for (const ln of (opts.lines || [])) {
+            const p = document.createElement('div');
+            p.textContent = ln; p.style.cssText = 'font-size:12.5px; color:var(--text-dim); margin-bottom:4px;';
+            box.appendChild(p);
+          }
+          const btnRow = document.createElement('div');
+          btnRow.style.cssText = 'display:flex; gap:8px; margin-top:16px; justify-content:flex-end;';
+          const cancel = document.createElement('button');
+          cancel.textContent = opts.cancelLabel || '취소';
+          cancel.style.cssText = 'font-size:12px; padding:6px 14px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
+          const ok = document.createElement('button');
+          ok.textContent = opts.confirmLabel || '승인';
+          ok.style.cssText = 'font-size:12px; padding:6px 14px; border:1px solid #3fb950; border-radius:6px; background:#3fb950; color:#06240e; cursor:pointer; font-weight:600;';
+          const close = (v) => { if (overlay.parentNode) document.body.removeChild(overlay); resolve(v); };
+          cancel.addEventListener('click', () => close(false));
+          ok.addEventListener('click', () => close(true));
+          overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+          btnRow.appendChild(cancel); btnRow.appendChild(ok); box.appendChild(btnRow);
+          overlay.appendChild(box); document.body.appendChild(overlay);
+        });
+      }
+      function _toast(msg) {
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 16px; font-size:12.5px; color:var(--text); z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,0.3);';
+        document.body.appendChild(t);
+        setTimeout(() => { if (t.parentNode) document.body.removeChild(t); }, 4200);
+      }
+      async function _postLifecycle(name, action) {
+        const r = await fetch('/api/jarvis/external/lifecycle', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, action: action, confirmed: true }),
+        });
+        return r.json();
+      }
+      async function _lifecycleClick(name, action, title) {
+        const grade = (action === 'adopt') ? 'HIGH' : 'MEDIUM';
+        const ok = await _controlModal({
+          title: title + ' — ' + _ACT_LABEL[action] + ' 하시겠습니까?',
+          lines: ['등급: ' + grade, '최근 60초 2회 · 누적 10회 한도 내에서만 집행됩니다.'],
+          confirmLabel: '승인',
+        });
+        if (!ok) return;
+        let res;
+        try { res = await _postLifecycle(name, action); }
+        catch (e) { _toast(name + ' ' + action + ' 실패: ' + e); return; }
+        // 미소유(referred) → cutover 인수 제안(꺼다 켜서 맡기)
+        if (res.outcome === 'referred' && (action === 'stop' || action === 'restart')
+            && /미소유|인수|signal 불가/.test(res.reason || '')) {
+          const adoptOk = await _controlModal({
+            title: title + ' 은(는) 자비스가 켠 게 아닙니다',
+            lines: [res.reason || '', '정지 후 자비스가 다시 켜서 맡을까요? (잠깐 다운타임)'],
+            confirmLabel: '인수(꺼다 켜기)',
+          });
+          if (adoptOk) {
+            try {
+              const ar = await _postLifecycle(name, 'adopt');
+              _toast(name + ' 인수: ' + ar.outcome + (ar.reason ? (' — ' + ar.reason) : ''));
+            } catch (e) { _toast(name + ' 인수 실패: ' + e); }
+          }
+        } else {
+          _toast(name + ' ' + action + ': ' + res.outcome + (res.reason ? (' — ' + res.reason) : ''));
+        }
+        _probeAll();  // 상태 점 갱신
+      }
 
       // 제어측 slice-1a: 카드 상태 probe(ProcessController.propose health, 저위험·자율).
       async function _probeOne(name, dot) {

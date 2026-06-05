@@ -27,6 +27,7 @@ CONVERSATIONS_DB = "jarvis-conversations.db"  # §10-4a SQLite backing
 CONVERSATIONS_ARCHIVE = "jarvis-conversations-archive"
 TASKS_LEDGER = "jarvis-stone0-tasks.jsonl"
 PLANS_LEDGER = "jarvis-plans.jsonl"  # HUD 계획 승인 보드(디딤돌1a~1d plan-then-execute)
+CONTROL_LEDGER = "jarvis-control-lifecycle.jsonl"  # 제어측 slice-1b lifecycle 감사(CB-2/CB-9)
 LAYER0_MEMORY = "jarvis-v00-layer0-memory.jsonl"
 LAYER1_REPORT = "jarvis-v00-layer1-report.json"
 MULTI_MODEL_MEASUREMENT = "jarvis-v00-multi-model-measurement.json"
@@ -97,6 +98,10 @@ def tasks_ledger_path() -> Path:
 
 def plans_ledger_path() -> Path:
     return data_file(PLANS_LEDGER)
+
+
+def control_ledger_path() -> Path:
+    return data_file(CONTROL_LEDGER)
 
 
 def layer0_memory_path() -> Path:

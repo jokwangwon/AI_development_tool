@@ -23,12 +23,66 @@ import json
 import pytest
 
 from src.jarvis.external_registry import (
+    ControlSpec,
     ExternalEntry,
     ExternalRegistryError,
     JARVIS_ORIGIN,
+    discover_control_specs,
     discover_external,
     parse_entry,
 )
+
+
+# ── 제어측 slice-1b: ControlSpec (제어 필드 분리, C-4/L-10) ────────────────
+def _write_reg(tmp_path, entries):
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"entries": entries}), encoding="utf-8")
+    return str(reg)
+
+
+def test_control_spec_parsed_when_present(tmp_path):
+    """control: {launch_argv, cwd} 있는 엔트리 → ControlSpec."""
+    reg = _write_reg(tmp_path, [{
+        "name": "voice_lab", "title": "음성 랩", "url": "http://127.0.0.1:8777",
+        "origin": "jarvis", "control": {"launch_argv": ["python", "server.py"], "cwd": "/srv"},
+    }])
+    specs = discover_control_specs(reg)
+    assert "voice_lab" in specs
+    assert specs["voice_lab"].launch_argv == ("python", "server.py")
+    assert specs["voice_lab"].cwd == "/srv"
+
+
+def test_control_spec_absent_without_control_field(tmp_path):
+    """control 필드 없는 읽기측-only 엔트리 = 제어 불가(specs 에 없음). L-10 분리."""
+    reg = _write_reg(tmp_path, [{
+        "name": "readonly", "title": "x", "url": "https://x.io", "origin": "jarvis",
+    }])
+    assert discover_control_specs(reg) == {}
+
+
+def test_control_spec_inherits_provenance_fail_closed(tmp_path):
+    """B-2 상속: origin != jarvis 엔트리는 control 있어도 제외."""
+    reg = _write_reg(tmp_path, [{
+        "name": "evil", "title": "x", "url": "http://127.0.0.1:9", "origin": "third_party",
+        "control": {"launch_argv": ["rm", "-rf"], "cwd": "/"},
+    }])
+    assert discover_control_specs(reg) == {}
+
+
+def test_control_spec_bad_launch_argv_skipped(tmp_path):
+    """launch_argv 불량(빈 리스트·비문자열) = fail-soft skip(제어 불가)."""
+    for bad in ([], "python server.py", [1, 2], ["", "x"], None):
+        reg = _write_reg(tmp_path, [{
+            "name": "voice_lab", "title": "x", "url": "http://127.0.0.1:8777",
+            "origin": "jarvis", "control": {"launch_argv": bad},
+        }])
+        assert discover_control_specs(reg) == {}
+
+
+def test_control_spec_is_frozen():
+    s = ControlSpec(name="x", launch_argv=("a",), cwd="/")
+    with pytest.raises(Exception):
+        s.cwd = "/y"  # type: ignore
 
 
 # ── parse_entry: 유효성 ───────────────────────────────────────────────

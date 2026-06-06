@@ -27,6 +27,7 @@ from src.jarvis.external_registry import (
     ExternalEntry,
     ExternalRegistryError,
     JARVIS_ORIGIN,
+    discover_apply_targets,
     discover_control_specs,
     discover_external,
     parse_entry,
@@ -226,3 +227,48 @@ def test_discover_external_missing_entries_key_returns_empty(tmp_path):
     f = tmp_path / "registry.json"
     f.write_text(json.dumps({}), encoding="utf-8")
     assert discover_external(str(f)) == []
+
+
+# ── 반영 루프 slice-app-1: discover_apply_targets (CB-2 화이트리스트) ──────
+def _entry(name="voice_lab", *, apply=None, origin=JARVIS_ORIGIN):
+    e = {"name": name, "title": "T", "url": "http://localhost:8777", "origin": origin}
+    if apply is not None:
+        e["apply"] = apply
+    return e
+
+
+def test_apply_targets_collects_repo_path(tmp_path):
+    f = tmp_path / "registry.json"
+    f.write_text(json.dumps({"entries": [
+        _entry(apply={"repo_path": "/home/u/voice_lab"}),
+    ]}), encoding="utf-8")
+    out = discover_apply_targets(str(f))
+    assert out == {"voice_lab": "/home/u/voice_lab"}
+
+
+def test_apply_targets_skips_entry_without_apply(tmp_path):
+    f = tmp_path / "registry.json"
+    f.write_text(json.dumps({"entries": [_entry()]}), encoding="utf-8")
+    assert discover_apply_targets(str(f)) == {}
+
+
+def test_apply_targets_provenance_fail_closed(tmp_path):
+    f = tmp_path / "registry.json"
+    f.write_text(json.dumps({"entries": [
+        _entry(name="evil", apply={"repo_path": "/x"}, origin="thirdparty"),
+    ]}), encoding="utf-8")
+    assert discover_apply_targets(str(f)) == {}
+
+
+def test_apply_targets_skips_blank_or_nonstr_path(tmp_path):
+    f = tmp_path / "registry.json"
+    f.write_text(json.dumps({"entries": [
+        _entry(name="a", apply={"repo_path": ""}),
+        _entry(name="b", apply={"repo_path": 123}),
+        _entry(name="c", apply={}),
+    ]}), encoding="utf-8")
+    assert discover_apply_targets(str(f)) == {}
+
+
+def test_apply_targets_missing_file_returns_empty(tmp_path):
+    assert discover_apply_targets(str(tmp_path / "nope.json")) == {}

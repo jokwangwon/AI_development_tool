@@ -147,6 +147,41 @@ def discover_control_specs(registry_file: str) -> dict[str, ControlSpec]:
     return out
 
 
+def discover_apply_targets(registry_file: str) -> dict[str, str]:
+    """registry.json → {name: repo_path}. 반영 루프 화이트리스트(CB-2 slice-app-1).
+
+    엔트리의 optional `apply: {repo_path}` 에서만 수집(ExternalEntry/ControlSpec 스키마
+    불변 — L-10 분리). provenance(origin==jarvis)는 parse_entry 가 강제(B-2 상속).
+    repo_path 의 realpath/.git/디렉토리 검증은 output_application.resolve_target 가 사용
+    시점에 수행(이 함수는 사람이 수동 등록한 문자열을 화이트리스트로 모으기만 — 쓰기 0).
+    fail-soft: apply 부재/repo_path 불량 = skip(반영 대상 아님, crash 아님).
+    """
+    try:
+        with open(registry_file, encoding="utf-8") as f:
+            data = json.load(f)
+    except (ValueError, OSError):
+        return {}
+
+    raw = data.get("entries") if isinstance(data, dict) else None
+    if not isinstance(raw, list):
+        return {}
+
+    out: dict[str, str] = {}
+    for item in raw:
+        try:
+            entry = parse_entry(item)  # provenance/name/url 검증(B-2 상속)
+        except ExternalRegistryError:
+            continue
+        ap = item.get("apply") if isinstance(item, dict) else None
+        if not isinstance(ap, dict):
+            continue
+        repo_path = ap.get("repo_path")
+        if not isinstance(repo_path, str) or not repo_path:
+            continue  # 없음/불량 = 반영 불가(fail-soft)
+        out[entry.name] = repo_path
+    return out
+
+
 def discover_external(registry_file: str) -> list[ExternalEntry]:
     """레지스트리 파일({"entries": [...]}) 파싱 → 검증 통과 엔트리. fail-soft.
 

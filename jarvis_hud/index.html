@@ -2378,6 +2378,9 @@
       let list = [];
       try { const r = await fetch('/api/jarvis/external'); list = (await r.json()).external || []; } catch (e) {}
       if (!list.length) return;
+      // 반영 루프(slice-app-1): apply 화이트리스트 등록 대상엔 [📤 반영] 노출.
+      let _applyTargets = new Set();
+      try { const ar = await fetch('/api/jarvis/apply/targets'); _applyTargets = new Set((await ar.json()).targets || []); } catch (e) {}
       const titleBar = document.querySelector('.canvas-title');
       const canvasAside = document.querySelector('.canvas');
       const tab = document.createElement('span');
@@ -2441,6 +2444,14 @@
           btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); _lifecycleClick(name, act, title); });
           row.appendChild(btn);
         }
+        // 반영 루프: 등록 대상이면 산출물 반영 버튼(diff preview → 1-클릭 적용).
+        if (_applyTargets.has(name)) {
+          const ab = document.createElement('button');
+          ab.textContent = '📤 반영';
+          ab.style.cssText = 'font-size:11px; padding:3px 9px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
+          ab.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); _applyModal(name, title); });
+          row.appendChild(ab);
+        }
         return row;
       }
       // 차단 승인 모달(1-클릭 게이트, C-2). textContent 전용 = XSS 차단(99 CB-5 답습).
@@ -2480,6 +2491,96 @@
         t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 16px; font-size:12.5px; color:var(--text); z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,0.3);';
         document.body.appendChild(t);
         setTimeout(() => { if (t.parentNode) document.body.removeChild(t); }, 4200);
+      }
+      // 반영 루프(slice-app-1): 산출물 폴더 → diff preview(dry-run) → 1-클릭 적용.
+      // 전부 textContent/DOM API = XSS 차단(서버 scrub 위 방어심층). commit/push는 사람.
+      async function _applyModal(name, title) {
+        let sources = [];
+        try { const r = await fetch('/api/jarvis/apply/sources'); sources = (await r.json()).sources || []; } catch (e) {}
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:9999;';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 22px; max-width:560px; width:92%; max-height:80vh; overflow:auto;';
+        const h = document.createElement('div');
+        h.textContent = title + ' — 산출물 반영'; h.style.cssText = 'font-weight:600; margin-bottom:10px; color:var(--text);';
+        box.appendChild(h);
+        const tgt = document.createElement('div');
+        tgt.textContent = '대상: ' + name; tgt.style.cssText = 'font-size:12px; color:var(--text-dim); margin-bottom:8px;';
+        box.appendChild(tgt);
+        const selRow = document.createElement('div');
+        selRow.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:10px;';
+        const selLbl = document.createElement('span');
+        selLbl.textContent = '산출물 폴더:'; selLbl.style.cssText = 'font-size:12px; color:var(--text);';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'flex:1; font-size:12px; padding:4px 6px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px;';
+        if (!sources.length) { const o = document.createElement('option'); o.textContent = '(산출물 폴더 없음)'; o.value = ''; sel.appendChild(o); }
+        for (const s of sources) { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); }
+        const pv = document.createElement('button');
+        pv.textContent = '미리보기'; pv.style.cssText = 'font-size:12px; padding:5px 12px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
+        selRow.appendChild(selLbl); selRow.appendChild(sel); selRow.appendChild(pv);
+        box.appendChild(selRow);
+        const diffPre = document.createElement('pre');
+        diffPre.style.cssText = 'background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; font-size:11.5px; max-height:280px; overflow:auto; white-space:pre-wrap; word-break:break-all; color:var(--text); margin:0 0 8px;';
+        diffPre.textContent = '미리보기를 눌러 diff 를 확인하세요.';
+        box.appendChild(diffPre);
+        const status = document.createElement('div');
+        status.style.cssText = 'font-size:12.5px; margin-bottom:12px; color:var(--text-dim);';
+        box.appendChild(status);
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end; align-items:center;';
+        const note = document.createElement('span');
+        note.textContent = '※ commit/push는 직접'; note.style.cssText = 'flex:1; font-size:11px; color:var(--text-dim);';
+        const cancel = document.createElement('button');
+        cancel.textContent = '취소'; cancel.style.cssText = 'font-size:12px; padding:6px 14px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer;';
+        const apply = document.createElement('button');
+        apply.textContent = '✓ 반영 적용'; apply.disabled = true;
+        apply.style.cssText = 'font-size:12px; padding:6px 14px; border:1px solid #3fb950; border-radius:6px; background:#3fb950; color:#06240e; cursor:pointer; font-weight:600; opacity:0.45;';
+        btnRow.appendChild(note); btnRow.appendChild(cancel); btnRow.appendChild(apply);
+        box.appendChild(btnRow);
+        const close = () => { if (overlay.parentNode) document.body.removeChild(overlay); };
+        cancel.addEventListener('click', close);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        let _canApply = false;
+        async function _doPreview() {
+          if (!sel.value) { status.textContent = '산출물 폴더를 선택하세요.'; return; }
+          status.textContent = '미리보기 중…'; diffPre.textContent = '';
+          _canApply = false; apply.disabled = true; apply.style.opacity = '0.45';
+          let res;
+          try {
+            const r = await fetch('/api/jarvis/apply/preview', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ source: sel.value, target: name }),
+            });
+            res = await r.json();
+          } catch (e) { status.textContent = '미리보기 실패: ' + e; return; }
+          if (res.error) { status.textContent = '오류: ' + res.error; return; }
+          diffPre.textContent = res.diff || '(변경 없음)';
+          if (res.outcome === 'executed') {
+            status.textContent = '✅ git apply 가능 (dry-run 통과)'; status.style.color = '#3fb950';
+            _canApply = true; apply.disabled = false; apply.style.opacity = '1';
+          } else if (res.outcome === 'rejected') {
+            const vs = (res.violations || []).map((v) => v.kind + ':' + v.path).join(', ');
+            status.textContent = '❌ 거부(위반): ' + (vs || res.reason); status.style.color = '#f85149';
+          } else {
+            status.textContent = '⚠️ 적용 불가: ' + (res.reason || ''); status.style.color = '#d29922';
+          }
+        }
+        pv.addEventListener('click', _doPreview);
+        apply.addEventListener('click', async () => {
+          if (!_canApply) return;
+          apply.disabled = true; apply.style.opacity = '0.45'; status.textContent = '반영 중…';
+          let res;
+          try {
+            const r = await fetch('/api/jarvis/apply/commit', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ source: sel.value, target: name, confirmed: true }),
+            });
+            res = await r.json();
+          } catch (e) { status.textContent = '반영 실패: ' + e; return; }
+          close();
+          _toast(name + ' 반영: ' + res.outcome + (res.reason ? (' — ' + res.reason) : ''));
+        });
+        overlay.appendChild(box); document.body.appendChild(overlay);
       }
       async function _postLifecycle(name, action) {
         const r = await fetch('/api/jarvis/external/lifecycle', {

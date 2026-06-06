@@ -742,6 +742,12 @@ _control = ProcessController(
 )
 routes += make_external_routes(registry_file=_EXTERNAL_REGISTRY, controller=_control)
 
+# 반영 게이트(slice-app-1): 워커 산출물 diff → 등록 외부 repo 반영. work_root = 워커
+# 산출물 루트(plugin 과 동일), 화이트리스트 = registry 의 apply.repo_path(CB-2).
+from jarvis_hud.apply_routes import make_apply_routes  # noqa: E402
+
+routes += make_apply_routes(work_root=_PLUGIN_WORK_ROOT, registry_file=_EXTERNAL_REGISTRY)
+
 # 프론트 패널 정적 서빙(C-2): /plugins/<name>/<file>. 디렉터리 부재 시 마운트 생략.
 if os.path.isdir(_PLUGINS_DIR):
     routes.append(Mount("/plugins", app=StaticFiles(directory=_PLUGINS_DIR)))

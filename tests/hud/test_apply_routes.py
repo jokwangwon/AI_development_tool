@@ -74,6 +74,29 @@ def test_targets_list(tmp_path):
     assert r.json()["targets"] == ["voice_lab"]
 
 
+# ── sources (work_root 하위 산출물 폴더 목록) ────────────────────────────
+def test_sources_lists_workdir_folders(tmp_path):
+    client, _ = _setup(tmp_path)
+    (tmp_path / "work" / "another").mkdir()
+    (tmp_path / "work" / ".hidden").mkdir()
+    (tmp_path / "work" / "afile.txt").write_text("x", encoding="utf-8")
+    r = client.get("/api/jarvis/apply/sources")
+    assert r.status_code == 200
+    srcs = r.json()["sources"]
+    assert "out" in srcs and "another" in srcs
+    assert ".hidden" not in srcs  # 숨김 제외
+    assert "afile.txt" not in srcs  # 파일 제외
+
+
+def test_sources_missing_work_root_empty(tmp_path):
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"entries": []}), encoding="utf-8")
+    app = Starlette(routes=make_apply_routes(
+        work_root=str(tmp_path / "nope"), registry_file=str(reg), git_runner=FakeGit()))
+    r = TestClient(app).get("/api/jarvis/apply/sources")
+    assert r.json()["sources"] == []
+
+
 # ── preview (diff + dry-run) ─────────────────────────────────────────────
 def test_preview_returns_diff_ok(tmp_path):
     client, _ = _setup(tmp_path)

@@ -49,6 +49,18 @@ def make_apply_routes(*, work_root: str, registry_file: str, git_runner=None) ->
         names = sorted(discover_apply_targets(registry_file).keys())
         return JSONResponse({"targets": names})
 
+    async def sources(request):
+        """work_root 하위 산출물 폴더명 목록(숨김·파일 제외). 반영 source 후보."""
+        try:
+            entries = os.listdir(work_root)
+        except OSError:
+            return JSONResponse({"sources": []})
+        out = sorted(
+            e for e in entries
+            if not e.startswith(".") and os.path.isdir(os.path.join(work_root, e))
+        )
+        return JSONResponse({"sources": out})
+
     def _run_gate(data, *, do_apply):
         """preview/commit 공통: source/target 검증 → diff 추출 → apply_patch.
 
@@ -106,6 +118,7 @@ def make_apply_routes(*, work_root: str, registry_file: str, git_runner=None) ->
 
     return [
         Route("/api/jarvis/apply/targets", targets, methods=["GET"]),
+        Route("/api/jarvis/apply/sources", sources, methods=["GET"]),
         Route("/api/jarvis/apply/preview", preview, methods=["POST"]),
         Route("/api/jarvis/apply/commit", commit, methods=["POST"]),
     ]

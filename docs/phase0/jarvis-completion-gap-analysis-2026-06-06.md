@@ -85,6 +85,47 @@ HUD 작업 탭에 명령을 넣으면 실제로 실행된다.
 - task board가 in-memory. 재시작 시 진행 중 작업 = `interrupted` 고아(자동 복구 없음).
   ledger fold로 **역사만** 복원(`jarvis_tasks.py:159-171`).
 
+### 갭 5 — `auto` 자연어 진입점 = 단일 분류 라우터(멀티출력 부재) ★ (2026-06-08 dogfood 발견)
+- `/api/respond` mode=`auto` → `classify_mode`(`conversation_routing.py:93`)는 4-way
+  (chat/note/svg/task) 중 **단 하나만** 반환(`ModeDecision(mode)`). "한 메시지 = 한 종류".
+- 규칙 우선순위: `_STRONG_TASK_RE`/`_is_make_task`("만들"+SW명사) 매칭 시 **task 확정**
+  (LLM 분류 스킵, `:105`). 그런데 `MODE_PROMPTS`엔 chat/note/svg만 있고 **task 키 없음**
+  (`server.py:211`) → mode=`chat` 폴백 + `looks_like_task` → boss.plan → proposal 동봉.
+- 결과: "아이디어 주면 **알아서 노트+도식+개발 계획까지 한 번에**"라는 복합 의도를
+  한 번의 auto로 처리 못 함. 노트/도식을 보려면 mode를 **명시**(분류 우회 = deterministic
+  탈출구)해야 함. dogfood 실측(대화 `42c3dc24`): auto 1회 = chat+proposal(8 subtask)만,
+  note/svg는 별도 명시 호출로 생성됨.
+- → 개선 후보(B, 사용자 승인 2026-06-08): task로 분류돼도 **노트/도식을 함께 생성하는
+  "정리 동봉" 옵션** 또는 단일 입력에서 복수 산출물을 오케스트레이션하는 경로. 별도 슬라이스.
+
+### 갭 6 — boss desc 요약이 설계 세부 손실 → 워커 충실도 저하 ★★ (2026-06-08 dogfood 발견)
+- 워커는 `auto_orch.dispatch(desc, sub_id, alias)` 로 **desc만** 받음(`jarvis_plan.py:232`).
+  원본 prompt(상세 설계·JSON 스키마·계약)는 워커에 전달 0 — boss 가 plan 단계에서 상세
+  명령을 한 줄 desc 로 **요약**하며 설계 세부가 손실됨.
+- dogfood 실측(plan `97462f94`, 만화 줄거리 생성기): 합의 설계(주제→LLM 해석 / 캐릭터
+  **페르소나** / **panels**[컷·장면·흐름역할] / 대사 생성기로 persona 연계)를 명령에 담았으나,
+  boss 가 desc 를 "만화 줄거리 생성기 Python 스크립트 작성(입력→JSON, 테스트 포함)"으로
+  요약 → claude 워커가 **동작하는 237줄 + 테스트 전부 PASS** 생성하나 **합의와 다름**:
+  LLM기반→룰베이스 random 조합 / 페르소나 누락 / panels→episodes(도입·갈등·전환·절정).
+  워커는 "동작하는 것"은 만들지만 "합의한 그것"은 아님.
+- → **"자연어 → *정확한* 개발"의 핵심 병목**(갭5보다 영향 큼). 개선 후보: desc 에 원본
+  prompt 맥락/contracts 동봉, 또는 boss 요약 억제(설계 보존 전달). 단 워커 입력 증가의
+  안전 함의(주입면 확대) 검토 필요 — 별도 설계 brief + 합의.
+- **2026-06-08 후속**: 갭6 는 옵션 B(원본 동봉) 없이 **로컬 planner 모델 교체로 해소** — planner=
+  `qwen3:30b-q4_K_M`(보유) + "최소 단계" 명령 → desc 충실도 8/9(페르소나·흐름역할). 풀 3+1 합의
+  REVISE(`docs/review/3plus1-consensus-2026-06-08-worker-fidelity-desc-context.md`), 사용자
+  frontier 기각·로컬 우선. 옵션 B 보류.
+
+### 갭 7 — work_root 누적 + 워커 산출물 파편화 (2026-06-08 dogfood 발견)
+- **work_root 누적**: `~/.jarvis/claude-home/work` 가 세션 간 청소 안 됨 → 이전 dogfood 산출물
+  잔존. 워커가 이전 파일 위에 작업 → 새 desc 일부 미반영(예: 기존 이름-only `CHARACTERS`
+  재사용으로 **페르소나 누락**). work_root 청소 후 정상(페르소나 생성됨).
+- **산출물 파편화**: multi-subtask plan 에서 각 subtask 가 격리 실행되어 서로의 산출물
+  파일명을 모름 → 파편화(comic_input.py / stdout / validate_comic_json.py 분산, 미연결).
+  "하나의 완결 모듈"이 안 됨. 정직 단서: subtask 추론 폴백 의심 마커도 관측.
+- → 백로그: work_root 청소 정책 + subtask 간 **산출물 파일 계약**(파일명 전달). SESSION
+  백로그 "워커 task→workdir 자동 연결" 직결. 갭1(산출물 반영) 인접 영역.
+
 ---
 
 ## 4. 완성도 종합

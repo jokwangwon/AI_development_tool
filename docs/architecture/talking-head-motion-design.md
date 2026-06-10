@@ -2,9 +2,9 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood)
-**상태**: **구현 완료 1차 (motion_lab 독립 repo 승격 — bridge/gate/renderer/server 47 tests green + 실 GPU e2e mp4 + 3-서비스 라이브 조합 dogfood). 후속 = D-2 2단계(Allosaurus)·blink/head idle·실 3-연쇄 생성)**
-**구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버)
+**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체**)
+**상태**: **구현 완료 2차 (D-2 2단계 = Allosaurus phone-level 프론트엔드 교체 — env var 선택·기본 allosaurus·66 tests green + 실 e2e mp4·ROI 실측). 후속 = blink/head idle·실 3-연쇄 생성)**
+**구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
 **합의 보고서**: `docs/review/3plus1-consensus-2026-06-10-talking-head-motion.md`
@@ -143,13 +143,25 @@ gen_gate 공유 모듈 재사용(§5).
 | 단계 | 내용 | 근거 |
 |------|------|------|
 | **1단계 (교체 전, 권고)** | **포먼트 분류기 자체 수정** — `ooo(480,900)`/`uuu(350,800)` 중심값 재캘리브레이션 + 무성 폴백을 `mouth_aaa` 강제 → **'직전 viseme 유지'**로 변경 + 시간 스무딩 | 편향(iii 과다·ooo 0) 원인은 분류기 결함. 검증된 결정적 경로 유지(§2 계산적 우선·비례성) |
-| **2단계 (교체)** | `bridge.analyze` 계약 뒤 **Allosaurus 1순위**(다국어 phone-level·텍스트 불필요·경량, GB10 aarch64 빌드 리스크 MFA<) · **MFA 2순위** | provider liquidity — 코드 변경 0 교체 |
+| **2단계 (교체, ✅ 구현 완료 2026-06-10)** | `bridge.analyze` 계약 뒤 **Allosaurus** phone-level 프론트엔드(다국어·텍스트 불필요·경량) — IPA phone(timestamp) → 추상 5모음 매핑. **MFA 2순위(미착수)** | provider liquidity — 코드 변경 0 교체 |
 
 - ~~Rhubarb~~ **후보 제거**(영어 전용 → 한국어 비전 모순, 딥리서치·합의 일치).
 - ⚠️ 모든 프론트엔드 이득이 **THA3 5모음 viseme 천장**(§1.2)으로 양자화됨을 ROI 전제로 인지.
 - ✅ **우선순위 = 포먼트 자체수정(1단계) 먼저 (사용자 결정 2026-06-10)**: 5모음 천장으로 교체 ROI 가
   제한적이고 편향 원인이 분류기 결함이므로, 검증된 결정적 경로(포먼트 재캘리브레이션 + 폴백 '직전 viseme
   유지' + 스무딩)를 먼저 적용. Allosaurus 교체(2단계)는 1단계 후 dogfooding 으로 ROI 재평가.
+- ✅ **2단계 구현 결정 (사용자 결정 2026-06-10)**:
+  - **프론트엔드 선택 = env `MOTION_BRIDGE_FRONTEND`**(기본 `allosaurus`, `formant` 옵션). `analyze(wav, fps)`
+    시그니처 **불변** — 교체가 계약/호출부를 오염시키지 않음(Provider Liquidity, voice_lab/gen_gate 모델 교체 패턴 동형).
+  - **기본값 = allosaurus** — ROI 실측이 명확(아래). LPC(formant)는 폴백/경량 옵션으로 보존.
+  - **IPA→5모음 매핑 외부화**(`IPA_TO_VOWEL`, §4.2) — 한국어 단모음 + 변이음(ʌ→aaa·ɯ→uuu·ɪ→iii·ɔ→ooo)·장음(iː/eː/oː)·æ 커버.
+  - **공유 후처리(프론트엔드 무관)**: 절대 dBFS 무음→닫힘 · 무성/공백=직전 viseme 유지 · 단발 spike 스무딩 ·
+    amount = 프레임 RMS. → 1단계·2단계가 silence/edge/amount 로직을 공유(중복 0).
+- ⭐ **ROI 실측 (speech.wav 한국어 6.5s, poc_allosaurus.py 비교 진단)**: LPC 1단계가 **구조적으로 못 낸 ooo
+  복구**(0 → 11~37 frames), iii 쏠림 해소, **5모음 전부 등장**(LPC=4모음). 추론 ~0.8s. 1단계 docstring 의
+  "실 모음 품질은 2단계가 실측으로 정당화" 예측이 **실측으로 입증**. (test_bridge_allosaurus.py 실 e2e 회귀 가드)
+- ⚠️ **정직한 한계**: 이득은 여전히 5모음 천장으로 양자화. uuu 는 이 클립에서 6frames(낮음)이나 LPC 의
+  ooo=0 같은 *구조적* 누락은 아님(클립 내용 반영). capabilities label 모음 정확도 over-claim 금지 유지.
 
 ### D-3. 라이선스 등급 — THA3 weight + 출력 상업화 [합의 다수, ✅ 결정 완료]
 
@@ -203,6 +215,13 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
   또는 명시 적응형으로 못박기. 테스트: 전구간 무음·0.1s 초단음성·클리핑 입력.
 - 무성 폴백 = **'직전 viseme 유지'**(mouth_aaa 강제 금지, 편향 방지). 모음→viseme 매핑 테이블 외부화.
 - 한계 명기: 한국어 ㅓ/ㅡ 등 5모음 외 미커버 → capabilities label 에 품질 over-claim 금지.
+- **프론트엔드 2개(env `MOTION_BRIDGE_FRONTEND`로 선택, 계약 뒤 교체)**:
+  - `formant`(1단계): LPC 포먼트 → `classify_vowel`. 결정적 CPU·경량, but 실측상 F2 order 민감(신뢰 모음 분포 미달).
+  - `allosaurus`(2단계, **기본**): `_RECOGNIZER.recognize(wav, timestamp=True)` → `parse_phones` → `map_ipa`(IPA→5모음,
+    `IPA_TO_VOWEL` 외부 테이블) → `phones_to_frame_vowels`(timestamp→프레임, 자음/공백=None→직전유지). lazy 모델 캐시.
+  - 공유 후처리(`analyze`): `_frame_energy`(RMS) → 절대 dBFS 무음→닫힘 → 직전유지 폴백 → `smooth` → `_amount_from_rms`.
+    프론트엔드는 raw 모음만, silence/amount/스무딩은 공유 → 프론트엔드 추가 시 후처리 재구현 0.
+  - 미지의 frontend = `ValueError`(조용한 폴백 금지 — 명시적 실패).
 
 ### 4.3 오케스트레이션 (③)
 
@@ -269,5 +288,9 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 총 **47 tests green** + 실 GPU e2e(lambda_00 + speech.wav 6.5s → mp4 13.6s 렌더).
 4. ✅ **3-서비스 라이브 조합 dogfood(2026-06-10)** — gen_gate+voice_lab+motion_lab 동형 발견 →
    모달리티 라우팅(하드코딩 0) → unit_param 자동 조립 → AND-clamp 라이브 집행(403/job_id) 검증.
-5. **후속(자동 진입 0)**: D-2 2단계(Allosaurus — 실 WAV LPC 포먼트 불안정 실측으로 정당화) ·
-   blink/head idle 모션(45-dim 활용) · 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) · motion_lab remote.
+5. ✅ **D-2 2단계 Allosaurus 교체 완료(2026-06-10)** — `bridge.analyze` 계약 뒤 phone-level 프론트엔드:
+   - 지배 리스크(aarch64 설치) 사망 → IPA→5모음 매핑 → env `MOTION_BRIDGE_FRONTEND`(기본 allosaurus) 선택.
+   - ROI 실측: LPC 가 못 낸 **ooo 복구**·5모음 전부·iii 쏠림 해소. **66 tests green**(+19) + 실 e2e mp4.
+   - `test_bridge_allosaurus.py` 실 speech.wav e2e = ooo 복구 회귀 가드. `poc_allosaurus.py` 비교 진단(repo 외부).
+6. **후속(자동 진입 0)**: blink/head idle 모션(45-dim 활용) · 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) ·
+   motion_lab remote · D-2 MFA(2순위, 미착수) · comic_lab ② 말풍선 · VTuber VRM.

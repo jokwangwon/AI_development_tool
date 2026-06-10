@@ -2,8 +2,8 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션**)
-**상태**: **구현 완료 3차 (blink/head idle 모션 — 결정적 함수·해시 지터 blink·mouth disjoint 가산 합성·81 tests green + 실 e2e mp4 blink 시각 확인). 후속 = 실 3-연쇄 생성·motion_lab remote)**
+**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션** → **실 3-연쇄 생성 dogfood**)
+**상태**: **구현 완료 4차 (실 3-연쇄 생성 dogfood — 이미지→음성→모션 기계적 완전 작동·AND-clamp 라이브·90 tests green + THA3 입력 포맷 정규화 어댑터. ⚠️ 정렬 갭=정직한 후속). 후속 = THA3 canonical 정렬·motion_lab remote)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -211,6 +211,10 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
   - **mouth viseme(26-36)과 disjoint** → `compose_pose = build_pose(mouth) + idle_pose` **가산 합성**(덮어쓰기 0).
     무음(입 닫힘)에도 idle 은 살아있음. `render_track(..., idle=True)` 토글(False=mouth-only 결정 경로).
   - 설정 외부화(`DEFAULT_IDLE` — 진폭/주기 단일출처). 실 e2e: 6.5s 클립 blink 3회(간격 2.0s·3.9s 비균일) 시각 확인.
+- ✅ **입력 포맷 정규화 `prepare_image_for_tha3`(2026-06-10, 3-연쇄 통합 어댑터)**: 생성 이미지(RGB/비512²)
+  → THA3 포맷(512² RGBA 투명배경). 종횡비 보존 패드 + 흰배경 알파키(rembg 부재 근사). 이미 THA3-ready(투명
+  픽셀 존재) 입력은 **무변경**(흰 옷 over-key 방지). `render_track` 자동 적용. ⚠️ **포맷만** — canonical 머리
+  위치/스케일 **정렬은 안 함**(§4.3 정렬 갭).
 
 ### 4.2 audio→viseme 브리지 (①)
 
@@ -233,6 +237,16 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
 
 - gen_gate(이미지) + voice_lab(음성) → motion_lab(영상) 균일 `discover→generate` 흐름.
 - 한 컷 매니페스트: {image_id, audio_id, clip_id} 추적.
+- ✅ **실 3-연쇄 생성 dogfood 완료(2026-06-10, `dogfood_3chain.py`)** — Part 2 dogfood(발견→조립→게이트
+  *판정*)에서 보류했던 실 *생성* 연쇄를 닫음:
+  - service-agnostic: `/api/capabilities` 발견 → 모달리티 라우팅(하드코딩0) → 산출물 **`url` HTTP fetch
+    → staging 저장**(서비스 내부 경로 무지) → 다음 서비스 전달 → 각 unit 실 commercial 등급을 AND-clamp 에 전파.
+  - ⭐ **기계적 완전 작동**: animagine-xl-4.0 이미지(11.2s) → 화자 0013 음성(5.56s) → AND-clamp 라이브
+    집행(commercial=True→**403**, 음성 비상업) → 모션 async job(21.3s) → **실 mp4 + attribution** 동봉.
+  - ⚠️ **정직한 한계(over-claim 0) — THA3 canonical 정렬 갭**: 임의 text-to-image(Animagine 1024² RGB
+    upper-body)는 THA3 요구(512²·머리 위치/스케일 정렬·투명배경)와 불일치 → face morpher 왜곡(뭉개짐).
+    **포맷 갭**(크기/알파/흰배경키)은 `renderer.prepare_image_for_tha3`(§4.1)가 닫았으나(이미 THA3-ready 입력은
+    무변경), **정렬 갭**(head-detect+crop+rembg)은 미착수 — 양질 3-연쇄의 다음 과제(anime face-detect 불안정 = 별도 난제).
 
 ### 4.4 Attribution 집행 (CC BY 4.0, D-3 결정)
 
@@ -302,5 +316,7 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 결정적 `idle_pose(frame_index, fps)`: blink(해시 지터 스케줄)·head sway(다른 주기 sine)·breathing.
    - mouth viseme 과 disjoint → `compose_pose` 가산 합성(`render_track(idle=True)` 토글). **81 tests green**(+15).
    - 실 e2e: blink 3회/6.5s 시각 확인(frame 17 눈감음 vs 30 눈뜸). motion_lab 커밋.
-7. **후속(자동 진입 0)**: 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) · motion_lab remote ·
-   D-2 MFA(2순위, 미착수) · comic_lab ② 말풍선 · VTuber VRM.
+7. ✅ **실 3-연쇄 생성 dogfood 완료(2026-06-10, §4.3)** — image→voice→motion 기계적 완전 작동(실 mp4·
+   AND-clamp 403·attribution). 포맷 정규화 어댑터(§4.1). **90 tests green**(+9). 정직한 한계=THA3 정렬 갭.
+8. **후속(자동 진입 0)**: **THA3 canonical 정렬 전처리**(head-detect+crop+rembg — 양질 3-연쇄) ·
+   motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선 · VTuber VRM.

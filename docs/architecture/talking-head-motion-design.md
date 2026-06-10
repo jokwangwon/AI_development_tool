@@ -2,8 +2,9 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (3+1 합의 REVISE 반영 + 사용자 BLOCKING 5건 결정 반영)
-**상태**: **설계 확정 (PoC 2건 실증 + 3+1 합의 REVISE + 사용자 BLOCKING 5건 결정 완료 · D-4 트리거 2조건부 TDD 구현 진입 가능)**
+**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood)
+**상태**: **구현 완료 1차 (motion_lab 독립 repo 승격 — bridge/gate/renderer/server 47 tests green + 실 GPU e2e mp4 + 3-서비스 라이브 조합 dogfood). 후속 = D-2 2단계(Allosaurus)·blink/head idle·실 3-연쇄 생성)**
+**구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
 **합의 보고서**: `docs/review/3plus1-consensus-2026-06-10-talking-head-motion.md`
@@ -262,6 +263,11 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    ③ 합성물 AND-clamp = image∧audio∧weight fail-closed ✅
    ④ D-1 generate 계약 = async job(POST→job_id) ✅
    ⑤ D-2 우선순위 = 포먼트 자체수정(1단계) 먼저 ✅
-3. **다음**: 별도 feature 브랜치(베이스=develop) TDD 구현(RED→GREEN→REFACTOR) — D-4 트리거 2조건부.
-   (트리거: bridge.analyze 계약+포먼트 1단계 수정 GREEN · 공유 게이트 모듈 추출 완료.)
-4. 구현 후 본 문서 상태 "구현 완료" 갱신 + CONTEXT/INDEX + `CLAUDE.md §8 참조표` 등재.
+3. ✅ **D-4 승격 + TDD 구현 완료(2026-06-10)** — `~/motion_lab` 독립 repo(sibling 패턴):
+   - `bridge.py`(analyze 계약 + 포먼트 1단계) 18 · `gate.py`(gen_gate 공유 재사용 + AND-clamp + attribution) 11
+   - `renderer.py`(viseme→45dim, 렌더러 책임) 8 · `server.py`(동형 capabilities + async job + AND-clamp 403 + attribution) 10
+   - 총 **47 tests green** + 실 GPU e2e(lambda_00 + speech.wav 6.5s → mp4 13.6s 렌더).
+4. ✅ **3-서비스 라이브 조합 dogfood(2026-06-10)** — gen_gate+voice_lab+motion_lab 동형 발견 →
+   모달리티 라우팅(하드코딩 0) → unit_param 자동 조립 → AND-clamp 라이브 집행(403/job_id) 검증.
+5. **후속(자동 진입 0)**: D-2 2단계(Allosaurus — 실 WAV LPC 포먼트 불안정 실측으로 정당화) ·
+   blink/head idle 모션(45-dim 활용) · 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) · motion_lab remote.

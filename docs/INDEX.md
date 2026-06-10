@@ -6,7 +6,8 @@
 
 **2026-06-10 🎬 신규 세션 (모션 조각 조사 → SDD 설계: anime 토킹헤드 립싱크)**
 
-- (2026-06-10) `docs/architecture/talking-head-motion-design.md` 신규 (비전 마지막 미싱피스=모션. 딥리서치 2R+PoC 2건 근거. ⭐ 실사 토킹헤드 전부 anime 부적합·THA3 유일 적합·**GB10 sm_121 ~30fps 헤드리스 실증**·viseme 직접노출(mouth_aaa..ooo)·**음성→움직이는입→mp4 풀루프 닫힘 전부 로컬**. motion_lab 독립서비스(voice_lab 패턴)+렌더러/브리지 분리(provider liquidity)+등급게이트 일관. 미결정 D-1~D-4(배치·브리지 프론트엔드·THA3 라이선스 감사·repo화)=사용자 결정+3+1 권고. **설계 제안 상태**, 구현 미진입. 메모리 `reference_talking_head_lipsync_landscape`)
+- (2026-06-10) `docs/review/3plus1-consensus-2026-06-10-vtuber-body-motion-backend.md` 신규 (VTuber 바디 모션 백엔드 결정. 딥리서치 2건(3D VRM·파츠 컷아웃) 근거. **만장일치 hybrid_phased** — 순수 3D/2.5D 즉시 채택 거부(둘 다 미해결 자동화 링크 1개+GB10 실측은 Blender뿐). ⭐ C 발견(코드검증): THA3가 body_y/body_z/neck_z 노출하나 미구동 → idle 패턴으로 0-의존성 상체 모션. Phase 0 PoC+Phase 1 완료. 사용자 결정=단계적(상체 먼저). 진짜 3D 전신=Phase 2~3 조건부)
+- (2026-06-10) `docs/architecture/talking-head-motion-design.md` 신규 (비전 마지막 미싱피스=모션. 딥리서치 2R+PoC 2건 근거. ⭐ 실사 토킹헤드 전부 anime 부적합·THA3 유일 적합·**GB10 sm_121 ~30fps 헤드리스 실증**·viseme 직접노출(mouth_aaa..ooo)·**음성→움직이는입→mp4 풀루프 닫힘 전부 로컬**. motion_lab 독립서비스(voice_lab 패턴)+렌더러/브리지 분리(provider liquidity)+등급게이트 일관. 구현 6차: D-2 Allosaurus·idle·3-연쇄·THA3 정렬·**상체모션 Phase 1**. 메모리 `reference_talking_head_lipsync_landscape`·`project_motion_lab`)
 
 **2026-06-03 🎙️ 신규 세션 (외부 관제형 첫 실사례 제작 = 한국어 음성 생성 랩 voice_lab)**
 

@@ -2,8 +2,8 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (… → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션** → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출, 양질 mp4)**)
-**상태**: **구현 완료 5차 (THA3 canonical 정렬 — feedforward 프롬프트 + rembg + lbpcascade 얼굴검출 + affine→128² 박스로 Part 5 정렬 갭 해소, 양질 3-연쇄 mp4·99 tests green). 후속 = motion_lab remote·정렬 품질 강건화)**
+**최종 수정**: 2026-06-10 (… → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출)** → **3+1 합의 hybrid_phased → 상체 모션 Phase 1**)
+**상태**: **구현 완료 6차 (상체 모션 Phase 1 — 3+1 합의 hybrid_phased. THA3 미구동 body_y/body_z/neck_z 축을 idle 패턴+발화 연동 weight-shift로 구동, '살아있는 상체 토킹헤드'·110 tests green·실 e2e mp4. 신규 의존성 0). 후속 = Phase 1.5 절차 제스처 / 3D 전신은 Phase 2~3 조건부)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -211,6 +211,15 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
   - **mouth viseme(26-36)과 disjoint** → `compose_pose = build_pose(mouth) + idle_pose` **가산 합성**(덮어쓰기 0).
     무음(입 닫힘)에도 idle 은 살아있음. `render_track(..., idle=True)` 토글(False=mouth-only 결정 경로).
   - 설정 외부화(`DEFAULT_IDLE` — 진폭/주기 단일출처). 실 e2e: 6.5s 클립 blink 3회(간격 2.0s·3.9s 비균일) 시각 확인.
+- ✅ **상체 모션 Phase 1 구현 완료(2026-06-10, 3+1 합의 `hybrid_phased`)** — THA3 미구동 BODY_ROTATION 축 구동:
+  - ⭐ **C 발견(코드 검증)**: THA3가 `body_y`(상체 회전, idx 42)·`body_z`(lean, 43)·`neck_z`(41)를 이미 노출하나
+    motion_lab 미구동. Phase 0 PoC 로 전 구간(-1→+1) **캐릭터 붕괴 0** 실증 후, idle 동일 패턴으로 편입.
+  - idle 기반 상체 sway/lean/neck = 결정적 sine(각 축 다른 주기, body는 head보다 큰 주기로 무게감).
+  - **발화 연동 weight-shift**: `compose_pose`가 viseme `amount`(발화 에너지) 비례로 현재 lean 방향을 증폭
+    (말할수록 몸이 반응) → body_z 가 idle ±0.07 에서 발화 시 ±0.17 까지. body_z 는 mouth disjoint(idle 과만 합산)→clamp.
+  - **신규 의존성 0·HW 리스크 0·라이선스 변경 0**(THA3 내장 축). 실 e2e mp4: '살아있는 상체 토킹헤드'(상체 sway/lean+발화+blink).
+  - ⚠️ **over-claim 가드(합의 결정)**: 이건 **상체뿐** — 다리/걷기/360 회전/측면 불가(2D 워핑). capabilities 라벨 = '진짜 전신' 금지,
+    '살아있는 상체 토킹헤드'. 진짜 전신(3D)은 Phase 2~3(조건부, 합의 보고서 참조).
 - ✅ **입력 포맷 정규화 `prepare_image_for_tha3`(2026-06-10, 3-연쇄 통합 어댑터)**: 생성 이미지(RGB/비512²)
   → THA3 포맷(512² RGBA 투명배경). 종횡비 보존 패드 + 흰배경 알파키(rembg 부재 근사). 이미 THA3-ready(투명
   픽셀 존재) 입력은 **무변경**(흰 옷 over-key 방지). `render_track` 자동 적용. ⚠️ **포맷만** — canonical 머리
@@ -327,5 +336,10 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    AND-clamp 403·attribution). 포맷 정규화 어댑터(§4.1). **90 tests green**(+9). 정직한 한계=THA3 정렬 갭.
 8. ✅ **THA3 canonical 정렬 완료(2026-06-10, §4.3 `align.py`)** — feedforward + rembg + lbpcascade
    얼굴검출 + affine→128² 박스. Part 5 정렬 갭 해소, 양질 3-연쇄 mp4. **99 tests green**(+9).
-9. **후속(자동 진입 0)**: motion_lab remote · 정렬 품질 강건화(미검출 폴백 개선·다양 포즈) ·
-   D-2 MFA(2순위) · comic_lab ② 말풍선 · VTuber VRM.
+9. ✅ **VTuber 바디 모션 백엔드 결정(2026-06-10) — 3+1 합의 만장일치 `hybrid_phased`**
+   (`docs/review/3plus1-consensus-2026-06-10-vtuber-body-motion-backend.md`, 딥리서치 2건 근거):
+   - 순수 3D VRM/2.5D 즉시 채택 거부(둘 다 미해결 자동화 링크 1개 + GB10 실측은 Blender뿐). THA3 유지 + 단계 진입.
+   - **Phase 0 PoC**(THA3 body 축 전 구간 붕괴 0) + **Phase 1**(상체 sway/lean/weight-shift, 신규 의존성 0) **완료**.
+   - 사용자 결정: '전신 움직임' = 단계적(상체 먼저 출하 후 재평가). 진짜 3D 전신은 Phase 2~3 조건부.
+10. **후속(자동 진입 0)**: Phase 1.5 절차적 음성→상체 제스처 정교화 · (3D 필요 재평가 시) Phase 2 Blender
+    헤드리스 UniRig+BVH PoC · motion_lab remote · 정렬 품질 강건화 · D-2 MFA(2순위) · comic_lab ② 말풍선.

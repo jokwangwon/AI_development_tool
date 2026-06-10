@@ -2,8 +2,8 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (3+1 합의 REVISE 반영)
-**상태**: **설계 제안 (PoC 2건 실증 + 3+1 합의 REVISE 반영 완료 · 사용자 BLOCKING 결정 대기)**
+**최종 수정**: 2026-06-10 (3+1 합의 REVISE 반영 + 사용자 BLOCKING 5건 결정 반영)
+**상태**: **설계 확정 (PoC 2건 실증 + 3+1 합의 REVISE + 사용자 BLOCKING 5건 결정 완료 · D-4 트리거 2조건부 TDD 구현 진입 가능)**
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
 **합의 보고서**: `docs/review/3plus1-consensus-2026-06-10-talking-head-motion.md`
@@ -90,15 +90,18 @@ GET /api/capabilities
 POST /api/generate {renderer:"tha3-standard-float", image:<png|ref>, audio:<wav|ref>,
                     image_commercial:<bool>, audio_commercial:<bool>,
                     bridge:"formant", fps:30, ...opts}
-→ {job_id}                    # async (긴 클립 대비, 아래 ⚠️)
-GET /api/jobs/<job_id>        → {status, file?, url?, ms?}
-→ 최종 {id, file:"<id>.mp4", url:"/outputs/<id>.mp4", ms, modality:"video"}
+→ {job_id}                    # async (사용자 결정 확정, 아래 ✅)
+GET /api/jobs/<job_id>        → {status, file?, url?, ms?, attribution?}
+→ 최종 {id, file:"<id>.mp4", url:"/outputs/<id>.mp4", ms, modality:"video",
+        attribution:"THA3 talking-head-anime-3 © Pramook Khungurn (CC BY 4.0)"}
 ```
 
 - **unit_param = `renderer`**: 오케스트레이터가 서비스 내부 모르고 단위 선택(provider liquidity 서비스판).
-- ⚠️ **동기 vs async (3+1 합의 A, BLOCKING D-1)**: PoC 실측상 6.5s 클립=195프레임, 알파합성 포함
-  ~18fps → 약 11s+mux. 클립 길이·동시요청에 비례해 동기 HTTP 가 타임아웃/블로킹된다. **async job
-  패턴(POST→`{job_id}` + GET status)** 또는 **명시적 `max_duration` 게이트** 중 택1 필요(사용자 결정).
+- ✅ **async job 확정 (3+1 합의 A 권고 = 사용자 결정 2026-06-10, D-1)**: PoC 실측상 6.5s 클립=195프레임,
+  알파합성 포함 ~18fps → 약 11s+mux. 클립 길이·동시요청에 비례해 동기 HTTP 가 타임아웃/블로킹되므로
+  **async job 패턴 채택**: `POST→{job_id}` 즉시 반환 + `GET /api/jobs/<id>` 상태 폴링. (max_duration 게이트는 미채택.)
+- ✅ **attribution 출력 응답 포함 (사용자 결정 2026-06-10, D-3)**: registry 의 `attribution_required:true`
+  단위는 generate 최종 응답에 `attribution` 필드를 실어 오케스트레이터가 표시 책임을 인지. repo NOTICE 와 이중 보장(§4.4).
 - ⚠️ **합성물 등급 AND-clamp (3+1 합의 B·C, BLOCKING D-3)**: 출력 상업화 = `image_commercial ∧
   audio_commercial ∧ renderer.commercial` (3자 중 가장 보수적). `voice_lab/server.py:69-73`
   fail-closed 선례 답습 — 1개라도 비상업이면 commercial 모드 요청 차단(§4.3).
@@ -122,15 +125,15 @@ GET /api/jobs/<job_id>        → {status, file?, url?, ms?}
 > CLAUDE.md §3: 아키텍처 의사결정 = 3+1 합의 필수. 아래는 합의 입력이자 사용자 최종 결정 항목.
 
 > **3+1 합의 결과(만장일치 REVISE)**: 방향 전부 승인, 근거·라이선스·계약 보완. 합의 권고를 아래
-> 반영했고, ⛔ 표시는 **사용자 BLOCKING 결정** 대기 항목.
+> 반영했고, **사용자 BLOCKING 5건은 2026-06-10 결정 완료**(✅ 표시). 결정은 전부 합의 권고와 일치.
 
 ### D-1. 배치: 독립 `motion_lab` 서비스 [합의 만장일치, high]
 
 **독립 motion_lab 서비스 채택.** 단 근거는 §2.3 정정대로 **운영 라이프사이클 분리**(GPU 상주·30fps
 루프·ffmpeg/job 운영). capabilities envelope = gen_gate/voice_lab 동형. 게이트 로직은 복제 금지,
 gen_gate 공유 모듈 재사용(§5).
-- ⛔ **generate 계약 형태**: 긴 클립 대비 동기 HTTP `max_duration` 게이트 vs **async job**(POST→`{job_id}`).
-  합의 권고 = async(또는 max_duration 명시). 택1 사용자 결정.
+- ✅ **generate 계약 형태 = async job (사용자 결정 2026-06-10)**: `POST→{job_id}` + `GET /api/jobs/<id>`
+  상태 폴링. max_duration 게이트는 미채택. 긴 클립·동시요청 확장 대비(§2.2).
 
 ### D-2. audio→viseme 브리지 프론트엔드 [합의 만장일치]
 
@@ -143,21 +146,25 @@ gen_gate 공유 모듈 재사용(§5).
 
 - ~~Rhubarb~~ **후보 제거**(영어 전용 → 한국어 비전 모순, 딥리서치·합의 일치).
 - ⚠️ 모든 프론트엔드 이득이 **THA3 5모음 viseme 천장**(§1.2)으로 양자화됨을 ROI 전제로 인지.
-- ⛔ **우선순위 사용자 결정**: 포먼트 자체수정(1단계)을 교체보다 먼저 할지.
+- ✅ **우선순위 = 포먼트 자체수정(1단계) 먼저 (사용자 결정 2026-06-10)**: 5모음 천장으로 교체 ROI 가
+  제한적이고 편향 원인이 분류기 결함이므로, 검증된 결정적 경로(포먼트 재캘리브레이션 + 폴백 '직전 viseme
+  유지' + 스무딩)를 먼저 적용. Allosaurus 교체(2단계)는 1단계 후 dogfooding 으로 ROI 재평가.
 
-### D-3. 라이선스 등급 — THA3 weight + 출력 상업화 [합의 다수, ⛔ BLOCKING]
+### D-3. 라이선스 등급 — THA3 weight + 출력 상업화 [합의 다수, ✅ 결정 완료]
 
 > **합의가 잡은 사실 오류**: 기존 'commercial:false 보수 표기'는 **과소차단(부정확)**.
 
-- **실측 라이선스**(Reviewer 직접 확인): THA3 코드 = **MIT**(Pramook Khungurn 2022), 모델 weight =
-  **CC BY 4.0**(`data/LICENSE.txt`, README line 128-129 "상업 사용 가능, 배포 시 저작자 표시 의무").
-  → registry 기입 = `license:'cc-by-4.0' + commercial:true + attribution_required:true`.
+- ✅ **실측 라이선스 정정 채택 (사용자 결정 2026-06-10)**: THA3 코드 = **MIT**(Pramook Khungurn 2022),
+  모델 weight = **CC BY 4.0**(`data/LICENSE.txt`, README line 128-129 "상업 사용 가능, 배포 시 저작자
+  표시 의무"). → registry 기입 = `license:'cc-by-4.0' + commercial:true + attribution_required:true`.
 - **Crypko/lambda 는 weight 학습데이터가 아님** — `data/images` **데모 입력 샘플** 라이선스
   (crypko=Crypko Guideline, lambda=CC BY-NC). 프로덕션 입력은 gen_gate(Animagine 등) 출력 → 무관.
-- ⛔ **attribution 집행 지점**: 상업 배포 시 저작자(Pramook Khungurn) 표시 의무 → 출력 메타데이터/NOTICE
-  어디서 충족할지 설계 확정 필요(사용자 결정).
-- ⛔ **합성물 AND-clamp**: 출력 상업화 = image ∧ audio ∧ weight 3자 보수 등급 fail-closed
-  (§2.2·§4.3, voice_lab 선례). 미반영 시 게이트 부정확.
+- ✅ **attribution 집행 지점 = registry + 출력 응답 + NOTICE 3중 (사용자 결정 2026-06-10)**:
+  ① registry/capabilities 단위에 `attribution_required:true`(+author) 노출 →
+  ② generate 최종 응답에 `attribution` 필드 동봉(오케스트레이터가 표시 책임 인지, §2.2) →
+  ③ repo 루트 NOTICE 파일에 THA3 MIT 고지 + CC BY 4.0 저작자 표시(§4.4). 단일출처는 registry.
+- ✅ **합성물 AND-clamp 채택 (사용자 결정 2026-06-10)**: 출력 상업화 = image ∧ audio ∧ weight 3자
+  보수 등급 fail-closed(§2.2·§4.3, `voice_lab/server.py:69-73` 선례). 1개라도 비상업이면 commercial 모드 차단.
 
 ### D-4. repo 화 시점 [합의 만장일치, DEFER]
 
@@ -201,6 +208,19 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
 - gen_gate(이미지) + voice_lab(음성) → motion_lab(영상) 균일 `discover→generate` 흐름.
 - 한 컷 매니페스트: {image_id, audio_id, clip_id} 추적.
 
+### 4.4 Attribution 집행 (CC BY 4.0, D-3 결정)
+
+상업 배포 시 저작자(Pramook Khungurn) 표시 의무를 **3중 지점**에서 충족(단일출처 = registry):
+
+| 지점 | 내용 | 책임 |
+|------|------|------|
+| ① registry/capabilities | `attribution_required:true` + author 필드 노출 (단일출처) | 게이트(공유 모듈) |
+| ② generate 출력 응답 | 최종 `{...}`에 `attribution:"THA3 ... © Pramook Khungurn (CC BY 4.0)"` 동봉 | server |
+| ③ repo NOTICE | 루트 NOTICE 파일에 THA3 MIT 코드 고지 + CC BY 4.0 weight 저작자 표시 | repo(D-4 승격 시) |
+
+- 테스트: `attribution_required:true` 단위의 generate 응답에 `attribution` 필드 누락 시 실패(`test_server.py`).
+- over-claim 금지: attribution 은 **상업 배포 시 표시 의무 충족 수단**이지 그 자체가 상업화 허가를 주는 게 아님(AND-clamp 우선).
+
 ---
 
 ## 5. Provider Liquidity / 확장성 (제5조-2 비협상)
@@ -236,7 +256,12 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
 ## 8. 다음 단계
 
 1. ✅ 3+1 합의(REVISE) 반영 완료(`docs/review/3plus1-consensus-2026-06-10-talking-head-motion.md`).
-2. ⛔ **사용자 BLOCKING 결정**: ① D-3 라이선스 정정(cc-by-4.0/commercial:true) ② attribution 집행 지점
-   ③ 합성물 AND-clamp ④ D-1 generate 계약(async vs max_duration) ⑤ D-2 우선순위(포먼트 자체수정 먼저).
-3. 결정 반영 후 별도 feature 브랜치(베이스=develop) TDD 구현(RED→GREEN→REFACTOR) — D-4 트리거 2조건부.
-4. 구현 후 본 문서 상태 "설계 확정" 갱신 + CONTEXT/INDEX + `CLAUDE.md §8 참조표` 등재.
+2. ✅ **사용자 BLOCKING 5건 결정 완료(2026-06-10, 전부 합의 권고와 일치)**:
+   ① D-3 라이선스 정정 = cc-by-4.0/commercial:true/attribution_required:true ✅
+   ② attribution 집행 지점 = registry + 출력 응답 + NOTICE 3중(§4.4) ✅
+   ③ 합성물 AND-clamp = image∧audio∧weight fail-closed ✅
+   ④ D-1 generate 계약 = async job(POST→job_id) ✅
+   ⑤ D-2 우선순위 = 포먼트 자체수정(1단계) 먼저 ✅
+3. **다음**: 별도 feature 브랜치(베이스=develop) TDD 구현(RED→GREEN→REFACTOR) — D-4 트리거 2조건부.
+   (트리거: bridge.analyze 계약+포먼트 1단계 수정 GREEN · 공유 게이트 모듈 추출 완료.)
+4. 구현 후 본 문서 상태 "구현 완료" 갱신 + CONTEXT/INDEX + `CLAUDE.md §8 참조표` 등재.

@@ -2,8 +2,8 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체**)
-**상태**: **구현 완료 2차 (D-2 2단계 = Allosaurus phone-level 프론트엔드 교체 — env var 선택·기본 allosaurus·66 tests green + 실 e2e mp4·ROI 실측). 후속 = blink/head idle·실 3-연쇄 생성)**
+**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션**)
+**상태**: **구현 완료 3차 (blink/head idle 모션 — 결정적 함수·해시 지터 blink·mouth disjoint 가산 합성·81 tests green + 실 e2e mp4 blink 시각 확인). 후속 = 실 3-연쇄 생성·motion_lab remote)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -203,8 +203,14 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
   `mouth_aaa=26..ooo=30`은 렌더러가 안다) → THA4/후속 교체 시 브리지 무변경 보장(§5).
 - 최적화 여지(non-blocking): source 이미지 인코딩 캐싱(동일 입력 반복)·배치 추론으로 throughput 개선.
 - **THA3 코드는 vendor 디렉토리로 격리**(우리 코드가 import만, 수정 0) — 업스트림 추적성·MIT 고지 준수.
-- 향후 확장축(범위 밖 명기): 45-dim 에 `eye_blink`·`head_x/y/z` 존재 → blink/head-sway idle 모션으로
-  '말하는 캐릭터' 자연스러움 향상 가능(PoC 는 입 viseme만 구동).
+- ✅ **blink/head idle 모션 구현 완료(2026-06-10)** — '말하는 캐릭터' 살아있음(입만 움직이는 죽은 느낌 방지):
+  - **결정적 함수**(§2 결정성 우선·재현/테스트 가능, RNG 0): `idle_pose(frame_index, fps)`.
+    - blink = `eye_wink_left/right`(12/13) **해시 지터 스케줄**(평균 3.2s 주기 ± 결정적 지터 → 로봇틱 회피, sin 펄스 0→1→0).
+    - head sway = `head_x`(39)·`head_y`(40) 저진폭 sine(±0.05~0.06, 5.0s/7.3s **다른 주기** → 비주기적 흔들림).
+    - breathing = `breathing`(44) 느린 sine(0~0.4, 4.0s).
+  - **mouth viseme(26-36)과 disjoint** → `compose_pose = build_pose(mouth) + idle_pose` **가산 합성**(덮어쓰기 0).
+    무음(입 닫힘)에도 idle 은 살아있음. `render_track(..., idle=True)` 토글(False=mouth-only 결정 경로).
+  - 설정 외부화(`DEFAULT_IDLE` — 진폭/주기 단일출처). 실 e2e: 6.5s 클립 blink 3회(간격 2.0s·3.9s 비균일) 시각 확인.
 
 ### 4.2 audio→viseme 브리지 (①)
 
@@ -292,5 +298,9 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 지배 리스크(aarch64 설치) 사망 → IPA→5모음 매핑 → env `MOTION_BRIDGE_FRONTEND`(기본 allosaurus) 선택.
    - ROI 실측: LPC 가 못 낸 **ooo 복구**·5모음 전부·iii 쏠림 해소. **66 tests green**(+19) + 실 e2e mp4.
    - `test_bridge_allosaurus.py` 실 speech.wav e2e = ooo 복구 회귀 가드. `poc_allosaurus.py` 비교 진단(repo 외부).
-6. **후속(자동 진입 0)**: blink/head idle 모션(45-dim 활용) · 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) ·
-   motion_lab remote · D-2 MFA(2순위, 미착수) · comic_lab ② 말풍선 · VTuber VRM.
+6. ✅ **blink/head idle 모션 완료(2026-06-10)** — 렌더러 §4.1 확장축:
+   - 결정적 `idle_pose(frame_index, fps)`: blink(해시 지터 스케줄)·head sway(다른 주기 sine)·breathing.
+   - mouth viseme 과 disjoint → `compose_pose` 가산 합성(`render_track(idle=True)` 토글). **81 tests green**(+15).
+   - 실 e2e: blink 3회/6.5s 시각 확인(frame 17 눈감음 vs 30 눈뜸). motion_lab 커밋.
+7. **후속(자동 진입 0)**: 실 3-연쇄 생성(이미지→음성→모션 풀 파이프라인) · motion_lab remote ·
+   D-2 MFA(2순위, 미착수) · comic_lab ② 말풍선 · VTuber VRM.

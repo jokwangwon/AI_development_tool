@@ -2,8 +2,8 @@
 
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
-**최종 수정**: 2026-06-10 (BLOCKING 5건 결정 → motion_lab 독립 repo 구현 → 3-서비스 라이브 dogfood → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션** → **실 3-연쇄 생성 dogfood**)
-**상태**: **구현 완료 4차 (실 3-연쇄 생성 dogfood — 이미지→음성→모션 기계적 완전 작동·AND-clamp 라이브·90 tests green + THA3 입력 포맷 정규화 어댑터. ⚠️ 정렬 갭=정직한 후속). 후속 = THA3 canonical 정렬·motion_lab remote)**
+**최종 수정**: 2026-06-10 (… → **D-2 2단계 Allosaurus 교체** → **blink/head idle 모션** → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출, 양질 mp4)**)
+**상태**: **구현 완료 5차 (THA3 canonical 정렬 — feedforward 프롬프트 + rembg + lbpcascade 얼굴검출 + affine→128² 박스로 Part 5 정렬 갭 해소, 양질 3-연쇄 mp4·99 tests green). 후속 = motion_lab remote·정렬 품질 강건화)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -243,10 +243,17 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
     → staging 저장**(서비스 내부 경로 무지) → 다음 서비스 전달 → 각 unit 실 commercial 등급을 AND-clamp 에 전파.
   - ⭐ **기계적 완전 작동**: animagine-xl-4.0 이미지(11.2s) → 화자 0013 음성(5.56s) → AND-clamp 라이브
     집행(commercial=True→**403**, 음성 비상업) → 모션 async job(21.3s) → **실 mp4 + attribution** 동봉.
-  - ⚠️ **정직한 한계(over-claim 0) — THA3 canonical 정렬 갭**: 임의 text-to-image(Animagine 1024² RGB
-    upper-body)는 THA3 요구(512²·머리 위치/스케일 정렬·투명배경)와 불일치 → face morpher 왜곡(뭉개짐).
-    **포맷 갭**(크기/알파/흰배경키)은 `renderer.prepare_image_for_tha3`(§4.1)가 닫았으나(이미 THA3-ready 입력은
-    무변경), **정렬 갭**(head-detect+crop+rembg)은 미착수 — 양질 3-연쇄의 다음 과제(anime face-detect 불안정 = 별도 난제).
+  - ✅ **THA3 canonical 정렬 갭 해소(2026-06-10, `align.py`)** — Part 5 의 정직한 한계(임의 text-to-image
+    가 THA3 머리 정렬 불일치 → morpher 왜곡)를 닫음:
+    1. **feedforward**(Guide-First): gen_gate 가 전신·정면·단순배경으로 생성(THA3-conforming 프롬프트) —
+       upper-body close-up 회피. (⚠️ seed/프롬프트 민감 — cand_b 같은 실패 존재.)
+    2. **rembg**(시맨틱 배경제거, **onnxruntime aarch64 CPU 작동 실측**) — 흰 옷 over-key 없음(색 키잉 대비 견고).
+    3. **lbpcascade_animeface**(anime 얼굴 검출, MIT) — **긴 머리 무관**(실루엣 폭-프로필 방식이 머리카락에
+       깨지는 지점을 해결). occlusion/비정면 미검출 시 center_top 폴백(저품질, `aligned_by` 신호).
+    4. **affine**(`face_to_tha3_affine`, 순수·결정적): 얼굴→THA3 128² 박스(중심 256,128) 스케일+평행이동.
+    - ⭐ **실측**: 정렬 후 THA3 가 깨끗하고 인식 가능한 캐릭터 렌더(Part 5 녹은 blob 대비 극적 개선). 양질 mp4.
+    - 도구(배경제거·얼굴검출)는 함수 뒤 교체 가능(Provider Liquidity). 에셋=vendor gitignore + download_assets.sh.
+    - **포맷 정규화**(`renderer.prepare_image_for_tha3`, §4.1)는 정렬 입력이 이미 512² RGBA → no-op(중복 0).
 
 ### 4.4 Attribution 집행 (CC BY 4.0, D-3 결정)
 
@@ -318,5 +325,7 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 실 e2e: blink 3회/6.5s 시각 확인(frame 17 눈감음 vs 30 눈뜸). motion_lab 커밋.
 7. ✅ **실 3-연쇄 생성 dogfood 완료(2026-06-10, §4.3)** — image→voice→motion 기계적 완전 작동(실 mp4·
    AND-clamp 403·attribution). 포맷 정규화 어댑터(§4.1). **90 tests green**(+9). 정직한 한계=THA3 정렬 갭.
-8. **후속(자동 진입 0)**: **THA3 canonical 정렬 전처리**(head-detect+crop+rembg — 양질 3-연쇄) ·
-   motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선 · VTuber VRM.
+8. ✅ **THA3 canonical 정렬 완료(2026-06-10, §4.3 `align.py`)** — feedforward + rembg + lbpcascade
+   얼굴검출 + affine→128² 박스. Part 5 정렬 갭 해소, 양질 3-연쇄 mp4. **99 tests green**(+9).
+9. **후속(자동 진입 0)**: motion_lab remote · 정렬 품질 강건화(미검출 폴백 개선·다양 포즈) ·
+   D-2 MFA(2순위) · comic_lab ② 말풍선 · VTuber VRM.

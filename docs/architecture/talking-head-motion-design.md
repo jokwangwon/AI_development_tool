@@ -3,7 +3,7 @@
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
 **최종 수정**: 2026-06-10 (… → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출)** → **3+1 합의 hybrid_phased → 상체 모션 Phase 1**)
-**상태**: **구현 완료 6차 (상체 모션 Phase 1 — 3+1 합의 hybrid_phased. THA3 미구동 body_y/body_z/neck_z 축을 idle 패턴+발화 연동 weight-shift로 구동, '살아있는 상체 토킹헤드'·110 tests green·실 e2e mp4. 신규 의존성 0). 후속 = Phase 1.5 절차 제스처 / 3D 전신은 Phase 2~3 조건부)**
+**상태**: **구현 완료 7차 (표현 레이어 — 경로 C 단계적. real VTuber 기법(시선 이동 saccade·은은한 미소·발화 눈썹)을 THA3 미사용 파라미터로 절차화 + 상체 모션 버벅임 제거(곱셈 증폭+발화 에너지 저역통과)·무음 idle 다층 풍부화. '표현력 있는 상체 토킹헤드'·129 tests green·실 e2e mp4. 신규 의존성 0). 후속 = 캐릭터 생성 품질 / 3D 전신은 Phase 2~3 조건부)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -220,6 +220,17 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
   - **신규 의존성 0·HW 리스크 0·라이선스 변경 0**(THA3 내장 축). 실 e2e mp4: '살아있는 상체 토킹헤드'(상체 sway/lean+발화+blink).
   - ⚠️ **over-claim 가드(합의 결정)**: 이건 **상체뿐** — 다리/걷기/360 회전/측면 불가(2D 워핑). capabilities 라벨 = '진짜 전신' 금지,
     '살아있는 상체 토킹헤드'. 진짜 전신(3D)은 Phase 2~3(조건부, 합의 보고서 참조).
+- ✅ **Phase 1.5 버벅임 제거 + 무음 idle 풍부화(2026-06-11)**: 상체 버벅임 원인 = 발화 weight-shift 가 idle body_z 0 교차 시
+  **부호 플립(불연속 점프)** + per-frame amount 노이즈. 수정: **곱셈 증폭**(body_z×(1+gain·e), 부호 보존·연속) +
+  `smooth_energy`(비대칭 EMA — 빠른 attack·느린 release 저역통과) → render_track 이 envelope 전달. 실측 프레임간 점프 0.13→0.024.
+  무음 idle = body 축 **다층 sine**(주+느린 wander) → 유기적 비반복(무음 4s 자세 이동 확인).
+- ✅ **표현 레이어(2026-06-11, 경로 A — real VTuber 기법 절차화, 신규 의존성 0)** — '살아있음' 극대화:
+  - **시선 이동**(`_gaze`, iris_rotation_x/y): 세그먼트(평균 2.8s)마다 해시 결정 고정점으로 **saccade**(smoothstep 0.2s)→고정.
+    실제 눈 '보고-멈춤'. **가장 큰 살아있음 레버**. 결정적·연속(순간이동 없음).
+  - **은은한 기본 미소**(mouth_raised_corner, idle 상수) — 무표정 탈피. viseme mouth(aaa..ooo) disjoint.
+  - **발화 연동 눈썹**(eyebrow_happy, compose_pose) — 저역통과 발화 에너지 비례(부드러움).
+  - PoC 로 gaze/eyebrow/smile 전 상태 THA3 붕괴 0 확인. capabilities='표현력 있는 상체 토킹헤드'.
+  - 사용자 결정: 경로 C(단계적, 최대한 좋은 결과물) — real VTuber 모션 설계를 절차적으로 흡수(자동 생성 유지).
 - ✅ **입력 포맷 정규화 `prepare_image_for_tha3`(2026-06-10, 3-연쇄 통합 어댑터)**: 생성 이미지(RGB/비512²)
   → THA3 포맷(512² RGBA 투명배경). 종횡비 보존 패드 + 흰배경 알파키(rembg 부재 근사). 이미 THA3-ready(투명
   픽셀 존재) 입력은 **무변경**(흰 옷 over-key 방지). `render_track` 자동 적용. ⚠️ **포맷만** — canonical 머리
@@ -341,5 +352,7 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 순수 3D VRM/2.5D 즉시 채택 거부(둘 다 미해결 자동화 링크 1개 + GB10 실측은 Blender뿐). THA3 유지 + 단계 진입.
    - **Phase 0 PoC**(THA3 body 축 전 구간 붕괴 0) + **Phase 1**(상체 sway/lean/weight-shift, 신규 의존성 0) **완료**.
    - 사용자 결정: '전신 움직임' = 단계적(상체 먼저 출하 후 재평가). 진짜 3D 전신은 Phase 2~3 조건부.
-10. **후속(자동 진입 0)**: Phase 1.5 절차적 음성→상체 제스처 정교화 · (3D 필요 재평가 시) Phase 2 Blender
-    헤드리스 UniRig+BVH PoC · motion_lab remote · 정렬 품질 강건화 · D-2 MFA(2순위) · comic_lab ② 말풍선.
+10. ✅ **Phase 1.5(버벅임 제거+무음 idle 풍부화) + 표현 레이어(2026-06-11, 경로 C 채택)** — real VTuber 기법
+    절차화(시선 saccade·미소·발화 눈썹), 곱셈 증폭+발화 에너지 저역통과로 버벅임 제거. **129 tests green**. 신규 의존성 0.
+11. **후속(자동 진입 0)**: 캐릭터 생성 품질 향상(경로 C 잔여 — 더 나은 베이스/일관성) · 표현 추가(눈 깜빡임 변주·look-at 타깃) ·
+    (3D 재평가 시) Phase 2 Blender 헤드리스 UniRig+BVH PoC · motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선.

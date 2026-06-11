@@ -3,7 +3,7 @@
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
 **최종 수정**: 2026-06-10 (… → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출)** → **3+1 합의 hybrid_phased → 상체 모션 Phase 1**)
-**상태**: **구현 완료 8차 (2.5D 컷아웃 퍼펫 — 관절 단위 팔/다리 articulation + 바스트 스프링 물리. RTMPose 관절 자동검출(anime 작동 실증, onnxruntime CPU aarch64)+본 바인딩+FK+PiecewiseAffine CPU 워프. 미세 idle 전용(큰 포즈 찢어짐=2.5D 천장). 141 tests green·실 클립. THA3 얼굴 합성은 다음). 후속 = THA3 얼굴×퍼펫 바디 합성 / 3D 전신 Phase 2~3 조건부)**
+**상태**: **구현 완료 9차 (⭐ 진짜 3D 바디 경로 PoC 닫힘 — 워프 퍼펫 품질 천장(사용자 확인) → Phase 2 진입. Blender 5.1 ARM64 헤드리스 GB10 실측(OPTIX 인식·EEVEE 0.3s/f) + Hunyuan3D 메시 거리-가중치 자체 리깅(UniRig 우회) + 알파마스크 머티리얼(배경 지느러미 소거) → 텍스처 3D 캐릭터 관절 회전 찢어짐 0. 141 tests). 후속 = 3D 품질 강건화·THA3 얼굴 합성·정식 모듈화)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -364,5 +364,16 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
       articulation 전용**(걷기·큰 제스처 불가 = 2.5D 천장, 합의 일치). ~3s/frame CPU(오프라인).
     - THA3와 별도 바디 렌더러(Provider Liquidity). **THA3 얼굴(립싱크/시선)×퍼펫 바디 합성 = 다음 단계**
       (head 영역은 워프에서 고정됨 → 합성 가능 구조). 141 tests green(+12).
-12. **후속(자동 진입 0)**: **THA3 얼굴×퍼펫 바디 한 클립 합성**(진짜 '최대한 좋은 결과물') · 캐릭터 생성 품질 ·
-    (3D 재평가 시) Phase 2 Blender 헤드리스 UniRig+BVH PoC · motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선.
+12. ✅ **진짜 3D 바디 경로 PoC(2026-06-11, Phase 2 진입)** — 워프 퍼펫 품질 천장(사용자 "몸체 깨짐" 확인)으로
+    전환. UniRig(bpy aarch64 휠 부재+flash_attn sm_121 도박) **우회**, 전부 검증 컴포넌트 자체 체인:
+    - **PoC-0**: Blender 5.1 ARM64(GB10 테스트 빌드) 헤드리스 — OPTIX/CUDA 'NVIDIA GB10' 인식,
+      **EEVEE 0.3s/frame**(warm), Cycles 1.8s/f. 첫 렌더 144s=JIT 캐시 후 정상. 시스템 라이브러리 12개 apt(사용자).
+    - **자체 리깅**: glb 용접+decimate(417k→60k) → 정면투영 UV+원본 텍스처 → **거리 기반 가중치 직접 계산**
+      (bone heat 가 Hunyuan3D 비매니폴드에서 전 본 0 실패 → 자체 계산 우회) → RTMPose 관절→3D 본.
+    - **알파마스크 머티리얼**(tex.Alpha→Mix(Transparent,Emission), CLIP): Hunyuan3D 융합 배경 지느러미+
+      측면 스미어 **자동 소거**(루즈파츠 분리·y-cut 실패 후 확정 해법). Standard view transform(anime 원색).
+    - ⭐ **결과**: 텍스처 3D 캐릭터가 관절 본(팔꿈치/어깨/몸통/머리/다리)으로 회전 — **찢어짐 0**. 90f/28s.
+    - ⚠️ 한계: 정면투영 텍스처(회전 시 측면 스미어)·가중치 좌우 비대칭(머리카락 흡착)·후면 환각.
+      gotcha: EEVEE 헤드리스 world 배경 미렌더(이 빌드) → 알파+후처리 합성 경유.
+13. **후속(자동 진입 0)**: 3D 품질 강건화(가중치 대칭·바스트 본·텍스처) · THA3 얼굴(립싱크)×3D 바디 합성 ·
+    정식 모듈화+TDD · motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선.

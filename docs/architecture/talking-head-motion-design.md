@@ -3,7 +3,7 @@
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
 **최종 수정**: 2026-06-10 (… → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출)** → **3+1 합의 hybrid_phased → 상체 모션 Phase 1**)
-**상태**: **구현 완료 7차 (표현 레이어 — 경로 C 단계적. real VTuber 기법(시선 이동 saccade·은은한 미소·발화 눈썹)을 THA3 미사용 파라미터로 절차화 + 상체 모션 버벅임 제거(곱셈 증폭+발화 에너지 저역통과)·무음 idle 다층 풍부화. '표현력 있는 상체 토킹헤드'·129 tests green·실 e2e mp4. 신규 의존성 0). 후속 = 캐릭터 생성 품질 / 3D 전신은 Phase 2~3 조건부)**
+**상태**: **구현 완료 8차 (2.5D 컷아웃 퍼펫 — 관절 단위 팔/다리 articulation + 바스트 스프링 물리. RTMPose 관절 자동검출(anime 작동 실증, onnxruntime CPU aarch64)+본 바인딩+FK+PiecewiseAffine CPU 워프. 미세 idle 전용(큰 포즈 찢어짐=2.5D 천장). 141 tests green·실 클립. THA3 얼굴 합성은 다음). 후속 = THA3 얼굴×퍼펫 바디 합성 / 3D 전신 Phase 2~3 조건부)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)
 **관련 문서**: `generative-ai-asset-pipeline-design.md`, `generative-ai-extensibility-design.md`, `ai-backend-stack-convention.md`
@@ -354,5 +354,15 @@ repo화 아님(비례성).** 승격 **트리거 2조건**:
    - 사용자 결정: '전신 움직임' = 단계적(상체 먼저 출하 후 재평가). 진짜 3D 전신은 Phase 2~3 조건부.
 10. ✅ **Phase 1.5(버벅임 제거+무음 idle 풍부화) + 표현 레이어(2026-06-11, 경로 C 채택)** — real VTuber 기법
     절차화(시선 saccade·미소·발화 눈썹), 곱셈 증폭+발화 에너지 저역통과로 버벅임 제거. **129 tests green**. 신규 의존성 0.
-11. **후속(자동 진입 0)**: 캐릭터 생성 품질 향상(경로 C 잔여 — 더 나은 베이스/일관성) · 표현 추가(눈 깜빡임 변주·look-at 타깃) ·
+11. ✅ **2.5D 컷아웃 퍼펫(2026-06-11, 경로 3 직접 빌드)** — 관절 단위 팔/다리 + 바스트(`puppet.py`):
+    - ⭐ **지배 리스크 사망**: RTMPose(rtmlib, onnxruntime CPU aarch64)가 **anime 캐릭터에서 17 COCO 관절
+      자동 검출**(스켈레톤 오버레이 시각 확인 — 연구의 '자동 리깅 수동' 결론을 관절 검출 한정으로 돌파).
+    - 파이프라인: rembg 실루엣 격자 제어점 → 가장 가까운 사지 본에 강체 바인딩(t·perp) → FK 관절 회전
+      (루트=체인 전파·중간=말단만, 본 길이 보존) → PiecewiseAffine 메시 워프(skimage **CPU 결정적**).
+    - 바스트 = 가슴 제어점 + **스프링 물리**(결정적 적분, bob 드라이브 → 지연 jiggle).
+    - ⚠️ **실측 한계(over-claim 0)**: 미세 각도(3~8°) 깨끗 / 큰 포즈(30°+) 메시 찢어짐 → **idle 미세
+      articulation 전용**(걷기·큰 제스처 불가 = 2.5D 천장, 합의 일치). ~3s/frame CPU(오프라인).
+    - THA3와 별도 바디 렌더러(Provider Liquidity). **THA3 얼굴(립싱크/시선)×퍼펫 바디 합성 = 다음 단계**
+      (head 영역은 워프에서 고정됨 → 합성 가능 구조). 141 tests green(+12).
+12. **후속(자동 진입 0)**: **THA3 얼굴×퍼펫 바디 한 클립 합성**(진짜 '최대한 좋은 결과물') · 캐릭터 생성 품질 ·
     (3D 재평가 시) Phase 2 Blender 헤드리스 UniRig+BVH PoC · motion_lab remote · D-2 MFA(2순위) · comic_lab ② 말풍선.

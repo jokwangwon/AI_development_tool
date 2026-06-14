@@ -6,6 +6,7 @@
 
 **2026-06-14 🧊 신규 세션 (AI 생성 3D 내재화 — 모델 3종 검증 → TRELLIS.2 채택)**
 
+- (2026-06-14) `docs/review/3plus1-consensus-2026-06-14-gen-gate-3d-backend.md` 신규 (gen_gate에 self-host AI 3D backend 통합 3+1 합의. subprocess 격리·신규 backend·범위=image→GLB 일치. ⚠️ **B1 라이선스 영토 BLOCKING(Hunyuan 한국 제외)이 모델 교체(→TRELLIS.2) 강제**, B2 PBR over-claim=TRELLIS.2로 해소. B3 VCS추적0·B4 동기194s타임아웃·B5 HF pickle·B6 subprocess 견고화+GPU Lock. 다음 세션 구현 체크리스트 포함)
 - (2026-06-14) `docs/sessions/SESSION_2026-06-14.md` 신규 (char_factory 절차조립 정체 → AI 3D self-host 전환. GB10 sm_121 스파이크로 모델 3종 검증: StdGEN(Blackwell xformers cutlass 벽)·Hunyuan3D 2.1(SDPA 기술성공 but Community License 한국 영토 제외로 폐기, gen_gate 통합 3+1 합의 BLOCKING)·⭐ **TRELLIS.2-4B(MIT) 채택** — flash-attn 2.8.3 sm_121 빌드+커널5종, DINOv3(worldwide·한국OK)+BiRefNet(MIT), firefly→풀 PBR GLB e2e 성공. **서버 크래시 2회=flash-attn MAX_JOBS=8 컴파일 OOM→MAX_JOBS=2+워치독 해결**. ⚠️ 산출물=`~/3d_lab`(외부, git 없음), AI_dev 코드변경0. 다음=gen_gate 통합(설계는 3+1 합의 완료, 모델만 TRELLIS.2). 메모리 `project_ai_3d_selfhost_gb10`·`reference_gb10_unified_memory_oom`)
 
 **2026-06-10 🎬 신규 세션 (모션 조각 조사 → SDD 설계: anime 토킹헤드 립싱크)**

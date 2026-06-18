@@ -1,6 +1,6 @@
 # 무검열 텍스트→이미지 파이프라인 설계 (Position A — jarvis 명시 위임)
 
-> 상태: **IMPLEMENTED v3 (스켈레톤 TDD + R1(A) gen_gate GPU flock 완료, 실 기동=학습 비점유 시 가능)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 상태: **IMPLEMENTED v3 (스켈레톤 TDD + R1(A) GPU flock + 주요 lab 동참 완료, 실 기동 가능 — D6/실 e2e 잔여)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
 > 모법: `docs/review/3plus1-consensus-2026-06-19-uncensored-llm-worker-delegation.md` (결정 #3)
 > 합의: `docs/review/3plus1-consensus-2026-06-19-uncensored-pipeline-integration.md` (REVISE 7건 — 본 v2 가 반영)
 > 적용 대상: `src/jarvis/` (이 repo, feature/uncensored-prompt-pipeline) + `~/prompt_lab` (신규 repo, commit 2fa01bf)
@@ -105,11 +105,11 @@ class HttpServiceWorker:
 
 | 합의 가드 | 본 설계에서 | 상태 |
 |-----------|-------------|------|
-| **GB10 OOM cross-process lock** | ✅ **R1 (A) 구현(부분 충족)**: gen_gate `gpu_guard.gpu_flock()`(flock LOCK_EX, lockfile `~/.gb10/gpu.lock` env-override, fail-soft) 신규 → `gate.generate()` 의 로컬 GPU backend 호출을 cross-process 직렬화(commit `22227cf`, 136 passed). 무검열 파이프라인 GPU 작업은 gen_gate 경유 → 다른 gen_gate 인스턴스와 직렬화. ⚠️ **학습 lab(lora/anima/OneTrainer/trellis)은 아직 같은 lockfile 미동참 → gen_gate↔학습 동시 실행은 여전히 OOM 가능**. | **부분 충족 — gen_gate 직렬화 ✅ / 전체 GPU 소비자 직렬화는 lab 동참 후** |
+| **GB10 OOM cross-process lock** | ✅ **R1 (A) 구현 + 주요 GPU 소비자 동참**: 중립 단일 소스 **`~/.gb10/gpu_lock.gpu_flock()`**(flock LOCK_EX, lockfile `~/.gb10/gpu.lock`, `GB10_GPU_LOCKFILE` env, stdlib-only fail-soft, 7 tests + git). 동참: gen_gate `gate.generate()`(gpu_guard 재수출, `183c925`) · lora_lab 학습(`4e79b0a`) · anima_lab spike/multiseed(`53cc48f`) · onetrainer_lab 래퍼(`train_with_lock.py`). 모두 같은 lockfile → cross-process 직렬화. ⚠️ **trellis 독립 실행만 미동참**(gen_gate subprocess 호출이 주 경로라 부모 flock 으로 커버 — trellis_runner 자체 flock 은 중첩 데드락 유발하므로 의도적 제외). | **주요 경로 충족 ✅ — trellis 독립 실행만 수동 주의** |
 | `allow_code_consume` 영구 off | `service`=텍스트 소비(SAFE_CONSUME 등록, R3). code/shell consume off 유지 | ✅ (테스트 회귀 차단) |
 | fail-closed = 검열측 | `ApprovalGate` default-deny + 예외→deny + 워커 비200→is_error(R4) | ✅ |
 
-**R1 결정 (확정)**: 사용자 선택 = **(A) `flock` 구현**, 범위 = **gen_gate `gate.generate()` 1차**(2026-06-19). lockfile 경로(`~/.gb10/gpu.lock`)를 규약화해 향후 학습 lab 이 같은 경로 flock 으로 동참하면 완전한 cross-process 직렬화 완성. **실 기동 가능 조건**: gen_gate 단독 GPU 작업이면 직렬화 보장 ✅ / 학습과 *동시* 실행은 lab flock 동참까지 수동 비점유 보장 필요(jarvis 는 GPU 비점유라 flock 불필요 — flock 은 GPU 직접 점유 프로세스에만 의미).
+**R1 결정 (확정·완료)**: 사용자 선택 = **(A) `flock` 구현**, 공유 방식 = **(C) 중립 단일 소스 `~/.gb10/gpu_lock.py`**(2026-06-19). flock 은 OS advisory 라 코드 출처 무관·같은 lockfile 만 잡으면 직렬화 → 중립 위치 stdlib-only 단일 소스를 모든 GPU 소비자가 import(별도 venv 도 의존 0). gen_gate 는 재수출로 통일, lab 들은 진입점(`__main__`)을 flock 으로 감쌈, OneTrainer(외부 도구)는 래퍼. **실 기동 가능**: 주요 GPU 경로(gen_gate·lora·anima·onetrainer)가 직렬화되어 동시 실행해도 순차 처리 ✅. jarvis 는 GPU 비점유라 flock 불필요(flock 은 GPU 직접 점유 프로세스에만 의미). 잔여: trellis *독립* 실행(gen_gate 경유는 커버) + lab 분산 학습(num_processes>1, GB10 단일 GPU 라 비해당).
 
 **정직한 한계 (Part 3 답습)**: capability 경계는 실행/부작용을 막지 NL injection 의미를 막지 않음. 사람 게이트는 라우팅(kind_table 매핑 alias)을 *노출*할 뿐 무검열 출력 *검증* 안 함. 무검열·서비스 워커 모두 localhost 한정.
 
@@ -172,8 +172,9 @@ class HttpServiceWorker:
 - import-linter 2 계약 PASS(grimp 직접 검증, SDK 직접 import 0 / 단방향 보존).
 - AI_dev PR **#56**(→ develop). prompt_lab commit `2fa01bf`.
 
-### R1 (A) GPU flock 구현 (2026-06-19, gen_gate `22227cf`)
+### R1 (A) GPU flock 구현 + lab 동참 (2026-06-19)
 
-- `gpu_guard.gpu_flock()` + `gate.generate()` 로컬 backend 직렬화. lockfile `~/.gb10/gpu.lock`(env override). 136 passed(cross-process subprocess 상호배제 실증 포함).
-- **부분 충족**: gen_gate 인스턴스 직렬화 ✅ / 학습 lab 동참은 후속(같은 lockfile 규약).
-- **다음 (사용자 명시 시)**: ① 학습 lab flock 동참(완전 cross-process) → ② D6 깨끗한 프롬프트 전달 경로 결정 → ③ dolphin3 실 e2e(GB10 비점유 또는 lab 동참 시).
+- **중립 단일 소스** `~/.gb10/gpu_lock.py`(stdlib-only, `GB10_GPU_LOCKFILE` env, fail-soft, 7 tests, git `6a1723d`). flock 은 OS advisory 라 같은 lockfile 만 잡으면 코드 출처 무관 직렬화 → 별도 venv 도 의존 0 으로 import.
+- **동참 commit**: gen_gate 재수출(`183c925`, 136 passed) · gen_gate gpu_flock 최초(`22227cf`) · lora_lab 학습(`4e79b0a`) · anima_lab spike/multiseed(`53cc48f`) · onetrainer_lab `train_with_lock.py` 래퍼(외부 도구, git 미추적).
+- **주요 경로 충족 ✅**: gen_gate·lora·anima·onetrainer 동시 실행 시 순차 직렬화. 잔여: trellis 독립 실행(gen_gate 경유는 커버, 중첩 데드락 회피로 의도적 제외).
+- **다음 (사용자 명시 시)**: ② D6 깨끗한 프롬프트 전달 경로 결정 → ③ dolphin3 실 e2e(주요 GPU 경로 직렬화로 실 기동 가능).

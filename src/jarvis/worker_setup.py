@@ -26,7 +26,7 @@ from typing import Any, Callable
 
 from src.jarvis.isolation import IsolationBackend, LandlockIsolation
 from src.jarvis.orchestrator import WorkerRegistry
-from src.jarvis.worker import CliWorker, OllamaWorker, Runner
+from src.jarvis.worker import CliWorker, HttpServiceWorker, OllamaWorker, Runner
 
 # claude headless 실행에 필요한 RO 경로(BL-2 최소화). 광범위 진짜 홈·/proc·전체
 # /run·전체 /dev 는 *제외* — fs 외 우회 채널(/proc/self/environ 상속 env,
@@ -221,4 +221,64 @@ def build_worker_registry(
     registry.register(code_worker)
     registry.register(OllamaWorker(alias="ollama-file", model=file_model))
     kind_table = {"code": "claude", "file": "ollama-file"}
+    return registry, kind_table
+
+
+# ── 무검열 텍스트→이미지 파이프라인 빌더 (Position A) ───────────────────────────
+# 답습: docs/architecture/uncensored-prompt-to-image-pipeline-design.md §3.1
+#   - 전용 kind_table(R2): prompt→ollama-uncensored(무검열 LLM, 텍스트 저작),
+#     service→gengate(HttpServiceWorker, 로컬 gen_gate /api/generate 로 이미지 생성).
+#   - boss 는 kind 도 못 정함 = harness 소유 고정 DAG(prompt_lab 레시피가 조립).
+#   - Provider Liquidity(헌법5조): 무검열 모델·이미지 모델·서비스 URL 전부 인자.
+#   - R7: gengate base_url 은 localhost 강제(HttpServiceWorker 생성자가 fail-fast).
+#   - 실 기동은 R1(cross-process GPU lock) 충족까지 DEFER — 본 빌더는 GPU 무관 배선.
+
+# 무검열 LLM 기본 모델 — 수단=사용자 영역(2026-06-19 결정, dolphin3 pull 완료).
+_DEFAULT_UNCENSORED_MODEL = "dolphin3"
+# gen_gate 기본 base_url — README 실측(GEN_GATE_PORT=8770, 127.0.0.1 상주).
+_DEFAULT_GENGATE_BASE_URL = "http://127.0.0.1:8770"
+# 기본 이미지 단위(unit) — 상업화 안전 + 일관성 선호 베이스(2026-06-19 그림체 확정).
+_DEFAULT_IMAGE_UNIT = "animagine-xl-4.0"
+
+
+def build_uncensored_pipeline_registry(
+    *,
+    uncensored_model: str = _DEFAULT_UNCENSORED_MODEL,
+    uncensored_system_prompt: str | None = None,
+    gengate_base_url: str = _DEFAULT_GENGATE_BASE_URL,
+    image_unit: str = _DEFAULT_IMAGE_UNIT,
+    commercial: bool = False,
+    image_opts: dict[str, object] | None = None,
+) -> tuple[WorkerRegistry, dict[str, str]]:
+    """무검열 파이프라인 전용 registry + kind_table 구성(R2/R5/R7).
+
+    prompt = OllamaWorker(무검열 LLM, 텍스트 저작 — fs 행동 능력 부재로 consume-safe)
+    service = HttpServiceWorker(로컬 gen_gate, 이미지 생성 — base_url localhost 강제).
+    반환 kind_table 을 PlanController(kind_table=…)에 주입. boss 는 kind 미선택(고정 DAG).
+
+    uncensored_system_prompt: prompt_lab 템플릿이 주입하는 dolphin3 system prompt
+      (무검열 이미지 프롬프트 저작 유도). None=OllamaWorker 기본(code-only)이므로
+      실전 호출자(prompt_lab)는 반드시 명시 주입.
+    """
+    registry = WorkerRegistry()
+    # 무검열 LLM 워커 — OllamaWorker 무수정(헌법5조). output_filename=None → 텍스트만
+    # 반환(fs 행동 능력 경로 부재 = consume-safe 본질).
+    registry.register(
+        OllamaWorker(
+            alias="ollama-uncensored",
+            model=uncensored_model,
+            system_prompt=uncensored_system_prompt,
+        )
+    )
+    # 이미지 서비스 워커 — base_url 비-localhost 면 생성자가 ValueError(R7 fail-fast).
+    registry.register(
+        HttpServiceWorker(
+            alias="gengate",
+            base_url=gengate_base_url,
+            unit=image_unit,
+            commercial=commercial,
+            opts=image_opts,
+        )
+    )
+    kind_table = {"prompt": "ollama-uncensored", "service": "gengate"}
     return registry, kind_table

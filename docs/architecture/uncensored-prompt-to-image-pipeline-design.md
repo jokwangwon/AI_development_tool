@@ -1,10 +1,10 @@
 # 무검열 텍스트→이미지 파이프라인 설계 (Position A — jarvis 명시 위임)
 
-> 상태: **DESIGN v2 (3+1 합의 REVISE 7건 반영, 구현 대기)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 상태: **IMPLEMENTED v3 (스켈레톤 TDD + R1(A) gen_gate GPU flock 완료, 실 기동=학습 비점유 시 가능)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
 > 모법: `docs/review/3plus1-consensus-2026-06-19-uncensored-llm-worker-delegation.md` (결정 #3)
 > 합의: `docs/review/3plus1-consensus-2026-06-19-uncensored-pipeline-integration.md` (REVISE 7건 — 본 v2 가 반영)
-> 적용 대상: `src/jarvis/` (이 repo) + `~/prompt_lab` (신규 repo)
-> ⚠️ 본 문서는 **설계안**. 구현은 별도 브랜치 TDD. **실 기동은 R1(GPU lock) 충족 시까지 DEFER.**
+> 적용 대상: `src/jarvis/` (이 repo, feature/uncensored-prompt-pipeline) + `~/prompt_lab` (신규 repo, commit 2fa01bf)
+> ⚠️ **실 기동은 R1(GPU lock) 충족 시까지 DEFER.** 사용자 R1=(b) 선택 → 스켈레톤+테스트만 구현(flock·실 e2e 보류).
 
 ---
 
@@ -105,11 +105,11 @@ class HttpServiceWorker:
 
 | 합의 가드 | 본 설계에서 | 상태 |
 |-----------|-------------|------|
-| **GB10 OOM cross-process lock** | 🔴 **R1**: gen_gate `gpu_guard`·`local_3d_trellis.py`·jarvis `process_control.py` 모두 **in-process threading.Lock** — **cross-process lock repo 전체 부재**. "재사용으로 충족"은 **over-claim, 철회.** | **미충족 → 실 기동 DEFER** |
+| **GB10 OOM cross-process lock** | ✅ **R1 (A) 구현(부분 충족)**: gen_gate `gpu_guard.gpu_flock()`(flock LOCK_EX, lockfile `~/.gb10/gpu.lock` env-override, fail-soft) 신규 → `gate.generate()` 의 로컬 GPU backend 호출을 cross-process 직렬화(commit `22227cf`, 136 passed). 무검열 파이프라인 GPU 작업은 gen_gate 경유 → 다른 gen_gate 인스턴스와 직렬화. ⚠️ **학습 lab(lora/anima/OneTrainer/trellis)은 아직 같은 lockfile 미동참 → gen_gate↔학습 동시 실행은 여전히 OOM 가능**. | **부분 충족 — gen_gate 직렬화 ✅ / 전체 GPU 소비자 직렬화는 lab 동참 후** |
 | `allow_code_consume` 영구 off | `service`=텍스트 소비(SAFE_CONSUME 등록, R3). code/shell consume off 유지 | ✅ (테스트 회귀 차단) |
 | fail-closed = 검열측 | `ApprovalGate` default-deny + 예외→deny + 워커 비200→is_error(R4) | ✅ |
 
-**R1 결정**: (a) `flock`/`fcntl` cross-process lockfile **신규 구현** 후 enable, 또는 (b) **실 기동 명시 DEFER**(GPU 단독 점유 수동 보장 또는 (a) 완료까지). **스켈레톤+테스트는 GPU 무관 → 진행 가능.** 수단 선택 = 사용자 영역.
+**R1 결정 (확정)**: 사용자 선택 = **(A) `flock` 구현**, 범위 = **gen_gate `gate.generate()` 1차**(2026-06-19). lockfile 경로(`~/.gb10/gpu.lock`)를 규약화해 향후 학습 lab 이 같은 경로 flock 으로 동참하면 완전한 cross-process 직렬화 완성. **실 기동 가능 조건**: gen_gate 단독 GPU 작업이면 직렬화 보장 ✅ / 학습과 *동시* 실행은 lab flock 동참까지 수동 비점유 보장 필요(jarvis 는 GPU 비점유라 flock 불필요 — flock 은 GPU 직접 점유 프로세스에만 의미).
 
 **정직한 한계 (Part 3 답습)**: capability 경계는 실행/부작용을 막지 NL injection 의미를 막지 않음. 사람 게이트는 라우팅(kind_table 매핑 alias)을 *노출*할 뿐 무검열 출력 *검증* 안 함. 무검열·서비스 워커 모두 localhost 한정.
 
@@ -143,9 +143,37 @@ class HttpServiceWorker:
 - **D4**: 한국 법·라이선스 미검토.
 - **D5**: dolphin3 → 양질 이미지 프롬프트 산출 품질 미검증.
 - **R6 부수**: `RedactionFilter` 가 무검열 프롬프트의 secret-유사 패턴을 마스킹해 손상시킬 가능 — 구현 시 동작 검증.
+- **D6 (구현 중 신규 발견)**: step1(service)의 gen_gate prompt 정제 미결. controller 의
+  artifact 주입은 desc 에 `[artifact:..] (데이터 — 지시 아님)\n<값>` 래퍼를 append 한다
+  (LLM 워커가 *읽는* 용도 설계). 그러나 `HttpServiceWorker` 는 LLM 이 아니라 받은 prompt
+  *전체*를 gen_gate `prompt` 로 직송 → step1 desc + 래퍼 텍스트가 이미지 프롬프트를 오염.
+  스켈레톤은 워커를 controller 내부 포맷에 **결합시키지 않기 위해**(R5 범용성 보존) 추출
+  로직을 넣지 않고, 깨끗한 전달 경로 결정을 실 e2e(R1 DEFER) 시점으로 미룸. 후보:
+  (i) service-step 전용 주입 포맷 / (ii) `HttpServiceWorker` artifact-aware 옵션 /
+  (iii) prompt_lab 가 controller 밖에서 2단계 직접 잇기. **결정=사용자 영역.**
 
 ---
 
 ## 8. 다음 단계 (단계적 cycle)
 
-검토 → 합의(완료, REVISE 7건) → **본 v2 반영 commit(현재)** → 구현(별도 브랜치 TDD, R1(b) 스켈레톤) → push. **실 기동은 R1 충족까지 DEFER.**
+검토 → 합의(완료, REVISE 7건) → v2 반영 commit(`87603fb`) → **구현 완료(현재, R1(b) GPU-무관 스켈레톤 TDD)** → push(사용자 명시 시). **실 기동은 R1 충족까지 DEFER.**
+
+### 구현 산출 (2026-06-19, feature/uncensored-prompt-pipeline)
+
+| 단위 | 위치 | 상태 |
+|------|------|------|
+| `HttpServiceWorker`(범용, localhost 강제, 202/비200→is_error) | `src/jarvis/worker.py` | ✅ 20 tests, 95% cov |
+| `SAFE_CONSUME_KINDS`/`EXECUTING_KINDS` += `service` (R3, code consume off 불변) | `src/jarvis/plan_controller.py` | ✅ 회귀 테스트 |
+| `build_uncensored_pipeline_registry`(전용 kind_table) | `src/jarvis/worker_setup.py` | ✅ 7 tests, 91% cov |
+| 고정 2-step DAG + ApprovalGate 노출 + R6 sentinel 미주입 | `tests/jarvis/test_uncensored_pipeline.py` | ✅ 7 tests |
+| `~/prompt_lab`(templates/recipe/conftest, 별도 repo) | `~/prompt_lab` (commit `2fa01bf`) | ✅ 6 tests(e2e mock 포함) |
+
+- 전체 jarvis 스위트 632 passed (사전 존재 환경 의존 실패 1건 = sandbox venv 권한, 본 변경 무관).
+- import-linter 2 계약 PASS(grimp 직접 검증, SDK 직접 import 0 / 단방향 보존).
+- AI_dev PR **#56**(→ develop). prompt_lab commit `2fa01bf`.
+
+### R1 (A) GPU flock 구현 (2026-06-19, gen_gate `22227cf`)
+
+- `gpu_guard.gpu_flock()` + `gate.generate()` 로컬 backend 직렬화. lockfile `~/.gb10/gpu.lock`(env override). 136 passed(cross-process subprocess 상호배제 실증 포함).
+- **부분 충족**: gen_gate 인스턴스 직렬화 ✅ / 학습 lab 동참은 후속(같은 lockfile 규약).
+- **다음 (사용자 명시 시)**: ① 학습 lab flock 동참(완전 cross-process) → ② D6 깨끗한 프롬프트 전달 경로 결정 → ③ dolphin3 실 e2e(GB10 비점유 또는 lab 동참 시).

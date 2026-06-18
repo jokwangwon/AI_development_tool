@@ -409,3 +409,120 @@ class OllamaWorker:
         except OSError as exc:
             return self._error(f"파일 쓰기 실패: {exc}")
         return None
+
+
+# ─── HttpServiceWorker (범용 HTTP 서비스 실행 워커) ────────────────────────────
+# 답습: docs/architecture/uncensored-prompt-to-image-pipeline-design.md §3.1 (b) (R5)
+#   - 범용: gen_gate·voice_lab·motion_lab 공통 `/api/generate` 규약(prompt→산출물)을
+#     워커 레벨로 흡수. modality(image/3d/audio)는 kind 가 아니라 워커 *인자*(unit) —
+#     능력축 폭발 선제 차단. 향후 voice/motion 흡수 시 신규 워커 코드 0.
+#   - base_url = localhost 강제 (R7): OllamaWorker 하드코딩 답습. 외부 URL 거부
+#     (SSRF/exfil 차단, net egress 미차단 환경). 생성자에서 fail-fast.
+#   - 견고화 (R4): diffusion 긴 timeout. gen_gate 이미지=동기 경로. **202(async
+#     편입)·비-200(403 등급차단/404 미등록/500)→ is_error=True**(거짓 성공 금지).
+#   - 실행 워커: did_act=True(부작용=서비스 측 산출물 쓰기). 단 controller 에서
+#     `requires_execution=False` 로 두어 _EXEC_SENTINEL/실행규약이 프롬프트를
+#     오염시키지 않게 함(R6, plan 구성 책임).
+
+_HTTP_SERVICE_DEFAULT_TIMEOUT_S = 600.0  # diffusion/3d 등 긴 생성 허용
+_LOCALHOST_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", ""})
+
+
+class HttpServiceWorker:
+    """범용 로컬 HTTP 서비스 워커 — POST {base_url}/api/generate.
+
+    답습: 위 헤더 주석(설계 §3.1 (b), R5/R7/R4).
+
+    - 요청: `{"model": unit, "prompt": prompt, "commercial": commercial, **opts}`
+      (opts 는 핵심 필드 model/prompt 를 덮어쓰지 못함 — setdefault 역순).
+    - 응답: 200 + file/url → 이미지 경로를 output, did_act=True.
+      202/비-200/연결실패/JSON 파싱실패/경로누락 → is_error=True(거짓 성공 금지).
+    - base_url 은 localhost/127.0.0.1/::1 만 허용(R7) — 그 외 ValueError(생성자).
+    """
+
+    def __init__(
+        self,
+        alias: str,
+        base_url: str,
+        unit: str,
+        *,
+        commercial: bool = False,
+        opts: dict[str, Any] | None = None,
+        timeout_s: float = _HTTP_SERVICE_DEFAULT_TIMEOUT_S,
+    ) -> None:
+        self.alias = alias
+        self._base_url = self._require_localhost(base_url)
+        self._unit = unit
+        self._commercial = commercial
+        self._opts = dict(opts or {})
+        self._timeout = timeout_s
+
+    @staticmethod
+    def _require_localhost(base_url: str) -> str:
+        """R7 — base_url 이 localhost 계열인지 fail-fast 검증(SSRF/exfil 차단)."""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(base_url)
+        host = (parsed.hostname or "").lower()
+        if host not in _LOCALHOST_HOSTS:
+            raise ValueError(
+                f"HttpServiceWorker base_url 은 localhost 만 허용(SSRF 차단): {base_url!r}"
+            )
+        return base_url.rstrip("/")
+
+    def run(self, prompt: str, workdir: str) -> WorkerResult:
+        # opts 먼저 깔고 핵심 필드로 덮어쓴다(opts 가 model/prompt 위조 불가).
+        body: dict[str, Any] = dict(self._opts)
+        body["model"] = self._unit
+        body["prompt"] = prompt
+        body["commercial"] = self._commercial
+        data = json.dumps(body).encode("utf-8")
+        req = urllib.request.Request(
+            f"{self._base_url}/api/generate", data=data, method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                status = resp.getcode()
+                raw_bytes = resp.read()
+        except urllib.error.HTTPError as exc:
+            # 4xx/5xx(403 등급차단·404 미등록·500·501) = 게이트 미진입/실패.
+            return self._error(f"gen_gate {exc.code} 응답: {exc.reason}", exit_code=exc.code)
+        except (urllib.error.URLError, OSError) as exc:
+            return self._error(f"HTTP 서비스 호출 실패: {exc}")
+
+        # R4: 202(async 편입) = 동기 이미지 가정 위반 → 거짓 성공 금지.
+        if status == 202:
+            return self._error(
+                "202(async submit) 수신 — 동기 경로 가정 위반(거짓 성공 금지). "
+                "async 모달리티는 poll 경로 별도 구현 필요",
+                exit_code=202,
+            )
+        if status != 200:
+            return self._error(f"비-200 응답: {status}", exit_code=status or 1)
+
+        try:
+            payload = json.loads(raw_bytes)
+        except (ValueError, TypeError) as exc:
+            return self._error(f"응답 JSON 파싱 실패: {exc}")
+
+        path = None
+        if isinstance(payload, dict):
+            path = payload.get("url") or payload.get("file") or payload.get("path")
+        if not isinstance(path, str) or not path.strip():
+            return self._error("200 응답에 산출 경로(url/file) 누락 — 거짓 성공 금지")
+
+        return WorkerResult(
+            exit_code=0,
+            output=path,
+            cost_usd=None,
+            is_error=False,
+            raw=payload if isinstance(payload, dict) else None,
+            did_act=True,  # 실행 워커 — 서비스 측 산출물 쓰기 부작용
+        )
+
+    def _error(self, msg: str, *, exit_code: int = 1) -> WorkerResult:
+        return WorkerResult(
+            exit_code=exit_code or 1, output=msg, cost_usd=None,
+            is_error=True, raw=None, did_act=False,
+        )

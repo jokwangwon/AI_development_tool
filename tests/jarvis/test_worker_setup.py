@@ -14,7 +14,10 @@ from src.jarvis.isolation import PassthroughIsolation
 from src.jarvis.orchestrator import Orchestrator
 from src.jarvis.plan_controller import PlanController, PlanStatus
 from src.jarvis.review import ReviewGuard
-from src.jarvis.worker_setup import build_worker_registry
+from src.jarvis.worker_setup import (
+    build_uncensored_pipeline_registry,
+    build_worker_registry,
+)
 
 
 def _claude_json(result: str) -> str:
@@ -98,3 +101,61 @@ def test_unregistered_kind_rejected_by_controller() -> None:
                           plan_approver=lambda r: True, implicit_contracts=False)
     plan = BossPlan(subtasks=(PlanSubtask(desc="x", worker_kind="shell"),))
     assert ctrl.run(plan, "t1").status == PlanStatus.VALIDATION_FAILED
+
+
+# ── 무검열 텍스트→이미지 파이프라인 빌더 (R2/R5/R7) ──────────────────────────
+# 답습: docs/architecture/uncensored-prompt-to-image-pipeline-design.md §3.1
+
+def test_uncensored_pipeline_table_structure() -> None:
+    """전용 kind_table: prompt→ollama-uncensored, service→gengate (R2)."""
+    reg, table = build_uncensored_pipeline_registry()
+    assert table == {"prompt": "ollama-uncensored", "service": "gengate"}
+    assert reg.select("ollama-uncensored").alias == "ollama-uncensored"
+    assert reg.select("gengate").alias == "gengate"
+
+
+def test_uncensored_model_default_dolphin3() -> None:
+    """무검열 LLM 워커 기본 모델 = dolphin3 (수단=사용자 영역, 교체 가능)."""
+    reg, _ = build_uncensored_pipeline_registry()
+    w = reg.select("ollama-uncensored")
+    assert w._model == "dolphin3"  # noqa: SLF001 (배선 검증)
+
+
+def test_uncensored_model_overridable() -> None:
+    """Provider Liquidity(헌법5조): model 교체 = 인자 1개."""
+    reg, _ = build_uncensored_pipeline_registry(uncensored_model="other-uncensored")
+    assert reg.select("ollama-uncensored")._model == "other-uncensored"  # noqa: SLF001
+
+
+def test_gengate_base_url_default_localhost_8770() -> None:
+    """gen_gate 기본 base_url = 127.0.0.1:8770 (실측 README), localhost 강제."""
+    reg, _ = build_uncensored_pipeline_registry()
+    w = reg.select("gengate")
+    assert "127.0.0.1:8770" in w._base_url  # noqa: SLF001
+
+
+def test_gengate_rejects_external_base_url() -> None:
+    """R7: 외부 base_url 주입 시 빌더가 fail-fast(SSRF 차단)."""
+    import pytest
+
+    with pytest.raises(ValueError):
+        build_uncensored_pipeline_registry(gengate_base_url="http://evil.com:8770")
+
+
+def test_uncensored_system_prompt_injected() -> None:
+    """prompt_lab 템플릿이 dolphin3 system_prompt 를 주입(무검열 저작 유도)."""
+    reg, _ = build_uncensored_pipeline_registry(
+        uncensored_system_prompt="You write vivid image prompts."
+    )
+    w = reg.select("ollama-uncensored")
+    assert w._system_prompt == "You write vivid image prompts."  # noqa: SLF001
+
+
+def test_image_unit_and_opts_passed_to_gengate() -> None:
+    """이미지 모델(unit)·스타일 opts 교체 = 인자(Provider Liquidity, R5)."""
+    reg, _ = build_uncensored_pipeline_registry(
+        image_unit="illustrious-xl", image_opts={"style": "anime-illustration"}
+    )
+    w = reg.select("gengate")
+    assert w._unit == "illustrious-xl"  # noqa: SLF001
+    assert w._opts == {"style": "anime-illustration"}  # noqa: SLF001

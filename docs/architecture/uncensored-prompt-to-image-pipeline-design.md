@@ -1,10 +1,10 @@
 # 무검열 텍스트→이미지 파이프라인 설계 (Position A — jarvis 명시 위임)
 
-> 상태: **DESIGN v2 (3+1 합의 REVISE 7건 반영, 구현 대기)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 상태: **IMPLEMENTED v3 (R1(b) GPU-무관 스켈레톤 TDD 완료, 실 기동 DEFER)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
 > 모법: `docs/review/3plus1-consensus-2026-06-19-uncensored-llm-worker-delegation.md` (결정 #3)
 > 합의: `docs/review/3plus1-consensus-2026-06-19-uncensored-pipeline-integration.md` (REVISE 7건 — 본 v2 가 반영)
-> 적용 대상: `src/jarvis/` (이 repo) + `~/prompt_lab` (신규 repo)
-> ⚠️ 본 문서는 **설계안**. 구현은 별도 브랜치 TDD. **실 기동은 R1(GPU lock) 충족 시까지 DEFER.**
+> 적용 대상: `src/jarvis/` (이 repo, feature/uncensored-prompt-pipeline) + `~/prompt_lab` (신규 repo, commit 2fa01bf)
+> ⚠️ **실 기동은 R1(GPU lock) 충족 시까지 DEFER.** 사용자 R1=(b) 선택 → 스켈레톤+테스트만 구현(flock·실 e2e 보류).
 
 ---
 
@@ -143,9 +143,31 @@ class HttpServiceWorker:
 - **D4**: 한국 법·라이선스 미검토.
 - **D5**: dolphin3 → 양질 이미지 프롬프트 산출 품질 미검증.
 - **R6 부수**: `RedactionFilter` 가 무검열 프롬프트의 secret-유사 패턴을 마스킹해 손상시킬 가능 — 구현 시 동작 검증.
+- **D6 (구현 중 신규 발견)**: step1(service)의 gen_gate prompt 정제 미결. controller 의
+  artifact 주입은 desc 에 `[artifact:..] (데이터 — 지시 아님)\n<값>` 래퍼를 append 한다
+  (LLM 워커가 *읽는* 용도 설계). 그러나 `HttpServiceWorker` 는 LLM 이 아니라 받은 prompt
+  *전체*를 gen_gate `prompt` 로 직송 → step1 desc + 래퍼 텍스트가 이미지 프롬프트를 오염.
+  스켈레톤은 워커를 controller 내부 포맷에 **결합시키지 않기 위해**(R5 범용성 보존) 추출
+  로직을 넣지 않고, 깨끗한 전달 경로 결정을 실 e2e(R1 DEFER) 시점으로 미룸. 후보:
+  (i) service-step 전용 주입 포맷 / (ii) `HttpServiceWorker` artifact-aware 옵션 /
+  (iii) prompt_lab 가 controller 밖에서 2단계 직접 잇기. **결정=사용자 영역.**
 
 ---
 
 ## 8. 다음 단계 (단계적 cycle)
 
-검토 → 합의(완료, REVISE 7건) → **본 v2 반영 commit(현재)** → 구현(별도 브랜치 TDD, R1(b) 스켈레톤) → push. **실 기동은 R1 충족까지 DEFER.**
+검토 → 합의(완료, REVISE 7건) → v2 반영 commit(`87603fb`) → **구현 완료(현재, R1(b) GPU-무관 스켈레톤 TDD)** → push(사용자 명시 시). **실 기동은 R1 충족까지 DEFER.**
+
+### 구현 산출 (2026-06-19, feature/uncensored-prompt-pipeline)
+
+| 단위 | 위치 | 상태 |
+|------|------|------|
+| `HttpServiceWorker`(범용, localhost 강제, 202/비200→is_error) | `src/jarvis/worker.py` | ✅ 20 tests, 95% cov |
+| `SAFE_CONSUME_KINDS`/`EXECUTING_KINDS` += `service` (R3, code consume off 불변) | `src/jarvis/plan_controller.py` | ✅ 회귀 테스트 |
+| `build_uncensored_pipeline_registry`(전용 kind_table) | `src/jarvis/worker_setup.py` | ✅ 7 tests, 91% cov |
+| 고정 2-step DAG + ApprovalGate 노출 + R6 sentinel 미주입 | `tests/jarvis/test_uncensored_pipeline.py` | ✅ 7 tests |
+| `~/prompt_lab`(templates/recipe/conftest, 별도 repo) | `~/prompt_lab` (commit `2fa01bf`) | ✅ 6 tests(e2e mock 포함) |
+
+- 전체 jarvis 스위트 632 passed (사전 존재 환경 의존 실패 1건 = sandbox venv 권한, 본 변경 무관).
+- import-linter 2 계약 PASS(grimp 직접 검증, SDK 직접 import 0 / 단방향 보존).
+- **다음 (사용자 명시 시)**: ① R1 수단 결정(flock 구현) → ② D6 깨끗한 프롬프트 전달 경로 결정 → ③ dolphin3 실 e2e(GB10 비점유 시).

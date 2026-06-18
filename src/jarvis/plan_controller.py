@@ -48,12 +48,17 @@ DEFAULT_MAX_STEPS = 5
 # Q7(대안3) ⭐: artifact 를 consume 하는 worker_kind 는 기본 file(OllamaWorker=fs
 # 실행 능력 부재)만 — 2차 injection 의 *실 부작용* 결정적 차단. code/shell consume 은
 # allow_code_consume=True opt-in 시에만(CLAUDE.md §2 계산적 우선).
-SAFE_CONSUME_KINDS: frozenset[str] = frozenset({"file"})
+# R3(무검열 파이프라인): `service`(HttpServiceWorker, 로컬 HTTP /api/generate) 추가 —
+# *텍스트 프롬프트* 소비 허용일 뿐(code/shell consume 과 무관, allow_code_consume off
+# 불변). 답습: uncensored-prompt-to-image-pipeline-design.md §2/§3.1.
+SAFE_CONSUME_KINDS: frozenset[str] = frozenset({"file", "service"})
 
 # 디딤돌1f F2: 실제 실행(테스트·명령·결과 출력) 능력이 있는 worker_kind.
 # requires_execution=True subtask 가 이 집합 밖 kind 로 가면 silent semantic failure
 # (무능력 워커가 텍스트만 내고 COMPLETED). 능력 경계(SAFE_CONSUME_KINDS)의 produce 짝.
-EXECUTING_KINDS: frozenset[str] = frozenset({"code", "shell"})
+# R3: `service` = 외부 HTTP 실 부작용(산출물 쓰기)이므로 실행류 kind. 단 modality 는
+# kind 에 박지 않고 워커 인자(unit)로 둠(R5, 능력축 폭발 차단).
+EXECUTING_KINDS: frozenset[str] = frozenset({"code", "shell", "service"})
 
 # Q2: artifact bounded text 길이 상한(평문 truncate — injection 차단 아님, 부피 제한).
 DEFAULT_MAX_ARTIFACT_LEN = 2000

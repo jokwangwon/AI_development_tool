@@ -278,6 +278,9 @@ def build_uncensored_pipeline_registry(
             unit=image_unit,
             commercial=commercial,
             opts=image_opts,
+            # D6: controller 가 step1 프롬프트를 artifact 래퍼로 주입 → gen_gate 에는
+            # 값(이미지 프롬프트)만 보내 자연어 노이즈 오염 차단.
+            prompt_from_artifact=True,
         )
     )
     kind_table = {"prompt": "ollama-uncensored", "service": "gengate"}

@@ -5,6 +5,7 @@
 > UX 후속: prompt_lab `0b2cb5d`(키워드 **검색+클릭 추가+적용칩**) · `316b178`(**프롬프트 직접 입력** — dolphin3 저작 선택화, ②의 사람 승인 게이트 불변) · `f23379c`(**📖 사전 도감 모달** — 헤더 항시·검색·전체 상세 읽기전용).
 > 시드 확장: gen_gate `93ce13f`(12)→`af5fad7`(13 entries) — 구성 닻(hetero-pair=1girl,1boy,hetero+융합 negative·solo-girl)·체위(missionary/cowgirl/from-behind)·표정(ecstasy-face·ahegao)·상황(after-sex-flaccid=사정 후 이완, negative로 진행중 액션 억제). 동기=인물 수/체위 누락이 2인 장면 해부학 붕괴 1순위.
 > 가중치: `(tag:1.2)`(어텐션 가중, lpw 적용) — **그룹 가중 `(a, b, c:1.2)` 지원**(gen_gate `9935a6e`): `_split_tags` paren-aware(괄호 안 콤마 비분리)로 그룹 한 토큰 보존+dedup 멱등.
+> **UI 가중치 — 클릭 시 지정**(gen_gate `caf4a0a`·prompt_lab `04c4db5`): 가중치 입력칸(기본 1.0)→키워드 클릭 시 `(tags:weight)` 주입(`keyword_prompt(weight=)`+compose_prompt weight). ⭐ 그룹-인식 dedup(`_covered_keys`)로 생성 단계 평문 재적용 이중적용 방지. 보기=📖 사전 모달(tags·negative 가중치 텍스트).
 > K1=(b)서버 · K2=안정화 우선+소수 효과 · K3=X(수동만) — 사용자 권고 채택(§7).
 > 동기: dolphin3 자유 저작이 상충 태그로 **해부학 붕괴(머리 두 개 등)**를 유발 → 검증된 키워드 스니펫을 *수동* 선택 주입해 안정화 + negative 보강.
 > 모법: `docs/architecture/uncensored-prompt-to-image-pipeline-design.md` (OPERATIONAL v3) — 본 설계는 그 위에 얹는 레버.

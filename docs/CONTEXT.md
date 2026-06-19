@@ -2,7 +2,8 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: **2026-06-19 🔤 [프롬프트 키워드 시스템 풀 세션 — #5 사전 + 가중치 + 태그 탐색 + 충돌 검출]** — 사용자 "프롬프트 강화, 특수 키워드 사전?" 발단으로 키워드/태그 시스템을 단일 세션에서 점진 구축. 동기=**"흐름에 안 맞으면 머리 두 개 같은 해부학 붕괴"**(dolphin3 자유 저작 상충 태그). **AI_dev 코드 0(docs만)**, 구현 전부 `~/gen_gate`·`~/prompt_lab`. **최종 커밋: gen_gate `39626b9`(198 passed)·prompt_lab `8c72406`(65 passed)·AI_dev develop push 완료(`cc0907f`)**. 상세=SESSION_2026-06-19.md Part 7.
+**최종 업데이트**: **2026-06-19 🎨 [그림체 흡수 — §12 NAI5/artist-mix + 모델별 사전 분리 ❌]** — 사용자 "썩 괜찮은 그림체 투척"(NAI5/ANAI 프롬프트) + "분석 후 적용 판단". 분석=**3 어휘 혼합**(Pony 死토큰/NoobAI·Illustrious/NAI artist-mix) → 구조적 분해 흡수. ⭐**핵심 결정 "모델별 사전 분리 ❌"**: danbooru SDXL 공통 어휘라 분리=90% 중복 → base 종속 3종만 `base_lock` 표식+UI 필터(진짜 경계는 "프롬프트 패러다임별", Qwen 편입 시만). **AI_dev 코드 0(docs만)**. **최종 커밋: gen_gate `de739e2`(203 passed)·prompt_lab `aedc032`(66 passed)·AI_dev develop push(`44ea4bd`)**. 상세=SESSION_2026-06-19.md Part 8.
+> 직전(같은 날 Part 1~7): 프롬프트 키워드 시스템 풀 세션(#5 사전+가중치+태그 탐색+충돌 검출). gen_gate `39626b9`·prompt_lab `8c72406`. 동기=**"흐름에 안 맞으면 머리 두 개 해부학 붕괴"**.
 
 세션 산출(순서):
 - **#5 특수 키워드 사전**(설계 `prompt-keyword-dictionary-design.md` IMPLEMENTED): 4축(내용·베이스·style·LoRA)과 직교 사용자 선택형 레버. 용어집+스니펫 한 스키마, gen_gate 레지스트리(styles·loras 동형). ⭐주입=**사람 승인 전**(BLOCKING — 강화된 최종 프롬프트 검토·승인, 게이트 불변)·⭐**멱등 합성**(미리보기=생성). 안정화 negative(anatomy-stable 등 머리/사지 중복 차단).
@@ -11,8 +12,10 @@
 - **시드 확장**(13→14 키워드): 구성 닻(hetero-pair/solo-girl)·체위(missionary/cowgirl/from-behind)·표정(ecstasy-face/ahegao)·상황(after-sex-flaccid). 직교 원칙(full-body standing 분리).
 - **⭐ 태그 탐색(discovery)**(gen_gate `5f48dd7`·prompt_lab `bf73e4a`): 큐레이션 사전과 별개 축 — 실제 danbooru 태그 ~14만(CSV 벤더 자산, 런타임 네트워크0) 검색 + dolphin3 개념→태그 제안 + DB 실재 검증. '🔎 태그 찾기' 모달. 두 레이어=DB 검증(환각 차단)+dolphin3 의미 확장.
 - **⭐ 충돌 검출**(gen_gate `39626b9`·prompt_lab `8c72406`, 설계 §11): registry `axis`(자세·인원·표정·구도·상황 상호배타)+`min_people`(체위=2). `conflicts.py`(같은-축 배타·인원 요구 미달, 신호 없으면 스킵) + `/api/check_conflicts` + 칩/베이스 변경 시 ⚠️ **비차단 경고**. standing+정상위·solo+정상위 자동 검출 실증.
+- **🎨 §12 그림체 흡수**(gen_gate `de739e2`·prompt_lab `aedc032`, 설계 §12): `base_lock` 신규 충돌 type(키워드 베이스 전용, 미상 시 스킵) + `artistmix-nai5-base`(artist 가중 믹스) + **rating 축 4종**(safe~explicit, **신규 코드 0**=same_axis 재사용) + style_presets `nai5-aesthetic-illustrious/-noobai` + UI 🔒 비호환 회색. **모델별 사전 분리 ❌** 결정. ⚠️ 검증=계산적뿐, 실 이미지 A/B 미실증.
 
-**잔여/다음 세션 후보**: ① 충돌 검출 후속(정반대 값 smile⊥angry·시점 축·같은-축 소프트 자동교체) ② 실제 무검열 콘텐츠 생성(한국 법·콘텐츠 감독=사용자 직접, 게이트 DEFER 불변) ③ 새 캐릭터 LoRA 학습(~1hr) ④ 실 이미지 A/B(키워드 효과 가시화, GPU 비점유 시). **운영**: gen_gate 8770·webapp 8780 백그라운드 가동 중(idle GPU 미점유). 페이지=`python run_web.py`→127.0.0.1:8780, gen_gate 먼저 기동. ⚠️ webapp.py(파이썬) 변경 시 재시작 필요(static index.html은 즉시).
+**⏭ 다음 세션 1순위 (GPU 비점유 시)**: **§12 실 이미지 그림체 전이 A/B** — illustrious/noobai 각 베이스에서 `nai5-aesthetic` 프리셋 ± `artistmix-nai5-base`(같은 시드)로 그림체가 사용자 의도 방향인지 실증. 키워드 효과 가시화(③ 기존 후보)와 같은 묶음. ANAI5 LoRA 실 자산 확보 시 lora_registry 등록.
+**잔여/기타 후보**: ① 충돌 검출 후속(정반대 값 smile⊥angry·시점 축·같은-축 소프트 자동교체) ② 실제 무검열 콘텐츠 생성(한국 법·콘텐츠 감독=사용자 직접, 게이트 DEFER 불변) ③ 새 캐릭터 LoRA 학습(~1hr). **운영**: gen_gate 8770·webapp 8780 백그라운드 가동 중(idle GPU 미점유). 페이지=`python run_web.py`→127.0.0.1:8780, gen_gate 먼저 기동. ⚠️ webapp.py(파이썬) 변경 시 재시작 필요(static index.html은 즉시) — **이번 세션 webapp.py 변경됨(conflict_checker 시그니처) → 재시작 필요**.
 
 ---
 

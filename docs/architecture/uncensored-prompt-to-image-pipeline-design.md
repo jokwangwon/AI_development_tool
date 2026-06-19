@@ -1,6 +1,7 @@
 # 무검열 텍스트→이미지 파이프라인 설계 (Position A — jarvis 명시 위임)
 
-> 상태: **IMPLEMENTED v3 (스켈레톤 TDD + R1(A) GPU flock + lab 동참 + D6 해소 완료, dolphin3 실 e2e만 잔여)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 상태: **OPERATIONAL v3 (스켈레톤 TDD + R1(A) GPU flock + lab 동참 + D6 해소 + 기술 e2e 실증 완료)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 실 e2e: 안전 의도("a knight")로 전 흐름 실증(dolphin3 GB10 D3 ✅ → 승인 게이트 → 프롬프트 저작 → D6 정제 → gen_gate 1024² 이미지). **실제 무검열 콘텐츠 생성은 사용자 직접 감독 영역**(한국 법 D4 미검토).
 > 모법: `docs/review/3plus1-consensus-2026-06-19-uncensored-llm-worker-delegation.md` (결정 #3)
 > 합의: `docs/review/3plus1-consensus-2026-06-19-uncensored-pipeline-integration.md` (REVISE 7건 — 본 v2 가 반영)
 > 적용 대상: `src/jarvis/` (이 repo, feature/uncensored-prompt-pipeline) + `~/prompt_lab` (신규 repo, commit 2fa01bf)
@@ -179,4 +180,9 @@ class HttpServiceWorker:
 - **동참 commit**: gen_gate 재수출(`183c925`, 136 passed) · gen_gate gpu_flock 최초(`22227cf`) · lora_lab 학습(`4e79b0a`) · anima_lab spike/multiseed(`53cc48f`) · onetrainer_lab `train_with_lock.py` 래퍼(외부 도구, git 미추적).
 - **주요 경로 충족 ✅**: gen_gate·lora·anima·onetrainer 동시 실행 시 순차 직렬화. 잔여: trellis 독립 실행(gen_gate 경유는 커버, 중첩 데드락 회피로 의도적 제외).
 - **D6 해소(`3199fdd`)**: HttpServiceWorker `prompt_from_artifact` — gengate 가 artifact 값만 추출 전송(gen_gate 프롬프트 정제). 사용자 결정 (ii).
-- **다음 (사용자 명시 시)**: dolphin3 실 e2e(주요 GPU 경로 직렬화로 실 기동 가능 — 의도→프롬프트→이미지 1회). 미검증=dolphin3 GB10 실구동(D3)·한국 법(D4)·프롬프트 품질(D5).
+
+### 기술 e2e 실증 (2026-06-19, 안전 의도)
+
+- 의도 `"a knight in armor, full body, dramatic lighting"` → **전 흐름 작동**: dolphin3:latest GB10 응답(**D3 ✅**, load 5.5s) → 승인 게이트가 `('ollama-uncensored','gengate')` 노출 → dolphin3 danbooru 프롬프트 저작 → D6 정제(값만) → gen_gate animagine-xl-4.0 → `outputs/65204ec555.png`(1024², 1.6MB). 두 step `APPLIED`/`did_act=True`, `COMPLETED`.
+- AI_dev 코드 변경 0(실행 검증). gen_gate 서버 기동/종료로 GPU 회수.
+- **잔여**: 실제 무검열 콘텐츠 생성 = 사용자 직접 감독(한국 법 D4 미검토, 콘텐츠 게이트 DEFER). 프롬프트 품질(D5)은 안전 의도 1건만 확인.

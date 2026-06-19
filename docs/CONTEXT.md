@@ -2,7 +2,8 @@
 
 > **AI 에이전트가 세션 시작 시 반드시 읽어야 하는 현재 상태 문서**
 
-**최종 업데이트**: **2026-06-19 🎨 [그림체 흡수 — §12 NAI5/artist-mix + 모델별 사전 분리 ❌]** — 사용자 "썩 괜찮은 그림체 투척"(NAI5/ANAI 프롬프트) + "분석 후 적용 판단". 분석=**3 어휘 혼합**(Pony 死토큰/NoobAI·Illustrious/NAI artist-mix) → 구조적 분해 흡수. ⭐**핵심 결정 "모델별 사전 분리 ❌"**: danbooru SDXL 공통 어휘라 분리=90% 중복 → base 종속 3종만 `base_lock` 표식+UI 필터(진짜 경계는 "프롬프트 패러다임별", Qwen 편입 시만). **AI_dev 코드 0(docs만)**. **최종 커밋: gen_gate `de739e2`(203 passed)·prompt_lab `aedc032`(66 passed)·AI_dev develop push(`44ea4bd`)**. 상세=SESSION_2026-06-19.md Part 8.
+**최종 업데이트**: **2026-06-19 🗂 [이미지 보관함 — 저장·다운로드·갤러리·정리(모델 그룹+컬렉션)·삭제]** — 사용자 "원하는 이미지 저장·다운로드·보관함 열람 + 모델 그룹·선택 이미지 모음 그룹 정리 + 마음에 안 드는 건 삭제". 진단: gen_gate 가 `outputs/<md5>.png` **익명 저장만**(메타 0·브라우징 0), webapp 은 생성 시점 메타 전부 보유 → **보관함=prompt_lab(앱) 소유**(gen_gate=generic, 무변경). mockup 컨펌 + AskUserQuestion 4결정(명시 저장·prompt_lab 복사·그룹 둘 다·삭제 영구vs빼기 구분). 설계 `image-library-gallery-design.md`(IMPLEMENTED). 구현(TDD): `library.py` LibraryStore(파일 복사+manifest.jsonl+collections.json, 모델 facet 파생+컬렉션 명시 멤버십, traversal 거부) + webapp 보관함 라우트(save·list·models·delete·컬렉션 CRUD·담기/빼기, **source localhost 강제 SSRF**, StaticFiles `/library/images`) + index.html(결과 ⬇다운로드·🗂저장 + 🗂 보관함 모달=모델 탭·컬렉션 칩·선택 모드·일괄 다운로드·삭제, XSS 안전 DOM). **100 passed**(+34). 라이브: 실 2.8MB 저장→모델그룹→컬렉션→다운로드→SSRF 400→영구삭제 왕복. **AI_dev 코드 0(docs만)**. **커밋: prompt_lab `5aeeeac`(master, library/ gitignore)**. 상세=SESSION_2026-06-19.md Part 9.
+> 직전(같은 날 Part 8): **🎨 그림체 흡수 — §12 NAI5/artist-mix + 모델별 사전 분리 ❌** — 사용자 "썩 괜찮은 그림체 투척"(NAI5/ANAI 프롬프트) + "분석 후 적용 판단". 분석=**3 어휘 혼합**(Pony 死토큰/NoobAI·Illustrious/NAI artist-mix) → 구조적 분해 흡수. ⭐**핵심 결정 "모델별 사전 분리 ❌"**: danbooru SDXL 공통 어휘라 분리=90% 중복 → base 종속 3종만 `base_lock` 표식+UI 필터(진짜 경계는 "프롬프트 패러다임별", Qwen 편입 시만). **AI_dev 코드 0(docs만)**. **최종 커밋: gen_gate `de739e2`(203 passed)·prompt_lab `aedc032`(66 passed)·AI_dev develop push(`44ea4bd`)**. 상세=SESSION_2026-06-19.md Part 8.
 > 직전(같은 날 Part 1~7): 프롬프트 키워드 시스템 풀 세션(#5 사전+가중치+태그 탐색+충돌 검출). gen_gate `39626b9`·prompt_lab `8c72406`. 동기=**"흐름에 안 맞으면 머리 두 개 해부학 붕괴"**.
 
 세션 산출(순서):
@@ -15,7 +16,7 @@
 - **🎨 §12 그림체 흡수**(gen_gate `de739e2`·prompt_lab `aedc032`, 설계 §12): `base_lock` 신규 충돌 type(키워드 베이스 전용, 미상 시 스킵) + `artistmix-nai5-base`(artist 가중 믹스) + **rating 축 4종**(safe~explicit, **신규 코드 0**=same_axis 재사용) + style_presets `nai5-aesthetic-illustrious/-noobai` + UI 🔒 비호환 회색. **모델별 사전 분리 ❌** 결정. ⚠️ 검증=계산적뿐, 실 이미지 A/B 미실증.
 
 **⏭ 다음 세션 1순위 (GPU 비점유 시)**: **§12 실 이미지 그림체 전이 A/B** — illustrious/noobai 각 베이스에서 `nai5-aesthetic` 프리셋 ± `artistmix-nai5-base`(같은 시드)로 그림체가 사용자 의도 방향인지 실증. 키워드 효과 가시화(③ 기존 후보)와 같은 묶음. ANAI5 LoRA 실 자산 확보 시 lora_registry 등록.
-**잔여/기타 후보**: ① 충돌 검출 후속(정반대 값 smile⊥angry·시점 축·같은-축 소프트 자동교체) ② 실제 무검열 콘텐츠 생성(한국 법·콘텐츠 감독=사용자 직접, 게이트 DEFER 불변) ③ 새 캐릭터 LoRA 학습(~1hr). **운영**: gen_gate 8770·webapp 8780 백그라운드 가동 중(idle GPU 미점유). 페이지=`python run_web.py`→127.0.0.1:8780, gen_gate 먼저 기동. ⚠️ webapp.py(파이썬) 변경 시 재시작 필요(static index.html은 즉시) — **이번 세션 webapp.py 변경됨(conflict_checker 시그니처) → 재시작 필요**.
+**잔여/기타 후보**: ① 충돌 검출 후속(정반대 값 smile⊥angry·시점 축·같은-축 소프트 자동교체) ② 실제 무검열 콘텐츠 생성(한국 법·콘텐츠 감독=사용자 직접, 게이트 DEFER 불변) ③ 새 캐릭터 LoRA 학습(~1hr). **운영**: gen_gate 8770·webapp 8780 백그라운드 가동 중(idle GPU 미점유). 페이지=`python run_web.py`→127.0.0.1:8780, gen_gate 먼저 기동. ⚠️ webapp.py(파이썬) 변경 시 재시작 필요(static index.html은 즉시) — **이번 세션(Part 9) webapp.py 변경 후 재시작 완료**(보관함 엔드포인트 반영). 🗂 **보관함** 추가됨: 결과 카드 다운로드·저장 + 헤더 🗂 보관함 모달, 데이터=`~/prompt_lab/library/`(gitignore, env `PROMPT_LAB_LIBRARY` 재배치). **보관함 후속 후보**: 검색/정렬·태그 필터·브라우저 육안 컨펌(이번엔 헤드리스 curl+JS 문법까지).
 
 ---
 

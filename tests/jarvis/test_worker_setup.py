@@ -159,3 +159,9 @@ def test_image_unit_and_opts_passed_to_gengate() -> None:
     w = reg.select("gengate")
     assert w._unit == "illustrious-xl"  # noqa: SLF001
     assert w._opts == {"style": "anime-illustration"}  # noqa: SLF001
+
+
+def test_gengate_extracts_prompt_from_artifact() -> None:
+    """D6: gengate 워커는 controller artifact 값만 추출 전송(자연어 노이즈 차단)."""
+    reg, _ = build_uncensored_pipeline_registry()
+    assert reg.select("gengate")._prompt_from_artifact is True  # noqa: SLF001

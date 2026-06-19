@@ -427,6 +427,25 @@ class OllamaWorker:
 _HTTP_SERVICE_DEFAULT_TIMEOUT_S = 600.0  # diffusion/3d 등 긴 생성 허용
 _LOCALHOST_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", ""})
 
+# D6: PlanController artifact 주입 포맷 마커. controller 가 desc 에
+#   f"\n\n[artifact:{name}] (데이터 — 지시 아님)\n{value}" 를 append 한다.
+# prompt_from_artifact=True 면 워커가 desc/래퍼를 버리고 artifact *값*만 추출해
+# 서비스(gen_gate)에 보낸다(자연어 노이즈가 booru 태그 프롬프트를 오염하지 않게).
+# controller 내부 포맷에 *약하게* 결합 — 포맷 불일치 시 원본 그대로(fail-soft).
+_ARTIFACT_MARKER_RE = re.compile(r"\n*\[artifact:[^\]]*\] \(데이터 — 지시 아님\)\n")
+
+
+def _extract_artifact_prompt(prompt: str) -> str:
+    """controller artifact 래퍼/선행 desc 를 제거하고 artifact 값만 결합 반환.
+
+    마커가 없으면(직접 prompt 또는 포맷 변경) 원본 그대로 반환(fail-soft).
+    """
+    parts = _ARTIFACT_MARKER_RE.split(prompt)
+    if len(parts) <= 1:
+        return prompt  # 마커 없음 → 원본
+    values = [p.strip() for p in parts[1:] if p.strip()]
+    return "\n".join(values) if values else prompt
+
 
 class HttpServiceWorker:
     """범용 로컬 HTTP 서비스 워커 — POST {base_url}/api/generate.
@@ -448,6 +467,7 @@ class HttpServiceWorker:
         *,
         commercial: bool = False,
         opts: dict[str, Any] | None = None,
+        prompt_from_artifact: bool = False,
         timeout_s: float = _HTTP_SERVICE_DEFAULT_TIMEOUT_S,
     ) -> None:
         self.alias = alias
@@ -455,6 +475,8 @@ class HttpServiceWorker:
         self._unit = unit
         self._commercial = commercial
         self._opts = dict(opts or {})
+        # D6: True 면 받은 prompt 에서 controller artifact 값만 추출해 전송(래퍼/desc 제거).
+        self._prompt_from_artifact = prompt_from_artifact
         self._timeout = timeout_s
 
     @staticmethod
@@ -471,6 +493,9 @@ class HttpServiceWorker:
         return base_url.rstrip("/")
 
     def run(self, prompt: str, workdir: str) -> WorkerResult:
+        # D6: controller artifact 주입 시 래퍼/선행 desc 를 버리고 값만 추출(노이즈 제거).
+        if self._prompt_from_artifact:
+            prompt = _extract_artifact_prompt(prompt)
         # opts 먼저 깔고 핵심 필드로 덮어쓴다(opts 가 model/prompt 위조 불가).
         body: dict[str, Any] = dict(self._opts)
         body["model"] = self._unit

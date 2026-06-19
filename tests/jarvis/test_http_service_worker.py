@@ -207,3 +207,51 @@ def test_success_status_but_no_path_is_error(tmp_path: Path) -> None:
     with patch("urllib.request.urlopen", return_value=_resp({"id": "x"})):
         res = w.run(prompt="x", workdir=str(tmp_path))
     assert res.is_error is True
+
+
+# --- D6: prompt_from_artifact — controller 주입 래퍼/desc 제거하고 값만 전송 ---
+# controller 포맷: desc + "\n\n[artifact:NAME] (데이터 — 지시 아님)\nVALUE"
+
+_MARK = " (데이터 — 지시 아님)"
+
+
+def _capture_prompt(tmp_path: Path, prompt: str, **kw) -> str:
+    captured: dict[str, Any] = {}
+
+    def fake(req, timeout=None):  # type: ignore[no-untyped-def]
+        captured["data"] = json.loads(req.data.decode("utf-8"))
+        return _resp({"id": "x", "file": "x.png", "url": "/outputs/x.png"})
+
+    w = HttpServiceWorker(
+        alias="gengate", base_url="http://localhost:8800", unit="m", **kw
+    )
+    with patch("urllib.request.urlopen", side_effect=fake):
+        w.run(prompt=prompt, workdir=str(tmp_path))
+    return captured["data"]["prompt"]
+
+
+def test_prompt_from_artifact_extracts_value(tmp_path: Path) -> None:
+    desc = "앞 단계가 저작한 이미지 프롬프트로 이미지를 생성한다."
+    prompt = f"{desc}\n\n[artifact:subtask_0]{_MARK}\nmasterpiece, 1girl, silver hair"
+    sent = _capture_prompt(tmp_path, prompt, prompt_from_artifact=True)
+    assert sent == "masterpiece, 1girl, silver hair"  # desc·래퍼 제거
+
+
+def test_prompt_from_artifact_multiple_blocks_joined(tmp_path: Path) -> None:
+    prompt = (
+        f"desc\n\n[artifact:a]{_MARK}\nval one"
+        f"\n\n[artifact:b]{_MARK}\nval two"
+    )
+    sent = _capture_prompt(tmp_path, prompt, prompt_from_artifact=True)
+    assert sent == "val one\nval two"
+
+
+def test_prompt_from_artifact_no_marker_falls_back_to_original(tmp_path: Path) -> None:
+    sent = _capture_prompt(tmp_path, "plain prompt, no marker", prompt_from_artifact=True)
+    assert sent == "plain prompt, no marker"  # 마커 없으면 원본(fail-soft)
+
+
+def test_prompt_from_artifact_default_off_keeps_original(tmp_path: Path) -> None:
+    prompt = f"desc\n\n[artifact:a]{_MARK}\nval"
+    sent = _capture_prompt(tmp_path, prompt)  # 기본 False
+    assert sent == prompt  # 하위호환: 원본 그대로 전송

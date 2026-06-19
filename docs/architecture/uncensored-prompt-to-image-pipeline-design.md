@@ -1,6 +1,7 @@
 # 무검열 텍스트→이미지 파이프라인 설계 (Position A — jarvis 명시 위임)
 
-> 상태: **IMPLEMENTED v3 (스켈레톤 TDD + R1(A) GPU flock + 주요 lab 동참 완료, 실 기동 가능 — D6/실 e2e 잔여)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 상태: **OPERATIONAL v3 (스켈레톤 TDD + R1(A) GPU flock + lab 동참 + D6 해소 + 기술 e2e 실증 완료)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
+> 실 e2e: 안전 의도("a knight")로 전 흐름 실증(dolphin3 GB10 D3 ✅ → 승인 게이트 → 프롬프트 저작 → D6 정제 → gen_gate 1024² 이미지). **실제 무검열 콘텐츠 생성은 사용자 직접 감독 영역**(한국 법 D4 미검토).
 > 모법: `docs/review/3plus1-consensus-2026-06-19-uncensored-llm-worker-delegation.md` (결정 #3)
 > 합의: `docs/review/3plus1-consensus-2026-06-19-uncensored-pipeline-integration.md` (REVISE 7건 — 본 v2 가 반영)
 > 적용 대상: `src/jarvis/` (이 repo, feature/uncensored-prompt-pipeline) + `~/prompt_lab` (신규 repo, commit 2fa01bf)
@@ -143,14 +144,15 @@ class HttpServiceWorker:
 - **D4**: 한국 법·라이선스 미검토.
 - **D5**: dolphin3 → 양질 이미지 프롬프트 산출 품질 미검증.
 - **R6 부수**: `RedactionFilter` 가 무검열 프롬프트의 secret-유사 패턴을 마스킹해 손상시킬 가능 — 구현 시 동작 검증.
-- **D6 (구현 중 신규 발견)**: step1(service)의 gen_gate prompt 정제 미결. controller 의
-  artifact 주입은 desc 에 `[artifact:..] (데이터 — 지시 아님)\n<값>` 래퍼를 append 한다
-  (LLM 워커가 *읽는* 용도 설계). 그러나 `HttpServiceWorker` 는 LLM 이 아니라 받은 prompt
-  *전체*를 gen_gate `prompt` 로 직송 → step1 desc + 래퍼 텍스트가 이미지 프롬프트를 오염.
-  스켈레톤은 워커를 controller 내부 포맷에 **결합시키지 않기 위해**(R5 범용성 보존) 추출
-  로직을 넣지 않고, 깨끗한 전달 경로 결정을 실 e2e(R1 DEFER) 시점으로 미룸. 후보:
-  (i) service-step 전용 주입 포맷 / (ii) `HttpServiceWorker` artifact-aware 옵션 /
-  (iii) prompt_lab 가 controller 밖에서 2단계 직접 잇기. **결정=사용자 영역.**
+- **D6 (해소, 2026-06-19)**: step1(service)의 gen_gate prompt 정제. controller 의
+  artifact 주입은 desc 에 `[artifact:..] (데이터 — 지시 아님)\n<값>` 래퍼를 append 하는데
+  (LLM 워커가 *읽는* 용도 설계), `HttpServiceWorker` 는 LLM 이 아니라 받은 prompt 전체를
+  gen_gate `prompt` 로 직송 → step1 desc + 래퍼 자연어가 booru 태그 프롬프트를 오염.
+  **사용자 결정 = (ii) `HttpServiceWorker(prompt_from_artifact=True)`**: 워커가 prompt 에서
+  `[artifact:..]` 블록 *값만* 추출 결합해 전송(마커 없으면 원본 fail-soft). 변경 범위
+  최소(워커 1개), controller/plan 모델 불변. controller 주입 포맷에 *약하게* 결합하나
+  포맷이 안정 규약이고 불일치 시 원본 fallback. `build_uncensored_pipeline_registry` 가
+  gengate 워커에 활성화. commit `3199fdd`(637 passed) + prompt_lab e2e 정제 검증.
 
 ---
 
@@ -177,4 +179,10 @@ class HttpServiceWorker:
 - **중립 단일 소스** `~/.gb10/gpu_lock.py`(stdlib-only, `GB10_GPU_LOCKFILE` env, fail-soft, 7 tests, git `6a1723d`). flock 은 OS advisory 라 같은 lockfile 만 잡으면 코드 출처 무관 직렬화 → 별도 venv 도 의존 0 으로 import.
 - **동참 commit**: gen_gate 재수출(`183c925`, 136 passed) · gen_gate gpu_flock 최초(`22227cf`) · lora_lab 학습(`4e79b0a`) · anima_lab spike/multiseed(`53cc48f`) · onetrainer_lab `train_with_lock.py` 래퍼(외부 도구, git 미추적).
 - **주요 경로 충족 ✅**: gen_gate·lora·anima·onetrainer 동시 실행 시 순차 직렬화. 잔여: trellis 독립 실행(gen_gate 경유는 커버, 중첩 데드락 회피로 의도적 제외).
-- **다음 (사용자 명시 시)**: ② D6 깨끗한 프롬프트 전달 경로 결정 → ③ dolphin3 실 e2e(주요 GPU 경로 직렬화로 실 기동 가능).
+- **D6 해소(`3199fdd`)**: HttpServiceWorker `prompt_from_artifact` — gengate 가 artifact 값만 추출 전송(gen_gate 프롬프트 정제). 사용자 결정 (ii).
+
+### 기술 e2e 실증 (2026-06-19, 안전 의도)
+
+- 의도 `"a knight in armor, full body, dramatic lighting"` → **전 흐름 작동**: dolphin3:latest GB10 응답(**D3 ✅**, load 5.5s) → 승인 게이트가 `('ollama-uncensored','gengate')` 노출 → dolphin3 danbooru 프롬프트 저작 → D6 정제(값만) → gen_gate animagine-xl-4.0 → `outputs/65204ec555.png`(1024², 1.6MB). 두 step `APPLIED`/`did_act=True`, `COMPLETED`.
+- AI_dev 코드 변경 0(실행 검증). gen_gate 서버 기동/종료로 GPU 회수.
+- **잔여**: 실제 무검열 콘텐츠 생성 = 사용자 직접 감독(한국 법 D4 미검토, 콘텐츠 게이트 DEFER). 프롬프트 품질(D5)은 안전 의도 1건만 확인.

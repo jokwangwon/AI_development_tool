@@ -1,7 +1,8 @@
 # 특수 키워드 사전 + 수동 프롬프트 강화 설계 (Keyword Dictionary)
 
 > 상태: **IMPLEMENTED v1 (TDD 완료 + 라이브 검증)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
-> 구현: gen_gate(`keywords.py`+`keyword_registry.json`+`gate.generate(keywords=)`+`GET /api/keywords`+`POST /api/compose_prompt`, 164 passed) · prompt_lab(`/api/keywords`·`/api/enhance` 프록시+generate keywords 전달+index.html group별 체크박스, 53 passed). 라이브: 실 레지스트리 로드·멱등 dedup·미등록 400 실증(GPU 무관, compose 경로). **AI_dev 코드 0(docs만).**
+> 구현: gen_gate `ffef5d0`(`keywords.py`+`keyword_registry.json`+`gate.generate(keywords=)`+`GET /api/keywords`+`POST /api/compose_prompt`, 164 passed) · prompt_lab(`/api/keywords`·`/api/enhance` 프록시+generate keywords 전달, 53 passed). 라이브: 실 레지스트리 로드·멱등 dedup·미등록 400 실증(GPU 무관, compose 경로). **AI_dev 코드 0(docs만).**
+> UX 후속: prompt_lab `0b2cb5d`(키워드 **검색+클릭 추가+적용칩**) · `316b178`(**프롬프트 직접 입력** — dolphin3 저작 선택화, ②의 사람 승인 게이트 불변).
 > K1=(b)서버 · K2=안정화 우선+소수 효과 · K3=X(수동만) — 사용자 권고 채택(§7).
 > 동기: dolphin3 자유 저작이 상충 태그로 **해부학 붕괴(머리 두 개 등)**를 유발 → 검증된 키워드 스니펫을 *수동* 선택 주입해 안정화 + negative 보강.
 > 모법: `docs/architecture/uncensored-prompt-to-image-pipeline-design.md` (OPERATIONAL v3) — 본 설계는 그 위에 얹는 레버.
@@ -176,8 +177,8 @@ gen_gate 이미지 생성
 | 산출물 | 내용 | 테스트 |
 |--------|------|--------|
 | webapp `/api/keywords` 프록시 | gen_gate 서버사이드 프록시(CORS 회피, styles/loras 동형) | 프록시·실패 처리 |
-| `static/index.html` | group 별 체크박스 + 선택→강화 프롬프트 구성→편집 textarea 갱신 | (수동/스모크) |
-| compose 헬퍼 | 선택 키워드 tags 를 프롬프트에 합성(§4 순서, 클라/서버 일관) | 합성 단위 |
+| webapp `/api/enhance` 프록시 | gen_gate `POST /api/compose_prompt` 프록시(클릭/강화 합성) | 프록시·실패 처리 |
+| `static/index.html` | **검색(클라 필터) + 클릭 추가 + 적용칩** — 사전 browse + 검색(이름·태그·그룹·메모) + 클릭 시 `/api/enhance`(서버 dedup) 로 태그 추가 + `activeKeywords` 칩 추적(생성 시 전달=negative 자동 적용). 🛡️=negative 포함. 칩 ✕=적용 해제(텍스트는 사용자 편집) | (스모크/라이브) |
 
 ### 6.3 AI_dev (`src/jarvis/`)
 

@@ -416,3 +416,7 @@ LoRA 보다 가벼운 style 제어 축. 가중 artist 태그 묶음 = 합성 그
 - gen_gate `POST /api/keywords`(검증·오버레이 쓰기, GET 에 즉시 병합 노출) ← webapp `POST /api/keywords` 프록시(단일 소스, 400/502 전달).
 - index.html `＋ 키워드 저장` 모달(이름·그룹·축·태그·negative) + 진입점 2개: ① 📖 도감 `＋ 새 키워드`(빈 폼) ② ② 섹션 `＋ 현재 프롬프트를 키워드로`(현재 합성 태그 prefill — "만들면서 저장"). 저장 후 `loadKeywords` 갱신 + 옵션 즉시 칩 적용.
 - 정직/한계: §13 raw 미인식 태그 자동 추출 prefill 은 미구현(현재 prefill=현재 프롬프트 전체). 삭제/편집 UI 미구현(오버레이 직접 편집) — 후속 후보.
+
+### 14.4 후속 — 새 태그 자동 식별 + 수정/삭제 (gen_gate `ec8398b`·prompt_lab `e6705d5`·`21ac618`)
+- **새 태그 스캔(프론트 전용)**: 🆕 버튼 → 현재 프롬프트 태그 분해(paren-aware·bare 추출) → 기존 키워드 스니펫 태그 집합에 없는 것만 칩으로 → 클릭 시 그 태그 하나로 저장 폼 prefill. 사용자 흐름("프롬프트에서 아직 키워드 아닌 `nude`를 콕 집어 저장") 실현. 라이브: 예시 프롬프트 → 새 태그=[rough sex, nude] 식별.
+- **수정/삭제(오버레이 대상, seed 보호)**: `update_keyword`(오버레이 upsert — **seed 편집=override**, seed 파일 불변, merge 사용자 우선) + `delete_keyword`(오버레이만, **seed 삭제 거부**=git 동기화 보호) + GET `origin`(user/seed). server PUT/DELETE `/api/keywords/{key}` ← webapp 프록시. UI: 📖 도감 각 항목 ✏️ 편집(전부, seed→override) / 🗑 삭제(origin=user 만). 편집=저장 모달 재사용(편집 모드). 라이브: seed override(파일 불변)·사용자 저장→수정→삭제·seed 삭제 400 왕복.

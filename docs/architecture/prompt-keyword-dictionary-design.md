@@ -213,3 +213,34 @@ gen_gate 이미지 생성
 - negative 보강은 SDXL/애니 모델에서 효과가 태그·모델별로 다름(실측으로 시드 키워드 검증 필요).
 - 자연어→태그 용어집의 *번역 품질*은 사용자가 등록한 매핑에 의존(자동 추론 아님 — 수동 결정 답습).
 - 콘텐츠 게이트는 여전히 DEFER(사용자 직접 감독) — 본 설계는 그 결정을 바꾸지 않는다.
+
+---
+
+## 10. 태그 탐색(discovery) 레이어 — 큐레이션 사전과 별개 축 (구현됨)
+
+큐레이션 사전(§3, 검증 스니펫+가중치+negative)과 **직교**: 수만 개 *실제 danbooru 태그*를
+검색·발견하는 사전적 참조. "이 개념엔 무슨 태그가 있지?"를 푼다.
+
+- **데이터**: `~/gen_gate/data/danbooru_tags.csv`(~14만, `name,category,count,"aliases"`).
+  벤더 자산 — gitignore + `data/download_tags.sh`(a1111 tagcomplete), **런타임 네트워크 0**.
+- **gen_gate** `5f48dd7`: `tags_db.py`(load/search 빈도순·공백↔underscore·alias·lookup/is_real)
+  + `GET /api/tags?q=&limit=&cat=`(부분 검색·카테고리 필터·503 안내) + `POST /api/tags/validate`
+  (이름 배치 → real/canonical/count, dolphin3 제안 실재 검증).
+- **prompt_lab** `bf73e4a`: `TAG_SUGGEST_SYSTEM` + `suggest_tags`(build_pipeline `system_prompt`
+  파라미터화로 재사용) + webapp `/api/tags`(검색 프록시)·`/api/suggest`(dolphin3 개념→태그 →
+  gen_gate 실재 검증, 검증 실패 fail-soft). UI '🔎 태그 찾기' 모달: 부분 검색 자동완성 + 개념
+  AI 제안(✓ 실제 / ✗ 미등록) → 클릭 시 ② 베이스 프롬프트에 추가(underscore→공백, dedup).
+- 두 레이어: **DB = 실재 검증**(환각 차단) · **dolphin3 = 의미 확장**(개념→태그). 라이브 실증
+  (`rainy neon alley`→night·city·alley ✓ / neon·rainy ✗).
+
+## 11. 충돌 검출 시스템 (설계 — 구현 예정, 사용자 지정 다음 작업)
+
+키워드/태그의 **의미 충돌**을 결정적 룰로 검출(계산적-우선, CLAUDE.md). "standing+정상위"
+수동 수정(§ 직교 원칙)이 이것의 첫 인스턴스.
+
+- **충돌 유형**: ① 같은-축 배타(자세 standing⊥lying, 시점 from above⊥from below) ② 인원
+  요구 불충족(행위 2인 필요인데 solo/1girl) ③ 인원 수 모순(1girl+2girls) ④ 정반대 값(smile+angry).
+- **설계**: 키워드 스키마에 `axis`(자세·시점·인원·행위·시간대·표정…) + 제약(`min_people`·
+  `requires`/`conflicts`). 순수 검사기 = 활성 키워드 + 베이스 인원 태그(1girl/solo/2girls…) →
+  경고 목록. 같은 axis = 상호배타.
+- **집행(권장)**: 경고(비차단, 콘텐츠는 사용자 영역) + 같은-축 소프트 자동교체. 모호만 dolphin3.

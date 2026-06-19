@@ -362,3 +362,40 @@ LoRA 보다 가벼운 style 제어 축. 가중 artist 태그 묶음 = 합성 그
   각 베이스 ± artist-mix, 같은 시드)는 **GPU 비점유 시 후속** — 아직 미실증.
 - **ANAI5 LoRA**: lora_registry 미등록(실 자산 확보 시). 현재는 artist 태그 가중 믹스만으로 동작.
 - **한계**: 사용자 선호 animagine 은 이 그림체 비대상(어휘 비호환) — 명시적 트레이드오프.
+
+## 13. Raw 프롬프트 충돌 분석 — 자유 텍스트 태그 인식 (구현됨 — gen_gate `c3c0c45`·prompt_lab `83eb2ce`, 2026-06-19)
+
+> §11 충돌 검출은 **등록된 키워드(레지스트리 key)** 기준. 사용자가 외부에서 *찾아 붙여넣는* 생(raw) 프롬프트(자유 텍스트 danbooru 태그 + artist 가중 믹스)는 축·rating·base_lock 분석에 안 잡히는 갭. 본 절이 메움. 결정(AskUserQuestion): **계산적 사전 방식**(CLAUDE.md 계산적 우선) + **전 항목 검출**(인원-행위·같은-축 모순·rating 불일치·base_lock·문법 린트).
+
+### 13.1 데이터 — `tag_lexicon.json` (태그 → 제약)
+점증 사전(찾을 때마다 등록, rule-of-three 불요 — 발견 즉시 추가):
+```jsonc
+{
+  "rating_order": ["safe","sensitive","questionable","explicit"],
+  "tags": {
+    "<bare tag>": {
+      "axis": "<자세|체위|구도|…>",          // (선택) 같은-축 판정
+      "min_people": 2,                          // (선택) 행위 최소 인원
+      "implies_rating": "explicit",             // (선택) 내용이 함의하는 수위
+      "rating_decl": "sensitive",               // (선택) 이 태그 자체가 레이팅 선언
+      "base_lock": ["illustrious-xl-2.0","noobai-xl-vpred"],  // (선택) 어휘 종속(artist 등)
+      "contradicts": ["lying","on back"]        // (선택) 명시적 비양립 태그
+    }
+  }
+}
+```
+- **모르는 태그 = 스킵**(거짓 경고 0 — §11 detect_people 패턴 일관). 커버리지=등록분만.
+- artist 태그는 `base_lock`(+의미상 kind=artist)로 표현 → §12 base_lock 재사용.
+
+### 13.2 검출 (`analyze_prompt(text, base_model, lexicon)` — conflicts.py)
+1. **토큰화**: §11 paren-aware split 재사용 → 토큰별 가중치/괄호/이스케이프 제거 → bare 태그(lower, `_`→공백).
+2. **인원-행위**(min_people): `detect_people(text)` ↔ 인식 태그의 min_people. 인원 신호 없으면 스킵.
+3. **같은-축 모순**(contradiction): 인식 태그쌍이 `contradicts` 관계면 hard 경고. (단순 같은-axis 공존은 *보강*일 수 있어 noise → 명시 `contradicts` 쌍만 hard; standing⊥lying 등.)
+4. **rating 불일치**: 인식된 `rating_decl` 최대값 < 인식된 `implies_rating` 최대값 → 경고(예: `sensitive` + `rough sex`).
+5. **base_lock**: base_model 주어지고 인식 태그가 base_lock 인데 현재 베이스 불포함 → 경고(미상이면 스킵).
+6. **문법 린트**(텍스트 직접): 괄호 불균형(이스케이프 `\( \)` 제외 후) · 미분리 그룹 `)( ` · 가중치 [0.1,2.0] 벗어남.
+7. 반환 = `[{type, message, ...}]`. type ∈ {min_people, contradiction, rating_mismatch, base_lock, syntax}. 전부 **비차단 경고**(§11 답습).
+
+### 13.3 배선 / UI
+- 서버 `/api/check_conflicts` 가 키워드 충돌(§11)에 더해 raw 프롬프트 분석을 **병합** → 프론트 무변경(기존 칩/베이스 디바운스가 그대로 raw 프롬프트 경고도 노출). 베이스 텍스트 붙여넣기 → ⚠️ 자동.
+- 사전은 gen_gate 단일 소스(provider-liquidity, styles·keywords 동형).

@@ -399,3 +399,20 @@ LoRA 보다 가벼운 style 제어 축. 가중 artist 태그 묶음 = 합성 그
 ### 13.3 배선 / UI
 - 서버 `/api/check_conflicts` 가 키워드 충돌(§11)에 더해 raw 프롬프트 분석을 **병합** → 프론트 무변경(기존 칩/베이스 디바운스가 그대로 raw 프롬프트 경고도 노출). 베이스 텍스트 붙여넣기 → ⚠️ 자동.
 - 사전은 gen_gate 단일 소스(provider-liquidity, styles·keywords 동형).
+
+## 14. 사용자 키워드 저장 — 쓰기 경로 + 오버레이 (구현됨 — gen_gate `5ea712f`·prompt_lab `3e2d04c`, 2026-06-19)
+
+> §3 키워드 사전은 `keyword_registry.json` **수동 편집**뿐 — UI 추가 경로 0. "찾을 때마다 점증"(§13)을 사용자가 직접 하려면 쓰기 경로 필요. 사용자 질문="다른 용어 만들어 생성하면 키워드 저장도?". 결정(AskUserQuestion): **재사용 키워드 스니펫**으로 저장 · **사용자 오버레이 파일**(seed 분리) · **진입점 둘 다**.
+
+### 14.1 저장 위치 — 오버레이(curated/user 분리)
+- `keyword_registry.json`(큐레이션 seed, git) **불변** + `keyword_registry.user.json`(사용자 추가, **gitignore**). `load_keywords` 가 병합(`{**base, **user}`, 사용자 키 우선). git diff 오염 0 — 보관함 `library/` gitignore 결정(§image-library)과 동형 철학.
+
+### 14.2 저장 함수 / 검증 (`keywords.add_keyword`)
+- 입력 `{label*, group?, tags?, negative_extra?, axis?, key?}`. key = 명시값 또는 label slug. **유니코드 허용**(한국어 라벨 OK), 경로 위험(`/ \ 공백`·`.`/`..`)만 차단 → traversal 방지하되 한국어 키 보존.
+- 거부(KeywordError→400): 빈 label · tags·negative 둘 다 빈 · 잘못된 key · **중복 key**. 허용 필드만 보존(나머지 드롭). 오버레이 원자 쓰기.
+- axis 등 충돌 메타도 (선택) 저장 가능 → 저장된 키워드가 §11 충돌 검출에 **즉시 참여**(라이브: 새 키워드 axis=자세 ↔ standing same_axis 검출 실증).
+
+### 14.3 UI / 배선
+- gen_gate `POST /api/keywords`(검증·오버레이 쓰기, GET 에 즉시 병합 노출) ← webapp `POST /api/keywords` 프록시(단일 소스, 400/502 전달).
+- index.html `＋ 키워드 저장` 모달(이름·그룹·축·태그·negative) + 진입점 2개: ① 📖 도감 `＋ 새 키워드`(빈 폼) ② ② 섹션 `＋ 현재 프롬프트를 키워드로`(현재 합성 태그 prefill — "만들면서 저장"). 저장 후 `loadKeywords` 갱신 + 옵션 즉시 칩 적용.
+- 정직/한계: §13 raw 미인식 태그 자동 추출 prefill 은 미구현(현재 prefill=현재 프롬프트 전체). 삭제/편집 UI 미구현(오버레이 직접 편집) — 후속 후보.

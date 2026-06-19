@@ -249,3 +249,110 @@ gen_gate 이미지 생성
 - 라이브: standing+정상위→"같은 축(자세) 충돌" · solo+정상위→"2인 필요하나 현재 1인".
 - **미구현(후속)**: 정반대 값(smile⊥angry)·시점 축·같은-축 *소프트 자동교체*(현재 경고만).
 - 16 tests(conflicts 12 + server 4), gen_gate 198·prompt_lab 65 passed.
+
+## 12. NAI5/artist-mix 그림체 흡수 + 모델별 어휘 의존성 (설계 — 승인 2026-06-19, 미구현)
+
+사용자 공유 "그림체 프롬프트"(NAI5/ANAI 계열) 분석에서 출발. 발단=그림체 공유. 분석 결과
+**그대로 복사 불가** — 단일 프롬프트가 아니라 **서로 다른 학습 어휘 3종의 혼합**이었음.
+
+### 12.1 어휘 출신 분해 (핵심 인사이트)
+
+| 토큰 | 출신 어휘 | 작동 베이스 |
+|------|----------|------------|
+| `score 9, score 8` | **Pony Diffusion** | Pony 전용 — illustrious/noobai/animagine 에선 **死토큰** |
+| `very aesthetic, newest, year 2024/2025` | **NoobAI / Illustrious** | noobai-xl-vpred·illustrious-xl-2.0 ✅ / animagine ❌ |
+| `masterpiece, absurdres, best quality, highres` | 범용 danbooru | 대부분 작동 |
+| `(@artist:weight)` + `<lora:ANAI5:1>` | **NovelAI V4.5 그림체 로컬 포팅** | danbooru artist 태그 가중 블렌딩 — base 종속 |
+
+→ 정체: **Illustrious/NoobAI 베이스 + ANAI5 LoRA + 다중 artist 가중 믹스**. `score_9`=관성 노이즈.
+사용자 선호 확정 animagine 으로는 **전이 불가**(어휘 어휘 다름).
+
+### 12.2 결정 — 모델별 사전 *분리* 안 함 (단일 사전 + base 메타 + UI 필터)
+
+질문("모델별 사전 별도 처리?")에 대한 결정:
+
+- **분리 ❌**. animagine/illustrious/noobai = 전부 **danbooru 학습 SDXL** → 기존 축(인원·자세·구도·
+  상황·표정) 태그는 세 모델 공통. 분리 시 ~90% 중복.
+- 실제 base 종속은 3종뿐, 각각 담당 메커니즘 존재:
+  ① quality/aesthetic 어휘 → **style_presets**(이미 `model` 잠금) ② artist 태그 → **artist-mix 그룹
+  + `base_lock`** ③ rating 태그 → rating 축 + `base_lock` 선택.
+- 분리가 아니라 **표식(`base_lock`)** 이 정확한 도구. 한 스키마 원칙(styles·loras·keywords 동형) +
+  Provider Liquidity(모델 교체 무코드) 보존.
+- UI 노이즈는 **필터링**으로 해결(현 베이스 비호환 = 회색/숨김), 데이터 통합 유지. §11 충돌검출이
+  base mismatch 경고를 재사용 제공.
+- **예외(정직)**: 진짜 경계는 "모델별"이 아니라 **"프롬프트 패러다임별"**(anime-tag vs Qwen 자연어
+  vs Pony-score). 레지스트리 `qwen-image`(실사·자연어)는 danbooru 태그 무의미 → 패러다임 다른
+  모델 편입 시 *그때* 패러다임 단위 분리 검토. danbooru-anime 패밀리 안에서는 단일 사전.
+
+### 12.3 도입 원칙
+
+- **AI_dev 코드 0**(기존 키워드 세션과 동일, jarvis 코어 무변경). 구현 시 `~/gen_gate`·`~/prompt_lab`.
+- 원본의 **반복·중복**(triple solo, negative `artist collaboration`×6 등) **도입 안 함** —
+  가중치/그룹-인식 dedup 이 이미 우월(원시 강조의 1급 메커니즘 대체).
+- 원본의 **Pony 死토큰**(`score 9/8`) **의도적 제외**.
+
+### 12.4 style_presets.json — 2개 신규 (base-lock, 둘 다 프리셋)
+
+```jsonc
+"nai5-aesthetic-illustrious": {
+  "label": "NAI5 그림체 (Illustrious·상업)",
+  "model": "illustrious-xl-2.0",
+  "prompt_prefix": "very aesthetic, newest, masterpiece, absurdres, best quality, highres, year 2024, year 2025",
+  "negative_extra": "<§12.7 quality-stable 참조>",
+  "levers": { "hires": true, "hires_upscaler": "realesrgan-anime", "hires_strength": 0.4 },
+  "notes": "NAI5/ANAI 그림체 로컬 포팅. score_9 등 Pony 死토큰 제외. artist-mix(§12.5)·ANAI LoRA 조합 전제. clip_skip 미설정(illustrious 백지버그)."
+},
+"nai5-aesthetic-noobai": {
+  "label": "NAI5 그림체 (NoobAI·개인전용)",
+  "model": "noobai-xl-vpred",
+  "prompt_prefix": "(동일)",
+  "levers": { "hires": true, "hires_upscaler": "realesrgan-anime", "hires_strength": 0.4, "guidance_rescale": 0.7 },
+  "notes": "v-pred 베이스 — guidance_rescale=0.7 필수(native). 다크/콘텐츠 자유도 최상, 상업 불가."
+}
+```
+> 차이=`model` 잠금 + noobai 의 **v-pred native(guidance_rescale 0.7)**. prefix 어휘 공유.
+
+### 12.5 keyword_registry.json — 신규 그룹 `그림체(artist-mix)` + 신규 필드 `base_lock`(승인)
+
+LoRA 보다 가벼운 style 제어 축. 가중 artist 태그 묶음 = 합성 그림체 조각.
+```jsonc
+"artistmix-nai5-base": {
+  "label": "NAI5 합성 그림체", "group": "그림체",
+  "tags": "(mx2j:1.5), (yoneyama mai:1.1), (say hana:1.1), (quasarcake:0.8), (hizaka:0.7), (momoko \\(momopoco\\):0.3)",
+  "negative_extra": "milkpanda, kurukurumagical, (taroimo \\(00120014\\):0.5), one-hour drawing challenge",
+  "base_lock": ["illustrious-xl-2.0", "noobai-xl-vpred"],
+  "notes": "danbooru artist 가중 블렌딩. animagine 비호환(태그 어휘 다름). 칩별 가중 조절 가능. artist 네거티브는 이 그림체 선택과 한 묶음(범용 anatomy 아님)."
+}
+```
+> **신규 메타 `base_lock`(승인)**: artist 태그=base 종속. 불일치 베이스 선택 시 §11 충돌검출 패턴
+> 재사용 → ⚠️ **비차단 경고**(키워드 레지스트리 첫 도입 필드).
+
+### 12.6 rating 축 신설 (승인 — 시스템에 없던 새 축)
+
+현 축(인원·자세·구도·상황·표정)에 **`등급`** 추가, 상호배타(`axis: 등급`).
+```jsonc
+"rating-safe":         { "tags": "safe",         "axis": "등급", "group": "등급",
+  "notes": "SFW 확률↑(사용자 실측). 단 explicit position 태그 동반 시 NSFW 여전히 출력 — 차단 아님." },
+"rating-sensitive":    { "tags": "sensitive",    "axis": "등급", "group": "등급" },
+"rating-questionable": { "tags": "questionable", "axis": "등급", "group": "등급" },
+"rating-explicit":     { "tags": "explicit",     "axis": "등급", "group": "등급" }
+```
+> §11 충돌검출 자동 적용 — `safe`+`explicit` 동시 선택 시 ⚠️ 경고. rating 태그 자체는 danbooru
+> 공통이나 animagine 처리 차이 시 해당 엔트리에 `base_lock` 선택 부착 가능.
+
+### 12.7 negative 보강 — `anatomy-stable` 확장 (별도 스니펫 아님)
+
+기존에 없는 유효 항목만:
+```
++ mob face, wrong head size, distorted body, ambiguous form, black rectangles, one-hour drawing challenge
+```
+> artist 네거티브(`milkpanda`·`kurukurumagical`·`taroimo`)는 범용 anatomy 아님 → §12.5 그림체
+> 스니펫 `negative_extra` 에 귀속.
+
+### 12.8 미구현 / 한계 / 후속
+
+- **미구현**: 위 전부 설계 단계. 구현(gen_gate/prompt_lab TDD + 테스트)은 **별도 승인** 후.
+- **ANAI5 LoRA**: lora_registry 등록 여부 = 실 자산 확보 시 결정(없으면 artist 태그 믹스만으로도 동작).
+- **검증 계획**: GPU 비점유 시 illustrious/noobai 각 베이스에서 nai5-aesthetic 프리셋 ± artist-mix
+  A/B(같은 시드) — 그림체 전이 실증.
+- **한계**: 사용자 선호 animagine 은 이 그림체 비대상(어휘 비호환) — 명시적 트레이드오프.

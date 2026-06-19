@@ -250,7 +250,7 @@ gen_gate 이미지 생성
 - **미구현(후속)**: 정반대 값(smile⊥angry)·시점 축·같은-축 *소프트 자동교체*(현재 경고만).
 - 16 tests(conflicts 12 + server 4), gen_gate 198·prompt_lab 65 passed.
 
-## 12. NAI5/artist-mix 그림체 흡수 + 모델별 어휘 의존성 (설계 — 승인 2026-06-19, 미구현)
+## 12. NAI5/artist-mix 그림체 흡수 + 모델별 어휘 의존성 (구현됨 — gen_gate `de739e2`·prompt_lab `aedc032`, 2026-06-19)
 
 사용자 공유 "그림체 프롬프트"(NAI5/ANAI 계열) 분석에서 출발. 발단=그림체 공유. 분석 결과
 **그대로 복사 불가** — 단일 프롬프트가 아니라 **서로 다른 학습 어휘 3종의 혼합**이었음.
@@ -349,10 +349,16 @@ LoRA 보다 가벼운 style 제어 축. 가중 artist 태그 묶음 = 합성 그
 > artist 네거티브(`milkpanda`·`kurukurumagical`·`taroimo`)는 범용 anatomy 아님 → §12.5 그림체
 > 스니펫 `negative_extra` 에 귀속.
 
-### 12.8 미구현 / 한계 / 후속
+### 12.8 구현 결과 / 한계 / 후속
 
-- **미구현**: 위 전부 설계 단계. 구현(gen_gate/prompt_lab TDD + 테스트)은 **별도 승인** 후.
-- **ANAI5 LoRA**: lora_registry 등록 여부 = 실 자산 확보 시 결정(없으면 artist 태그 믹스만으로도 동작).
-- **검증 계획**: GPU 비점유 시 illustrious/noobai 각 베이스에서 nai5-aesthetic 프리셋 ± artist-mix
-  A/B(같은 시드) — 그림체 전이 실증.
+- **구현됨**(TDD): conflicts.py `base_lock` 검출(③, base_model 미상 시 스킵) + keyword_registry
+  artistmix-nai5-base·rating 4종(axis=등급)·anatomy-stable 보강 + style_presets nai5-aesthetic
+  ×2(illustrious 상업 / noobai v-pred 0.7) + server `/api/check_conflicts` base_model·`/api/keywords`
+  base_lock 노출. prompt_lab webapp base_model 전달 + index.html 🔒 비호환 회색 표시(비차단)·
+  베이스 변경 시 재검사. **gen_gate 198→203·prompt_lab 65→66 passed**.
+- **rating 축은 신규 코드 0** — 기존 §11 `same_axis` 룰이 그대로 적용(safe+explicit 자동 경고).
+  base_lock 만 신규 type. 모델별 사전 분리 회피(§12.2) = 표식+필터로 충분 실증.
+- **검증 한계(정직)**: 검증=**계산적(테스트)**뿐. 실 이미지로 그림체 전이 A/B(illustrious/noobai
+  각 베이스 ± artist-mix, 같은 시드)는 **GPU 비점유 시 후속** — 아직 미실증.
+- **ANAI5 LoRA**: lora_registry 미등록(실 자산 확보 시). 현재는 artist 태그 가중 믹스만으로 동작.
 - **한계**: 사용자 선호 animagine 은 이 그림체 비대상(어휘 비호환) — 명시적 트레이드오프.

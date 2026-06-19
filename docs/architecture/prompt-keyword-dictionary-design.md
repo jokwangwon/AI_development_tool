@@ -2,7 +2,8 @@
 
 > 상태: **IMPLEMENTED v1 (TDD 완료 + 라이브 검증)** · 날짜: 2026-06-19 · 유형: 아키텍처 설계 (SDD)
 > 구현: gen_gate `ffef5d0`(`keywords.py`+`keyword_registry.json`+`gate.generate(keywords=)`+`GET /api/keywords`+`POST /api/compose_prompt`, 164 passed) · prompt_lab(`/api/keywords`·`/api/enhance` 프록시+generate keywords 전달, 53 passed). 라이브: 실 레지스트리 로드·멱등 dedup·미등록 400 실증(GPU 무관, compose 경로). **AI_dev 코드 0(docs만).**
-> UX 후속: prompt_lab `0b2cb5d`(키워드 **검색+클릭 추가+적용칩**) · `316b178`(**프롬프트 직접 입력** — dolphin3 저작 선택화, ②의 사람 승인 게이트 불변).
+> UX 후속: prompt_lab `0b2cb5d`(키워드 **검색+클릭 추가+적용칩**) · `316b178`(**프롬프트 직접 입력** — dolphin3 저작 선택화, ②의 사람 승인 게이트 불변) · `f23379c`(**📖 사전 도감 모달** — 헤더 항시·검색·전체 상세 읽기전용).
+> 시드 확장: gen_gate `93ce13f`(12)→`af5fad7`(13 entries) — 구성 닻(hetero-pair=1girl,1boy,hetero+융합 negative·solo-girl)·체위(missionary/cowgirl/from-behind)·표정(ecstasy-face·ahegao)·상황(after-sex-flaccid=사정 후 이완, negative로 진행중 액션 억제). 동기=인물 수/체위 누락이 2인 장면 해부학 붕괴 1순위. ⚠️ negative 가중치는 괄호내 콤마 회피(태그별 개별 `(tag:1.2)`)=dedup 안전.
 > K1=(b)서버 · K2=안정화 우선+소수 효과 · K3=X(수동만) — 사용자 권고 채택(§7).
 > 동기: dolphin3 자유 저작이 상충 태그로 **해부학 붕괴(머리 두 개 등)**를 유발 → 검증된 키워드 스니펫을 *수동* 선택 주입해 안정화 + negative 보강.
 > 모법: `docs/architecture/uncensored-prompt-to-image-pipeline-design.md` (OPERATIONAL v3) — 본 설계는 그 위에 얹는 레버.

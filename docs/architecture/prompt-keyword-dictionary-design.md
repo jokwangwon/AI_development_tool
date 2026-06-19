@@ -233,14 +233,19 @@ gen_gate 이미지 생성
 - 두 레이어: **DB = 실재 검증**(환각 차단) · **dolphin3 = 의미 확장**(개념→태그). 라이브 실증
   (`rainy neon alley`→night·city·alley ✓ / neon·rainy ✗).
 
-## 11. 충돌 검출 시스템 (설계 — 구현 예정, 사용자 지정 다음 작업)
+## 11. 충돌 검출 시스템 (구현됨 — gen_gate `39626b9`·prompt_lab `8c72406`)
 
 키워드/태그의 **의미 충돌**을 결정적 룰로 검출(계산적-우선, CLAUDE.md). "standing+정상위"
-수동 수정(§ 직교 원칙)이 이것의 첫 인스턴스.
+수동 수정(§ 직교 원칙)의 일반화·자동화.
 
-- **충돌 유형**: ① 같은-축 배타(자세 standing⊥lying, 시점 from above⊥from below) ② 인원
-  요구 불충족(행위 2인 필요인데 solo/1girl) ③ 인원 수 모순(1girl+2girls) ④ 정반대 값(smile+angry).
-- **설계**: 키워드 스키마에 `axis`(자세·시점·인원·행위·시간대·표정…) + 제약(`min_people`·
-  `requires`/`conflicts`). 순수 검사기 = 활성 키워드 + 베이스 인원 태그(1girl/solo/2girls…) →
-  경고 목록. 같은 axis = 상호배타.
-- **집행(권장)**: 경고(비차단, 콘텐츠는 사용자 영역) + 같은-축 소프트 자동교체. 모호만 dolphin3.
+- **데이터**(registry): 키워드에 `axis`(자세·인원·표정·구도·상황 — 상호배타 축) + `min_people`
+  (체위=2). axis 없는 키워드(효과·안정화)는 스택 가능. `/api/keywords` 가 axis·min_people 노출.
+- **`conflicts.py`**: `detect_people`(solo=1·Ngirl/Nboy 합산·multiple≥3·신호 없으면 None) +
+  `check_conflicts(active_keys, base_text, reg)` →
+  ① **같은-축 배타**(같은 axis 2+ → 경고) ② **인원 요구**(min_people > 감지 인원 → 경고;
+  인원 신호 *전무*면 스킵 = 거짓 경고 회피). `POST /api/check_conflicts`.
+- **UI**(prompt_lab): 칩/베이스 변경 시 디바운스(250ms) 검사 → ⚠️ **비차단 경고**(콘텐츠는
+  사용자 영역, 사람 판단). 검사 실패는 fail-soft(경고 부재, 작업 안 막음).
+- 라이브: standing+정상위→"같은 축(자세) 충돌" · solo+정상위→"2인 필요하나 현재 1인".
+- **미구현(후속)**: 정반대 값(smile⊥angry)·시점 축·같은-축 *소프트 자동교체*(현재 경고만).
+- 16 tests(conflicts 12 + server 4), gen_gate 198·prompt_lab 65 passed.

@@ -250,6 +250,7 @@ docs/architecture/implementation-runtime-roadmap-mvp1.md 수정 시 → implemen
 | 환경+Docker | `docs/architecture/environment-and-docker-design.md` | 하드코딩 금지, Docker-First |
 | 변경 영향 분석 | `docs/architecture/change-impact-analysis-design.md` | 의존성/장애 사전 검증 |
 | **수단/목적 분리 원칙** | `docs/decisions/ADR-011-means-vs-ends-redaction.md` | **헌법 8조 (보안) + 5조-2 (Provider Liquidity, 비협상) 본질 = 안전 결과 + Provider Liquidity. R-4~R-7 모법, Hermes ≠ root of trust, 자동 학습 vs 자동 정책 변경 분리(T1/T2/T3). 상위 권위 매핑 답습 (ADR-011 line 6/245 + 헌법 line 75~80)** |
+| NAI5 LoRA UI 통합 | `docs/architecture/nai5-lora-ui-integration-design.md` | @NAI5 그림체 LoRA를 gen_gate/prompt_lab UI에 통합 (lab 상주 추론 서버 브리지 백엔드, 3+1 합의). gen_gate `lab-inference` 백엔드 + `anima-nai5` 모델 엔트리 |
 | 멀티에이전트 설계 | `docs/architecture/multi-agent-system-design.md` | 3+1 에이전트 상세 |
 | 개발 가이드 | `docs/guides/DEVELOPMENT_GUIDE.md` | 개발 프로세스 |
 | 테스트 전략 | `docs/guides/TEST_STRATEGY.md` | 테스트 방법론 |

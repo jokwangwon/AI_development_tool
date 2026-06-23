@@ -134,6 +134,8 @@ def inpaint(
 ### 추론적/e2e — GPU 필요(다른 세션 GPU 비점유 시)
 9. **실 e2e**: 아벨린 이미지 + 한쪽 다리 마스크 → "white thigh-high stocking" 인페인트 → 정체성 유지 + 해당 다리만 변경(육안 + md5 변화). LoRA on 시 트리거 색 일관.
 
+> ✅ **e2e PASS (2026-06-24, GB10)**: init=`combo3_d_s999.png`(1536², 흰+검 비대칭 스타킹), 뷰어-좌측 흰 다리 마스크 → "black thigh-high stockings" 인페인트(animagine 상업 + LoRA aveline). **풀 경로 작동**(gate→flock→backend inpaint→LoRA, 에러 0). **영역 한정 정확**: 마스크 안 diff 71.16 / 밖 2.50(~28×, 얼굴·드레스·날개·반대쪽 다리·배경 전부 보존). **strength=1.0에서 흰→검 완전 전환**(비대칭→대칭 복구, 육안 컨펌). ⭐ **발견: strength = 색 전환 레버** — 0.85는 원본 흰색이 강하게 보존(LoRA on/off 무관, 둘 다 흰색 유지)되고 1.0에서 완전 재생성. 초기 가설 "LoRA가 흰색 정체성 재주장"은 **오답으로 정정**(원인=strength, LoRA 아님). LoRA의 inpaint 내 *구별되는* 효과는 이 A/B로 분리 못 함(matched strength에서 둘 다 흰색); 핵심 갭 CODE는 단위테스트(cak 전달)+e2e 무에러로 검증. 산출=`~/lora_lab/inpaint_e2e/`.
+
 > 커버리지 70%+ (CLAUDE.md). 1~8은 GPU 없이 즉시 가능, 9는 GPU 슬롯 대기.
 
 ---

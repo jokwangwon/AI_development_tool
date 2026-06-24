@@ -1,5 +1,7 @@
 # 3+1 합의 보고서 — VTuber 바디 모션 백엔드 결정
 
+> ⚠️ **SUPERSEDED (부분) by `ADR-015` (2026-06-24)**: 본 합의의 `hybrid_phased` "조건부 3D 전신(Phase 2~3, THA3 2D 얼굴+3D 바디 분업)"은 PoC 게이트 PASS(char_factory VRoid 조립 VRM이 표정 모프 자체 상속 → blendshape 갭 소멸)로 **char_factory VRoid 조립 VRM 전신 확정으로 승격**됨. 상체 Phase 1(THA3 idle 모션) 등 그 외 결론은 유효.
+
 > **일자**: 2026-06-10 · **프로토콜**: CLAUDE.md §3 (아키텍처 결정 = 3+1 필수)
 > **사안**: anime VTuber 캐릭터에 바디 모션을 추가하는 애니메이션 백엔드 결정
 > **후보**: (1) 3D VRM 전신 · (2) 파츠 컷아웃 2.5D · (3) 하이브리드/단계적

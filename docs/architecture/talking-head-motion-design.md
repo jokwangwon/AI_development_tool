@@ -3,6 +3,7 @@
 > **정적 anime 일러스트 + 음성(WAV)을 "말하는 캐릭터 클립"으로 만드는 모션 계층 설계 — 비전의 마지막 미싱 피스(이미지 + 음성 + **모션**)**
 
 **최종 수정**: 2026-06-10 (… → **실 3-연쇄 생성 dogfood** → **THA3 canonical 정렬(rembg+얼굴검출)** → **3+1 합의 hybrid_phased → 상체 모션 Phase 1**)
+> ⚠️ **2026-06-24 패러다임 확정 (`ADR-015`)**: VTuber 에셋 메인 = **char_factory VRoid 조립 VRM**. THA3는 토킹헤드 프로토타입/단순캐릭터 용도로 강등(아벨린 뿔/날개 깨짐). hybrid_phased "조건부 3D"는 PoC 게이트 PASS로 확정 승격(VRoid 표정 모프 상속 → blendshape 갭 소멸). 본 문서의 THA3 중심 설계는 폴백·토킹헤드 트랙으로 유효.
 **상태**: **구현 완료 9차 (⭐ 진짜 3D 바디 경로 PoC 닫힘 — 워프 퍼펫 품질 천장(사용자 확인) → Phase 2 진입. Blender 5.1 ARM64 헤드리스 GB10 실측(OPTIX 인식·EEVEE 0.3s/f) + Hunyuan3D 메시 거리-가중치 자체 리깅(UniRig 우회) + 알파마스크 머티리얼(배경 지느러미 소거) → 텍스처 3D 캐릭터 관절 회전 찢어짐 0. 141 tests). 후속 = 3D 품질 강건화·THA3 얼굴 합성·정식 모듈화)**
 **구현 repo**: `~/motion_lab` (독립 git repo, main: `c479c5a` 승격 + `8bf127e` 렌더러/서버 + D-2 2단계 커밋)
 **상위 문서**: `PROJECT_CONSTITUTION.md` 제3조(에셋), 제5조-2(Provider Liquidity)

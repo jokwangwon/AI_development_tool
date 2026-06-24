@@ -72,3 +72,22 @@
 - **옵션 3**: 방향만 합의로 기록하고 다른 작업으로(버튜버는 백로그).
 
 > ⚠️ 이 합의는 **방향 권고**다. 패러다임 *확정*과 구현은 PoC 게이트 통과 + 사용자 명시 후 별도 SDD·TDD.
+
+---
+
+## 부록 — 선결 PoC 게이트 결과 (2026-06-24, **PASS**)
+
+사용자 "커밋하고 PoC 게이트 진행" → 권고 3의 게이트를 수행. **블로커 0, 게이트 PASS.**
+
+| 체크포인트 | 결과 |
+|-----------|------|
+| **VRM export 경로** (1단계) | ✅ VRM-Addon v4.3.0(Blender 5.1 지원) + `export_scene.vrm` 작동. VRoid 라운드트립 본 83→83·shapekey 57→57 보존. char_factory yellow_01.blend→.vrm humanoid 본 54 정상 |
+| **표정 모프** ⓒ | ✅ VRoid 상속 binds=1 보존. 조립체는 `Fcl_*` rename wiring만 남음(모프 지오메트리 다 존재, 블로커 아님) |
+| **뿔** ⓐ (head 본) | ✅ `J_Bip_C_Head` 강체 → head yaw/pitch 회전 추종(시각 확인) |
+| **날개** ⓑ (독립 본+물리) — *최대 미검증* | ✅ 신규 본 `wing.L/R`(UpperChest 부모) → 몸통 독립 flap up/down/sway 2 DOF(시각 확인). VRM export 본 83→85 보존 |
+
+**판정**: 합의가 지목한 "최대 미검증"(뿔/날개가 3D에서 구조적으로 풀리는가)이 무조건부 실증. **THA3가 깨졌던 비인간 요소가 VRM 본 리깅으로 작동** → fallback 조건 미발동, **VRM/3D(char_factory VRoid 조립) 패러다임 확정 근거 확보**.
+
+⚠️ **범위(over-claim 방지)**: 검증=기술(본 부착·독립 구동·export 보존)이지 아벨린 버튜버 완성 아님. 절차 메시 + VRoid 교복 베이스(아벨린 화풍 아님). 남은 갭(블로커 아님)=표정 wiring·날개 부드러운 flap(segment 본 체인)·solidify·아벨린 화풍 이식·립싱크 e2e.
+
+**다음(사용자 결정)**: 패러다임 *확정* + SDD(hybrid_phased supersede) + 라이선스 게이트 / 계속 구현(화풍→말하는 아벨린 VRM e2e). 산출 = `~/motion_lab/char_factory/poc_horn_wing.py` + `build/horn_wing_poc/sheet*.png`.

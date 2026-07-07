@@ -6,13 +6,22 @@
       "url": "http://localhost:8777",
       "icon": "🎙️",
       "origin": "jarvis",
-      "apply": { "repo_path": "/home/delangi/voice_lab" }
+      "apply": {
+        "repo_path": "/home/delangi/voice_lab"
+      }
     },
     {
       "name": "qwen3_design",
       "title": "Qwen3 VoiceDesign (묘사→목소리 생성)",
       "url": "http://localhost:8778",
       "icon": "🎨",
+      "origin": "jarvis"
+    },
+    {
+      "name": "friday",
+      "title": "F.R.I.D.A.Y. (동반 성장 지능 실험 — read-only 관제)",
+      "url": "https://github.com/jokwangwon/F.R.I.D.A.Y.",
+      "icon": "🧬",
       "origin": "jarvis"
     }
   ]

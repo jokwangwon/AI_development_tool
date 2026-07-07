@@ -84,7 +84,7 @@
 2. **격리 메커니즘 사전 정의**: §4 답습
 3. **Rollback Trigger 사전 등록**: §6 답습
 4. **Evidence 수집 의무**: §7 답습
-5. **자비스 144/144 test green 답습**: 자비스 회귀 0건 보장
+5. **자비스 전체 test suite green 답습**: 자비스 회귀 0건 보장 (2026-07-07 갱신: "144/144" 숫자 고정 폐기 — stale. 현행 suite 기준, 시점 실측 791 collected)
 
 ### 3.3 자비스와의 권위 관계
 
@@ -101,11 +101,11 @@
 
 | 옵션 | 설명 | trade-off |
 |---|---|---|
-| (a) 같은 repo 별도 브랜치 | `feature/friday-experimental` 신규, `src/friday/` 신설. 자비스 brach (`feature/jarvis-mvp0` + `main`) 보호 | git history 통합, branch protection rule 별도 의무 |
+| (a) 같은 repo 별도 브랜치 | `feature/friday-experimental` 신규, `src/friday/` 신설. 자비스 branch (`feature/jarvis-mvp0` + `main`) 보호 | git history 통합, branch protection rule 별도 의무 |
 | (b) 별도 repo | `friday/` 별도 git repo, 자비스 repo 와 무관 | 완전 격리, 권위 분리 명확, 단 cross-reference 불편 |
 | (c) 같은 repo 같은 브랜치 + 디렉토리 격리 | `friday/` 디렉토리 신설, 자비스 main에서 진행 | 가장 가벼움, 단 격리 약함 (실수로 자비스 본문 변경 risk) |
 
-**권고**: (a) 별도 브랜치 (자비스 main branch protection rule 침범 0 + git history 통합 + 권위 분리 명확)
+**권고**: ~~(a) 별도 브랜치~~ → **2026-07-07 확정 = (b) 별도 repo** (사용자 직접 결정 + 3+1 합의 4/4 독립 권고 일치): `/home/delangi/문서/project/category/F.R.I.D.A.Y.` (git init + GitHub private `jokwangwon/F.R.I.D.A.Y.` + main/develop). (R) 체제에서는 repo 위치 = Claude 프로젝트 메모리 스코프이므로 별도 repo가 코드·commit·메모리 3층을 구조적(feedforward)으로 격리. ⚠️ 자비스 repo와 **같은 부모 디렉토리**(`category/`) 유의 3건: ① Landlock RO/RW 경로는 반드시 `F.R.I.D.A.Y./` beneath 한정(부모 beneath 금지) ② `category/*` 단위 일괄 스캔/glob·자비스 세션의 `category/` 전체 working directory 등록 금지 ③ repo명 점 포함 tooling 마찰 = 기록만.
 
 ### 4.2 메모리 격리
 
@@ -130,12 +130,14 @@
   - (a) 별도 Ollama 포트 (`localhost:11435`) + 별도 모델 (예: glm-4.7-flash 또는 별도 fine-tuned)
   - (b) 같은 Ollama, 다른 모델 (포트 공유)
   - (c) Hermes 자체 endpoint ((Q) 형태 채택 시)
+- **2026-07-07 확정 (D-5)**: (a) 별도 포트 `127.0.0.1:11435` + `OLLAMA_MODELS` 기존 스토어 공유(RO, blob 중복 0) + `keep_alive` 단축(사용 후 언로드) + mem_limit 별도 + **`~/.gb10/gpu_lock.py` flock 동참 = 비협상**(brief 작성 이후 발효된 GB10 규약, "자비스 idle 시점만" 문서 정책과 이중). 클라이언트는 `OllamaBoss` 재사용 불가(url 하드코딩 = 의도적 SSRF 회피 설계) — localhost 한정 + 포트만 파라미터화한 자체 클래스.
 
 ### 4.5 filesystem ACL (자비스 침범 0 보장)
 
 - 프라이데이 워커가 자비스 `src/jarvis/`, `tests/jarvis/`, 자비스 MEMORY 폴더, ADR/헌법/roadmap 본문 변경 시도 시 **fail-closed**
 - Landlock 격리 = workdir RO + 자비스 source 차단 (자비스 ll_sandbox 답습)
 - audit log = 프라이데이가 자비스 영역 접근 시도 evidence 기록
+  - ⚠️ **2026-07-07 정정**: audit log 는 기존 답습이 아니라 **신규 작업** — `ll_sandbox.c` 로깅 0건, Landlock 거부는 조용히 일어남(deny-by-default). 커널 6.17 = Landlock audit(6.15+) 지원으로 구현 가능. append-only + **프라이데이-RO 보관**(ADR-012 Evidence Ledger 패턴, 프라이데이 쓰기 영역에 두면 삭제 가능) = MVP-0 선결 조건.
 
 ### 4.6 commit 격리
 
@@ -151,6 +153,20 @@
 | 자비스 본문 변경 제안 | 자비스 cycle | **0** (프라이데이 = 참고 한정, 자비스 cycle 별도 진입 의무) |
 | 프라이데이 본문 변경 | (참고 한정) | 프라이데이 cycle |
 | HW 자원 충돌 | **우선** | 후위 (자비스 idle 시점 운영) |
+
+### 4.8 ① 오케스트레이터 격리 (2026-07-07 합의 신설 — 필수 수정 1)
+
+> §4.1~§4.7 은 전부 프라이데이 **워커** 격리다. D-2=(R) 체제에서 진화 엔진(Claude
+> `/loop`+Workflow 세션)은 워커가 아니라 **부모 프로세스**이며, 조치 없이는 격리 0층에서
+> 돈다 (Agent B CRITICAL, B-1). R-Friday-1 이 지키려는 침범이 격리를 한 층도 거치지 않고
+> 일어날 수 있으므로 아래를 신설한다.
+
+1. **별도 cwd**: 진화 엔진 세션 = `F.R.I.D.A.Y.` repo 에서만 구동 (D-3 별도 repo 로 충족 — 별도 Claude 프로젝트 메모리 스코프 공짜 획득. 발효 evidence: 프라이데이 세션의 자비스 MEMORY.md 비로드 실측 1건).
+2. **가짜 홈 + Landlock 샌드박스**: 무인 진화 cycle 의 Claude 인스턴스는 자비스 `worker_setup.py` 레시피(HOME 재배치 + env allowlist + RO 최소화 + `--dangerously-skip-permissions`를 커널 격리로 상쇄, ADR-014) 재사용으로 wrap — **R-Friday-1 을 규약이 아니라 커널 강제로** (Agent A 발견 2와 Agent B B-1 의 독립 수렴 해법).
+3. **격리 정의 = 프라이데이-RO**: Landlock 정의·ACL·R-Friday trigger 정의는 프라이데이 쓰기 가능 영역 밖에 보관 — 침범 *전* 단계의 합법적 무력화(자기 수정) 차단 (B-4).
+4. **경로 beneath 한정**: RO/RW 는 `F.R.I.D.A.Y./` beneath 한정. 같은 부모 디렉토리(`category/`) beneath 개방 금지 (§4.1 유의 3건).
+5. **스코프 누출 금지**: ① 레이어가 프라이데이 관찰/R1 데이터를 자비스 스코프(메모리·세션 로그)에 기록 금지 — 헌법 8조 우회 소로 차단 (B G-10).
+6. **별도 Unix user = DEFER** (codex 권고, 비례성 기각): 발효 트리거 = (i) 프라이데이 네트워크 egress 능력 획득 또는 (ii) 무인 장기 상주(daemon 화) 전환 시점. 단 가짜홈이 못 막는 2건(symlink escape, backup/인덱서 동시 스캔)은 격리 smoke test 자동화로 흡수.
 
 ---
 
@@ -208,6 +224,7 @@
 
 - **trigger**: 프라이데이가 헌법 8조 / ADR-011 §2.4 T3 / Boss = root of trust 아님 / Provider Liquidity 5조-2 4 invariant 1건이라도 침범 (제안 포함)
 - **대응**: 즉시 프라이데이 정지 + 권위 분리 재명문 + 메모리 갱신
+- **2026-07-07 범위 정밀화 (합의 §3-D2)**: "제안 포함" 발화 대상 = **자비스 스코프 변경 제안에 한정**. 프라이데이가 *자기 자신*에 대한 개선 제안을 사용자에게 표시하는 것 = **비발화** (학습 산출물 억압 방지). 이 trigger 는 사회공학 경로(사용자 손을 거친 반입)의 유일한 사전 센서이므로 유지 — 발생하지 않으면 비용 0.
 
 ### R-Friday-4: R1 학습루프 폭주
 
@@ -227,7 +244,7 @@
 |---|---|---|
 | E-Friday-1: 자비스 4 invariant 보존 | 본 brief 발효 후 + 프라이데이 진입 후 매 cycle | git diff (헌법 / ADR / Protocol 본문 변경 0건) |
 | E-Friday-2: 격리 메커니즘 작동 | 프라이데이 진입 후 첫 격리 PoC | filesystem ACL + workdir + endpoint 별도 작동 evidence |
-| E-Friday-3: 자비스 144 tests green 답습 | 매 프라이데이 cycle 후 | `pytest tests/jarvis/` 144/144 PASS |
+| E-Friday-3: 자비스 전체 suite green 답습 (2026-07-07 갱신: 숫자 고정 폐기) | 매 프라이데이 cycle 후 | `pytest tests/` 현행 전체 suite PASS |
 | E-Friday-4: 프라이데이 R1 차단 | 프라이데이 진입 후 첫 학습루프 cycle | SQLCipher 또는 동등 메커니즘 작동 evidence |
 | E-Friday-5: 권위 분리 명문 | 본 brief 발효 후 | 프라이데이 cycle 결과 = 참고 한정, 자비스 본문 변경 제안 0건 |
 
@@ -355,4 +372,50 @@
 
 ---
 
-**본 brief 종결** (진입 자격 평가 한정. 실 진입 = 자비스 MVP-1 완료 후 + 풀 3+1 + 외부 LLM 1+ 합의 + D-1 ~ D-8 사용자 명시 결정 의무. 자동 진입 0건 영구 답습. **2026-06-24 D-2 = (R) 하이브리드 결정 추가, 나머지 D 미결.**)
+**본 brief 종결** (진입 자격 평가 한정. 실 진입 = 자비스 MVP-1 완료 후 + 풀 3+1 + 외부 LLM 1+ 합의 + D-1 ~ D-8 사용자 명시 결정 의무. 자동 진입 0건 영구 답습. **2026-06-24 D-2 = (R) 하이브리드 결정 추가.** → **§15 로 전 D 항목 종결, 발효.**)
+
+---
+
+## 15. 2026-07-07 합의 반영 갱신 (발효 결정 로그)
+
+> **풀 3+1 + 외부 LLM 1+ 합의 완료** = `docs/review/3plus1-consensus-2026-07-07-friday-entry.md`
+> (Agent A/B/C 독립 분석 + codex/gpt-5.5 외부 검토 + Reviewer 교차 비교).
+> **최종 판정 = CONDITIONAL-PASS (4/4 방향 승인)**, 필수 수정 1~5 를 본 brief 에 반영한
+> 본 갱신본으로 발효. §11.1 합의 요건 충족.
+
+### 15.1 비전 (사용자 명시, 2026-07-07)
+
+프라이데이 = **"AGI 로서 사용자와 함께 발전하는 인공지능"** — 합의 정직 프레이밍(합의 §8):
+AGI 는 도달의 주장(claim)이 아니라 방향(vector). 프라이데이는 AGI 적 속성(지속성·자기반성·
+도구 사용·장기 기억·사용자 적응)을 격리된 개인 로컬 환경에서 실험하고 **검증 가능한 개선만
+누적하는 동반 성장 지능 프로토타입**이다. "함께" = 사용자 승인 게이트(M 트랙), "발전" =
+계산적 적합도 센서 + 자동 revert(E 트랙). Claude 는 후보 생성자이자 부트스트랩 엔진일 뿐
+root of trust 가 아니다. 프라이데이는 런타임에서 로컬로 자라며 — 언젠가, 스스로 큰다.
+
+### 15.2 D-1 ~ D-8 전 항목 종결
+
+| # | 결정 (사용자 명시) | 비고 |
+|---|---|---|
+| D-1 | **경량 evidence 후 진입** — 자비스 MVP-1 완료 판정을 현행 실태 재베이스라인 1줄 evidence 로 고정하는 소규모 작업만 선행 후 MVP-0 설계 진입 | over-claim 방지 |
+| D-2 | (R) 루프 하네스 하이브리드 (2026-06-24) — 본 합의 = **사후(post-hoc) 검증, 승인** | §8 매트릭스 (R) 기준 재평가: (a) 자비스 invariant 변경 0 = ✅ 유지, (c) 회귀 경로 = ✅ 유지(suite 갱신), (b)(d)(e) = MVP-0/이후 cycle ⏳ 유지. 단 (R) 신규 축(① 레이어 격리)이 §4.8 로 편입되어 (b) 격리 PoC 범위에 ① 레이어 포함 |
+| D-3 | **(b) 별도 repo** `/home/delangi/문서/project/category/F.R.I.D.A.Y.` (2026-07-07 사용자 직접 결정·집행, git+GitHub 연결 완료) — 4/4 독립 권고 일치, 사후 승인 | §4.1 갱신, 유의 3건 명문 |
+| D-4 | **소멸** — 별도 repo = 별도 Claude 프로젝트 메모리 스코프 공짜 | 발효 evidence 1건: 자비스 MEMORY.md 비로드 실측 |
+| D-5 | **별도 포트 11435** + `OLLAMA_MODELS` 공유(RO) + keep_alive 단축 + mem_limit + **gpu_lock flock 동참(비협상)** | §4.4 갱신 |
+| D-6 | 수용 + 강화 1줄: 프라이데이 메모리에 "자가진화 자동 적용 툴이므로 비례성 논리는 완화가 아니라 **강화** 방향" 명문 | 비례성 메모리 오용 차단 |
+| D-7 | 진입 합의 = 본 보고서로 충족. 이후 **T3-인접 결정(격리 정의·tier 매핑·대상 사다리 승격)만 풀 3+1 승격**, 그 외 1-agent(+Reviewer) 상한 | ceremony 인플레이션 차단 |
+| D-8 | 본 갱신본 + 합의 문서 일괄 commit (develop). commit cadence: T1 산출물 = cycle 자동 / T2(MVP-0 은 E 트랙 프롬프트만) = 벤치마크 센서 게이트 / T3-core = 영구 사람 전용 / 자비스 스코프 = 영구 0 | — |
+
+### 15.3 헌법 5조-2 스코프 해석 명문 (필수 수정 2)
+
+- **5조-2 의 본질(목적) = 런타임 시스템의 provider 교체 가능성.** ② 레이어(로컬 Ollama)가 런타임 두뇌인 구조는 5조-2 준수의 교과서적 형태.
+- **① 레이어(Claude `/loop`+Workflow) = 개발 하네스(부트스트랩 엔진)로 분류** — 프라이데이 *제품 정의*에서 제외. "공장 lock-in ≠ 제품 lock-in".
+- 단 3 조건: (i) 진화 루프 정의(관찰→제안→검증→적용)는 **provider-중립 스펙**(markdown/YAML)으로 유지, Claude = 그 스펙의 *실행기* (ii) **타 실행기(codex) 1회 구동 = MVP evidence** (exit ramp 실증) (iii) 진화 루프가 배포 후 **상시 기능으로 전환되는 시점 = 재분류 + 별도 합의 의무**.
+- **(U) 장기 졸업 목표 명문**: 진화 루프까지 로컬 구동 — "Claude 가 키우고 프라이데이는 로컬로 자란다, 그리고 언젠가 스스로 큰다".
+
+### 15.4 cadence + MVP-0 방향 (필수 수정 5 + 선결 조건 포인터)
+
+- **진화 cadence = 이산(discrete) cycle** (`/loop` self-paced 상주 대신) — evidence 경계 명확·비용 통제(R-Friday-5/6)·컨텍스트 소진 회피. **루프 상태는 파일(JSONL) 외부화 의무** (cadence 무관 유지). 주기 하한/fan-out 상한 수치 = MVP-0 에서 고정.
+- **MVP-0 첫 진화 대상 = 이중 트랙 (사용자 채택)**: **M(동반)** = 메모리/사용자 모델(선호·규칙·패턴·실패 사례 추출 → 구조화 후보 → **사용자 승인** 반영) + **E(진화)** = 자기 프롬프트/설정(고정 벤치마크 스위트 점수 센서 → 하락 시 **자동 revert**). **자기 코드 수정 = MVP-0 금지.** 대상 사다리 F-0(프롬프트)→F-1(도구)→F-2(코드), 각 승격 = 사용자 명시 + 풀 합의. 시퀀스 = F-0a 뼈대(진화 0) → F-0b 최소 한 바퀴(= ADR-011 §2.1 (b)+(d) evidence 동시 산출) → M/E 병행.
+- **MVP-0 설계 brief 선결 조건 10건** = 합의 보고서 §6 (진화 대상+적합도 함수 / 프라이데이 내부 T3-core+tier 매핑 / R-Friday-6·7·8+센서 바인딩 / audit log 스펙 / 자원 규율 / Ollama 자체 클래스 / provider-중립 스펙 / 격리 smoke test / 부트스트랩 원료(자비스 Layer 0/1 read-only 소비)+외부 관제형 registry 등록 / 주기·fan-out 상한).
+
+**§15 종결 — 본 brief 발효. 다음 cycle = D-1 경량 evidence 고정 → 프라이데이 MVP-0 설계 brief (F.R.I.D.A.Y. repo 측).**

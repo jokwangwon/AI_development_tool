@@ -1,182 +1,73 @@
-# AI Development Tool — AI 자동화 개발 방법론 템플릿
+# AI Development Tool
 
-> **하네스 엔지니어링 + SDD + TDD + 3+1 멀티에이전트 합의 기반 AI 자동화 개발 프레임워크**
->
-> **v1.0.0** | 새 프로젝트에 복사하여 즉시 사용
+**Experimental** · AI-assisted software engineering · 검증 가능한 개발 프로세스
 
----
+AI가 생성한 코드를 작업 승인·실행 기록·결과 검토·테스트가 있는 개발 프로세스 안에 넣는 도구입니다.
+Jarvis 실행 코드와 검증 도구를 개발하고 있으며 완전 자율 개발이나 모든 환경에서의 안전한 실행을 보장하지 않습니다.
 
-## 이 프로젝트는 무엇인가
+## 문제와 내가 한 일
 
-**개발 방법론 템플릿**이다. 새 아이디어로 프로젝트를 시작할 때, 이 파일들을 가져와 적용하면 체계적인 자동화 개발을 진행할 수 있다.
+AI의 출력만으로는 실제 파일이 바뀌었는지, 요구사항을 충족했는지, 실행 결과를 다시 확인할 수 있는지 알기 어렵습니다.
+작업 계획과 승인, 워커 실행, 산출물 확인과 기록을 나누고 각 경계를 테스트로 확인하는 구조를 구현했습니다.
 
-```
-사용법:
-  1. 새 프로젝트 디렉토리 생성
-  2. 이 템플릿의 파일을 복사
-  3. Claude에게 아이디어를 제시
-  4. Phase 0 → 1 → 2 → 3 → 4 자동화 개발 진행
-```
+AI agent는 코드 생성과 반복 작업에 활용합니다. 요구사항 정의·설계 판단·리뷰·테스트·검증은 개발자의 책임으로 둡니다.
 
----
+## 현재 구현과 근거
 
-## 핵심 가치
+| 구현 | 소스 / 검증 |
+| --- | --- |
+| 작업 계획·승인·워커 실행 | [orchestrator](src/jarvis/orchestrator.py), [승인 게이트](src/jarvis/approval.py), [테스트](tests/jarvis/test_approval_gate.py) |
+| 결과 검토 | [ReviewGuard](src/jarvis/review.py)는 알려진 위험 명령 패턴을 검사합니다. [테스트](tests/jarvis/test_review_guard.py) |
+| 작업 기록과 대화 저장 | [JSONL 작업 기록](src/jarvis/ledger.py), [대화 저장소](src/jarvis/conversation_repo.py) |
+| 실행 환경 분리 | [격리 어댑터](src/jarvis/isolation.py), [Landlock 구현](src/jarvis/sandbox), [환경별 테스트](tests/jarvis/test_isolation.py) |
+| 개발 과정 검증 | [비밀정보 패턴 검사](tools/secret_scanner.py), [스키마 검증](tools/schema_validator.py), [증거 표기 검사](tools/evidence_pass_gate.py) |
 
-| 가치 | 설명 |
-|------|------|
-| **Specification First** | 코드보다 명세가 먼저 (SDD) |
-| **Test First** | 구현보다 테스트가 먼저 (TDD) |
-| **Harness First** | 잘못하는 것이 불가능하게 만들어라 |
-| **Multi-Agent Consensus** | 중요 결정은 3+1 에이전트 합의로 검증 |
-| **Zero Hardcoding** | 모든 설정은 환경 변수, Docker-First |
+`main`은 안정 기준, `develop`은 개발 통합 브랜치입니다. 이 설명은 양쪽에서 확인할 수 있는 위 구현을 중심으로 작성했습니다.
+`develop`의 추가 기능과 설계 문서에만 있는 목표를 기본 브랜치의 완료 기능으로 간주하지 않습니다.
 
----
+## Architecture · 기술 선택
 
-## 개발 파이프라인
-
-```
-사용자 아이디어
-    │
-    ▼
-Phase 0: 자동화 검토 질문지          [ADR-001]
-    → 아이디어 자동 구조화 + 최소 질문 (필수3 + 동적2)
-    → 구조화된 아이디어 브리프 출력
-    │
-    ▼
-Phase 1: 3+1 에이전트 합의 (통합)    [ADR-002]
-    → 아이디어 검증 + 기술 스택 결정 + 에셋 식별
-    → Agent A(구현) / B(품질) / C(대안) → Reviewer(합의)
-    │
-    ├─── Phase 2: SDD 설계 문서 작성
-    │    → 확정된 스택 기반 명세 작성
-    │
-    ├─── Phase 3: TDD 구현
-    │    → RED → GREEN → REFACTOR
-    │
-    └─── 에셋 파이프라인 (병렬)       [ADR-003]
-         → Guide-First: 최적 AI 모델 탐색 + 안내
-    │
-    ▼
-Phase 4: 통합 테스트 + 배포
+```mermaid
+flowchart LR
+    Request[요구사항] --> Plan[계획·승인]
+    Plan --> Worker[격리 어댑터 / 워커]
+    Worker --> Review[결과·산출물 검토]
+    Review --> Human[개발자 리뷰·테스트]
+    Plan --> Ledger[작업 기록]
+    Worker --> Ledger
+    Review --> Ledger
 ```
 
----
+- **Python**: 실행 도구·검토 규칙·테스트를 같은 언어에서 연결합니다.
+- **JSONL / SQLite**: 작업 이벤트와 대화 정보를 저장합니다. 기록이 있다는 사실만으로 결과의 정확성을 보증하지 않습니다.
+- **pytest / pre-commit / GitHub Actions**: 반복 가능한 검사를 개발·커밋·PR 단계에 배치합니다.
+- **Linux Landlock**: 실행 접근 범위를 제한하는 구현을 실험합니다. 커널·실행 환경에 의존하며 패턴 검사는 완전한 보안 경계가 아닙니다.
 
-## 포함된 설계 체계 (v1.0.0)
+## 실행과 검증
 
-### 헌법 + 원칙
-| 문서 | 설명 |
-|------|------|
-| `docs/constitution/PROJECT_CONSTITUTION.md` | 12개 조항 프로젝트 헌법 |
-| `docs/constitution/ARCHITECTURE_PRINCIPLES.md` | 아키텍처 10대 원칙 |
-| `docs/constitution/CODE_QUALITY_PRINCIPLES.md` | 코드 품질 원칙 |
-
-### 아키텍처 설계 (6개 ADR)
-| 문서 | ADR | 핵심 |
-|------|-----|------|
-| `automated-review-questionnaire-design.md` | ADR-001 | Phase 0: 아이디어 → 브리프 |
-| `idea-driven-stack-decision-design.md` | ADR-002 | Phase 1: 아이디어가 스택을 결정 |
-| `generative-ai-asset-pipeline-design.md` | ADR-003 | 비코드 에셋 Guide-First 생성 |
-| `generative-ai-extensibility-design.md` | ADR-004 | 모델 교체/학습 Config 기반 |
-| `ai-backend-stack-convention.md` | ADR-005 | 로컬 추론 시 Python 분리 |
-| `environment-and-docker-design.md` | ADR-006 | 하드코딩 제로 + Docker-First |
-
-### 가이드
-| 문서 | 설명 |
-|------|------|
-| `CLAUDE.md` | AI 에이전트 개발 지시사항 (매 세션 자동 로드) |
-| `docs/guides/DEVELOPMENT_GUIDE.md` | 개발 프로세스, Git 규칙 |
-| `docs/guides/TEST_STRATEGY.md` | 테스트 전략 (70% 커버리지) |
-
-### 하네스 인프라
-| 파일 | 설명 |
-|------|------|
-| `.claude/settings.json` | Claude Code Hook 설정 |
-| `.githooks/pre-commit` | Layer 3 자체 hook — 시크릿/디버그 코드 grep 감지 |
-| `.githooks/setup.sh` | Layer 3 Git hooks 초기 설정 |
-| `.pre-commit-config.yaml` | Layer 2 pre-commit framework — PC-1-T3 mandatory enforcement (6 hook, secret/workflow/import 검증) |
-| `bin/setup.sh` | dev onboarding 통합 스크립트 — Layer 3 + Layer 2 + audit log 모두 활성화 |
-| `tools/pre_commit_install_audit.sh` | PC-1-T3 bypass detection (3 탐지 경로 통합 verify) |
-| `CONTRIBUTING.md` | dev onboarding workflow + PC-1-T3 mandatory enforcement 명문 |
-| `.gitignore` | 표준 무시 규칙 |
-
----
-
-## 새 프로젝트에서 사용하기
-
-### 1. 복사
+Python 3.12 기준의 개발 의존성을 사용합니다. 먼저 [기여 가이드](CONTRIBUTING.md)의 개발 환경·hook 설치 절차를 확인하세요.
 
 ```bash
-# 새 프로젝트에 템플릿 파일 복사
-cp -r AI_development_tool/* /path/to/new-project/
-cp -r AI_development_tool/.claude /path/to/new-project/
-cp -r AI_development_tool/.githooks /path/to/new-project/
-cp AI_development_tool/.gitignore /path/to/new-project/
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pytest tests/jarvis/ -q
 ```
 
-### 2. 초기 설정
+위 명령은 테스트 환경을 준비합니다. 실제 워커 실행에는 별도의 로컬 도구·모델·설정이 필요합니다. 테스트 실행만으로 외부 LLM을 사용하는 전체 개발 흐름이 재현된다고 설명하지 않습니다.
 
-```bash
-cd /path/to/new-project
-git init
-bash bin/setup.sh            # dev 환경 통합 setup (Layer 3 + Layer 2 + audit log)
-cp .env.example .env         # 환경 변수 생성 (API 키 설정)
-```
+**설치 제약(2026-09-30 확인)**: 기존 `bin/setup.sh`는 `core.hooksPath`를 설정한 뒤 `pre-commit install`을 호출해 설치가 중단됩니다. 기여용 hook 설치는 이 충돌을 먼저 해소해야 합니다. 커밋 전 필수 검사를 생략해도 된다는 의미는 아닙니다.
 
-> `bin/setup.sh` 가 다음을 자동 수행:
-> - `.githooks/setup.sh` 실행 (Layer 3 자체 hook 활성화)
-> - `pip install -r requirements-dev.txt` (dev 의존성 + pre-commit framework 설치)
-> - `pre-commit install` (Layer 2 framework hook 활성화, **PC-1-T3 mandatory enforcement**)
-> - `.git/pre-commit-audit/install.log` 기록 (audit log)
->
-> 자세한 dev workflow + PC-1-T3 의무화 명문 = `CONTRIBUTING.md` 참조
+- [Jarvis Tests CI](.github/workflows/jarvis-tests.yml)는 단위 테스트와 sandbox 컴파일을 수행합니다.
+- sandbox 미빌드 상태에서 런타임 통합 테스트는 skip될 수 있습니다. CI의 컴파일 성공은 Landlock 런타임 격리 검증과 다릅니다.
+- [전체 workflow](.github/workflows)와 [실행 결과](https://github.com/jokwangwon/AI_development_tool/actions)에서 검사 범위를 확인할 수 있습니다.
+- 과거 실제 사용 검증은 [세션 기록](docs/sessions)에 남아 있습니다. 특정 사례의 성공을 일반적인 성공률로 확장하지 않습니다.
 
-### 3. 아이디어 제시
+## 현재 상태와 한계
 
-Claude에게 아이디어를 제시하면 Phase 0부터 자동 시작:
+**Experimental** — 구현과 테스트가 있는 개인 개발 도구이며 범용 제품이나 프로덕션 운영 플랫폼으로 소개하지 않습니다.
 
-```
-사용자: "실시간 채팅 앱을 만들자. WebSocket 기반, 읽지 않은 메시지 알림 포함"
+ReviewGuard는 알려진 패턴만 탐지합니다. 문서의 검증 절차와 실제 실행 강제력은 다를 수 있으므로 코드·테스트·CI 결과를 함께 확인해야 합니다.
+새로운 기능은 `feature/* → develop`에서 검토하며 `main` 반영은 별도 릴리스 결정에 따릅니다.
 
-→ Phase 0: 검토 질문지 자동 실행
-→ Phase 1: 3+1 합의 (아이디어 + 스택 + 에셋)
-→ Phase 2: SDD 작성
-→ Phase 3: TDD 구현
-→ Phase 4: 통합 + 배포
-```
-
-### 4. Docker 실행
-
-```bash
-docker compose up            # 기본 실행
-docker compose --profile gpu up  # GPU 포함 (AI 백엔드)
-```
-
----
-
-## v1.0.0 알려진 제한사항
-
-Phase 0~1(아이디어 구조화 + 합의)은 상세 설계 완료. 아래 항목은 프로젝트별로 구현:
-
-- Phase 2~3 자동 변환 (합의→SDD→테스트→코드)
-- 복합 기능 분해 메커니즘
-- 런타임 AI 코드 패턴
-- 프로젝트 스캐폴딩 자동화
-- 실동작 CI Pipeline
-
----
-
-## 참고 자료
-
-| 주제 | 링크 |
-|------|------|
-| 하네스 엔지니어링 | [Martin Fowler](https://martinfowler.com/articles/harness-engineering.html) |
-| 하네스 설계 | [Anthropic](https://www.anthropic.com/engineering/harness-design-long-running-apps) |
-| Claude Code | [Docs](https://code.claude.com/docs/en/how-claude-code-works) |
-| SDD | [Agent Factory](https://agentfactory.panaversity.org/docs/General-Agents-Foundations/spec-driven-development) |
-
----
-
-**버전**: v1.0.0
-**작성일**: 2026-04-06
-**라이선스**: MIT
+[문서 인덱스](docs/INDEX.md) · [현재 개발 상태](docs/CONTEXT.md) · [포트폴리오](https://gwangwon.dev)
